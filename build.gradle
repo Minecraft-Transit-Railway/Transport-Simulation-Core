@@ -1,0 +1,21 @@
+plugins {
+	id "java"
+}
+
+group "org.mtr"
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation "com.google.code.gson:gson:${rootProject.gson_version}"
+}
+
+jar {
+	manifest {
+		attributes(
+				"Main-Class": "org.mtr.Main"
+		)
+	}
+}
