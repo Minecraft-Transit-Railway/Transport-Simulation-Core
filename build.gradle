@@ -2,20 +2,24 @@ plugins {
 	id "java"
 }
 
-group "org.mtr"
+group "org.mtr.core"
 
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation "com.google.code.gson:gson:${rootProject.gson_version}"
+	implementation "com.google.code.gson:gson:+"
+	implementation "it.unimi.dsi:fastutil:+"
+	implementation "org.msgpack:msgpack-core:+"
 }
 
 jar {
 	manifest {
-		attributes(
-				"Main-Class": "org.mtr.Main"
-		)
+		attributes("Main-Class": "org.mtr.core.Main")
 	}
+}
+
+tasks.withType(JavaCompile) {
+	options.release = 8;
 }
