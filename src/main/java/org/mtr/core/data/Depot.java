@@ -1,8 +1,8 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
@@ -12,11 +12,11 @@ import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public class Depot extends AreaBase implements IReducedSaveData, Utilities {
+public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 
 	public int pathGenerationSuccessfulSegments;
 	public long lastDeployedMillis;
@@ -33,9 +33,9 @@ public class Depot extends AreaBase implements IReducedSaveData, Utilities {
 	public final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 
 	private final int[] frequencies = new int[HOURS_PER_DAY];
-	private final Map<Long, Train> deployableSidings = new HashMap<>();
-	private final List<SavedRailBase> platformsInRoute = new ArrayList<>();
-	private final List<SidingPathFinder> sidingPathFinders = new ArrayList<>();
+	private final Long2ObjectAVLTreeMap<Train> deployableSidings = new Long2ObjectAVLTreeMap<>();
+	private final List<Platform> platformsInRoute = new ArrayList<>();
+	private final List<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ArrayList<>();
 
 	public static final int DEFAULT_CRUISING_ALTITUDE = 256;
 	private static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
@@ -78,13 +78,6 @@ public class Depot extends AreaBase implements IReducedSaveData, Utilities {
 
 	@Override
 	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		toReducedMessagePack(messagePacker);
-		messagePacker.packString(KEY_DEPLOY_INDEX).packInt(deployIndex);
-		messagePacker.packString(KEY_LAST_DEPLOYED).packLong(System.currentTimeMillis() - lastDeployedMillis);
-	}
-
-	@Override
-	public void toReducedMessagePack(MessagePacker messagePacker) throws IOException {
 		super.toMessagePack(messagePacker);
 
 		messagePacker.packString(KEY_ROUTE_IDS).packArrayHeader(routeIds.size());
@@ -109,12 +102,20 @@ public class Depot extends AreaBase implements IReducedSaveData, Utilities {
 
 	@Override
 	public int messagePackLength() {
-		return super.messagePackLength() + 7;
+		return super.messagePackLength() + 6;
 	}
 
 	@Override
-	public int reducedMessagePackLength() {
-		return messagePackLength() - 2;
+	public void toFullMessagePack(MessagePacker messagePacker) throws IOException {
+		super.toFullMessagePack(messagePacker);
+
+		messagePacker.packString(KEY_DEPLOY_INDEX).packInt(deployIndex);
+		messagePacker.packString(KEY_LAST_DEPLOYED).packLong(System.currentTimeMillis() - lastDeployedMillis);
+	}
+
+	@Override
+	public int fullMessagePackLength() {
+		return super.fullMessagePackLength() + 2;
 	}
 
 	@Override
@@ -122,12 +123,12 @@ public class Depot extends AreaBase implements IReducedSaveData, Utilities {
 		return true;
 	}
 
-	public void generateMainRoute(DataCache dataCache, Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, Set<Siding> sidings, Consumer<Thread> callback) {
+	public void generateMainRoute(DataCache dataCache, Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
 		path.clear();
 		sidingPathFinders.clear();
 
 		routeIds.forEach(routeId -> {
-			final Route route = dataCache.routeIdMap.get(routeId);
+			final Route route = dataCache.routeIdMap.get(routeId.longValue());
 			if (route != null) {
 				route.platformIds.forEach(platformId -> {
 					final Platform platform = dataCache.platformIdMap.get(platformId.platformId);
@@ -139,11 +140,11 @@ public class Depot extends AreaBase implements IReducedSaveData, Utilities {
 		});
 
 		for (int i = 0; i < platformsInRoute.size() - 1; i++) {
-			sidingPathFinders.add(new SidingPathFinder(rails, platformsInRoute.get(i), platformsInRoute.get(i + 1), i + 1));
+			sidingPathFinders.add(new SidingPathFinder<>(rails, platformsInRoute.get(i), platformsInRoute.get(i + 1), i + 1));
 		}
 	}
 
-	public void tick(ObjectOpenHashSet<Siding> sidings, Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
+	public void tick(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
 		SidingPathFinder.findPathTick(rails, path, sidingPathFinders, stopIndex -> {
 			pathGenerationSuccessfulSegments = stopIndex;
 
@@ -156,30 +157,21 @@ public class Depot extends AreaBase implements IReducedSaveData, Utilities {
 			}
 
 			if (sidingPathFinders.isEmpty() && !platformsInRoute.isEmpty()) {
-				sidings.forEach(siding -> {
-					final Position position = siding.getMidPosition();
-					if (siding.isTransportMode(transportMode) && inArea(position.x, position.z)) {
-						siding.generateRoute(this, pathGenerationSuccessfulSegments, rails, Utilities.getElement(platformsInRoute, 0), Utilities.getElement(platformsInRoute, -1), repeatInfinitely, cruisingAltitude);
-					}
-				});
+				savedRails.forEach(siding -> siding.generateRoute(pathGenerationSuccessfulSegments, rails, Utilities.getElement(platformsInRoute, 0), Utilities.getElement(platformsInRoute, -1), repeatInfinitely, cruisingAltitude));
 			}
 		});
 
-		if (!deployableSidings.isEmpty() && departures.stream().anyMatch(simulator::matchMillis)) {
-			final List<Siding> sidingsInDepot = sidings.stream().filter(siding -> {
-				final Position sidingPosition = siding.getMidPosition();
-				return siding.isTransportMode(transportMode) && inArea(sidingPosition.x, sidingPosition.z);
-			}).sorted().collect(Collectors.toList());
+		if (!deployableSidings.isEmpty() && actualDepartures.stream().anyMatch(simulator::matchMillis)) {
+			final ObjectArrayList<Siding> sidingsInDepot = new ObjectArrayList<>(savedRails);
+			Collections.shuffle(sidingsInDepot);
+			Collections.sort(sidingsInDepot);
 
 			final int sidingsInDepotSize = sidingsInDepot.size();
 			for (int i = deployIndex; i < deployIndex + sidingsInDepotSize; i++) {
 				final Train train = deployableSidings.get(sidingsInDepot.get(i % sidingsInDepotSize).id);
 				if (train != null) {
 					lastDeployedMillis = System.currentTimeMillis();
-					deployIndex++;
-					if (deployIndex >= sidingsInDepotSize) {
-						deployIndex = 0;
-					}
+					deployIndex = (deployIndex + 1) % sidingsInDepotSize;
 					train.deployTrain();
 					break;
 				}
@@ -194,32 +186,38 @@ public class Depot extends AreaBase implements IReducedSaveData, Utilities {
 	}
 
 	private void generateActualDepartures() {
+		actualDepartures.clear();
+
 		if (transportMode.continuousMovement) {
 			for (int i = 0; i < MILLIS_PER_DAY; i += CONTINUOUS_MOVEMENT_FREQUENCY) {
 				actualDepartures.add(i);
 			}
-		} else if (!useRealTime) {
-			final int offsetMillis = (int) ((Main.START_MILLIS - simulator.startingGameDayPercentage * simulator.millisPerGameDay) % MILLIS_PER_DAY);
-			final List<Integer> gameDepartures = new ArrayList<>();
+		} else {
+			if (useRealTime) {
+				actualDepartures.addAll(departures);
+			} else {
+				final int offsetMillis = (int) ((Main.START_MILLIS - simulator.startingGameDayPercentage * simulator.millisPerGameDay) % MILLIS_PER_DAY);
+				final List<Integer> gameDepartures = new ArrayList<>();
 
-			for (int i = 0; i < HOURS_PER_DAY; i++) {
-				final int intervalMillis = 200000 / frequencies[i];
-				final int hourMinMillis = MILLIS_PER_HOUR * i;
-				final int hourMaxMillis = MILLIS_PER_HOUR * (i + 1);
+				for (int i = 0; i < HOURS_PER_DAY; i++) {
+					final int intervalMillis = 200000 / frequencies[i];
+					final int hourMinMillis = MILLIS_PER_HOUR * i;
+					final int hourMaxMillis = MILLIS_PER_HOUR * (i + 1);
 
-				while (true) {
-					final int newDeparture = Math.max(hourMinMillis, Utilities.getElement(gameDepartures, -1, Integer.MIN_VALUE) + intervalMillis);
-					if (newDeparture < hourMaxMillis) {
-						gameDepartures.add(newDeparture);
-					} else {
-						break;
+					while (true) {
+						final int newDeparture = Math.max(hourMinMillis, Utilities.getElement(gameDepartures, -1, Integer.MIN_VALUE) + intervalMillis);
+						if (newDeparture < hourMaxMillis) {
+							gameDepartures.add(newDeparture);
+						} else {
+							break;
+						}
 					}
 				}
-			}
 
-			for (int i = 0; i < Math.ceil((float) MILLIS_PER_DAY / simulator.millisPerGameDay); i++) {
-				for (int gameDeparture : gameDepartures) {
-					actualDepartures.add((offsetMillis + gameDeparture + simulator.millisPerGameDay * i) % MILLIS_PER_DAY);
+				for (int i = 0; i < Math.ceil((float) MILLIS_PER_DAY / simulator.millisPerGameDay); i++) {
+					for (int gameDeparture : gameDepartures) {
+						actualDepartures.add((offsetMillis + gameDeparture + simulator.millisPerGameDay * i) % MILLIS_PER_DAY);
+					}
 				}
 			}
 		}

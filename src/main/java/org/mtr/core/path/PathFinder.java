@@ -64,7 +64,7 @@ public abstract class PathFinder<T, U> {
 			} else {
 				final double totalDuration = elapsedTime + bestDuration + bestWaitingTime;
 				localBlacklist.put(bestNode, totalDuration);
-				tempData.add(new ConnectionDetails<T>(bestNode, bestDuration, bestWaitingTime, bestRouteId));
+				tempData.add(new ConnectionDetails<>(bestNode, bestDuration, bestWaitingTime, bestRouteId));
 
 				if (bestNode == endNode) {
 					if (totalDuration > 0 && totalDuration < totalTime) {

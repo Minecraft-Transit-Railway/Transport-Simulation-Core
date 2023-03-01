@@ -1,17 +1,19 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
 
-public abstract class AreaBase extends NameColorDataBase {
+public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends NameColorDataBase {
 
 	public long cornerXMin;
 	public long cornerZMin;
 	public long cornerXMax;
 	public long cornerZMax;
+	public final ObjectAVLTreeSet<U> savedRails = new ObjectAVLTreeSet<>();
 
 	private static final String KEY_X_MIN = "x_min";
 	private static final String KEY_Z_MIN = "z_min";
@@ -67,7 +69,7 @@ public abstract class AreaBase extends NameColorDataBase {
 		return validCorners(this) && Utilities.isBetween(x, cornerXMin, cornerXMax) && Utilities.isBetween(z, cornerZMin, cornerZMax);
 	}
 
-	public boolean intersecting(AreaBase areaBase) {
+	public boolean intersecting(AreaBase<T, U> areaBase) {
 		return validCorners(this) && validCorners(areaBase) && (inThis(areaBase) || areaBase.inThis(this));
 	}
 
@@ -75,11 +77,11 @@ public abstract class AreaBase extends NameColorDataBase {
 		return validCorners(this) ? new Position((cornerXMin + cornerXMax) / 2, 0, (cornerZMin + cornerZMax) / 2) : null;
 	}
 
-	private boolean inThis(AreaBase areaBase) {
+	private boolean inThis(AreaBase<T, U> areaBase) {
 		return inArea(areaBase.cornerXMin, areaBase.cornerZMin) || inArea(areaBase.cornerXMin, areaBase.cornerZMax) || inArea(areaBase.cornerXMax, areaBase.cornerZMin) || inArea(areaBase.cornerXMax, areaBase.cornerZMax);
 	}
 
-	public static boolean validCorners(AreaBase areaBase) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> boolean validCorners(AreaBase<T, U> areaBase) {
 		return areaBase != null && areaBase.cornerXMax > areaBase.cornerXMin && areaBase.cornerZMax > areaBase.cornerZMin;
 	}
 }

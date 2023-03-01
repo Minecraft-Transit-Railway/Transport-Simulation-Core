@@ -3,10 +3,7 @@ package org.mtr.core.path;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.core.data.DataCache;
-import org.mtr.core.data.Rail;
-import org.mtr.core.data.RailType;
-import org.mtr.core.data.SavedRailBase;
+import org.mtr.core.data.*;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -14,14 +11,14 @@ import org.mtr.core.tools.Utilities;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class SidingPathFinder extends PathFinder<SidingPathFinder.PositionAndAngle, PathData> {
+public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> extends PathFinder<SidingPathFinder.PositionAndAngle, PathData> {
 
-	public final SavedRailBase startSavedRail;
-	public final SavedRailBase endSavedRail;
+	public final U startSavedRail;
+	public final W endSavedRail;
 	public final int stopIndex;
 	private final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails;
 
-	public SidingPathFinder(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, SavedRailBase startSavedRail, SavedRailBase endSavedRail, int stopIndex) {
+	public SidingPathFinder(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, U startSavedRail, W endSavedRail, int stopIndex) {
 		super(new PositionAndAngle(startSavedRail.getAnyPos(), null), new PositionAndAngle(endSavedRail.getAnyPos(), null));
 		this.rails = rails;
 		this.startSavedRail = startSavedRail;
@@ -80,9 +77,9 @@ public class SidingPathFinder extends PathFinder<SidingPathFinder.PositionAndAng
 		return node.position.distManhattan(endNode.position);
 	}
 
-	public static void findPathTick(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, ObjectArrayList<PathData> path, List<SidingPathFinder> sidingPathFinders, Consumer<Integer> callback) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Consumer<Integer> callback) {
 		if (!sidingPathFinders.isEmpty()) {
-			final SidingPathFinder sidingPathFinder = sidingPathFinders.get(0);
+			final SidingPathFinder<T, U, V, W> sidingPathFinder = sidingPathFinders.get(0);
 			final ObjectArrayList<PathData> tempPath = sidingPathFinder.tick();
 
 			if (tempPath != null) {
@@ -101,14 +98,14 @@ public class SidingPathFinder extends PathFinder<SidingPathFinder.PositionAndAng
 		}
 	}
 
-	public static void addPathData(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, ObjectArrayList<PathData> path, boolean isFirst, SavedRailBase savedRail, ObjectArrayList<PathData> pathForPosition, boolean useDwellTime, int stopIndex) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void addPathData(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, ObjectArrayList<PathData> path, boolean isFirst, SavedRailBase<U, T> savedRail, ObjectArrayList<PathData> pathForPosition, boolean useDwellTime, int stopIndex) {
 		final PathData pathData = Utilities.getElement(pathForPosition, isFirst ? 0 : -1);
 		if (pathData != null && savedRail != null) {
 			final Position position1 = isFirst ? pathData.startPosition : pathData.endPosition;
 			final Position position2 = savedRail.getOtherPosition(position1);
 			final Position position3 = isFirst ? position2 : position1;
 			final Position position4 = isFirst ? position1 : position2;
-			path.add(new PathData(DataCache.tryGet(rails, position3, position4), savedRail.id, useDwellTime ? savedRail.getDwellTime() : 0, position3, position4, stopIndex));
+			path.add(new PathData(DataCache.tryGet(rails, position3, position4), savedRail.id, useDwellTime ? savedRail.getIntegerValue() : 0, position3, position4, stopIndex));
 		}
 	}
 

@@ -12,27 +12,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class SavedRailBase extends NameColorDataBase {
+public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends NameColorDataBase {
 
-	protected int dwellTime;
+	public U area;
+	private int integerValue;
 	private final Set<Position> positions = new HashSet<>(2);
 
-	public static final int MAX_DWELL_TIME = 1200;
-	private static final int DEFAULT_DWELL_TIME = 20;
+	private static final int MAX_INTEGER_VALUE = 1200;
+	private static final int DEFAULT_INTEGER_VALUE = 20;
 	private static final String KEY_POS_1_X = "pos_1_x";
 	private static final String KEY_POS_1_Y = "pos_1_y";
 	private static final String KEY_POS_1_Z = "pos_1_z";
 	private static final String KEY_POS_2_X = "pos_2_x";
 	private static final String KEY_POS_2_Y = "pos_2_y";
 	private static final String KEY_POS_2_Z = "pos_2_z";
-	private static final String KEY_DWELL_TIME = "dwell_time";
+	private static final String KEY_INTEGER_VALUE = "dwell_time";
 
 	public SavedRailBase(long id, TransportMode transportMode, Position pos1, Position pos2) {
 		super(id, transportMode);
 		name = "1";
 		positions.add(pos1);
 		positions.add(pos2);
-		dwellTime = transportMode.continuousMovement ? 1 : DEFAULT_DWELL_TIME;
+		integerValue = transportMode.continuousMovement ? 1 : DEFAULT_INTEGER_VALUE;
 	}
 
 	public SavedRailBase(TransportMode transportMode, Position pos1, Position pos2) {
@@ -40,7 +41,7 @@ public abstract class SavedRailBase extends NameColorDataBase {
 		name = "1";
 		positions.add(pos1);
 		positions.add(pos2);
-		dwellTime = transportMode.continuousMovement ? 1 : DEFAULT_DWELL_TIME;
+		integerValue = transportMode.continuousMovement ? 1 : DEFAULT_INTEGER_VALUE;
 	}
 
 	public SavedRailBase(MessagePackHelper messagePackHelper) {
@@ -68,7 +69,7 @@ public abstract class SavedRailBase extends NameColorDataBase {
 			positions.add(pos2);
 		}
 
-		messagePackHelper.unpackInt(KEY_DWELL_TIME, value -> dwellTime = transportMode.continuousMovement ? 1 : value);
+		messagePackHelper.unpackInt(KEY_INTEGER_VALUE, value -> integerValue = transportMode.continuousMovement ? 1 : value);
 	}
 
 	@Override
@@ -81,7 +82,7 @@ public abstract class SavedRailBase extends NameColorDataBase {
 		messagePacker.packString(KEY_POS_2_X).packLong(getPosition(1).x);
 		messagePacker.packString(KEY_POS_2_Y).packLong(getPosition(1).y);
 		messagePacker.packString(KEY_POS_2_Z).packLong(getPosition(1).z);
-		messagePacker.packString(KEY_DWELL_TIME).packInt(dwellTime);
+		messagePacker.packString(KEY_INTEGER_VALUE).packInt(integerValue);
 	}
 
 	@Override
@@ -139,11 +140,11 @@ public abstract class SavedRailBase extends NameColorDataBase {
 		return pos.equals(pos1) ? pos2 : pos1;
 	}
 
-	public int getDwellTime() {
-		if (dwellTime <= 0 || dwellTime > MAX_DWELL_TIME) {
-			dwellTime = DEFAULT_DWELL_TIME;
+	public int getIntegerValue() {
+		if (integerValue <= 0 || integerValue > MAX_INTEGER_VALUE) {
+			integerValue = DEFAULT_INTEGER_VALUE;
 		}
-		return transportMode.continuousMovement ? 1 : dwellTime;
+		return transportMode.continuousMovement ? 1 : integerValue;
 	}
 
 	private Position getPosition(int index) {

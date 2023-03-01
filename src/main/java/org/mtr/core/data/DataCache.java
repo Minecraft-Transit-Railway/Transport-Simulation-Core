@@ -1,7 +1,8 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 
 import java.util.HashMap;
@@ -14,68 +15,50 @@ public class DataCache {
 
 	private long lastRefreshedTime;
 
-	public final Map<Long, Station> stationIdMap = new HashMap<>();
-	public final Map<Long, Platform> platformIdMap = new HashMap<>();
-	public final Map<Long, Siding> sidingIdMap = new HashMap<>();
-	public final Map<Long, Route> routeIdMap = new HashMap<>();
-	public final Map<Long, Depot> depotIdMap = new HashMap<>();
-	public final Map<Long, Lift> liftsIdMap = new HashMap<>();
+	public final Long2ObjectOpenHashMap<Station> stationIdMap = new Long2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Platform> platformIdMap = new Long2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Siding> sidingIdMap = new Long2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Route> routeIdMap = new Long2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Depot> depotIdMap = new Long2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Lift> liftsIdMap = new Long2ObjectOpenHashMap<>();
 
-	public final Map<Long, Station> platformIdToStation = new HashMap<>();
-	public final Map<Long, Depot> sidingIdToDepot = new HashMap<>();
-	public final Map<Long, Depot> routeIdToOneDepot = new HashMap<>();
+	public final Long2ObjectOpenHashMap<Depot> routeIdToOneDepot = new Long2ObjectOpenHashMap<>();
 	public final Map<Station, Set<Station>> stationIdToConnectingStations = new HashMap<>();
-	public final Map<Position, Station> PositionToStation = new HashMap<>();
-	public final Long2LongOpenHashMap PositionToPlatformId = new Long2LongOpenHashMap();
 
-	protected final Set<Station> stations;
-	protected final Set<Platform> platforms;
-	protected final Set<Siding> sidings;
-	protected final Set<Route> routes;
-	protected final Set<Depot> depots;
-	private final Set<Lift> lifts;
+	private final Simulator simulator;
 
-	public DataCache(Set<Station> stations, Set<Platform> platforms, Set<Siding> sidings, Set<Route> routes, Set<Depot> depots, Set<Lift> lifts) {
-		this.stations = stations;
-		this.platforms = platforms;
-		this.sidings = sidings;
-		this.routes = routes;
-		this.depots = depots;
-		this.lifts = lifts;
+	public DataCache(Simulator simulator) {
+		this.simulator = simulator;
 	}
 
 	public final void sync() {
 		try {
-			mapIds(stationIdMap, stations);
-			mapIds(platformIdMap, platforms);
-			mapIds(sidingIdMap, sidings);
-			mapIds(routeIdMap, routes);
-			mapIds(depotIdMap, depots);
-			mapIds(liftsIdMap, lifts);
+			mapIds(stationIdMap, simulator.stations);
+			mapIds(platformIdMap, simulator.platforms);
+			mapIds(sidingIdMap, simulator.sidings);
+			mapIds(routeIdMap, simulator.routes);
+			mapIds(depotIdMap, simulator.depots);
+			mapIds(liftsIdMap, simulator.lifts);
 
 			routeIdToOneDepot.clear();
-			routes.forEach(route -> route.platformIds.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId)));
-			depots.forEach(depot -> {
-				depot.routeIds.removeIf(routeId -> routeIdMap.get(routeId) == null);
-				depot.routeIds.forEach(routeId -> routeIdToOneDepot.put(routeId, depot));
+			simulator.routes.forEach(route -> route.platformIds.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId)));
+			simulator.depots.forEach(depot -> {
+				depot.routeIds.removeIf(routeId -> routeIdMap.get(routeId.longValue()) == null);
+				depot.routeIds.forEach(routeId -> routeIdToOneDepot.put(routeId.longValue(), depot));
 			});
 
 			stationIdToConnectingStations.clear();
-			stations.forEach(station1 -> {
+			simulator.stations.forEach(station1 -> {
 				stationIdToConnectingStations.put(station1, new HashSet<>());
-				stations.forEach(station2 -> {
+				simulator.stations.forEach(station2 -> {
 					if (station1 != station2 && station1.intersecting(station2)) {
 						stationIdToConnectingStations.get(station1).add(station2);
 					}
 				});
 			});
 
-			mapSavedRailIdToStation(platformIdToStation, platforms, stations);
-			mapSavedRailIdToStation(sidingIdToDepot, sidings, depots);
-
-			PositionToPlatformId.clear();
-			PositionToStation.clear();
-			syncAdditional();
+			mapAreasAndSavedRails(simulator.platforms, simulator.stations);
+			mapAreasAndSavedRails(simulator.sidings, simulator.depots);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -85,9 +68,6 @@ public class DataCache {
 
 	public boolean needsRefresh(long cachedRefreshTime) {
 		return lastRefreshedTime > cachedRefreshTime;
-	}
-
-	protected void syncAdditional() {
 	}
 
 	public static <T, U, V extends Map<T, U>, W extends Map<T, V>> U tryGet(W map, T key1, T key2, U defaultValue) {
@@ -121,13 +101,15 @@ public class DataCache {
 		source.forEach(data -> map.put(data.id, data));
 	}
 
-	private static <U extends SavedRailBase, V extends AreaBase> void mapSavedRailIdToStation(Map<Long, V> map, Set<U> savedRails, Set<V> areas) {
-		map.clear();
+	private static <U extends SavedRailBase<U, V>, V extends AreaBase<V, U>> void mapAreasAndSavedRails(ObjectAVLTreeSet<U> savedRails, ObjectAVLTreeSet<V> areas) {
+		areas.forEach(area -> area.savedRails.clear());
 		savedRails.forEach(savedRail -> {
+			savedRail.area = null;
 			final Position pos = savedRail.getMidPosition();
 			for (final V area : areas) {
 				if (area.isTransportMode(savedRail.transportMode) && area.inArea(pos.x, pos.z)) {
-					map.put(savedRail.id, area);
+					savedRail.area = area;
+					area.savedRails.add(savedRail);
 					break;
 				}
 			}

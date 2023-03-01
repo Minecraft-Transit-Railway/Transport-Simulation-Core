@@ -1,8 +1,6 @@
 package org.mtr.core.path;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.data.DataCache;
 import org.mtr.core.data.MessagePackHelper;
 import org.mtr.core.data.Rail;
 import org.mtr.core.data.SerializedDataBase;
@@ -89,17 +87,5 @@ public class PathData extends SerializedDataBase {
 
 	public boolean isOppositeRail(PathData pathData) {
 		return startPosition.equals(pathData.endPosition) && endPosition.equals(pathData.startPosition);
-	}
-
-	public PathData getReverse(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
-		return new PathData(DataCache.tryGet(rails, endPosition, startPosition), savedRailBaseId, dwellTime, endPosition, startPosition, stopIndex);
-	}
-
-	public PathData setDwellTime(int newDwellTime) {
-		return new PathData(rail, savedRailBaseId, newDwellTime, startPosition, endPosition, stopIndex);
-	}
-
-	public PathData setStopIndex(int newStopIndex) {
-		return new PathData(rail, savedRailBaseId, dwellTime, startPosition, endPosition, newStopIndex);
 	}
 }

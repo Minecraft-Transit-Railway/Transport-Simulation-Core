@@ -25,7 +25,7 @@ public class Simulator implements Utilities {
 	public final ObjectAVLTreeSet<Lift> lifts = new ObjectAVLTreeSet<>();
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails = new Object2ObjectOpenHashMap<>();
 	public final SignalBlocks signalBlocks = new SignalBlocks();
-	public final DataCache dataCache = new DataCache(stations, platforms, sidings, routes, depots, lifts);
+	public final DataCache dataCache = new DataCache(this);
 	private final FileLoader fileLoader;
 
 	public Simulator(String dimension, Path rootPath, int millisPerGameDay, float startingGameDayPercentage) {
@@ -33,7 +33,6 @@ public class Simulator implements Utilities {
 		this.startingGameDayPercentage = startingGameDayPercentage;
 
 		fileLoader = new FileLoader(this, dimension, rootPath.resolve(dimension));
-		fileLoader.load();
 	}
 
 	public void tick() {

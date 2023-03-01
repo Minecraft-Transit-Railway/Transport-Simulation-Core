@@ -34,7 +34,7 @@ public enum RailType {
 		this.railSlopeStyle = railSlopeStyle;
 	}
 
-	public static float getDefaultMaxBlocksPerTick(TransportMode transportMode) {
+	public static float getDefaultMaxMetersPerSecond(TransportMode transportMode) {
 		return (transportMode.continuousMovement ? CABLE_CAR_STATION : WOODEN).speedLimitMetersPerSecond;
 	}
 

@@ -16,5 +16,5 @@ public enum DyeColor {
 	BROWN,
 	GREEN,
 	RED,
-	BLACK;
+	BLACK
 }

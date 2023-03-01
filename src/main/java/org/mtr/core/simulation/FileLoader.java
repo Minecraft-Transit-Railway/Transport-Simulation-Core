@@ -23,8 +23,6 @@ import java.util.stream.Stream;
 
 public class FileLoader {
 
-	private boolean canAutoSave = false;
-	private boolean dataLoaded = false;
 	private boolean useReducedHash = true;
 	private int filesWritten;
 	private int filesDeleted;
@@ -79,9 +77,7 @@ public class FileLoader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
 
-	public void load() {
 		existingFiles.clear();
 		readMessagePackFromFile(stationsPath, Station::new, simulator.stations::add, false);
 		readMessagePackFromFile(platformsPath, Platform::new, simulator.platforms::add, true);
@@ -92,9 +88,15 @@ public class FileLoader {
 		readMessagePackFromFile(railsPath, RailEntry::new, railEntry -> simulator.rails.put(railEntry.position, railEntry.connections), true);
 		readMessagePackFromFile(signalBlocksPath, SignalBlocks.SignalBlock::new, simulator.signalBlocks.signalBlocks::add, true);
 
+		simulator.dataCache.sync();
+		simulator.stations.forEach(Station::init);
+		simulator.platforms.forEach(Platform::init);
+		simulator.sidings.forEach(Siding::init);
+		simulator.routes.forEach(Route::init);
+		simulator.depots.forEach(Depot::init);
+		simulator.lifts.forEach(Lift::init);
+
 		Main.LOGGER.info("Minecraft Transit Railway data successfully loaded for " + dimension);
-		canAutoSave = true;
-		dataLoaded = true;
 	}
 
 	public void fullSave() {
@@ -114,16 +116,10 @@ public class FileLoader {
 				break;
 			}
 		}
-		canAutoSave = false;
 	}
 
 	public void autoSave() {
-		if (!dataLoaded) {
-			dataLoaded = true;
-			canAutoSave = true;
-		}
-
-		if (canAutoSave && checkFilesToDelete.isEmpty()) {
+		if (checkFilesToDelete.isEmpty()) {
 			autoSaveStartMillis = System.currentTimeMillis();
 			filesWritten = 0;
 			filesDeleted = 0;
@@ -140,60 +136,56 @@ public class FileLoader {
 	}
 
 	public boolean autoSaveTick() {
-		if (canAutoSave) {
-			final boolean deleteEmptyOld = checkFilesToDelete.isEmpty();
+		final boolean deleteEmptyOld = checkFilesToDelete.isEmpty();
 
-			boolean hasSpareTime = writeDirtyDataToFile(dirtyStationIds, simulator.dataCache.stationIdMap::get, id -> id, stationsPath);
-			if (hasSpareTime) {
-				hasSpareTime = writeDirtyDataToFile(dirtyPlatformIds, simulator.dataCache.platformIdMap::get, id -> id, platformsPath);
-			}
-			if (hasSpareTime) {
-				hasSpareTime = writeDirtyDataToFile(dirtySidingIds, simulator.dataCache.sidingIdMap::get, id -> id, sidingsPath);
-			}
-			if (hasSpareTime) {
-				hasSpareTime = writeDirtyDataToFile(dirtyRouteIds, simulator.dataCache.routeIdMap::get, id -> id, routesPath);
-			}
-			if (hasSpareTime) {
-				hasSpareTime = writeDirtyDataToFile(dirtyDepotIds, simulator.dataCache.depotIdMap::get, id -> id, depotsPath);
-			}
-			if (hasSpareTime) {
-				hasSpareTime = writeDirtyDataToFile(dirtyLiftIds, simulator.dataCache.liftsIdMap::get, id -> id, liftsPath);
-			}
-			if (hasSpareTime) {
-				hasSpareTime = writeDirtyDataToFile(dirtyRailPositions, position -> simulator.rails.containsKey(position) ? new RailEntry(position, simulator.rails.get(position)) : null, position -> position.x, railsPath);
-			}
-			if (hasSpareTime) {
-				hasSpareTime = writeDirtyDataToFile(dirtySignalBlocks, signalBlock -> signalBlock, signalBlock -> signalBlock.id, signalBlocksPath);
-			}
-
-			final boolean doneWriting = dirtyStationIds.isEmpty() && dirtyPlatformIds.isEmpty() && dirtySidingIds.isEmpty() && dirtyRouteIds.isEmpty() && dirtyDepotIds.isEmpty() && dirtyLiftIds.isEmpty() && dirtyRailPositions.isEmpty() && dirtySignalBlocks.isEmpty();
-			if (hasSpareTime && !checkFilesToDelete.isEmpty() && doneWriting) {
-				final Path path = checkFilesToDelete.remove(0);
-				try {
-					Files.deleteIfExists(path);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				existingFiles.remove(path);
-				filesDeleted++;
-			}
-
-			if (!deleteEmptyOld && checkFilesToDelete.isEmpty()) {
-				if (!useReducedHash || filesWritten > 0 || filesDeleted > 0) {
-					Main.LOGGER.info("Save complete for " + dimension + " in " + (System.currentTimeMillis() - autoSaveStartMillis) / 1000 + " second(s)");
-					if (filesWritten > 0) {
-						Main.LOGGER.info("- Changed: " + filesWritten);
-					}
-					if (filesDeleted > 0) {
-						Main.LOGGER.info("- Deleted: " + filesDeleted);
-					}
-				}
-			}
-
-			return doneWriting && checkFilesToDelete.isEmpty();
-		} else {
-			return true;
+		boolean hasSpareTime = writeDirtyDataToFile(dirtyStationIds, id -> simulator.dataCache.stationIdMap.get(id.longValue()), id -> id, stationsPath);
+		if (hasSpareTime) {
+			hasSpareTime = writeDirtyDataToFile(dirtyPlatformIds, id -> simulator.dataCache.platformIdMap.get(id.longValue()), id -> id, platformsPath);
 		}
+		if (hasSpareTime) {
+			hasSpareTime = writeDirtyDataToFile(dirtySidingIds, id -> simulator.dataCache.sidingIdMap.get(id.longValue()), id -> id, sidingsPath);
+		}
+		if (hasSpareTime) {
+			hasSpareTime = writeDirtyDataToFile(dirtyRouteIds, id -> simulator.dataCache.routeIdMap.get(id.longValue()), id -> id, routesPath);
+		}
+		if (hasSpareTime) {
+			hasSpareTime = writeDirtyDataToFile(dirtyDepotIds, id -> simulator.dataCache.depotIdMap.get(id.longValue()), id -> id, depotsPath);
+		}
+		if (hasSpareTime) {
+			hasSpareTime = writeDirtyDataToFile(dirtyLiftIds, id -> simulator.dataCache.liftsIdMap.get(id.longValue()), id -> id, liftsPath);
+		}
+		if (hasSpareTime) {
+			hasSpareTime = writeDirtyDataToFile(dirtyRailPositions, position -> simulator.rails.containsKey(position) ? new RailEntry(position, simulator.rails.get(position)) : null, position -> position.x, railsPath);
+		}
+		if (hasSpareTime) {
+			hasSpareTime = writeDirtyDataToFile(dirtySignalBlocks, signalBlock -> signalBlock, signalBlock -> signalBlock.id, signalBlocksPath);
+		}
+
+		final boolean doneWriting = dirtyStationIds.isEmpty() && dirtyPlatformIds.isEmpty() && dirtySidingIds.isEmpty() && dirtyRouteIds.isEmpty() && dirtyDepotIds.isEmpty() && dirtyLiftIds.isEmpty() && dirtyRailPositions.isEmpty() && dirtySignalBlocks.isEmpty();
+		if (hasSpareTime && !checkFilesToDelete.isEmpty() && doneWriting) {
+			final Path path = checkFilesToDelete.remove(0);
+			try {
+				Files.deleteIfExists(path);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			existingFiles.remove(path);
+			filesDeleted++;
+		}
+
+		if (!deleteEmptyOld && checkFilesToDelete.isEmpty()) {
+			if (!useReducedHash || filesWritten > 0 || filesDeleted > 0) {
+				Main.LOGGER.info("Save complete for " + dimension + " in " + (System.currentTimeMillis() - autoSaveStartMillis) / 1000 + " second(s)");
+				if (filesWritten > 0) {
+					Main.LOGGER.info("- Changed: " + filesWritten);
+				}
+				if (filesDeleted > 0) {
+					Main.LOGGER.info("- Deleted: " + filesDeleted);
+				}
+			}
+		}
+
+		return doneWriting && checkFilesToDelete.isEmpty();
 	}
 
 	private <T extends SerializedDataBase> void readMessagePackFromFile(Path path, Function<MessagePackHelper, T> getData, Consumer<T> callback, boolean skipVerify) {
@@ -278,12 +270,12 @@ public class FileLoader {
 		try {
 			final MessageBufferPacker messageBufferPacker = MessagePack.newDefaultBufferPacker();
 
-			if (useReducedHash && data instanceof IReducedSaveData) {
-				messageBufferPacker.packMapHeader(((IReducedSaveData) data).reducedMessagePackLength());
-				((IReducedSaveData) data).toReducedMessagePack(messageBufferPacker);
-			} else {
+			if (useReducedHash) {
 				messageBufferPacker.packMapHeader(data.messagePackLength());
 				data.toMessagePack(messageBufferPacker);
+			} else {
+				messageBufferPacker.packMapHeader(data.fullMessagePackLength());
+				data.toFullMessagePack(messageBufferPacker);
 			}
 
 			final int hash = Arrays.hashCode(messageBufferPacker.toByteArray());
