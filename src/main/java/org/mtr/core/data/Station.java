@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class Station extends AreaBase {
+public class Station extends AreaBase {
 
 	public int zone;
 	public final Map<String, List<String>> exits = new HashMap<>();

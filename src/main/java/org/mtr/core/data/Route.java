@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class Route extends NameColorDataBase {
+public class Route extends NameColorDataBase {
 
 	public RouteType routeType;
 	public boolean isLightRailRoute;

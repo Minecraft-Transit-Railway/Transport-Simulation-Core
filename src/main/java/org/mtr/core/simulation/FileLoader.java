@@ -87,7 +87,7 @@ public class FileLoader {
 		readMessagePackFromFile(platformsPath, Platform::new, simulator.platforms::add, true);
 		readMessagePackFromFile(sidingsPath, Siding::new, simulator.sidings::add, true);
 		readMessagePackFromFile(routesPath, Route::new, simulator.routes::add, false);
-		readMessagePackFromFile(depotsPath, Depot::new, simulator.depots::add, false);
+		readMessagePackFromFile(depotsPath, messagePackHelper -> new Depot(messagePackHelper, simulator), simulator.depots::add, false);
 		readMessagePackFromFile(liftsPath, Lift::new, simulator.lifts::add, true);
 		readMessagePackFromFile(railsPath, RailEntry::new, railEntry -> simulator.rails.put(railEntry.position, railEntry.connections), true);
 		readMessagePackFromFile(signalBlocksPath, SignalBlocks.SignalBlock::new, simulator.signalBlocks.signalBlocks::add, true);

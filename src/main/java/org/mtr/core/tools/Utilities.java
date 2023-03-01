@@ -7,6 +7,10 @@ import java.util.List;
 
 public interface Utilities {
 
+	int HOURS_PER_DAY = 24;
+	int MILLIS_PER_HOUR = 60 * 60 * 1000;
+	int MILLIS_PER_DAY = HOURS_PER_DAY * MILLIS_PER_HOUR;
+
 	static boolean isBetween(double value, double value1, double value2) {
 		return isBetween(value, value1, value2, 0);
 	}
@@ -40,14 +44,34 @@ public interface Utilities {
 	}
 
 	static <T, U extends List<T>> T getElement(U collection, int index) {
+		return getElement(collection, index, null);
+	}
+
+	static <T, U extends List<T>> T getElement(U collection, int index, T defaultValue) {
+		final T result;
 		if (collection == null || index >= collection.size() || index < -collection.size()) {
-			return null;
+			result = null;
 		} else {
-			return collection.get((index < 0 ? collection.size() : 0) + index);
+			result = collection.get((index < 0 ? collection.size() : 0) + index);
 		}
+		return result == null ? defaultValue : result;
 	}
 
 	static boolean containsRail(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, Position pos1, Position pos2) {
 		return rails.containsKey(pos1) && rails.get(pos1).containsKey(pos2);
+	}
+
+	static long circularDifference(long value1, long value2, long totalDegrees) {
+		long tempValue2 = value2;
+		while (tempValue2 < 0) {
+			tempValue2 += totalDegrees;
+		}
+
+		long tempValue1 = value1;
+		while (tempValue1 < tempValue2) {
+			tempValue1 += totalDegrees;
+		}
+
+		return (tempValue1 - tempValue2) % totalDegrees;
 	}
 }
