@@ -35,12 +35,20 @@ public interface Utilities {
 		return Math.min(max, Math.max(min, value));
 	}
 
-	static float round(double value, int decimalPlaces) {
+	static double round(double value, int decimalPlaces) {
 		int factor = 1;
 		for (int i = 0; i < decimalPlaces; i++) {
 			factor *= 10;
 		}
-		return (float) Math.round(value * factor) / factor;
+		return (double) Math.round(value * factor) / factor;
+	}
+
+	static double getAverage(double a, double b) {
+		return (a + b) / 2;
+	}
+
+	static double kilometersPerHourToMetersPerMillisecond(double speedKilometersPerHour) {
+		return speedKilometersPerHour / 3600;
 	}
 
 	static <T, U extends List<T>> T getElement(U collection, int index) {

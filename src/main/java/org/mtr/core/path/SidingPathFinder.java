@@ -3,7 +3,10 @@ package org.mtr.core.path;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.core.data.*;
+import org.mtr.core.data.AreaBase;
+import org.mtr.core.data.DataCache;
+import org.mtr.core.data.Rail;
+import org.mtr.core.data.SavedRailBase;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -62,7 +65,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 			railConnections.forEach((position, rail) -> {
 				if (data.node.angle == null || data.node.angle == rail.facingStart) {
 					connections.add(getConnectionDetails(position, rail, true));
-					if (rail.railType == RailType.TURN_BACK) {
+					if (rail.canTurnBack) {
 						connections.add(getConnectionDetails(position, rail, false));
 					}
 				}
@@ -105,12 +108,12 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 			final Position position2 = savedRail.getOtherPosition(position1);
 			final Position position3 = isFirst ? position2 : position1;
 			final Position position4 = isFirst ? position1 : position2;
-			path.add(new PathData(DataCache.tryGet(rails, position3, position4), savedRail.id, useDwellTime ? savedRail.getIntegerValue() : 0, position3, position4, stopIndex));
+			path.add(new PathData(DataCache.tryGet(rails, position3, position4), savedRail.id, useDwellTime ? savedRail.getTimeValueMillis() : 0, position3, position4, stopIndex));
 		}
 	}
 
 	private static ConnectionDetails<PositionAndAngle> getConnectionDetails(Position position, Rail rail, boolean isOpposite) {
-		return new ConnectionDetails<>(new PositionAndAngle(position, isOpposite ? rail.facingEnd.getOpposite() : rail.facingEnd), rail.getLength() / rail.railType.speedLimitMetersPerSecond, 0, 0);
+		return new ConnectionDetails<>(new PositionAndAngle(position, isOpposite ? rail.facingEnd.getOpposite() : rail.facingEnd), rail.getLength() / rail.speedLimitMetersPerMillisecond, 0, 0);
 	}
 
 	protected static class PositionAndAngle {

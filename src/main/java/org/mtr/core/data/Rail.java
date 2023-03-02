@@ -1,19 +1,23 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
-import org.mtr.core.tools.Vec3;
+import org.mtr.core.tools.*;
 
 import java.io.IOException;
 
 public class Rail extends SerializedDataBase {
 
-	public final RailType railType;
-	public final TransportMode transportMode;
 	public final Angle facingStart;
 	public final Angle facingEnd;
+	public final double speedLimitKilometersPerHour;
+	public final double speedLimitMetersPerMillisecond;
+	public final Shape shapeStart;
+	public final Shape shapeEnd;
+	public final boolean hasSavedRail;
+	public final boolean canAccelerate;
+	public final boolean canTurnBack;
+	public final boolean canHaveSignal;
+	public final TransportMode transportMode;
 	private final double h1, k1, r1, tStart1, tEnd1;
 	private final double h2, k2, r2, tStart2, tEnd2;
 	private final long yStart, yEnd;
@@ -40,8 +44,34 @@ public class Rail extends SerializedDataBase {
 	private static final String KEY_IS_STRAIGHT_1 = "is_straight_1";
 	private static final String KEY_REVERSE_T_2 = "reverse_t_2";
 	private static final String KEY_IS_STRAIGHT_2 = "is_straight_2";
-	private static final String KEY_RAIL_TYPE = "rail_type";
+	private static final String KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR = "speed_limit_kilometers_per_hour";
+	private static final String KEY_SHAPE_START = "shape_start";
+	private static final String KEY_SHAPE_END = "shape_end";
+	private static final String KEY_HAS_SAVED_RAIL = "has_saved_rail";
+	private static final String KEY_CAN_ACCELERATE = "can_accelerate";
+	private static final String KEY_CAN_TURN_BACK = "can_turn_back";
+	private static final String KEY_CAN_HAVE_SIGNAL = "can_have_signal";
 	private static final String KEY_TRANSPORT_MODE = "transport_mode";
+
+	public static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, double speedLimitKilometersPerHour, Shape shapeStart, Shape shapeEnd, boolean hasSavedRail, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
+		return new Rail(posStart, facingStart, posEnd, facingEnd, speedLimitKilometersPerHour, shapeStart, shapeEnd, hasSavedRail, canAccelerate, false, canHaveSignal, transportMode);
+	}
+
+	public static Rail newTurnBackRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
+		return new Rail(posStart, facingStart, posEnd, facingEnd, 80, shapeStart, shapeEnd, false, false, true, false, transportMode);
+	}
+
+	public static Rail newPlatformRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
+		return newPlatformOrSidingRail(posStart, facingStart, posEnd, facingEnd, true, shapeStart, shapeEnd, transportMode);
+	}
+
+	public static Rail newSidingRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
+		return newPlatformOrSidingRail(posStart, facingStart, posEnd, facingEnd, false, shapeStart, shapeEnd, transportMode);
+	}
+
+	private static Rail newPlatformOrSidingRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, boolean isPlatform, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
+		return new Rail(posStart, facingStart, posEnd, facingEnd, isPlatform ? 80 : 40, shapeStart, shapeEnd, true, false, false, true, transportMode);
+	}
 
 	// for curves:
 	// x = h + r*cos(T)
@@ -53,10 +83,17 @@ public class Rail extends SerializedDataBase {
 	// x = h*T + k*r
 	// z = k*T + h*r
 
-	public Rail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, RailType railType, TransportMode transportMode) {
+	private Rail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, double speedLimitKilometersPerHour, Shape shapeStart, Shape shapeEnd, boolean hasSavedRail, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
 		this.facingStart = facingStart;
 		this.facingEnd = facingEnd;
-		this.railType = railType;
+		this.speedLimitKilometersPerHour = speedLimitKilometersPerHour;
+		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimitKilometersPerHour);
+		this.shapeStart = shapeStart;
+		this.shapeEnd = shapeEnd;
+		this.hasSavedRail = hasSavedRail;
+		this.canAccelerate = canAccelerate;
+		this.canTurnBack = canTurnBack;
+		this.canHaveSignal = canHaveSignal;
 		this.transportMode = transportMode;
 		yStart = posStart.y;
 		yEnd = posEnd.y;
@@ -229,7 +266,32 @@ public class Rail extends SerializedDataBase {
 		isStraight1 = messagePackHelper.getBoolean(KEY_IS_STRAIGHT_1, false);
 		reverseT2 = messagePackHelper.getBoolean(KEY_REVERSE_T_2, false);
 		isStraight2 = messagePackHelper.getBoolean(KEY_IS_STRAIGHT_2, false);
-		railType = EnumHelper.valueOf(RailType.IRON, messagePackHelper.getString(KEY_RAIL_TYPE, ""));
+
+		final double[] tempSpeedLimitKilometersPerHour = {messagePackHelper.getDouble(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR, 20)};
+		final Shape[] tempShapeStart = {EnumHelper.valueOf(Shape.CURVE, messagePackHelper.getString(KEY_SHAPE_START, ""))};
+		final Shape[] tempShapeEnd = {EnumHelper.valueOf(Shape.CURVE, messagePackHelper.getString(KEY_SHAPE_END, ""))};
+		final boolean[] tempHasSavedRail = {messagePackHelper.getBoolean(KEY_HAS_SAVED_RAIL, false)};
+		final boolean[] tempCanAccelerate = {messagePackHelper.getBoolean(KEY_CAN_ACCELERATE, true)};
+		final boolean[] tempCanTurnBack = {messagePackHelper.getBoolean(KEY_CAN_TURN_BACK, false)};
+		final boolean[] tempCanHaveSignal = {messagePackHelper.getBoolean(KEY_CAN_HAVE_SIGNAL, true)};
+		DataFixer.convertRailType(messagePackHelper, (speedLimitKilometersPerHour, shape, hasSavedRail, canAccelerate, canTurnBack, canHaveSignal) -> {
+			tempSpeedLimitKilometersPerHour[0] = speedLimitKilometersPerHour;
+			tempShapeStart[0] = shape;
+			tempShapeEnd[0] = shape;
+			tempHasSavedRail[0] = hasSavedRail;
+			tempCanAccelerate[0] = canAccelerate;
+			tempCanTurnBack[0] = canTurnBack;
+			tempCanHaveSignal[0] = canHaveSignal;
+		});
+		speedLimitKilometersPerHour = tempSpeedLimitKilometersPerHour[0];
+		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimitKilometersPerHour);
+		shapeStart = tempShapeStart[0];
+		shapeEnd = tempShapeEnd[0];
+		hasSavedRail = tempHasSavedRail[0];
+		canAccelerate = tempCanAccelerate[0];
+		canTurnBack = tempCanTurnBack[0];
+		canHaveSignal = tempCanHaveSignal[0];
+
 		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, messagePackHelper.getString(KEY_TRANSPORT_MODE, ""));
 
 		facingStart = getRailAngle(false);
@@ -258,7 +320,9 @@ public class Rail extends SerializedDataBase {
 		messagePacker.packString(KEY_IS_STRAIGHT_1).packBoolean(isStraight1);
 		messagePacker.packString(KEY_REVERSE_T_2).packBoolean(reverseT2);
 		messagePacker.packString(KEY_IS_STRAIGHT_2).packBoolean(isStraight2);
-		messagePacker.packString(KEY_RAIL_TYPE).packString(railType.toString());
+		messagePacker.packString(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR).packDouble(speedLimitKilometersPerHour);
+		messagePacker.packString(KEY_SHAPE_START).packString(shapeStart.toString());
+		messagePacker.packString(KEY_SHAPE_END).packString(shapeEnd.toString());
 		messagePacker.packString(KEY_TRANSPORT_MODE).packString(transportMode.toString());
 	}
 
@@ -300,7 +364,7 @@ public class Rail extends SerializedDataBase {
 	private double getPositionY(double value) {
 		final double length = getLength();
 
-		if (railType.railSlopeStyle == RailType.RailSlopeStyle.CABLE) {
+		if (shapeStart == Shape.STRAIGHT) {
 			if (value < 0.5) {
 				return yStart;
 			} else if (value > length - 0.5) {
@@ -393,4 +457,6 @@ public class Rail extends SerializedDataBase {
 	public interface RenderRail {
 		void renderRail(double x1, double z1, double x2, double z2, double x3, double z3, double x4, double z4, double y1, double y2);
 	}
+
+	public enum Shape {CURVE, STRAIGHT}
 }

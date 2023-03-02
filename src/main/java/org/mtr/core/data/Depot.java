@@ -150,7 +150,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 
 			if (repeatInfinitely) {
 				final PathData lastPathData = path.remove(path.size() - 1);
-				path.add(new PathData(lastPathData.rail, lastPathData.savedRailBaseId, lastPathData.dwellTime, lastPathData.startPosition, lastPathData.endPosition, 1));
+				path.add(new PathData(lastPathData.rail, lastPathData.savedRailBaseId, lastPathData.dwellTimeMillis, lastPathData.startPosition, lastPathData.endPosition, 1));
 				if (!lastPathData.endPosition.equals(Utilities.getElement(path, 0).startPosition)) {
 					SidingPathFinder.addPathData(rails, path, false, Utilities.getElement(platformsInRoute, 0), path, false, 1);
 				}

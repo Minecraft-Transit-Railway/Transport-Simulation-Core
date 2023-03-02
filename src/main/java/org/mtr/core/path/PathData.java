@@ -12,7 +12,7 @@ public class PathData extends SerializedDataBase {
 
 	public final Rail rail;
 	public final long savedRailBaseId;
-	public final int dwellTime;
+	public final int dwellTimeMillis;
 	public final int stopIndex;
 
 	public final Position startPosition;
@@ -29,10 +29,10 @@ public class PathData extends SerializedDataBase {
 	private static final String KEY_END_POSITION_Y = "end_pos_y";
 	private static final String KEY_END_POSITION_Z = "end_pos_z";
 
-	public PathData(Rail rail, long savedRailBaseId, int dwellTime, Position startPosition, Position endPosition, int stopIndex) {
+	public PathData(Rail rail, long savedRailBaseId, int dwellTimeMillis, Position startPosition, Position endPosition, int stopIndex) {
 		this.rail = rail;
 		this.savedRailBaseId = savedRailBaseId;
-		this.dwellTime = dwellTime;
+		this.dwellTimeMillis = dwellTimeMillis;
 		this.startPosition = startPosition;
 		this.endPosition = endPosition;
 		this.stopIndex = stopIndex;
@@ -41,7 +41,7 @@ public class PathData extends SerializedDataBase {
 	public PathData(MessagePackHelper messagePackHelper) {
 		rail = new Rail(new MessagePackHelper(MessagePackHelper.castMessagePackValueToSKMap(messagePackHelper.get(KEY_RAIL))));
 		savedRailBaseId = messagePackHelper.getLong(KEY_SAVED_RAIL_BASE_ID, 0);
-		dwellTime = messagePackHelper.getInt(KEY_DWELL_TIME, 0);
+		dwellTimeMillis = messagePackHelper.getInt(KEY_DWELL_TIME, 0);
 		stopIndex = messagePackHelper.getInt(KEY_STOP_INDEX, 0);
 		startPosition = new Position(
 				messagePackHelper.getLong(KEY_START_POSITION_X, 0),
@@ -66,7 +66,7 @@ public class PathData extends SerializedDataBase {
 		rail.toMessagePack(messagePacker);
 
 		messagePacker.packString(KEY_SAVED_RAIL_BASE_ID).packLong(savedRailBaseId);
-		messagePacker.packString(KEY_DWELL_TIME).packInt(dwellTime);
+		messagePacker.packString(KEY_DWELL_TIME).packInt(dwellTimeMillis);
 		messagePacker.packString(KEY_STOP_INDEX).packInt(stopIndex);
 		messagePacker.packString(KEY_START_POSITION_X).packLong(startPosition.x);
 		messagePacker.packString(KEY_START_POSITION_Y).packLong(startPosition.y);

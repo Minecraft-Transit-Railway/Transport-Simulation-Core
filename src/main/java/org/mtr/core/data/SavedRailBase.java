@@ -15,25 +15,25 @@ import java.util.Set;
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends NameColorDataBase {
 
 	public U area;
-	private int integerValue;
+	private int timeValue;
 	private final Set<Position> positions = new HashSet<>(2);
 
-	private static final int MAX_INTEGER_VALUE = 1200;
-	private static final int DEFAULT_INTEGER_VALUE = 20;
+	private static final int MAX_TIME_VALUE = 1200;
+	private static final int DEFAULT_TIME_VALUE = 20;
 	private static final String KEY_POS_1_X = "pos_1_x";
 	private static final String KEY_POS_1_Y = "pos_1_y";
 	private static final String KEY_POS_1_Z = "pos_1_z";
 	private static final String KEY_POS_2_X = "pos_2_x";
 	private static final String KEY_POS_2_Y = "pos_2_y";
 	private static final String KEY_POS_2_Z = "pos_2_z";
-	private static final String KEY_INTEGER_VALUE = "dwell_time";
+	private static final String KEY_TIME_VALUE = "dwell_time";
 
 	public SavedRailBase(long id, TransportMode transportMode, Position pos1, Position pos2) {
 		super(id, transportMode);
 		name = "1";
 		positions.add(pos1);
 		positions.add(pos2);
-		integerValue = transportMode.continuousMovement ? 1 : DEFAULT_INTEGER_VALUE;
+		timeValue = transportMode.continuousMovement ? 1 : DEFAULT_TIME_VALUE;
 	}
 
 	public SavedRailBase(TransportMode transportMode, Position pos1, Position pos2) {
@@ -41,7 +41,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		name = "1";
 		positions.add(pos1);
 		positions.add(pos2);
-		integerValue = transportMode.continuousMovement ? 1 : DEFAULT_INTEGER_VALUE;
+		timeValue = transportMode.continuousMovement ? 1 : DEFAULT_TIME_VALUE;
 	}
 
 	public SavedRailBase(MessagePackHelper messagePackHelper) {
@@ -69,7 +69,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 			positions.add(pos2);
 		}
 
-		messagePackHelper.unpackInt(KEY_INTEGER_VALUE, value -> integerValue = transportMode.continuousMovement ? 1 : value);
+		messagePackHelper.unpackInt(KEY_TIME_VALUE, value -> timeValue = transportMode.continuousMovement ? 1 : value);
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		messagePacker.packString(KEY_POS_2_X).packLong(getPosition(1).x);
 		messagePacker.packString(KEY_POS_2_Y).packLong(getPosition(1).y);
 		messagePacker.packString(KEY_POS_2_Z).packLong(getPosition(1).z);
-		messagePacker.packString(KEY_INTEGER_VALUE).packInt(integerValue);
+		messagePacker.packString(KEY_TIME_VALUE).packInt(timeValue);
 	}
 
 	@Override
@@ -140,11 +140,11 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		return pos.equals(pos1) ? pos2 : pos1;
 	}
 
-	public int getIntegerValue() {
-		if (integerValue <= 0 || integerValue > MAX_INTEGER_VALUE) {
-			integerValue = DEFAULT_INTEGER_VALUE;
+	public int getTimeValueMillis() {
+		if (timeValue <= 0 || timeValue > MAX_TIME_VALUE) {
+			timeValue = DEFAULT_TIME_VALUE;
 		}
-		return transportMode.continuousMovement ? 1 : integerValue;
+		return transportMode.continuousMovement ? 1 : timeValue;
 	}
 
 	private Position getPosition(int index) {
@@ -152,7 +152,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	}
 
 	public static boolean isInvalidSavedRail(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, Position pos1, Position pos2) {
-		return !Utilities.containsRail(rails, pos1, pos2) || !rails.get(pos1).get(pos2).railType.hasSavedRail;
+		return !Utilities.containsRail(rails, pos1, pos2) || !rails.get(pos1).get(pos2).hasSavedRail;
 	}
 
 	private static boolean isNumber(String text) {

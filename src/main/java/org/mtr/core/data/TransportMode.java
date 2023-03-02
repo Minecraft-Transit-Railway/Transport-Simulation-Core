@@ -1,5 +1,7 @@
 package org.mtr.core.data;
 
+import org.mtr.core.tools.Utilities;
+
 public enum TransportMode {
 	TRAIN(Integer.MAX_VALUE, false, true, true, true, 0),
 	BOAT(1, false, true, true, true, 0),
@@ -12,6 +14,7 @@ public enum TransportMode {
 	public final boolean hasPitchDescending;
 	public final boolean hasRouteTypeVariation;
 	public final int railOffset;
+	public final double defaultSpeedMetersPerMillisecond;
 
 	TransportMode(int maxLength, boolean continuousMovement, boolean hasPitchAscending, boolean hasPitchDescending, boolean hasRouteTypeVariation, int railOffset) {
 		this.maxLength = maxLength;
@@ -20,5 +23,6 @@ public enum TransportMode {
 		this.hasPitchDescending = hasPitchDescending;
 		this.hasRouteTypeVariation = hasRouteTypeVariation;
 		this.railOffset = railOffset;
+		defaultSpeedMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(continuousMovement ? 2 : 20);
 	}
 }
