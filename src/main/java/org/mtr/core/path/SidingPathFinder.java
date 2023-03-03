@@ -22,7 +22,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 	private final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails;
 
 	public SidingPathFinder(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, U startSavedRail, W endSavedRail, int stopIndex) {
-		super(new PositionAndAngle(startSavedRail.getAnyPos(), null), new PositionAndAngle(endSavedRail.getAnyPos(), null));
+		super(new PositionAndAngle(startSavedRail.positions.left(), null), new PositionAndAngle(endSavedRail.positions.left(), null));
 		this.rails = rails;
 		this.startSavedRail = startSavedRail;
 		this.endSavedRail = endSavedRail;

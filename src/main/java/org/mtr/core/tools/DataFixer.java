@@ -4,7 +4,6 @@ import org.mtr.core.data.EnumHelper;
 import org.mtr.core.data.MessagePackHelper;
 import org.mtr.core.data.Rail;
 
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class DataFixer {
@@ -22,9 +21,9 @@ public class DataFixer {
 	private static final int Z_OFFSET = PACKED_Y_LENGTH;
 	private static final int X_OFFSET = PACKED_Y_LENGTH + PACKED_Z_LENGTH;
 
-	public static void unpackSavedRailBase(MessagePackHelper messagePackHelper, Set<Position> positions) {
-		messagePackHelper.unpackLong(KEY_POS_1, value -> positions.add(convertCoordinates(value)));
-		messagePackHelper.unpackLong(KEY_POS_2, value -> positions.add(convertCoordinates(value)));
+	public static void unpackSavedRailBase(MessagePackHelper messagePackHelper, Consumer<Position> consumer1, Consumer<Position> consumer2) {
+		messagePackHelper.unpackLong(KEY_POS_1, value -> consumer1.accept(convertCoordinates(value)));
+		messagePackHelper.unpackLong(KEY_POS_2, value -> consumer2.accept(convertCoordinates(value)));
 	}
 
 	public static void unpackRailEntry(MessagePackHelper messagePackHelper, Consumer<Position> consumer) {

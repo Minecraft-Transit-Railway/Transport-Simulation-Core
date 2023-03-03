@@ -8,10 +8,6 @@ public class Platform extends SavedRailBase<Platform, Station> {
 		super(id, transportMode, pos1, pos2);
 	}
 
-	public Platform(TransportMode transportMode, Position pos1, Position pos2) {
-		super(transportMode, pos1, pos2);
-	}
-
 	public Platform(MessagePackHelper messagePackHelper) {
 		super(messagePackHelper);
 	}

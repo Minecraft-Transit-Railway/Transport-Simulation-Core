@@ -1,89 +1,89 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.path.PathData;
 import org.mtr.core.tools.Utilities;
-import org.mtr.core.tools.Vec3;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class Train extends NameColorDataBase {
 
-	protected double speed;
-	protected double railProgress;
-	protected boolean doorTarget;
-	protected double doorValue;
-	protected double elapsedDwellMillis;
-	protected int nextStoppingIndex;
-	protected int nextPlatformIndex;
-	protected boolean reversed;
-	protected boolean isOnRoute = false;
-	protected boolean isCurrentlyManual;
-	protected int manualNotch;
+	private double speed;
+	private double railProgress;
+	private boolean doorTarget;
+	private double doorValue;
+	private double elapsedDwellMillis;
+	private int nextStoppingIndex;
+	private int nextPlatformIndex;
+	private boolean reversed;
+	private boolean isOnRoute = false;
+	private boolean isCurrentlyManual;
+	private int manualNotch;
 	private boolean canDeploy;
 
 	public final long sidingId;
-	public final String baseVehicleType;
-	public final String trainId;
-	public final TransportMode transportMode;
-	public final int spacing;
-	public final int width;
-	public final int trainCars;
+	public final double railLength;
+	public final ObjectImmutableList<VehicleCar> vehicleCars;
+	public final double totalVehicleLength;
+	public final int vehicleCarCount;
+
+	public final ObjectImmutableList<PathData> path;
+	public final DoubleImmutableList distances;
+	public final int repeatIndex1;
+	public final int repeatIndex2;
+
 	public final double acceleration;
 	public final boolean isManualAllowed;
 	public final double maxManualSpeed;
 	public final int manualToAutomaticTime;
 
-	protected final ObjectArrayList<PathData> path = new ObjectArrayList<>();
-	protected final List<Double> distances;
-	protected final int repeatIndex1;
-	protected final int repeatIndex2;
-	protected final Set<UUID> ridingEntities = new HashSet<>();
-
-	private final double railLength;
+	private final ObjectOpenHashSet<UUID> ridingEntities = new ObjectOpenHashSet<>();
 
 	public static final double ACCELERATION_DEFAULT = 1D / 250000;
 	public static final double MAX_ACCELERATION = 1D / 50000;
 	public static final double MIN_ACCELERATION = 1D / 2500000;
 	public static final int DOOR_MOVE_TIME = 64;
-	protected static final int MAX_CHECK_DISTANCE = 32;
 	protected static final int DOOR_DELAY = 20;
 
 	private static final String KEY_SPEED = "speed";
 	private static final String KEY_RAIL_PROGRESS = "rail_progress";
-	private static final String KEY_ELAPSED_DWELL_TICKS = "stop_counter";
+	private static final String KEY_ELAPSED_DWELL_MILLIS = "elapsed_dwell_millis";
 	private static final String KEY_NEXT_STOPPING_INDEX = "next_stopping_index";
 	private static final String KEY_NEXT_PLATFORM_INDEX = "next_platform_index";
 	private static final String KEY_REVERSED = "reversed";
 	private static final String KEY_IS_CURRENTLY_MANUAL = "is_currently_manual";
 	private static final String KEY_IS_ON_ROUTE = "is_on_route";
-	private static final String KEY_BASE_VEHICLE_TYPE = "train_type";
-	private static final String KEY_TRAIN_ID = "train_custom_id";
 	private static final String KEY_RIDING_ENTITIES = "riding_entities";
 
 	public Train(
-			long id, long sidingId, double railLength, String baseVehicleType, String trainId,
-			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, List<Double> distances,
+			long id, long sidingId, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
+			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, DoubleArrayList distances,
 			double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime
 	) {
-		super(id);
+		super(id, transportMode);
 
 		this.sidingId = sidingId;
 		this.railLength = Siding.getRailLength(railLength);
-		this.baseVehicleType = baseVehicleType;
-		this.trainId = trainId;
 
-		transportMode = VehicleType.getTransportMode(baseVehicleType);
-		spacing = VehicleType.getSpacing(baseVehicleType);
-		width = VehicleType.getWidth(baseVehicleType);
-		trainCars = Siding.getVehicleCars(transportMode, railLength, spacing);
+		this.vehicleCars = new ObjectImmutableList<>(vehicleCars);
+		vehicleCarCount = this.vehicleCars.size();
+		this.totalVehicleLength = totalVehicleLength;
 
-		path.addAll(pathSidingToMainRoute);
-		path.addAll(pathMainRoute);
-		path.addAll(pathMainRouteToSiding);
-		this.distances = distances;
+		final List<PathData> tempPath = new ArrayList<>();
+		tempPath.addAll(pathSidingToMainRoute);
+		tempPath.addAll(pathMainRoute);
+		tempPath.addAll(pathMainRouteToSiding);
+		path = new ObjectImmutableList<>(tempPath);
+
+		this.distances = new DoubleImmutableList(distances);
 		repeatIndex1 = pathSidingToMainRoute.size();
 		repeatIndex2 = repeatIndex1 + pathMainRoute.size();
 
@@ -96,20 +96,26 @@ public class Train extends NameColorDataBase {
 	}
 
 	public Train(
-			long sidingId, double railLength,
-			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, List<Double> distances,
-			double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime,
-			MessagePackHelper messagePackHelper
+			long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
+			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, DoubleArrayList distances,
+			double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, MessagePackHelper messagePackHelper
 	) {
 		super(messagePackHelper);
 
 		this.sidingId = sidingId;
 		this.railLength = Siding.getRailLength(railLength);
 
-		path.addAll(pathSidingToMainRoute);
-		path.addAll(pathMainRoute);
-		path.addAll(pathMainRouteToSiding);
-		this.distances = distances;
+		this.vehicleCars = new ObjectImmutableList<>(vehicleCars);
+		vehicleCarCount = this.vehicleCars.size();
+		this.totalVehicleLength = totalVehicleLength;
+
+		final List<PathData> tempPath = new ArrayList<>();
+		tempPath.addAll(pathSidingToMainRoute);
+		tempPath.addAll(pathMainRoute);
+		tempPath.addAll(pathMainRouteToSiding);
+		path = new ObjectImmutableList<>(tempPath);
+
+		this.distances = new DoubleImmutableList(distances);
 		repeatIndex1 = pathSidingToMainRoute.size();
 		repeatIndex2 = repeatIndex1 + pathMainRoute.size();
 
@@ -118,13 +124,7 @@ public class Train extends NameColorDataBase {
 		this.maxManualSpeed = maxManualSpeed;
 		this.manualToAutomaticTime = manualToAutomaticTime;
 
-		baseVehicleType = messagePackHelper.getString(KEY_BASE_VEHICLE_TYPE, "").toLowerCase(Locale.ENGLISH);
-		final String tempTrainId = messagePackHelper.getString(KEY_TRAIN_ID, "").toLowerCase(Locale.ENGLISH);
-		trainId = tempTrainId.isEmpty() ? baseVehicleType : tempTrainId;
-		transportMode = VehicleType.getTransportMode(baseVehicleType);
-		spacing = VehicleType.getSpacing(baseVehicleType);
-		width = VehicleType.getWidth(baseVehicleType);
-		trainCars = Siding.getVehicleCars(transportMode, railLength, spacing);
+		isCurrentlyManual = isManualAllowed;
 	}
 
 	@Override
@@ -133,12 +133,12 @@ public class Train extends NameColorDataBase {
 
 		messagePackHelper.unpackDouble(KEY_SPEED, value -> speed = value);
 		messagePackHelper.unpackDouble(KEY_RAIL_PROGRESS, value -> railProgress = value);
-		messagePackHelper.unpackDouble(KEY_ELAPSED_DWELL_TICKS, value -> elapsedDwellMillis = value);
+		messagePackHelper.unpackDouble(KEY_ELAPSED_DWELL_MILLIS, value -> elapsedDwellMillis = value);
 		messagePackHelper.unpackInt(KEY_NEXT_STOPPING_INDEX, value -> nextStoppingIndex = value);
 		messagePackHelper.unpackInt(KEY_NEXT_PLATFORM_INDEX, value -> nextPlatformIndex = value);
 		messagePackHelper.unpackBoolean(KEY_REVERSED, value -> reversed = value);
-		messagePackHelper.unpackBoolean(KEY_IS_CURRENTLY_MANUAL, value -> isCurrentlyManual = value);
 		messagePackHelper.unpackBoolean(KEY_IS_ON_ROUTE, value -> isOnRoute = value);
+		messagePackHelper.unpackBoolean(KEY_IS_CURRENTLY_MANUAL, value -> isCurrentlyManual = value);
 		messagePackHelper.iterateArrayValue(KEY_RIDING_ENTITIES, value -> ridingEntities.add(UUID.fromString(value.asStringValue().asString())));
 	}
 
@@ -148,14 +148,12 @@ public class Train extends NameColorDataBase {
 
 		messagePacker.packString(KEY_SPEED).packDouble(speed);
 		messagePacker.packString(KEY_RAIL_PROGRESS).packDouble(railProgress);
-		messagePacker.packString(KEY_ELAPSED_DWELL_TICKS).packDouble(elapsedDwellMillis);
+		messagePacker.packString(KEY_ELAPSED_DWELL_MILLIS).packDouble(elapsedDwellMillis);
 		messagePacker.packString(KEY_NEXT_STOPPING_INDEX).packLong(nextStoppingIndex);
 		messagePacker.packString(KEY_NEXT_PLATFORM_INDEX).packLong(nextPlatformIndex);
 		messagePacker.packString(KEY_REVERSED).packBoolean(reversed);
-		messagePacker.packString(KEY_TRAIN_ID).packString(trainId);
-		messagePacker.packString(KEY_BASE_VEHICLE_TYPE).packString(baseVehicleType);
-		messagePacker.packString(KEY_IS_CURRENTLY_MANUAL).packBoolean(isCurrentlyManual);
 		messagePacker.packString(KEY_IS_ON_ROUTE).packBoolean(isOnRoute);
+		messagePacker.packString(KEY_IS_CURRENTLY_MANUAL).packBoolean(isCurrentlyManual);
 		messagePacker.packString(KEY_RIDING_ENTITIES).packArrayHeader(ridingEntities.size());
 		for (final UUID uuid : ridingEntities) {
 			messagePacker.packString(uuid.toString());
@@ -169,7 +167,7 @@ public class Train extends NameColorDataBase {
 
 	@Override
 	protected final boolean hasTransportMode() {
-		return false;
+		return true;
 	}
 
 	public final boolean getIsOnRoute() {
@@ -180,8 +178,8 @@ public class Train extends NameColorDataBase {
 		return railProgress;
 	}
 
-	public final boolean closeToDepot(int trainDistance) {
-		return !isOnRoute || railProgress < trainDistance + railLength;
+	public final boolean closeToDepot() {
+		return !isOnRoute || railProgress < totalVehicleLength + railLength;
 	}
 
 	public final boolean isCurrentlyManual() {
@@ -211,14 +209,10 @@ public class Train extends NameColorDataBase {
 		}
 	}
 
-	public final int getIndex(int car, int trainSpacing, boolean roundDown) {
-		return getIndex(getRailProgress(car, trainSpacing), roundDown);
-	}
-
-	public final int getIndex(double tempRailProgress, boolean roundDown) {
+	public final int getIndex(boolean roundDown) {
 		for (int i = 0; i < path.size(); i++) {
-			final double tempDistance = distances.get(i);
-			if (tempRailProgress < tempDistance || roundDown && tempRailProgress == tempDistance) {
+			final double tempDistance = distances.getDouble(i);
+			if (railProgress < tempDistance || roundDown && railProgress == tempDistance) {
 				return i;
 			}
 		}
@@ -276,7 +270,7 @@ public class Train extends NameColorDataBase {
 			final int totalDwellTicks = getTotalDwellMillis();
 
 			if (!isOnRoute) {
-				railProgress = (railLength + trainCars * spacing) / 2;
+				railProgress = (railLength + totalVehicleLength) / 2;
 				reversed = false;
 				tempDoorOpen = false;
 				tempDoorValue = 0;
@@ -284,12 +278,12 @@ public class Train extends NameColorDataBase {
 				nextStoppingIndex = 0;
 
 				if (!isCurrentlyManual && canDeploy(depot) || isCurrentlyManual && manualNotch > 0) {
-					startUp(trainCars, spacing, isOppositeRail());
+					startUp();
 				}
 			} else {
 				final double newAcceleration = acceleration * ticksElapsed;
 
-				if (railProgress >= distances.get(distances.size() - 1) - (railLength - trainCars * spacing) / 2) {
+				if (railProgress >= distances.getDouble(distances.size() - 1) - (railLength - totalVehicleLength) / 2) {
 					isOnRoute = false;
 					manualNotch = -2;
 					ridingEntities.clear();
@@ -299,18 +293,17 @@ public class Train extends NameColorDataBase {
 					if (speed <= 0) {
 						speed = 0;
 
-						final boolean isOppositeRail = isOppositeRail();
-						final boolean railBlocked = isRailBlocked(getIndex(0, spacing, true) + (isOppositeRail ? 2 : 1));
+						final boolean railBlocked = isRailBlocked(getIndex(true) + (isOppositeRail() ? 2 : 1));
 
 						if (totalDwellTicks == 0) {
 							tempDoorOpen = false;
 						} else {
-							if (elapsedDwellMillis == 0 && isRepeat() && getIndex(railProgress, false) >= repeatIndex2 && distances.size() > repeatIndex1) {
+							if (elapsedDwellMillis == 0 && isRepeat() && getIndex(false) >= repeatIndex2 && distances.size() > repeatIndex1) {
 								if (path.get(repeatIndex2).isOppositeRail(path.get(repeatIndex1))) {
-									railProgress = distances.get(repeatIndex1 - 1) + trainCars * spacing;
+									railProgress = distances.getDouble(repeatIndex1 - 1) + totalVehicleLength;
 									reversed = !reversed;
 								} else {
-									railProgress = distances.get(repeatIndex1);
+									railProgress = distances.getDouble(repeatIndex1);
 								}
 							}
 
@@ -322,10 +315,10 @@ public class Train extends NameColorDataBase {
 						}
 
 						if ((isCurrentlyManual || elapsedDwellMillis >= totalDwellTicks) && !railBlocked && (!isCurrentlyManual || manualNotch > 0)) {
-							startUp(trainCars, spacing, isOppositeRail);
+							startUp();
 						}
 					} else {
-						final int checkIndex = getIndex(0, spacing, true) + 1;
+						final int checkIndex = getIndex(true) + 1;
 						if (isRailBlocked(checkIndex)) {
 							nextStoppingIndex = checkIndex - 1;
 						} else if (nextPlatformIndex > 0 && nextPlatformIndex < path.size()) {
@@ -335,7 +328,7 @@ public class Train extends NameColorDataBase {
 							}
 						}
 
-						final double stoppingDistance = distances.get(nextStoppingIndex) - railProgress;
+						final double stoppingDistance = distances.getDouble(nextStoppingIndex) - railProgress;
 						if (!transportMode.continuousMovement && stoppingDistance < 0.5 * speed * speed / acceleration) {
 							speed = stoppingDistance <= 0 ? Train.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * ticksElapsed, Train.ACCELERATION_DEFAULT);
 							manualNotch = -3;
@@ -345,7 +338,7 @@ public class Train extends NameColorDataBase {
 									speed = Utilities.clamp(speed + manualNotch * newAcceleration / 2, 0, maxManualSpeed);
 								}
 							} else {
-								final double railSpeed = getRailSpeed(getIndex(0, spacing, false));
+								final double railSpeed = getRailSpeed(getIndex(false));
 								if (speed < railSpeed) {
 									speed = Math.min(speed + newAcceleration, railSpeed);
 									manualNotch = 2;
@@ -362,8 +355,8 @@ public class Train extends NameColorDataBase {
 					}
 
 					railProgress += speed * ticksElapsed;
-					if (!transportMode.continuousMovement && railProgress > distances.get(nextStoppingIndex)) {
-						railProgress = distances.get(nextStoppingIndex);
+					if (!transportMode.continuousMovement && railProgress > distances.getDouble(nextStoppingIndex)) {
+						railProgress = distances.getDouble(nextStoppingIndex);
 						speed = 0;
 						manualNotch = -2;
 					}
@@ -377,68 +370,18 @@ public class Train extends NameColorDataBase {
 			if (doorTarget || doorValue != 0) {
 				manualNotch = -2;
 			}
-
-			if (!path.isEmpty()) {
-				final Vec3[] positions = new Vec3[trainCars + 1];
-				for (int i = 0; i <= trainCars; i++) {
-					positions[i] = getRoutePosition(reversed ? trainCars - i : i, spacing);
-				}
-
-				if (handlePositions(positions, ticksElapsed)) {
-					final double[] prevX = {0};
-					final double[] prevY = {0};
-					final double[] prevZ = {0};
-					final double[] prevYaw = {0};
-					final double[] prevPitch = {0};
-
-					for (int i = 0; i < trainCars; i++) {
-						final int ridingCar = i;
-						calculateCar(positions, i, totalDwellTicks, (x, y, z, yaw, pitch, realSpacing) -> {
-							simulateCar(
-									ridingCar, ticksElapsed,
-									x, y, z,
-									yaw, pitch,
-									prevX[0], prevY[0], prevZ[0],
-									prevYaw[0], prevPitch[0], realSpacing
-							);
-							prevX[0] = x;
-							prevY[0] = y;
-							prevZ[0] = z;
-							prevYaw[0] = yaw;
-							prevPitch[0] = pitch;
-						});
-					}
-				}
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	protected final void calculateCar(Vec3[] positions, int index, int dwellTicks, CalculateCarCallback calculateCarCallback) {
-		final Vec3 pos1 = positions[index];
-		final Vec3 pos2 = positions[index + 1];
-
-		if (pos1 != null && pos2 != null) {
-			final double x = Utilities.getAverage(pos1.x, pos2.x);
-			final double y = Utilities.getAverage(pos1.y, pos2.y) + 1;
-			final double z = Utilities.getAverage(pos1.z, pos2.z);
-
-			final double realSpacing = pos2.distanceTo(pos1);
-			final double yaw = Math.atan2(pos2.x - pos1.x, pos2.z - pos1.z);
-			final double pitch = realSpacing == 0 ? 0 : Math.asin((pos2.y - pos1.y) / realSpacing);
-
-			calculateCarCallback.calculateCarCallback(x, y, z, yaw, pitch, realSpacing);
-		}
-	}
-
-	protected void startUp(int trainCars, int trainSpacing, boolean isOppositeRail) {
+	protected void startUp() {
 		canDeploy = false;
 		isOnRoute = true;
 		elapsedDwellMillis = 0;
 		speed = Train.ACCELERATION_DEFAULT;
-		if (isOppositeRail) {
-			railProgress += trainCars * trainSpacing;
+		if (isOppositeRail()) {
+			railProgress += totalVehicleLength;
 			reversed = !reversed;
 		}
 		nextStoppingIndex = getNextStoppingIndex();
@@ -458,23 +401,8 @@ public class Train extends NameColorDataBase {
 		return doorTarget;
 	}
 
-	protected double getModelZOffset() {
-		return 0;
-	}
-
 	protected boolean isRepeat() {
 		return repeatIndex1 > 0 && repeatIndex2 > 0;
-	}
-
-	protected void simulateCar(
-			int ridingCar, double ticksElapsed,
-			double carX, double carY, double carZ, double carYaw, double carPitch,
-			double prevCarX, double prevCarY, double prevCarZ, double prevCarYaw, double prevCarPitch, double realSpacing
-	) {
-	}
-
-	protected boolean handlePositions(Vec3[] positions, double ticksElapsed) {
-		return true;
 	}
 
 	protected boolean isRailBlocked(int checkIndex) {
@@ -482,21 +410,11 @@ public class Train extends NameColorDataBase {
 	}
 
 	private boolean isOppositeRail() {
-		return path.size() > nextStoppingIndex + 1 && railProgress == distances.get(nextStoppingIndex) && path.get(nextStoppingIndex).isOppositeRail(path.get(nextStoppingIndex + 1));
-	}
-
-	private double getRailProgress(int car, int trainSpacing) {
-		return railProgress - car * trainSpacing;
-	}
-
-	private Vec3 getRoutePosition(int car, int trainSpacing) {
-		final double tempRailProgress = Math.max(getRailProgress(car, trainSpacing) - getModelZOffset(), 0);
-		final int index = getIndex(tempRailProgress, false);
-		return path.get(index).rail.getPosition(tempRailProgress - (index == 0 ? 0 : distances.get(index - 1))).add(0, transportMode.railOffset, 0);
+		return path.size() > nextStoppingIndex + 1 && railProgress == distances.getDouble(nextStoppingIndex) && path.get(nextStoppingIndex).isOppositeRail(path.get(nextStoppingIndex + 1));
 	}
 
 	private int getNextStoppingIndex() {
-		final int headIndex = getIndex(0, 0, false);
+		final int headIndex = getIndex(false);
 		for (int i = headIndex; i < path.size(); i++) {
 			if (path.get(i).dwellTimeMillis > 0) {
 				return i;
@@ -507,11 +425,6 @@ public class Train extends NameColorDataBase {
 
 	public static double roundAcceleration(double acceleration) {
 		final double tempAcceleration = Utilities.round(acceleration, 8);
-		return tempAcceleration <= 0 ? ACCELERATION_DEFAULT : tempAcceleration;
-	}
-
-	@FunctionalInterface
-	protected interface CalculateCarCallback {
-		void calculateCarCallback(double x, double y, double z, double yaw, double pitch, double realSpacing);
+		return tempAcceleration <= 0 ? ACCELERATION_DEFAULT : Utilities.clamp(tempAcceleration, MIN_ACCELERATION, MAX_ACCELERATION);
 	}
 }

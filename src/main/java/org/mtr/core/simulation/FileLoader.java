@@ -311,7 +311,7 @@ public class FileLoader {
 		@Override
 		public void updateData(MessagePackHelper messagePackHelper) {
 			messagePackHelper.iterateArrayValue(KEY_RAIL_CONNECTIONS, value -> {
-				final MessagePackHelper messagePackHelper2 = new MessagePackHelper(MessagePackHelper.castMessagePackValueToSKMap(value));
+				final MessagePackHelper messagePackHelper2 = MessagePackHelper.messagePackHelperFromValue(value);
 				connections.put(getPosition(messagePackHelper2), new Rail(messagePackHelper2));
 			});
 		}

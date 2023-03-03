@@ -1,6 +1,6 @@
 package org.mtr.core.tools;
 
-public class Position {
+public class Position implements Comparable<Position> {
 
 	public final long x;
 	public final long y;
@@ -30,6 +30,17 @@ public class Position {
 			return x == ((Position) obj).x && y == ((Position) obj).y && z == ((Position) obj).z;
 		} else {
 			return super.equals(obj);
+		}
+	}
+
+	@Override
+	public int compareTo(Position position) {
+		if (equals(position)) {
+			return 0;
+		} else if (x > position.x || y > position.y || z > position.z) {
+			return 1;
+		} else {
+			return -1;
 		}
 	}
 }

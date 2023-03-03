@@ -17,10 +17,6 @@ public class Station extends AreaBase<Station, Platform> {
 	private static final String KEY_ZONE = "zone";
 	private static final String KEY_EXITS = "exits";
 
-	public Station() {
-		super();
-	}
-
 	public Station(long id) {
 		super(id);
 	}

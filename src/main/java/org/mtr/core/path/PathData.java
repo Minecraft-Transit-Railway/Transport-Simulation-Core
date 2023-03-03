@@ -39,7 +39,7 @@ public class PathData extends SerializedDataBase {
 	}
 
 	public PathData(MessagePackHelper messagePackHelper) {
-		rail = new Rail(new MessagePackHelper(MessagePackHelper.castMessagePackValueToSKMap(messagePackHelper.get(KEY_RAIL))));
+		rail = new Rail(MessagePackHelper.messagePackHelperFromValue(messagePackHelper.get(KEY_RAIL)));
 		savedRailBaseId = messagePackHelper.getLong(KEY_SAVED_RAIL_BASE_ID, 0);
 		dwellTimeMillis = messagePackHelper.getInt(KEY_DWELL_TIME, 0);
 		stopIndex = messagePackHelper.getInt(KEY_STOP_INDEX, 0);

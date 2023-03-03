@@ -18,16 +18,8 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 	private static final String KEY_NAME = "name";
 	private static final String KEY_COLOR = "color";
 
-	public NameColorDataBase() {
-		this(0);
-	}
-
 	public NameColorDataBase(long id) {
 		this(id, TransportMode.TRAIN);
-	}
-
-	public NameColorDataBase(TransportMode transportMode) {
-		this(0, transportMode);
 	}
 
 	public NameColorDataBase(long id, TransportMode transportMode) {

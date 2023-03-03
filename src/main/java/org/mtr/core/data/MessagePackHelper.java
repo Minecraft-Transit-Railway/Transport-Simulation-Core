@@ -94,9 +94,12 @@ public class MessagePackHelper {
 		return getOrDefault(key, defaultValue, value -> value.asStringValue().asString());
 	}
 
-	public void iterateArrayValue(String key, Consumer<Value> consumer) {
+	public boolean iterateArrayValue(String key, Consumer<Value> consumer) {
 		if (map.containsKey(key)) {
 			map.get(key).asArrayValue().forEach(consumer);
+			return true;
+		} else {
+			return false;
 		}
 	}
 
@@ -127,10 +130,10 @@ public class MessagePackHelper {
 		}
 	}
 
-	public static Map<String, Value> castMessagePackValueToSKMap(Value value) {
+	public static MessagePackHelper messagePackHelperFromValue(Value value) {
 		final Map<Value, Value> oldMap = value == null ? new HashMap<>() : value.asMapValue().map();
 		final HashMap<String, Value> resultMap = new HashMap<>(oldMap.size());
 		oldMap.forEach((key, newValue) -> resultMap.put(key.asStringValue().asString(), newValue));
-		return resultMap;
+		return new MessagePackHelper(resultMap);
 	}
 }

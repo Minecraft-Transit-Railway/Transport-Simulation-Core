@@ -20,16 +20,8 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	private static final String KEY_X_MAX = "x_max";
 	private static final String KEY_Z_MAX = "z_max";
 
-	public AreaBase() {
-		super();
-	}
-
 	public AreaBase(long id) {
 		super(id);
-	}
-
-	public AreaBase(TransportMode transportMode) {
-		super(transportMode);
 	}
 
 	public AreaBase(long id, TransportMode transportMode) {
