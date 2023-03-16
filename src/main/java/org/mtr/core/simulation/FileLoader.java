@@ -8,6 +8,8 @@ import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.Value;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 
@@ -309,11 +311,10 @@ public class FileLoader {
 		}
 
 		@Override
-		public void updateData(MessagePackHelper messagePackHelper) {
-			messagePackHelper.iterateArrayValue(KEY_RAIL_CONNECTIONS, value -> {
-				final MessagePackHelper messagePackHelper2 = MessagePackHelper.messagePackHelperFromValue(value);
-				connections.put(getPosition(messagePackHelper2), new Rail(messagePackHelper2));
-			});
+		public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+			if (readerBase instanceof MessagePackHelper) {
+				readerBase.iterateReaderArray(KEY_RAIL_CONNECTIONS, value -> connections.put(getPosition((MessagePackHelper) value), new Rail((MessagePackHelper) value)));
+			}
 		}
 
 		@Override

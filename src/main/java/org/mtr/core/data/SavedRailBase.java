@@ -3,6 +3,8 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -57,10 +59,10 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		super.updateData(messagePackHelper);
+	public <V extends ReaderBase<W, V>, W> void updateData(V readerBase) {
+		super.updateData(readerBase);
 
-		messagePackHelper.unpackInt(KEY_TIME_VALUE, value -> timeValue = transportMode.continuousMovement ? 1 : value);
+		readerBase.unpackInt(KEY_TIME_VALUE, value -> timeValue = transportMode.continuousMovement ? 1 : value);
 	}
 
 	@Override

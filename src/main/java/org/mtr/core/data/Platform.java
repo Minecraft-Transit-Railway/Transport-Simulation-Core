@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.tools.Position;
 
 public class Platform extends SavedRailBase<Platform, Station> {

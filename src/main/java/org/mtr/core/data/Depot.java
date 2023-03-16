@@ -7,6 +7,8 @@ import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
 import org.mtr.core.path.SidingPathFinder;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -55,23 +57,23 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		super.updateData(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+		super.updateData(readerBase);
 
-		messagePackHelper.iterateArrayValue(KEY_ROUTE_IDS, routeId -> routeIds.add(routeId.asIntegerValue().asLong()));
-		messagePackHelper.unpackBoolean(KEY_USE_REAL_TIME, value -> useRealTime = value);
+		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeIds::add);
+		readerBase.unpackBoolean(KEY_USE_REAL_TIME, value -> useRealTime = value);
 
 		final List<Integer> frequenciesArray = new ArrayList<>();
-		messagePackHelper.iterateArrayValue(KEY_FREQUENCIES, value -> frequenciesArray.add(value.asIntegerValue().asInt()));
+		readerBase.iterateIntArray(KEY_FREQUENCIES, frequenciesArray::add);
 		for (int i = 0; i < Math.min(frequenciesArray.size(), HOURS_PER_DAY); i++) {
 			frequencies[i] = frequenciesArray.get(i);
 		}
 
-		messagePackHelper.iterateArrayValue(KEY_DEPARTURES, departure -> departures.add(departure.asIntegerValue().asInt()));
-		messagePackHelper.unpackInt(KEY_DEPLOY_INDEX, value -> deployIndex = value);
-		messagePackHelper.unpackBoolean(KEY_REPEAT_INFINITELY, value -> repeatInfinitely = value);
-		messagePackHelper.unpackInt(KEY_CRUISING_ALTITUDE, value -> cruisingAltitude = value);
-		messagePackHelper.unpackLong(KEY_LAST_DEPLOYED, value -> lastDeployedMillis = System.currentTimeMillis() - value);
+		readerBase.iterateIntArray(KEY_DEPARTURES, departures::add);
+		readerBase.unpackInt(KEY_DEPLOY_INDEX, value -> deployIndex = value);
+		readerBase.unpackBoolean(KEY_REPEAT_INFINITELY, value -> repeatInfinitely = value);
+		readerBase.unpackInt(KEY_CRUISING_ALTITUDE, value -> cruisingAltitude = value);
+		readerBase.unpackLong(KEY_LAST_DEPLOYED, value -> lastDeployedMillis = System.currentTimeMillis() - value);
 
 		generateActualDepartures();
 	}

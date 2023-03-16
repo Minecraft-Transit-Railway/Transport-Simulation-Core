@@ -1,6 +1,8 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -34,9 +36,9 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		messagePackHelper.unpackString(KEY_NAME, value -> name = value);
-		messagePackHelper.unpackInt(KEY_COLOR, value -> color = value);
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+		readerBase.unpackString(KEY_NAME, value -> name = value);
+		readerBase.unpackInt(KEY_COLOR, value -> color = value);
 	}
 
 	@Override

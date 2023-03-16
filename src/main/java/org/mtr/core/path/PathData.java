@@ -1,9 +1,10 @@
 package org.mtr.core.path;
 
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.data.MessagePackHelper;
 import org.mtr.core.data.Rail;
 import org.mtr.core.data.SerializedDataBase;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Position;
 
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class PathData extends SerializedDataBase {
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
 	}
 
 	@Override

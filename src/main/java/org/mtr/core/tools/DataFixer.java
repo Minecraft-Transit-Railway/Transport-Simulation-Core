@@ -1,8 +1,9 @@
 package org.mtr.core.tools;
 
 import org.mtr.core.data.EnumHelper;
-import org.mtr.core.data.MessagePackHelper;
 import org.mtr.core.data.Rail;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 
 import java.util.function.Consumer;
 
@@ -52,17 +53,17 @@ public class DataFixer {
 		});
 	}
 
-	public static void unpackMaxManualSpeed(MessagePackHelper messagePackHelper, Consumer<Double> consumer) {
-		messagePackHelper.unpackInt(KEY_MAX_MANUAL_SPEED, value -> {
+	public static <T extends ReaderBase<U, T>, U> void unpackMaxManualSpeed(T readerBase, Consumer<Double> consumer) {
+		readerBase.unpackInt(KEY_MAX_MANUAL_SPEED, value -> {
 			if (value >= 0 && value <= RailType.DIAMOND.ordinal()) {
 				consumer.accept(RailType.values()[value].speedLimitMetersPerMillisecond);
 			}
 		});
 	}
 
-	public static void unpackAcceleration(MessagePackHelper messagePackHelper, Consumer<Double> consumer) {
+	public static <T extends ReaderBase<U, T>, U> void unpackAcceleration(T readerBase, Consumer<Double> consumer) {
 		// meters/tick^2 to meters/millisecond^2
-		messagePackHelper.unpackInt(KEY_ACCELERATION_CONSTANT, value -> consumer.accept(value / 50D / 50D));
+		readerBase.unpackInt(KEY_ACCELERATION_CONSTANT, value -> consumer.accept(value / 50D / 50D));
 	}
 
 	@FunctionalInterface

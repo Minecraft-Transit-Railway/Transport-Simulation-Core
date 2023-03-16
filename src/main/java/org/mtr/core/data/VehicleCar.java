@@ -2,6 +2,8 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleImmutableList;
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
@@ -50,7 +52,7 @@ public class VehicleCar extends SerializedDataBase {
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
 	}
 
 	@Override
@@ -77,7 +79,7 @@ public class VehicleCar extends SerializedDataBase {
 
 	private static DoubleImmutableList getDoorPositions(MessagePackHelper messagePackHelper, String key) {
 		final List<Double> tempDoorPositions = new ArrayList<>();
-		messagePackHelper.iterateArrayValue(key, value -> tempDoorPositions.add(value.asFloatValue().toDouble()));
+		messagePackHelper.iterateDoubleArray(key, tempDoorPositions::add);
 		return new DoubleImmutableList(tempDoorPositions);
 	}
 }

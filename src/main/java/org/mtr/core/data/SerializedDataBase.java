@@ -1,12 +1,13 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.ReaderBase;
 
 import java.io.IOException;
 
 public abstract class SerializedDataBase {
 
-	public abstract void updateData(MessagePackHelper messagePackHelper);
+	public abstract <T extends ReaderBase<U, T>, U> void updateData(T readerBase);
 
 	public abstract void toMessagePack(MessagePacker messagePacker) throws IOException;
 

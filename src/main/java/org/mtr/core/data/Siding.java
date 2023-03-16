@@ -7,6 +7,8 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.path.PathData;
 import org.mtr.core.path.SidingPathFinder;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -59,29 +61,29 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		super(messagePackHelper);
 
 		railLength = getRailLength(messagePackHelper.getDouble(KEY_RAIL_LENGTH, 0));
-		messagePackHelper.iterateArrayValue(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSection -> pathSidingToMainRoute.add(new PathData(MessagePackHelper.messagePackHelperFromValue(pathSection))));
-		messagePackHelper.iterateArrayValue(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathSection -> pathMainRouteToSiding.add(new PathData(MessagePackHelper.messagePackHelperFromValue(pathSection))));
+		messagePackHelper.iterateReaderArray(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSection -> pathSidingToMainRoute.add(new PathData(pathSection)));
+		messagePackHelper.iterateReaderArray(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathSection -> pathMainRouteToSiding.add(new PathData(pathSection)));
 		final List<MessagePackHelper> tempVehicleMessagePackHelpers = new ArrayList<>();
-		messagePackHelper.iterateArrayValue(KEY_VEHICLES, value -> tempVehicleMessagePackHelpers.add(MessagePackHelper.messagePackHelperFromValue(value)));
+		messagePackHelper.iterateReaderArray(KEY_VEHICLES, tempVehicleMessagePackHelpers::add);
 		vehicleMessagePackHelpers = new ObjectImmutableList<>(tempVehicleMessagePackHelpers);
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		super.updateData(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+		super.updateData(readerBase);
 
 		final ObjectArrayList<VehicleCar> tempVehicleCars = new ObjectArrayList<>();
-		if (messagePackHelper.iterateArrayValue(KEY_VEHICLE_CARS, vehicleCar -> tempVehicleCars.add(new VehicleCar(MessagePackHelper.messagePackHelperFromValue(vehicleCar))))) {
+		if ((readerBase instanceof MessagePackHelper) && readerBase.iterateReaderArray(KEY_VEHICLE_CARS, vehicleCar -> tempVehicleCars.add(new VehicleCar((MessagePackHelper) vehicleCar)))) {
 			setVehicle(tempVehicleCars);
 		}
 
-		messagePackHelper.unpackBoolean(KEY_UNLIMITED_VEHICLES, value -> unlimitedVehicles = transportMode.continuousMovement || value);
-		messagePackHelper.unpackInt(KEY_MAX_VEHICLES, value -> maxVehicles = value);
-		messagePackHelper.unpackBoolean(KEY_IS_MANUAL, value -> isManual = value);
-		messagePackHelper.unpackDouble(KEY_MAX_MANUAL_SPEED, value -> maxManualSpeed = value);
-		DataFixer.unpackMaxManualSpeed(messagePackHelper, value -> maxManualSpeed = value);
-		messagePackHelper.unpackDouble(KEY_ACCELERATION, value -> acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.roundAcceleration(value));
-		DataFixer.unpackAcceleration(messagePackHelper, value -> acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.roundAcceleration(value));
+		readerBase.unpackBoolean(KEY_UNLIMITED_VEHICLES, value -> unlimitedVehicles = transportMode.continuousMovement || value);
+		readerBase.unpackInt(KEY_MAX_VEHICLES, value -> maxVehicles = value);
+		readerBase.unpackBoolean(KEY_IS_MANUAL, value -> isManual = value);
+		readerBase.unpackDouble(KEY_MAX_MANUAL_SPEED, value -> maxManualSpeed = value);
+		DataFixer.unpackMaxManualSpeed(readerBase, value -> maxManualSpeed = value);
+		readerBase.unpackDouble(KEY_ACCELERATION, value -> acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.roundAcceleration(value));
+		DataFixer.unpackAcceleration(readerBase, value -> acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.roundAcceleration(value));
 	}
 
 	@Override

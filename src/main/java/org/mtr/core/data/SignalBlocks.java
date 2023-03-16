@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.tools.DyeColor;
 
 import java.io.IOException;
@@ -170,7 +171,7 @@ public class SignalBlocks {
 			}
 			color = savedColor;
 
-			messagePackHelper.iterateArrayValue(KEY_RAILS, value -> rails.add(UUID.fromString(value.asStringValue().asString())));
+			messagePackHelper.iterateStringArray(KEY_RAILS, value -> rails.add(UUID.fromString(value)));
 		}
 
 		@Override

@@ -1,6 +1,8 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,24 +46,24 @@ public class Route extends NameColorDataBase {
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		super.updateData(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+		super.updateData(readerBase);
 
-		messagePackHelper.iterateArrayValue(KEY_PLATFORM_IDS, platformId -> platformIds.add(new RoutePlatform(platformId.asIntegerValue().asLong())));
+		readerBase.iterateLongArray(KEY_PLATFORM_IDS, platformId -> platformIds.add(new RoutePlatform(platformId)));
 
 		final List<String> customDestinations = new ArrayList<>();
-		messagePackHelper.iterateArrayValue(KEY_CUSTOM_DESTINATIONS, customDestination -> customDestinations.add(customDestination.asStringValue().asString()));
+		readerBase.iterateStringArray(KEY_CUSTOM_DESTINATIONS, customDestinations::add);
 
 		for (int i = 0; i < Math.min(platformIds.size(), customDestinations.size()); i++) {
 			platformIds.get(i).customDestination = customDestinations.get(i);
 		}
 
-		messagePackHelper.unpackString(KEY_ROUTE_TYPE, value -> routeType = EnumHelper.valueOf(RouteType.NORMAL, value));
-		messagePackHelper.unpackBoolean(KEY_IS_LIGHT_RAIL_ROUTE, value -> isLightRailRoute = value);
-		messagePackHelper.unpackBoolean(KEY_IS_ROUTE_HIDDEN, value -> isHidden = value);
-		messagePackHelper.unpackBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, value -> disableNextStationAnnouncements = value);
-		messagePackHelper.unpackString(KEY_LIGHT_RAIL_ROUTE_NUMBER, value -> lightRailRouteNumber = value);
-		messagePackHelper.unpackString(KEY_CIRCULAR_STATE, value -> circularState = EnumHelper.valueOf(CircularState.NONE, value));
+		readerBase.unpackString(KEY_ROUTE_TYPE, value -> routeType = EnumHelper.valueOf(RouteType.NORMAL, value));
+		readerBase.unpackBoolean(KEY_IS_LIGHT_RAIL_ROUTE, value -> isLightRailRoute = value);
+		readerBase.unpackBoolean(KEY_IS_ROUTE_HIDDEN, value -> isHidden = value);
+		readerBase.unpackBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, value -> disableNextStationAnnouncements = value);
+		readerBase.unpackString(KEY_LIGHT_RAIL_ROUTE_NUMBER, value -> lightRailRouteNumber = value);
+		readerBase.unpackString(KEY_CIRCULAR_STATE, value -> circularState = EnumHelper.valueOf(CircularState.NONE, value));
 	}
 
 	@Override

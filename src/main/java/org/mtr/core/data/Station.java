@@ -1,7 +1,8 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
-import org.msgpack.value.Value;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,17 +27,15 @@ public class Station extends AreaBase<Station, Platform> {
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		super.updateData(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+		super.updateData(readerBase);
 
-		messagePackHelper.unpackInt(KEY_ZONE, value -> zone = value);
-		messagePackHelper.iterateMapValue(KEY_EXITS, entry -> {
-			final List<String> destinations = new ArrayList<>(entry.getValue().asArrayValue().size());
-			for (final Value destination : entry.getValue().asArrayValue()) {
-				destinations.add(destination.asStringValue().asString());
-			}
-			exits.put(entry.getKey().asStringValue().asString(), destinations);
-		});
+		readerBase.unpackInt(KEY_ZONE, value -> zone = value);
+		readerBase.iterateReaderMap(KEY_EXITS, entry -> entry.forEach((key, value) -> {
+			final List<String> destinations = new ArrayList<>();
+			entry.iterateStringArray(key, destinations::add);
+			exits.put(key, destinations);
+		}));
 	}
 
 	@Override

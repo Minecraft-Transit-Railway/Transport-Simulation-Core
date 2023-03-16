@@ -2,6 +2,8 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
@@ -33,13 +35,13 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		super.updateData(messagePackHelper);
+	public <V extends ReaderBase<W, V>, W> void updateData(V readerBase) {
+		super.updateData(readerBase);
 
-		messagePackHelper.unpackLong(KEY_X_MIN, value -> cornerXMin = value);
-		messagePackHelper.unpackLong(KEY_Z_MIN, value -> cornerZMin = value);
-		messagePackHelper.unpackLong(KEY_X_MAX, value -> cornerXMax = value);
-		messagePackHelper.unpackLong(KEY_Z_MAX, value -> cornerZMax = value);
+		readerBase.unpackLong(KEY_X_MIN, value -> cornerXMin = value);
+		readerBase.unpackLong(KEY_Z_MIN, value -> cornerZMin = value);
+		readerBase.unpackLong(KEY_X_MAX, value -> cornerXMax = value);
+		readerBase.unpackLong(KEY_Z_MAX, value -> cornerZMax = value);
 	}
 
 	@Override

@@ -7,6 +7,8 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.path.PathData;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
@@ -128,18 +130,18 @@ public class Train extends NameColorDataBase {
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
-		super.updateData(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+		super.updateData(readerBase);
 
-		messagePackHelper.unpackDouble(KEY_SPEED, value -> speed = value);
-		messagePackHelper.unpackDouble(KEY_RAIL_PROGRESS, value -> railProgress = value);
-		messagePackHelper.unpackDouble(KEY_ELAPSED_DWELL_MILLIS, value -> elapsedDwellMillis = value);
-		messagePackHelper.unpackInt(KEY_NEXT_STOPPING_INDEX, value -> nextStoppingIndex = value);
-		messagePackHelper.unpackInt(KEY_NEXT_PLATFORM_INDEX, value -> nextPlatformIndex = value);
-		messagePackHelper.unpackBoolean(KEY_REVERSED, value -> reversed = value);
-		messagePackHelper.unpackBoolean(KEY_IS_ON_ROUTE, value -> isOnRoute = value);
-		messagePackHelper.unpackBoolean(KEY_IS_CURRENTLY_MANUAL, value -> isCurrentlyManual = value);
-		messagePackHelper.iterateArrayValue(KEY_RIDING_ENTITIES, value -> ridingEntities.add(UUID.fromString(value.asStringValue().asString())));
+		readerBase.unpackDouble(KEY_SPEED, value -> speed = value);
+		readerBase.unpackDouble(KEY_RAIL_PROGRESS, value -> railProgress = value);
+		readerBase.unpackDouble(KEY_ELAPSED_DWELL_MILLIS, value -> elapsedDwellMillis = value);
+		readerBase.unpackInt(KEY_NEXT_STOPPING_INDEX, value -> nextStoppingIndex = value);
+		readerBase.unpackInt(KEY_NEXT_PLATFORM_INDEX, value -> nextPlatformIndex = value);
+		readerBase.unpackBoolean(KEY_REVERSED, value -> reversed = value);
+		readerBase.unpackBoolean(KEY_IS_ON_ROUTE, value -> isOnRoute = value);
+		readerBase.unpackBoolean(KEY_IS_CURRENTLY_MANUAL, value -> isCurrentlyManual = value);
+		readerBase.iterateStringArray(KEY_RIDING_ENTITIES, value -> ridingEntities.add(UUID.fromString(value)));
 	}
 
 	@Override

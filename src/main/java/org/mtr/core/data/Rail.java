@@ -1,6 +1,8 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.*;
 
 import java.io.IOException;
@@ -299,7 +301,7 @@ public class Rail extends SerializedDataBase {
 	}
 
 	@Override
-	public void updateData(MessagePackHelper messagePackHelper) {
+	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
 	}
 
 	@Override
