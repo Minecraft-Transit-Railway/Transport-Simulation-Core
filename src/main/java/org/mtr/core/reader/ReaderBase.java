@@ -19,97 +19,83 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 		iterateMap(value, map::put);
 	}
 
-	public T get(String key) {
+	public final T get(String key) {
 		return map.get(key);
 	}
 
-	public void forEach(BiConsumer<String, T> consumer) {
+	public final void forEach(BiConsumer<String, T> consumer) {
 		map.forEach(consumer);
 	}
 
-	public void unpackBoolean(String key, Consumer<Boolean> ifExists) {
+	public final void unpackBoolean(String key, Consumer<Boolean> ifExists) {
 		unpack(key, this::getBoolean, ifExists);
 	}
 
-	public boolean getBoolean(String key, boolean defaultValue) {
+	public final boolean getBoolean(String key, boolean defaultValue) {
 		return getOrDefault(key, defaultValue, this::getBoolean);
 	}
 
-	public boolean iterateBooleanArray(String key, Consumer<Boolean> ifExists) {
+	public final boolean iterateBooleanArray(String key, Consumer<Boolean> ifExists) {
 		return iterateArray(key, this::getBoolean, ifExists);
 	}
 
-	public void unpackInt(String key, Consumer<Integer> ifExists) {
+	public final void unpackInt(String key, Consumer<Integer> ifExists) {
 		unpack(key, this::getInt, ifExists);
 	}
 
-	public int getInt(String key, int defaultValue) {
+	public final int getInt(String key, int defaultValue) {
 		return getOrDefault(key, defaultValue, this::getInt);
 	}
 
-	public void iterateIntArray(String key, Consumer<Integer> ifExists) {
+	public final void iterateIntArray(String key, Consumer<Integer> ifExists) {
 		iterateArray(key, this::getInt, ifExists);
 	}
 
-	public void unpackLong(String key, Consumer<Long> ifExists) {
+	public final void unpackLong(String key, Consumer<Long> ifExists) {
 		unpack(key, this::getLong, ifExists);
 	}
 
-	public long getLong(String key, long defaultValue) {
+	public final long getLong(String key, long defaultValue) {
 		return getOrDefault(key, defaultValue, this::getLong);
 	}
 
-	public void iterateLongArray(String key, Consumer<Long> ifExists) {
+	public final void iterateLongArray(String key, Consumer<Long> ifExists) {
 		iterateArray(key, this::getLong, ifExists);
 	}
 
-	public void unpackFloat(String key, Consumer<Float> ifExists) {
-		unpack(key, this::getFloat, ifExists);
-	}
-
-	public float getFloat(String key, float defaultValue) {
-		return getOrDefault(key, defaultValue, this::getFloat);
-	}
-
-	public void iterateFloatArray(String key, Consumer<Float> ifExists) {
-		iterateArray(key, this::getFloat, ifExists);
-	}
-
-	public void unpackDouble(String key, Consumer<Double> ifExists) {
+	public final void unpackDouble(String key, Consumer<Double> ifExists) {
 		unpack(key, this::getDouble, ifExists);
 	}
 
-	public double getDouble(String key, double defaultValue) {
+	public final double getDouble(String key, double defaultValue) {
 		return getOrDefault(key, defaultValue, this::getDouble);
 	}
 
-	public void iterateDoubleArray(String key, Consumer<Double> ifExists) {
+	public final void iterateDoubleArray(String key, Consumer<Double> ifExists) {
 		iterateArray(key, this::getDouble, ifExists);
 	}
 
-	public void unpackString(String key, Consumer<String> ifExists) {
+	public final void unpackString(String key, Consumer<String> ifExists) {
 		unpack(key, this::getString, ifExists);
 	}
 
-	public String getString(String key, String defaultValue) {
+	public final String getString(String key, String defaultValue) {
 		return getOrDefault(key, defaultValue, this::getString);
 	}
 
-	public void iterateStringArray(String key, Consumer<String> ifExists) {
+	public final void iterateStringArray(String key, Consumer<String> ifExists) {
 		iterateArray(key, this::getString, ifExists);
 	}
 
 	public abstract boolean iterateReaderArray(String key, Consumer<U> ifExists);
 
-	public abstract void iterateReaderMap(String key, Consumer<U> ifExists);
+	public abstract U getChild(String key);
 
 	protected abstract boolean getBoolean(T value);
 
 	protected abstract int getInt(T value);
 
 	protected abstract long getLong(T value);
-
-	protected abstract float getFloat(T value);
 
 	protected abstract double getDouble(T value);
 
@@ -119,14 +105,14 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 
 	protected abstract void iterateMap(T value, BiConsumer<String, T> consumer);
 
-	protected <V> boolean iterateArray(String key, Function<T, V> function, Consumer<V> ifExists) {
+	protected final <V> boolean iterateArray(String key, Function<T, V> function, Consumer<V> ifExists) {
 		return unpack(key, value -> value, value -> iterateArray(value, arrayValue -> ifExists.accept(function.apply(arrayValue))));
 	}
 
-	protected void iterateMap(String key, Function<Map<String, T>, U> function, Consumer<U> ifExists) {
+	protected final U getChild(String key, Function<Map<String, T>, U> function) {
 		final Map<String, T> newMap = new HashMap<>();
 		unpack(key, value -> value, value -> iterateMap(value, newMap::put));
-		ifExists.accept(function.apply(newMap));
+		return function.apply(newMap);
 	}
 
 	private <V> V getOrDefault(String key, V defaultValue, Function<T, V> function) {

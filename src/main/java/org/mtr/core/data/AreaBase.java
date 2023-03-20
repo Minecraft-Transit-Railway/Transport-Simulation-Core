@@ -2,7 +2,6 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -30,8 +29,8 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 		super(id, transportMode);
 	}
 
-	public AreaBase(MessagePackHelper messagePackHelper) {
-		super(messagePackHelper);
+	public <V extends ReaderBase<W, V>, W> AreaBase(V readerBase) {
+		super(readerBase);
 	}
 
 	@Override

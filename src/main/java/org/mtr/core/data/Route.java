@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 
 import java.io.IOException;
@@ -41,8 +40,9 @@ public class Route extends NameColorDataBase {
 		disableNextStationAnnouncements = false;
 	}
 
-	public Route(MessagePackHelper messagePackHelper) {
-		super(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> Route(T readerBase) {
+		super(readerBase);
+		updateData(readerBase);
 	}
 
 	@Override

@@ -3,7 +3,6 @@ package org.mtr.core.path;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.data.Rail;
 import org.mtr.core.data.SerializedDataBase;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Position;
 
@@ -39,20 +38,20 @@ public class PathData extends SerializedDataBase {
 		this.stopIndex = stopIndex;
 	}
 
-	public PathData(MessagePackHelper messagePackHelper) {
-		rail = new Rail(MessagePackHelper.messagePackHelperFromValue(messagePackHelper.get(KEY_RAIL)));
-		savedRailBaseId = messagePackHelper.getLong(KEY_SAVED_RAIL_BASE_ID, 0);
-		dwellTimeMillis = messagePackHelper.getInt(KEY_DWELL_TIME, 0);
-		stopIndex = messagePackHelper.getInt(KEY_STOP_INDEX, 0);
+	public <T extends ReaderBase<U, T>, U> PathData(T readerBase) {
+		rail = new Rail(readerBase.getChild(KEY_RAIL));
+		savedRailBaseId = readerBase.getLong(KEY_SAVED_RAIL_BASE_ID, 0);
+		dwellTimeMillis = readerBase.getInt(KEY_DWELL_TIME, 0);
+		stopIndex = readerBase.getInt(KEY_STOP_INDEX, 0);
 		startPosition = new Position(
-				messagePackHelper.getLong(KEY_START_POSITION_X, 0),
-				messagePackHelper.getLong(KEY_START_POSITION_Y, 0),
-				messagePackHelper.getLong(KEY_START_POSITION_Z, 0)
+				readerBase.getLong(KEY_START_POSITION_X, 0),
+				readerBase.getLong(KEY_START_POSITION_Y, 0),
+				readerBase.getLong(KEY_START_POSITION_Z, 0)
 		);
 		endPosition = new Position(
-				messagePackHelper.getLong(KEY_END_POSITION_X, 0),
-				messagePackHelper.getLong(KEY_END_POSITION_Y, 0),
-				messagePackHelper.getLong(KEY_END_POSITION_Z, 0)
+				readerBase.getLong(KEY_END_POSITION_X, 0),
+				readerBase.getLong(KEY_END_POSITION_Y, 0),
+				readerBase.getLong(KEY_END_POSITION_Z, 0)
 		);
 	}
 

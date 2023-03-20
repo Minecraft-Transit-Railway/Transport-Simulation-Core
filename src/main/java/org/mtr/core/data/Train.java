@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.path.PathData;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Utilities;
 
@@ -97,12 +96,12 @@ public class Train extends NameColorDataBase {
 		isCurrentlyManual = isManualAllowed;
 	}
 
-	public Train(
+	public <T extends ReaderBase<U, T>, U> Train(
 			long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, DoubleArrayList distances,
-			double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, MessagePackHelper messagePackHelper
+			double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, T readerBase
 	) {
-		super(messagePackHelper);
+		super(readerBase);
 
 		this.sidingId = sidingId;
 		this.railLength = Siding.getRailLength(railLength);
@@ -127,6 +126,8 @@ public class Train extends NameColorDataBase {
 		this.manualToAutomaticTime = manualToAutomaticTime;
 
 		isCurrentlyManual = isManualAllowed;
+
+		updateData(readerBase);
 	}
 
 	@Override

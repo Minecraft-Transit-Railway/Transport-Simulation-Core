@@ -6,12 +6,11 @@ import org.mtr.core.data.SerializedDataBase;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class MessagePackHelper extends ReaderBase<Value, MessagePackHelper> {
+public final class MessagePackHelper extends ReaderBase<Value, MessagePackHelper> {
 
 	public MessagePackHelper(Map<String, Value> map) {
 		super(map);
@@ -27,8 +26,8 @@ public class MessagePackHelper extends ReaderBase<Value, MessagePackHelper> {
 	}
 
 	@Override
-	public void iterateReaderMap(String key, Consumer<MessagePackHelper> ifExists) {
-		iterateMap(key, MessagePackHelper::new, ifExists);
+	public MessagePackHelper getChild(String key) {
+		return getChild(key, MessagePackHelper::new);
 	}
 
 	@Override
@@ -44,11 +43,6 @@ public class MessagePackHelper extends ReaderBase<Value, MessagePackHelper> {
 	@Override
 	protected long getLong(Value value) {
 		return value.asIntegerValue().asLong();
-	}
-
-	@Override
-	protected float getFloat(Value value) {
-		return value.asFloatValue().toFloat();
 	}
 
 	@Override
@@ -78,12 +72,5 @@ public class MessagePackHelper extends ReaderBase<Value, MessagePackHelper> {
 			messagePacker.packMapHeader(data.messagePackLength());
 			data.toMessagePack(messagePacker);
 		}
-	}
-
-	public static MessagePackHelper messagePackHelperFromValue(Value value) {
-		final Map<Value, Value> oldMap = value == null ? new HashMap<>() : value.asMapValue().map();
-		final HashMap<String, Value> resultMap = new HashMap<>(oldMap.size());
-		oldMap.forEach((key, newValue) -> resultMap.put(key.asStringValue().asString(), newValue));
-		return new MessagePackHelper(resultMap);
 	}
 }

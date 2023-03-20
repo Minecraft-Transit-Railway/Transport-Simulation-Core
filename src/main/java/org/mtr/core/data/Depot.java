@@ -7,7 +7,6 @@ import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
 import org.mtr.core.path.SidingPathFinder;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
@@ -51,9 +50,10 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	private static final String KEY_REPEAT_INFINITELY = "repeat_infinitely";
 	private static final String KEY_CRUISING_ALTITUDE = "cruising_altitude";
 
-	public Depot(MessagePackHelper messagePackHelper, Simulator simulator) {
-		super(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> Depot(T readerBase, Simulator simulator) {
+		super(readerBase);
 		this.simulator = simulator;
+		updateData(readerBase);
 	}
 
 	@Override
@@ -202,6 +202,10 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 				final List<Integer> gameDepartures = new ArrayList<>();
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
+					if (frequencies[i] == 0) {
+						continue;
+					}
+
 					final int intervalMillis = 200000 / frequencies[i];
 					final int hourMinMillis = MILLIS_PER_HOUR * i;
 					final int hourMaxMillis = MILLIS_PER_HOUR * (i + 1);

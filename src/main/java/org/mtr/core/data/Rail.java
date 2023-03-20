@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.*;
 
@@ -249,34 +248,34 @@ public class Rail extends SerializedDataBase {
 		}
 	}
 
-	public Rail(MessagePackHelper messagePackHelper) {
-		updateData(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> Rail(T readerBase) {
+		updateData(readerBase);
 
-		h1 = messagePackHelper.getDouble(KEY_H_1, 0);
-		k1 = messagePackHelper.getDouble(KEY_K_1, 0);
-		h2 = messagePackHelper.getDouble(KEY_H_2, 0);
-		k2 = messagePackHelper.getDouble(KEY_K_2, 0);
-		r1 = messagePackHelper.getDouble(KEY_R_1, 0);
-		r2 = messagePackHelper.getDouble(KEY_R_2, 0);
-		tStart1 = messagePackHelper.getDouble(KEY_T_START_1, 0);
-		tEnd1 = messagePackHelper.getDouble(KEY_T_END_1, 0);
-		tStart2 = messagePackHelper.getDouble(KEY_T_START_2, 0);
-		tEnd2 = messagePackHelper.getDouble(KEY_T_END_2, 0);
-		yStart = messagePackHelper.getLong(KEY_Y_START, 0);
-		yEnd = messagePackHelper.getLong(KEY_Y_END, 0);
-		reverseT1 = messagePackHelper.getBoolean(KEY_REVERSE_T_1, false);
-		isStraight1 = messagePackHelper.getBoolean(KEY_IS_STRAIGHT_1, false);
-		reverseT2 = messagePackHelper.getBoolean(KEY_REVERSE_T_2, false);
-		isStraight2 = messagePackHelper.getBoolean(KEY_IS_STRAIGHT_2, false);
+		h1 = readerBase.getDouble(KEY_H_1, 0);
+		k1 = readerBase.getDouble(KEY_K_1, 0);
+		h2 = readerBase.getDouble(KEY_H_2, 0);
+		k2 = readerBase.getDouble(KEY_K_2, 0);
+		r1 = readerBase.getDouble(KEY_R_1, 0);
+		r2 = readerBase.getDouble(KEY_R_2, 0);
+		tStart1 = readerBase.getDouble(KEY_T_START_1, 0);
+		tEnd1 = readerBase.getDouble(KEY_T_END_1, 0);
+		tStart2 = readerBase.getDouble(KEY_T_START_2, 0);
+		tEnd2 = readerBase.getDouble(KEY_T_END_2, 0);
+		yStart = readerBase.getLong(KEY_Y_START, 0);
+		yEnd = readerBase.getLong(KEY_Y_END, 0);
+		reverseT1 = readerBase.getBoolean(KEY_REVERSE_T_1, false);
+		isStraight1 = readerBase.getBoolean(KEY_IS_STRAIGHT_1, false);
+		reverseT2 = readerBase.getBoolean(KEY_REVERSE_T_2, false);
+		isStraight2 = readerBase.getBoolean(KEY_IS_STRAIGHT_2, false);
 
-		final double[] tempSpeedLimitKilometersPerHour = {messagePackHelper.getDouble(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR, 20)};
-		final Shape[] tempShapeStart = {EnumHelper.valueOf(Shape.CURVE, messagePackHelper.getString(KEY_SHAPE_START, ""))};
-		final Shape[] tempShapeEnd = {EnumHelper.valueOf(Shape.CURVE, messagePackHelper.getString(KEY_SHAPE_END, ""))};
-		final boolean[] tempHasSavedRail = {messagePackHelper.getBoolean(KEY_HAS_SAVED_RAIL, false)};
-		final boolean[] tempCanAccelerate = {messagePackHelper.getBoolean(KEY_CAN_ACCELERATE, true)};
-		final boolean[] tempCanTurnBack = {messagePackHelper.getBoolean(KEY_CAN_TURN_BACK, false)};
-		final boolean[] tempCanHaveSignal = {messagePackHelper.getBoolean(KEY_CAN_HAVE_SIGNAL, true)};
-		DataFixer.convertRailType(messagePackHelper, (speedLimitKilometersPerHour, shape, hasSavedRail, canAccelerate, canTurnBack, canHaveSignal) -> {
+		final double[] tempSpeedLimitKilometersPerHour = {readerBase.getDouble(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR, 20)};
+		final Shape[] tempShapeStart = {EnumHelper.valueOf(Shape.CURVE, readerBase.getString(KEY_SHAPE_START, ""))};
+		final Shape[] tempShapeEnd = {EnumHelper.valueOf(Shape.CURVE, readerBase.getString(KEY_SHAPE_END, ""))};
+		final boolean[] tempHasSavedRail = {readerBase.getBoolean(KEY_HAS_SAVED_RAIL, false)};
+		final boolean[] tempCanAccelerate = {readerBase.getBoolean(KEY_CAN_ACCELERATE, true)};
+		final boolean[] tempCanTurnBack = {readerBase.getBoolean(KEY_CAN_TURN_BACK, false)};
+		final boolean[] tempCanHaveSignal = {readerBase.getBoolean(KEY_CAN_HAVE_SIGNAL, true)};
+		DataFixer.convertRailType(readerBase, (speedLimitKilometersPerHour, shape, hasSavedRail, canAccelerate, canTurnBack, canHaveSignal) -> {
 			tempSpeedLimitKilometersPerHour[0] = speedLimitKilometersPerHour;
 			tempShapeStart[0] = shape;
 			tempShapeEnd[0] = shape;
@@ -294,7 +293,7 @@ public class Rail extends SerializedDataBase {
 		canTurnBack = tempCanTurnBack[0];
 		canHaveSignal = tempCanHaveSignal[0];
 
-		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, messagePackHelper.getString(KEY_TRANSPORT_MODE, ""));
+		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, readerBase.getString(KEY_TRANSPORT_MODE, ""));
 
 		facingStart = getRailAngle(false);
 		facingEnd = getRailAngle(true);

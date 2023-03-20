@@ -1,6 +1,6 @@
 package org.mtr.core.data;
 
-import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Position;
 
 public class Platform extends SavedRailBase<Platform, Station> {
@@ -9,7 +9,7 @@ public class Platform extends SavedRailBase<Platform, Station> {
 		super(id, transportMode, pos1, pos2);
 	}
 
-	public Platform(MessagePackHelper messagePackHelper) {
-		super(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> Platform(T readerBase) {
+		super(readerBase);
 	}
 }

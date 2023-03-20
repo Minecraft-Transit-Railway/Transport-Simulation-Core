@@ -1,12 +1,14 @@
 package org.mtr.core.reader;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class JsonHelper extends ReaderBase<JsonElement, JsonHelper> {
+public final class JsonHelper extends ReaderBase<JsonElement, JsonHelper> {
 
 	public JsonHelper(Map<String, JsonElement> map) {
 		super(map);
@@ -22,8 +24,8 @@ public class JsonHelper extends ReaderBase<JsonElement, JsonHelper> {
 	}
 
 	@Override
-	public void iterateReaderMap(String key, Consumer<JsonHelper> ifExists) {
-		iterateMap(key, JsonHelper::new, ifExists);
+	public JsonHelper getChild(String key) {
+		return getChild(key, JsonHelper::new);
 	}
 
 	@Override
@@ -39,11 +41,6 @@ public class JsonHelper extends ReaderBase<JsonElement, JsonHelper> {
 	@Override
 	protected long getLong(JsonElement value) {
 		return value.getAsLong();
-	}
-
-	@Override
-	protected float getFloat(JsonElement value) {
-		return value.getAsFloat();
 	}
 
 	@Override
@@ -64,5 +61,14 @@ public class JsonHelper extends ReaderBase<JsonElement, JsonHelper> {
 	@Override
 	protected void iterateMap(JsonElement value, BiConsumer<String, JsonElement> consumer) {
 		value.getAsJsonObject().asMap().forEach(consumer);
+	}
+
+	public static JsonHelper parse(String string) {
+		try {
+			return new JsonHelper(JsonParser.parseString(string));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new JsonHelper(new HashMap<>());
+		}
 	}
 }

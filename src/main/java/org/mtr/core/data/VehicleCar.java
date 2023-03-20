@@ -2,7 +2,6 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleImmutableList;
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Utilities;
 
@@ -40,15 +39,15 @@ public class VehicleCar extends SerializedDataBase {
 		this.doorRightPositions = new DoubleImmutableList(doorRightPositions);
 	}
 
-	public VehicleCar(MessagePackHelper messagePackHelper) {
-		vehicleId = messagePackHelper.getString(KEY_VEHICLE_ID, "");
-		length = messagePackHelper.getDouble(KEY_LENGTH, 0);
-		width = messagePackHelper.getDouble(KEY_WIDTH, 0);
-		bogie1Position = messagePackHelper.getDouble(KEY_BOGIE_1_POSITION, 0);
-		bogie2Position = messagePackHelper.getDouble(KEY_BOGIE_2_POSITION, 0);
+	public <T extends ReaderBase<U, T>, U> VehicleCar(T readerBase) {
+		vehicleId = readerBase.getString(KEY_VEHICLE_ID, "");
+		length = readerBase.getDouble(KEY_LENGTH, 0);
+		width = readerBase.getDouble(KEY_WIDTH, 0);
+		bogie1Position = readerBase.getDouble(KEY_BOGIE_1_POSITION, 0);
+		bogie2Position = readerBase.getDouble(KEY_BOGIE_2_POSITION, 0);
 		hasOneBogie = bogie1Position == bogie2Position;
-		doorLeftPositions = getDoorPositions(messagePackHelper, KEY_DOOR_LEFT_POSITIONS);
-		doorRightPositions = getDoorPositions(messagePackHelper, KEY_DOOR_RIGHT_POSITIONS);
+		doorLeftPositions = getDoorPositions(readerBase, KEY_DOOR_LEFT_POSITIONS);
+		doorRightPositions = getDoorPositions(readerBase, KEY_DOOR_RIGHT_POSITIONS);
 	}
 
 	@Override
@@ -77,9 +76,9 @@ public class VehicleCar extends SerializedDataBase {
 		return 7;
 	}
 
-	private static DoubleImmutableList getDoorPositions(MessagePackHelper messagePackHelper, String key) {
+	private static <T extends ReaderBase<U, T>, U> DoubleImmutableList getDoorPositions(T readerBase, String key) {
 		final List<Double> tempDoorPositions = new ArrayList<>();
-		messagePackHelper.iterateDoubleArray(key, tempDoorPositions::add);
+		readerBase.iterateDoubleArray(key, tempDoorPositions::add);
 		return new DoubleImmutableList(tempDoorPositions);
 	}
 }

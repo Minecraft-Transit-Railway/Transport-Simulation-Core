@@ -57,15 +57,21 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		vehicleMessagePackHelpers = ObjectImmutableList.of();
 	}
 
-	public Siding(MessagePackHelper messagePackHelper) {
-		super(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> Siding(T readerBase) {
+		super(readerBase);
 
-		railLength = getRailLength(messagePackHelper.getDouble(KEY_RAIL_LENGTH, 0));
-		messagePackHelper.iterateReaderArray(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSection -> pathSidingToMainRoute.add(new PathData(pathSection)));
-		messagePackHelper.iterateReaderArray(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathSection -> pathMainRouteToSiding.add(new PathData(pathSection)));
+		railLength = getRailLength(readerBase.getDouble(KEY_RAIL_LENGTH, 0));
+		readerBase.iterateReaderArray(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSection -> pathSidingToMainRoute.add(new PathData(pathSection)));
+		readerBase.iterateReaderArray(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathSection -> pathMainRouteToSiding.add(new PathData(pathSection)));
 		final List<MessagePackHelper> tempVehicleMessagePackHelpers = new ArrayList<>();
-		messagePackHelper.iterateReaderArray(KEY_VEHICLES, tempVehicleMessagePackHelpers::add);
+		readerBase.iterateReaderArray(KEY_VEHICLES, vehicleReaderBase -> {
+			if (vehicleReaderBase instanceof MessagePackHelper) {
+				tempVehicleMessagePackHelpers.add((MessagePackHelper) vehicleReaderBase);
+			}
+		});
 		vehicleMessagePackHelpers = new ObjectImmutableList<>(tempVehicleMessagePackHelpers);
+
+		updateData(readerBase);
 	}
 
 	@Override
@@ -90,7 +96,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	public void init() {
 		vehicleMessagePackHelpers.forEach(messagePackHelper -> vehicles.add(new Train(
 				id, railLength, vehicleCars, totalVehicleLength,
-				pathSidingToMainRoute, area.path, pathMainRouteToSiding, distances,
+				pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances,
 				acceleration, isManual, maxManualSpeed, getTimeValueMillis(), messagePackHelper
 		)));
 		generateDistances();
@@ -189,7 +195,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		if (totalVehicleLength > 0 && (vehicles.isEmpty() || spawnTrain && (unlimitedVehicles || vehicles.size() <= maxVehicles))) {
 			final Train train = new Train(
 					unlimitedVehicles || maxVehicles > 0 ? new Random().nextLong() : id, id, transportMode, railLength, vehicleCars, totalVehicleLength,
-					pathSidingToMainRoute, area.path, pathMainRouteToSiding, distances,
+					pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances,
 					acceleration, isManual, maxManualSpeed, getTimeValueMillis()
 			);
 			vehicles.add(train);
@@ -222,6 +228,10 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 	public void clearVehicles() {
 		vehicles.clear();
+	}
+
+	private ObjectArrayList<PathData> getPathMainRoute() {
+		return area == null ? new ObjectArrayList<>() : area.path;
 	}
 
 	private void setVehicle(ObjectArrayList<VehicleCar> newVehicleCars) {
@@ -259,7 +269,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 		vehicles.add(new Train(
 				id, id, transportMode, railLength, vehicleCars, totalVehicleLength,
-				pathSidingToMainRoute, area.path, pathMainRouteToSiding, distances,
+				pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances,
 				acceleration, isManual, maxManualSpeed, getTimeValueMillis()
 		));
 	}
@@ -270,7 +280,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 		final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 		path.addAll(pathSidingToMainRoute);
-		path.addAll(area.path);
+		path.addAll(getPathMainRoute());
 		path.addAll(pathMainRouteToSiding);
 
 		double distanceSum = 0;

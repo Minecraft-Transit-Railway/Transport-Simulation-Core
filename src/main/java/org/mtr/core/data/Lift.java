@@ -1,15 +1,15 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 
 import java.io.IOException;
 
 public class Lift extends NameColorDataBase {
 
-	public Lift(MessagePackHelper messagePackHelper) {
-		super(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> Lift(T readerBase) {
+		super(readerBase);
+		updateData(readerBase);
 	}
 
 	@Override

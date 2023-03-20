@@ -115,6 +115,7 @@ public class FileLoader {
 		autoSave();
 		while (true) {
 			if (autoSaveTick()) {
+				Main.LOGGER.info("Minecraft Transit Railway data successfully saved for " + dimension);
 				break;
 			}
 		}
@@ -305,8 +306,8 @@ public class FileLoader {
 			this.connections = connections;
 		}
 
-		public RailEntry(MessagePackHelper messagePackHelper) {
-			position = getPosition(messagePackHelper);
+		public <T extends ReaderBase<U, T>, U> RailEntry(T readerBase) {
+			position = getPosition(readerBase);
 			connections = new Object2ObjectOpenHashMap<>();
 		}
 
@@ -339,12 +340,12 @@ public class FileLoader {
 			return 4;
 		}
 
-		private static Position getPosition(MessagePackHelper messagePackHelper) {
-			final long x = messagePackHelper.getLong(KEY_NODE_POSITION_X, 0);
-			final long y = messagePackHelper.getLong(KEY_NODE_POSITION_Y, 0);
-			final long z = messagePackHelper.getLong(KEY_NODE_POSITION_Z, 0);
+		private static <T extends ReaderBase<U, T>, U> Position getPosition(T readerBase) {
+			final long x = readerBase.getLong(KEY_NODE_POSITION_X, 0);
+			final long y = readerBase.getLong(KEY_NODE_POSITION_Y, 0);
+			final long z = readerBase.getLong(KEY_NODE_POSITION_Z, 0);
 			final Position[] newPosition = {new Position(x, y, z)};
-			DataFixer.unpackRailEntry(messagePackHelper, value -> newPosition[0] = value);
+			DataFixer.unpackRailEntry(readerBase, value -> newPosition[0] = value);
 			return newPosition[0];
 		}
 	}

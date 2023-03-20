@@ -1,7 +1,7 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.DyeColor;
 
 import java.io.IOException;
@@ -160,18 +160,18 @@ public class SignalBlocks {
 			rails.add(rail);
 		}
 
-		public SignalBlock(MessagePackHelper messagePackHelper) {
-			super(messagePackHelper);
+		public <T extends ReaderBase<U, T>, U> SignalBlock(T readerBase) {
+			super(readerBase);
 			DyeColor savedColor;
 			try {
-				savedColor = DyeColor.values()[messagePackHelper.getInt(KEY_COLOR, 0)];
+				savedColor = DyeColor.values()[readerBase.getInt(KEY_COLOR, 0)];
 			} catch (Exception e) {
 				e.printStackTrace();
 				savedColor = DyeColor.RED;
 			}
 			color = savedColor;
 
-			messagePackHelper.iterateStringArray(KEY_RAILS, value -> rails.add(UUID.fromString(value)));
+			readerBase.iterateStringArray(KEY_RAILS, value -> rails.add(UUID.fromString(value)));
 		}
 
 		@Override

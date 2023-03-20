@@ -3,7 +3,6 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
@@ -34,11 +33,11 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		timeValue = transportMode.continuousMovement ? 1 : DEFAULT_TIME_VALUE;
 	}
 
-	public SavedRailBase(MessagePackHelper messagePackHelper) {
-		super(messagePackHelper);
+	public <V extends ReaderBase<W, V>, W> SavedRailBase(V readerBase) {
+		super(readerBase);
 
 		final long[] newPositions = {0, 0, 0, 0, 0, 0};
-		DataFixer.unpackSavedRailBase(messagePackHelper, position -> {
+		DataFixer.unpackSavedRailBase(readerBase, position -> {
 			newPositions[0] = position.x;
 			newPositions[1] = position.y;
 			newPositions[2] = position.z;
@@ -47,12 +46,12 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 			newPositions[4] = position.y;
 			newPositions[5] = position.z;
 		});
-		messagePackHelper.unpackLong(KEY_POS_1_X, value -> newPositions[0] = value);
-		messagePackHelper.unpackLong(KEY_POS_1_Y, value -> newPositions[1] = value);
-		messagePackHelper.unpackLong(KEY_POS_1_Z, value -> newPositions[2] = value);
-		messagePackHelper.unpackLong(KEY_POS_2_X, value -> newPositions[3] = value);
-		messagePackHelper.unpackLong(KEY_POS_2_Y, value -> newPositions[4] = value);
-		messagePackHelper.unpackLong(KEY_POS_2_Z, value -> newPositions[5] = value);
+		readerBase.unpackLong(KEY_POS_1_X, value -> newPositions[0] = value);
+		readerBase.unpackLong(KEY_POS_1_Y, value -> newPositions[1] = value);
+		readerBase.unpackLong(KEY_POS_1_Z, value -> newPositions[2] = value);
+		readerBase.unpackLong(KEY_POS_2_X, value -> newPositions[3] = value);
+		readerBase.unpackLong(KEY_POS_2_Y, value -> newPositions[4] = value);
+		readerBase.unpackLong(KEY_POS_2_Z, value -> newPositions[5] = value);
 		final Position position1 = new Position(newPositions[0], newPositions[1], newPositions[2]);
 		final Position position2 = new Position(newPositions[3], newPositions[4], newPositions[5]);
 		positions = createPositions(position1, position2);

@@ -2,7 +2,6 @@ package org.mtr.core.tools;
 
 import org.mtr.core.data.EnumHelper;
 import org.mtr.core.data.Rail;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 
 import java.util.function.Consumer;
@@ -22,13 +21,13 @@ public class DataFixer {
 	private static final int Z_OFFSET = PACKED_Y_LENGTH;
 	private static final int X_OFFSET = PACKED_Y_LENGTH + PACKED_Z_LENGTH;
 
-	public static void unpackSavedRailBase(MessagePackHelper messagePackHelper, Consumer<Position> consumer1, Consumer<Position> consumer2) {
-		messagePackHelper.unpackLong(KEY_POS_1, value -> consumer1.accept(convertCoordinates(value)));
-		messagePackHelper.unpackLong(KEY_POS_2, value -> consumer2.accept(convertCoordinates(value)));
+	public static <T extends ReaderBase<U, T>, U> void unpackSavedRailBase(T readerBase, Consumer<Position> consumer1, Consumer<Position> consumer2) {
+		readerBase.unpackLong(KEY_POS_1, value -> consumer1.accept(convertCoordinates(value)));
+		readerBase.unpackLong(KEY_POS_2, value -> consumer2.accept(convertCoordinates(value)));
 	}
 
-	public static void unpackRailEntry(MessagePackHelper messagePackHelper, Consumer<Position> consumer) {
-		messagePackHelper.unpackLong(KEY_NODE_POS, value -> consumer.accept(convertCoordinates(value)));
+	public static <T extends ReaderBase<U, T>, U> void unpackRailEntry(T readerBase, Consumer<Position> consumer) {
+		readerBase.unpackLong(KEY_NODE_POS, value -> consumer.accept(convertCoordinates(value)));
 	}
 
 	public static Position convertCoordinates(long packedPosition) {
@@ -39,8 +38,8 @@ public class DataFixer {
 		);
 	}
 
-	public static void convertRailType(MessagePackHelper messagePackHelper, HexConsumer<Integer, Rail.Shape, Boolean, Boolean, Boolean, Boolean> consumer) {
-		messagePackHelper.unpackString(KEY_RAIL_TYPE, value -> {
+	public static <T extends ReaderBase<U, T>, U> void convertRailType(T readerBase, HexConsumer<Integer, Rail.Shape, Boolean, Boolean, Boolean, Boolean> consumer) {
+		readerBase.unpackString(KEY_RAIL_TYPE, value -> {
 			final RailType railType = EnumHelper.valueOf(RailType.IRON, value);
 			consumer.accept(
 					railType.speedLimitKilometersPerHour,

@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 
 import java.io.IOException;
@@ -29,10 +28,9 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 		this.transportMode = transportMode;
 	}
 
-	public NameColorDataBase(MessagePackHelper messagePackHelper) {
-		id = messagePackHelper.getLong(KEY_ID, 0);
-		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, messagePackHelper.getString(KEY_TRANSPORT_MODE, ""));
-		updateData(messagePackHelper);
+	public <T extends ReaderBase<U, T>, U> NameColorDataBase(T readerBase) {
+		id = readerBase.getLong(KEY_ID, 0);
+		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, readerBase.getString(KEY_TRANSPORT_MODE, ""));
 	}
 
 	@Override
