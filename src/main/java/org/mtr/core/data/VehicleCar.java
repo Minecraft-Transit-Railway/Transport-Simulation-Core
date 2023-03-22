@@ -76,6 +76,11 @@ public class VehicleCar extends SerializedDataBase {
 		return 7;
 	}
 
+	@Override
+	public String getHexId() {
+		return "";
+	}
+
 	private static <T extends ReaderBase<U, T>, U> DoubleImmutableList getDoorPositions(T readerBase, String key) {
 		final List<Double> tempDoorPositions = new ArrayList<>();
 		readerBase.iterateDoubleArray(key, tempDoorPositions::add);

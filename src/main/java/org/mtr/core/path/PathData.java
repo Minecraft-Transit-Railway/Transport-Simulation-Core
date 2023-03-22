@@ -81,6 +81,11 @@ public class PathData extends SerializedDataBase {
 		return 6;
 	}
 
+	@Override
+	public String getHexId() {
+		return "";
+	}
+
 	public boolean isSameRail(PathData pathData) {
 		return startPosition.equals(pathData.startPosition) && endPosition.equals(pathData.endPosition);
 	}

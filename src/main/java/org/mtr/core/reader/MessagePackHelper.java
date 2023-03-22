@@ -1,18 +1,18 @@
 package org.mtr.core.reader;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.msgpack.core.MessagePacker;
 import org.msgpack.value.Value;
 import org.mtr.core.data.SerializedDataBase;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public final class MessagePackHelper extends ReaderBase<Value, MessagePackHelper> {
 
-	public MessagePackHelper(Map<String, Value> map) {
+	public MessagePackHelper(Object2ObjectArrayMap<String, Value> map) {
 		super(map);
 	}
 

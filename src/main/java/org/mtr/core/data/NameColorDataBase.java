@@ -2,6 +2,7 @@ package org.mtr.core.data;
 
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -50,6 +51,11 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 	@Override
 	public int messagePackLength() {
 		return 4;
+	}
+
+	@Override
+	public String getHexId() {
+		return Utilities.longToPaddedHexString(id);
 	}
 
 	public final boolean isTransportMode(TransportMode transportMode) {

@@ -165,7 +165,7 @@ public class Train extends NameColorDataBase {
 
 	@Override
 	public int messagePackLength() {
-		return super.messagePackLength() + 11;
+		return super.messagePackLength() + 9;
 	}
 
 	@Override

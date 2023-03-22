@@ -329,7 +329,12 @@ public class Rail extends SerializedDataBase {
 
 	@Override
 	public int messagePackLength() {
-		return 18;
+		return 20;
+	}
+
+	@Override
+	public String getHexId() {
+		return "";
 	}
 
 	public Vec3 getPosition(double rawValue) {

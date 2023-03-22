@@ -1,21 +1,21 @@
 package org.mtr.core.reader;
 
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 
-	private final Map<String, T> map;
+	private final Object2ObjectArrayMap<String, T> map;
 
-	public ReaderBase(Map<String, T> map) {
+	public ReaderBase(Object2ObjectArrayMap<String, T> map) {
 		this.map = map;
 	}
 
 	protected ReaderBase(T value) {
-		map = new HashMap<>();
+		map = new Object2ObjectArrayMap<>();
 		iterateMap(value, map::put);
 	}
 
@@ -109,8 +109,8 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 		return unpack(key, value -> value, value -> iterateArray(value, arrayValue -> ifExists.accept(function.apply(arrayValue))));
 	}
 
-	protected final U getChild(String key, Function<Map<String, T>, U> function) {
-		final Map<String, T> newMap = new HashMap<>();
+	protected final U getChild(String key, Function<Object2ObjectArrayMap<String, T>, U> function) {
+		final Object2ObjectArrayMap<String, T> newMap = new Object2ObjectArrayMap<>();
 		unpack(key, value -> value, value -> iterateMap(value, newMap::put));
 		return function.apply(newMap);
 	}

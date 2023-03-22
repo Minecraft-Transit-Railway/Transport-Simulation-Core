@@ -1,9 +1,13 @@
 package org.mtr.core.tools;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.core.Main;
 import org.mtr.core.data.Rail;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public interface Utilities {
 
@@ -47,6 +51,10 @@ public interface Utilities {
 		return (a + b) / 2;
 	}
 
+	static String longToPaddedHexString(long value) {
+		return String.format("%" + (Long.SIZE / 4) + "s", Long.toHexString(value)).replace(' ', '0').toUpperCase(Locale.ENGLISH);
+	}
+
 	static double kilometersPerHourToMetersPerMillisecond(double speedKilometersPerHour) {
 		return speedKilometersPerHour / 3600;
 	}
@@ -81,5 +89,15 @@ public interface Utilities {
 		}
 
 		return (tempValue1 - tempValue2) % totalDegrees;
+	}
+
+	static void awaitTermination(ExecutorService executorService) {
+		try {
+			while (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
+				Main.LOGGER.warning("Termination failed, retrying...");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

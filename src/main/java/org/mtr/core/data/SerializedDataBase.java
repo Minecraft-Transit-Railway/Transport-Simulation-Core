@@ -13,6 +13,8 @@ public abstract class SerializedDataBase {
 
 	public abstract int messagePackLength();
 
+	public abstract String getHexId();
+
 	public void toFullMessagePack(MessagePacker messagePacker) throws IOException {
 		toMessagePack(messagePacker);
 	}

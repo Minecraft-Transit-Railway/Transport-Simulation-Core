@@ -82,6 +82,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		if ((readerBase instanceof MessagePackHelper) && readerBase.iterateReaderArray(KEY_VEHICLE_CARS, vehicleCar -> tempVehicleCars.add(new VehicleCar((MessagePackHelper) vehicleCar)))) {
 			setVehicle(tempVehicleCars);
 		}
+		DataFixer.unpackVehicleCars(readerBase, transportMode, railLength, this::setVehicle);
 
 		readerBase.unpackBoolean(KEY_UNLIMITED_VEHICLES, value -> unlimitedVehicles = transportMode.continuousMovement || value);
 		readerBase.unpackInt(KEY_MAX_VEHICLES, value -> maxVehicles = value);

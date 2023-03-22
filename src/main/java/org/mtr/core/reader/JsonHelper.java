@@ -2,15 +2,14 @@ package org.mtr.core.reader;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public final class JsonHelper extends ReaderBase<JsonElement, JsonHelper> {
 
-	public JsonHelper(Map<String, JsonElement> map) {
+	public JsonHelper(Object2ObjectArrayMap<String, JsonElement> map) {
 		super(map);
 	}
 
@@ -68,7 +67,7 @@ public final class JsonHelper extends ReaderBase<JsonElement, JsonHelper> {
 			return new JsonHelper(JsonParser.parseString(string));
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new JsonHelper(new HashMap<>());
+			return new JsonHelper(new Object2ObjectArrayMap<>());
 		}
 	}
 }
