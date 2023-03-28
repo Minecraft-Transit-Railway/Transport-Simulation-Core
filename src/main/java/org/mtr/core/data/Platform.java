@@ -11,5 +11,6 @@ public class Platform extends SavedRailBase<Platform, Station> {
 
 	public <T extends ReaderBase<U, T>, U> Platform(T readerBase) {
 		super(readerBase);
+		updateData(readerBase);
 	}
 }

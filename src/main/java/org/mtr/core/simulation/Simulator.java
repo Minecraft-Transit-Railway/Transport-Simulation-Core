@@ -42,14 +42,15 @@ public class Simulator implements Utilities {
 		this.millisPerGameDay = millisPerGameDay;
 		this.startingGameDayPercentage = startingGameDayPercentage;
 
+		final long startMillis = System.currentTimeMillis();
 		final Path savePath = rootPath.resolve(dimension);
-		fileLoaderStations = new FileLoader<>(stations, Station::new, savePath.resolve("stations"), false);
-		fileLoaderPlatforms = new FileLoader<>(platforms, Platform::new, savePath.resolve("platforms"), true);
-		fileLoaderSidings = new FileLoader<>(sidings, Siding::new, savePath.resolve("sidings"), true);
-		fileLoaderRoutes = new FileLoader<>(routes, Route::new, savePath.resolve("routes"), false);
-		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath.resolve("depots"), false);
-		fileLoaderLifts = new FileLoader<>(lifts, Lift::new, savePath.resolve("lifts"), true);
-		fileLoaderRailNodes = new FileLoader<>(railNodes, RailNode::new, savePath.resolve("rails"), true);
+		fileLoaderStations = new FileLoader<>(stations, Station::new, savePath, "stations", false);
+		fileLoaderPlatforms = new FileLoader<>(platforms, Platform::new, savePath, "platforms", true);
+		fileLoaderSidings = new FileLoader<>(sidings, Siding::new, savePath, "sidings", true);
+		fileLoaderRoutes = new FileLoader<>(routes, Route::new, savePath, "routes", false);
+		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", false);
+		fileLoaderLifts = new FileLoader<>(lifts, Lift::new, savePath, "lifts", true);
+		fileLoaderRailNodes = new FileLoader<>(railNodes, RailNode::new, savePath, "rails", true);
 
 		dataCache.sync();
 		stations.forEach(Station::init);
@@ -59,7 +60,7 @@ public class Simulator implements Utilities {
 		depots.forEach(Depot::init);
 		lifts.forEach(Lift::init);
 
-		Main.LOGGER.info("Minecraft Transit Railway data successfully loaded for " + dimension);
+		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}
 
 	public void tick() {
@@ -67,13 +68,7 @@ public class Simulator implements Utilities {
 		currentMillis = System.currentTimeMillis();
 
 		if (autoSave) {
-			save(fileLoaderStations, true);
-			save(fileLoaderPlatforms, true);
-			save(fileLoaderSidings, true);
-			save(fileLoaderRoutes, true);
-			save(fileLoaderDepots, true);
-			save(fileLoaderLifts, true);
-			save(fileLoaderRailNodes, true);
+			save(true);
 			autoSave = false;
 		}
 	}
@@ -83,13 +78,7 @@ public class Simulator implements Utilities {
 	}
 
 	public void stop() {
-		save(fileLoaderStations, false);
-		save(fileLoaderPlatforms, false);
-		save(fileLoaderSidings, false);
-		save(fileLoaderRoutes, false);
-		save(fileLoaderDepots, false);
-		save(fileLoaderLifts, false);
-		save(fileLoaderRailNodes, false);
+		save(false);
 	}
 
 	public boolean matchMillis(long millis) {
@@ -98,15 +87,25 @@ public class Simulator implements Utilities {
 		return previousDifference > 0 && previousDifference < MILLIS_PER_DAY / 2 && currentDifference < MILLIS_PER_DAY / 2;
 	}
 
+	private void save(boolean useReducedHash) {
+		final long startMillis = System.currentTimeMillis();
+		save(fileLoaderStations, useReducedHash);
+		save(fileLoaderPlatforms, useReducedHash);
+		save(fileLoaderSidings, useReducedHash);
+		save(fileLoaderRoutes, useReducedHash);
+		save(fileLoaderDepots, useReducedHash);
+		save(fileLoaderLifts, useReducedHash);
+		save(fileLoaderRailNodes, useReducedHash);
+		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
+	}
+
 	private <T extends SerializedDataBase> void save(FileLoader<T> fileLoader, boolean useReducedHash) {
-		final long autoSaveStartMillis = System.currentTimeMillis();
 		final IntIntImmutablePair saveCounts = fileLoader.save(useReducedHash);
-		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - autoSaveStartMillis) / 1000F));
 		if (saveCounts.leftInt() > 0) {
-			Main.LOGGER.info("- Changed: " + saveCounts.leftInt());
+			Main.LOGGER.info(String.format("- Changed %s: %s", fileLoader.key, saveCounts.leftInt()));
 		}
 		if (saveCounts.rightInt() > 0) {
-			Main.LOGGER.info("- Deleted: " + saveCounts.rightInt());
+			Main.LOGGER.info(String.format("- Deleted %s: %s", fileLoader.key, saveCounts.rightInt()));
 		}
 	}
 }

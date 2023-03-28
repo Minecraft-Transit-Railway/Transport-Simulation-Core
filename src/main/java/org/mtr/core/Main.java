@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 
 public class Main {
 
-	public static final Logger LOGGER = Logger.getLogger("Transport-Simulation-Core");
+	public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	public static final long START_MILLIS = System.currentTimeMillis();
 
 	public static void main(String[] args) {
@@ -30,6 +30,7 @@ public class Main {
 			final int webserverPort = Integer.parseInt(args[i++]);
 			final ObjectArrayList<Simulator> simulators = new ObjectArrayList<>();
 
+			LOGGER.info("Loading files...");
 			while (i < args.length) {
 				simulators.add(new Simulator(args[i++], rootPath, millisPerGameDay, startingGameDayPercentage));
 			}

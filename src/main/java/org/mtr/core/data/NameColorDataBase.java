@@ -64,8 +64,12 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 
 	protected abstract boolean hasTransportMode();
 
+	private String combineNameColorId() {
+		return (name + color + id).toLowerCase(Locale.ENGLISH);
+	}
+
 	@Override
 	public int compareTo(NameColorDataBase compare) {
-		return (name.toLowerCase(Locale.ENGLISH) + color).compareTo((compare.name + compare.color).toLowerCase(Locale.ENGLISH));
+		return combineNameColorId().compareTo(compare.combineNameColorId());
 	}
 }
