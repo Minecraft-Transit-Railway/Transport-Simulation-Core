@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
@@ -22,6 +23,7 @@ public class DataCache {
 	public final Long2ObjectOpenHashMap<Depot> depotIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Lift> liftsIdMap = new Long2ObjectOpenHashMap<>();
 
+	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionToRailConnections = new Object2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Depot> routeIdToOneDepot = new Long2ObjectOpenHashMap<>();
 	public final Map<Station, Set<Station>> stationIdToConnectingStations = new HashMap<>();
 
@@ -39,6 +41,9 @@ public class DataCache {
 			mapIds(routeIdMap, simulator.routes);
 			mapIds(depotIdMap, simulator.depots);
 			mapIds(liftsIdMap, simulator.lifts);
+
+			positionToRailConnections.clear();
+			simulator.railNodes.forEach(railNode -> positionToRailConnections.put(railNode.position, railNode.connections));
 
 			routeIdToOneDepot.clear();
 			simulator.routes.forEach(route -> route.platformIds.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId)));

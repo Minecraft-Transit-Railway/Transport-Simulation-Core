@@ -1,14 +1,15 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -25,6 +26,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	private double maxManualSpeed;
 	private double acceleration = Train.ACCELERATION_DEFAULT;
 
+	public final Simulator simulator;
 	public final double railLength;
 	private final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Depot, Siding, Station, Platform>> sidingPathFinderSidingToMainRoute = new ObjectArrayList<>();
@@ -48,18 +50,20 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	private static final String KEY_MAX_MANUAL_SPEED = "max_manual_speed_meters_per_millisecond";
 	private static final String KEY_ACCELERATION = "acceleration";
 
-	public Siding(long id, TransportMode transportMode, Position pos1, Position pos2, double railLength) {
+	public Siding(Simulator simulator, long id, TransportMode transportMode, Position pos1, Position pos2, double railLength) {
 		super(id, transportMode, pos1, pos2);
 
+		this.simulator = simulator;
 		this.railLength = getRailLength(railLength);
 		unlimitedVehicles = transportMode.continuousMovement;
 		acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.ACCELERATION_DEFAULT;
 		vehicleMessagePackHelpers = ObjectImmutableList.of();
 	}
 
-	public <T extends ReaderBase<U, T>, U> Siding(T readerBase) {
+	public <T extends ReaderBase<U, T>, U> Siding(T readerBase, Simulator simulator) {
 		super(readerBase);
 
+		this.simulator = simulator;
 		railLength = getRailLength(readerBase.getDouble(KEY_RAIL_LENGTH, 0));
 		readerBase.iterateReaderArray(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSection -> pathSidingToMainRoute.add(new PathData(pathSection)));
 		readerBase.iterateReaderArray(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathSection -> pathMainRouteToSiding.add(new PathData(pathSection)));
@@ -139,7 +143,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		return acceleration;
 	}
 
-	public void generateRoute(int successfulSegmentsMain, Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, Platform firstPlatform, Platform lastPlatform, boolean repeatInfinitely, int cruisingAltitude) {
+	public void generateRoute(Platform firstPlatform, Platform lastPlatform, int cruisingAltitude) {
 		if (area == null) {
 			vehicles.clear();
 		}
@@ -147,22 +151,29 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		pathSidingToMainRoute.clear();
 		pathMainRouteToSiding.clear();
 		sidingPathFinderSidingToMainRoute.clear();
-		sidingPathFinderSidingToMainRoute.add(new SidingPathFinder<>(rails, this, firstPlatform, 0));
+		sidingPathFinderSidingToMainRoute.add(new SidingPathFinder<>(simulator.dataCache, this, firstPlatform, -1));
 		sidingPathFinderMainRouteToSiding.clear();
-		if (!repeatInfinitely) {
-			sidingPathFinderMainRouteToSiding.add(new SidingPathFinder<>(rails, lastPlatform, this, successfulSegmentsMain + 1));
+		if (lastPlatform != null) {
+			sidingPathFinderMainRouteToSiding.add(new SidingPathFinder<>(simulator.dataCache, lastPlatform, this, -1));
 		}
 	}
 
-	public void tick(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
-		SidingPathFinder.findPathTick(rails, pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, stopIndexSidingToMainRoute -> {
-			SidingPathFinder.addPathData(rails, pathSidingToMainRoute, true, this, pathSidingToMainRoute, false, -1);
-			finishGeneratingPath(rails);
+	public void tick() {
+		SidingPathFinder.findPathTick(simulator.dataCache, pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, () -> {
+			// start at this siding fully
+			SidingPathFinder.addPathData(simulator.dataCache, pathSidingToMainRoute, true, this, pathSidingToMainRoute, false, -1);
+			finishGeneratingPath();
+		}, () -> {
+			Main.LOGGER.info(String.format("Path not found from %s siding %s to main route", getDepotName(), name));
+			finishGeneratingPath();
 		});
-		SidingPathFinder.findPathTick(rails, pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, stopIndexMainRouteToSiding -> finishGeneratingPath(rails));
+		SidingPathFinder.findPathTick(simulator.dataCache, pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, this::finishGeneratingPath, () -> {
+			Main.LOGGER.info(String.format("Path not found from main route to %s siding %s", getDepotName(), name));
+			finishGeneratingPath();
+		});
 	}
 
-	public void simulateTrain(float ticksElapsed, DataCache dataCache, List<Map<UUID, Long>> trainPositions, SignalBlocks signalBlocks, Map<Long, List<ScheduleEntry>> schedulesForPlatform, Map<Long, Map<Position, TrainDelay>> trainDelays) {
+	public void simulateTrain(long millisElapsed) {
 		if (area == null) {
 			return;
 		}
@@ -173,7 +184,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		final Set<Long> railProgressSet = new HashSet<>();
 		final Set<Train> trainsToRemove = new HashSet<>();
 		for (final Train train : vehicles) {
-			train.simulateTrain(ticksElapsed, area);
+			train.simulateTrain(millisElapsed, area);
 
 			if (train.closeToDepot()) {
 				spawnTrain = false;
@@ -235,6 +246,10 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		return area == null ? new ObjectArrayList<>() : area.path;
 	}
 
+	private String getDepotName() {
+		return area == null ? "" : area.name;
+	}
+
 	private void setVehicle(ObjectArrayList<VehicleCar> newVehicleCars) {
 		vehicleCars.clear();
 		int tempVehicleLength = 0;
@@ -248,24 +263,27 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		totalVehicleLength = tempVehicleLength;
 	}
 
-	private void finishGeneratingPath(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
+	private void finishGeneratingPath() {
 		if (sidingPathFinderSidingToMainRoute.isEmpty() && sidingPathFinderMainRouteToSiding.isEmpty()) {
-			if (pathSidingToMainRoute.isEmpty() || pathMainRouteToSiding.isEmpty()) {
-				generateDefaultPath(rails);
+			vehicles.clear();
+			if (pathSidingToMainRoute.isEmpty()) {
+				generateDefaultPath();
+			} else {
+				Main.LOGGER.info(String.format("Path successfully generated for %s siding %s", getDepotName(), name));
 			}
 			generateDistances();
 		}
 	}
 
-	private void generateDefaultPath(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
-		vehicles.clear();
+	private void generateDefaultPath() {
 		pathSidingToMainRoute.clear();
 		pathMainRouteToSiding.clear();
 
 		final Position position1 = positions.left();
 		final Position position2 = positions.right();
-		if (Utilities.containsRail(rails, position1, position2)) {
-			pathSidingToMainRoute.add(new PathData(rails.get(position1).get(position2), id, 0, position1, position2, -1));
+		final Rail rail = DataCache.tryGet(simulator.dataCache.positionToRailConnections, position1, position2);
+		if (rail != null) {
+			pathSidingToMainRoute.add(new PathData(rail, -1, position1, position2));
 		}
 
 		vehicles.add(new Train(

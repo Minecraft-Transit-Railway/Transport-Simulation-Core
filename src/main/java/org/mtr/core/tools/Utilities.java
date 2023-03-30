@@ -1,8 +1,6 @@
 package org.mtr.core.tools;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.core.Main;
-import org.mtr.core.data.Rail;
 
 import java.util.List;
 import java.util.Locale;
@@ -71,10 +69,6 @@ public interface Utilities {
 			result = collection.get((index < 0 ? collection.size() : 0) + index);
 		}
 		return result == null ? defaultValue : result;
-	}
-
-	static boolean containsRail(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails, Position pos1, Position pos2) {
-		return rails.containsKey(pos1) && rails.get(pos1).containsKey(pos2);
 	}
 
 	static long circularDifference(long value1, long value2, long totalDegrees) {

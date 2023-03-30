@@ -19,6 +19,7 @@ public class Rail extends SerializedDataBase {
 	public final boolean canTurnBack;
 	public final boolean canHaveSignal;
 	public final TransportMode transportMode;
+	public final boolean validRail;
 	private final double h1, k1, r1, tStart1, tEnd1;
 	private final double h2, k2, r2, tStart2, tEnd2;
 	private final long yStart, yEnd;
@@ -96,6 +97,7 @@ public class Rail extends SerializedDataBase {
 		this.canTurnBack = canTurnBack;
 		this.canHaveSignal = canHaveSignal;
 		this.transportMode = transportMode;
+		validRail = true;
 		yStart = posStart.y;
 		yEnd = posEnd.y;
 
@@ -275,7 +277,7 @@ public class Rail extends SerializedDataBase {
 		final boolean[] tempCanAccelerate = {readerBase.getBoolean(KEY_CAN_ACCELERATE, true)};
 		final boolean[] tempCanTurnBack = {readerBase.getBoolean(KEY_CAN_TURN_BACK, false)};
 		final boolean[] tempCanHaveSignal = {readerBase.getBoolean(KEY_CAN_HAVE_SIGNAL, true)};
-		DataFixer.convertRailType(readerBase, (speedLimitKilometersPerHour, shape, hasSavedRail, canAccelerate, canTurnBack, canHaveSignal) -> {
+		validRail = DataFixer.convertRailType(readerBase, (speedLimitKilometersPerHour, shape, hasSavedRail, canAccelerate, canTurnBack, canHaveSignal) -> {
 			tempSpeedLimitKilometersPerHour[0] = speedLimitKilometersPerHour;
 			tempShapeStart[0] = shape;
 			tempShapeEnd[0] = shape;

@@ -1,15 +1,14 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
 import org.mtr.core.path.SidingPathFinder;
+import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
@@ -19,7 +18,6 @@ import java.util.List;
 
 public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 
-	public int pathGenerationSuccessfulSegments;
 	public long lastDeployedMillis;
 	public boolean useRealTime;
 	public boolean repeatInfinitely;
@@ -42,6 +40,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	private static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
 
 	private static final String KEY_ROUTE_IDS = "route_ids";
+	private static final String KEY_PATH = "path";
 	private static final String KEY_USE_REAL_TIME = "use_real_time";
 	private static final String KEY_FREQUENCIES = "frequencies";
 	private static final String KEY_DEPARTURES = "departures";
@@ -61,6 +60,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		super.updateData(readerBase);
 
 		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeIds::add);
+		readerBase.iterateReaderArray(KEY_PATH, pathSection -> path.add(new PathData(pathSection)));
 		readerBase.unpackBoolean(KEY_USE_REAL_TIME, value -> useRealTime = value);
 
 		final List<Integer> frequenciesArray = new ArrayList<>();
@@ -87,6 +87,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			messagePacker.packLong(routeId);
 		}
 
+		MessagePackHelper.writeMessagePackDataset(messagePacker, path, KEY_PATH);
 		messagePacker.packString(KEY_USE_REAL_TIME).packBoolean(useRealTime);
 		messagePacker.packString(KEY_REPEAT_INFINITELY).packBoolean(repeatInfinitely);
 		messagePacker.packString(KEY_CRUISING_ALTITUDE).packInt(cruisingAltitude);
@@ -125,43 +126,47 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		return true;
 	}
 
-	public void generateMainRoute(DataCache dataCache, Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
-		path.clear();
-		sidingPathFinders.clear();
+	public void generateMainRoute() {
+		if (savedRails.isEmpty()) {
+			Main.LOGGER.info(String.format("No sidings in %s", name));
+		} else {
+			Main.LOGGER.info(String.format("Starting path generation for %s...", name));
+			path.clear();
+			platformsInRoute.clear();
+			sidingPathFinders.clear();
 
-		routeIds.forEach(routeId -> {
-			final Route route = dataCache.routeIdMap.get(routeId.longValue());
-			if (route != null) {
-				route.platformIds.forEach(platformId -> {
-					final Platform platform = dataCache.platformIdMap.get(platformId.platformId);
-					if (platform != null && (platformsInRoute.isEmpty() || platform.id != Utilities.getElement(platformsInRoute, -1).id)) {
-						platformsInRoute.add(platform);
-					}
-				});
+			routeIds.forEach(routeId -> {
+				final Route route = simulator.dataCache.routeIdMap.get(routeId.longValue());
+				if (route != null) {
+					route.platformIds.forEach(platformId -> {
+						final Platform platform = simulator.dataCache.platformIdMap.get(platformId.platformId);
+						if (platform != null && (platformsInRoute.isEmpty() || platform.id != Utilities.getElement(platformsInRoute, -1).id)) {
+							platformsInRoute.add(platform);
+						}
+					});
+				}
+			});
+
+			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
+				sidingPathFinders.add(new SidingPathFinder<>(simulator.dataCache, platformsInRoute.get(i), platformsInRoute.get(i + 1), i));
 			}
-		});
-
-		for (int i = 0; i < platformsInRoute.size() - 1; i++) {
-			sidingPathFinders.add(new SidingPathFinder<>(rails, platformsInRoute.get(i), platformsInRoute.get(i + 1), i + 1));
 		}
 	}
 
-	public void tick(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> rails) {
-		SidingPathFinder.findPathTick(rails, path, sidingPathFinders, stopIndex -> {
-			pathGenerationSuccessfulSegments = stopIndex;
-
+	public void tick() {
+		SidingPathFinder.findPathTick(simulator.dataCache, path, sidingPathFinders, () -> {
 			if (repeatInfinitely) {
 				final PathData lastPathData = path.remove(path.size() - 1);
-				path.add(new PathData(lastPathData.rail, lastPathData.savedRailBaseId, lastPathData.dwellTimeMillis, lastPathData.startPosition, lastPathData.endPosition, 1));
-				if (!lastPathData.endPosition.equals(Utilities.getElement(path, 0).startPosition)) {
-					SidingPathFinder.addPathData(rails, path, false, Utilities.getElement(platformsInRoute, 0), path, false, 1);
+				path.add(new PathData(lastPathData.rail, lastPathData.savedRailBaseId, lastPathData.dwellTimeMillis, 0, lastPathData.startPosition, lastPathData.endPosition));
+				if (SidingPathFinder.needsReverse(path, path)) {
+					SidingPathFinder.addPathData(simulator.dataCache, path, false, Utilities.getElement(platformsInRoute, 0), path, false, 0);
 				}
 			}
 
-			if (sidingPathFinders.isEmpty() && !platformsInRoute.isEmpty()) {
-				savedRails.forEach(siding -> siding.generateRoute(pathGenerationSuccessfulSegments, rails, Utilities.getElement(platformsInRoute, 0), Utilities.getElement(platformsInRoute, -1), repeatInfinitely, cruisingAltitude));
+			if (!platformsInRoute.isEmpty()) {
+				savedRails.forEach(siding -> siding.generateRoute(Utilities.getElement(platformsInRoute, 0), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1), cruisingAltitude));
 			}
-		});
+		}, () -> Main.LOGGER.info(String.format("Path not found for %s", name)));
 
 		if (!deployableSidings.isEmpty() && actualDepartures.stream().anyMatch(simulator::matchMillis)) {
 			final ObjectArrayList<Siding> sidingsInDepot = new ObjectArrayList<>(savedRails);

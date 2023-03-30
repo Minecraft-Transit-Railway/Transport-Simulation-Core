@@ -1,5 +1,7 @@
 package org.mtr.core.tools;
 
+import java.util.Objects;
+
 public class Position implements Comparable<Position> {
 
 	public final long x;
@@ -31,6 +33,11 @@ public class Position implements Comparable<Position> {
 		} else {
 			return super.equals(obj);
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(x, y, z);
 	}
 
 	@Override

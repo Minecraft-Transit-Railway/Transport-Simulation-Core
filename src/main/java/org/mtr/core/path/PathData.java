@@ -29,13 +29,17 @@ public class PathData extends SerializedDataBase {
 	private static final String KEY_END_POSITION_Y = "end_pos_y";
 	private static final String KEY_END_POSITION_Z = "end_pos_z";
 
-	public PathData(Rail rail, long savedRailBaseId, int dwellTimeMillis, Position startPosition, Position endPosition, int stopIndex) {
+	public PathData(Rail rail, int stopIndex, Position startPosition, Position endPosition) {
+		this(rail, 0, 0, stopIndex, startPosition, endPosition);
+	}
+
+	public PathData(Rail rail, long savedRailBaseId, int dwellTimeMillis, int stopIndex, Position startPosition, Position endPosition) {
 		this.rail = rail;
 		this.savedRailBaseId = savedRailBaseId;
 		this.dwellTimeMillis = dwellTimeMillis;
+		this.stopIndex = stopIndex;
 		this.startPosition = startPosition;
 		this.endPosition = endPosition;
-		this.stopIndex = stopIndex;
 	}
 
 	public <T extends ReaderBase<U, T>, U> PathData(T readerBase) {
@@ -78,7 +82,7 @@ public class PathData extends SerializedDataBase {
 
 	@Override
 	public int messagePackLength() {
-		return 6;
+		return 10;
 	}
 
 	@Override

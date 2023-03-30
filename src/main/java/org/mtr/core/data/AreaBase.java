@@ -41,6 +41,17 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 		readerBase.unpackLong(KEY_Z_MIN, value -> cornerZMin = value);
 		readerBase.unpackLong(KEY_X_MAX, value -> cornerXMax = value);
 		readerBase.unpackLong(KEY_Z_MAX, value -> cornerZMax = value);
+
+		if (cornerXMax < cornerXMin) {
+			long temp = cornerXMax;
+			cornerXMax = cornerXMin;
+			cornerXMin = temp;
+		}
+		if (cornerZMax < cornerZMin) {
+			long temp = cornerZMax;
+			cornerZMax = cornerZMin;
+			cornerZMin = temp;
+		}
 	}
 
 	@Override

@@ -8,12 +8,14 @@ import org.mtr.core.data.*;
 import org.mtr.core.tools.Utilities;
 
 import java.nio.file.Path;
+import java.util.Locale;
 
 public class Simulator implements Utilities {
 
 	private long lastMillis = Main.START_MILLIS;
 	private long currentMillis = Main.START_MILLIS;
 	private boolean autoSave = false;
+	private String generateKey = null;
 
 	public final int millisPerGameDay;
 	public final float startingGameDayPercentage;
@@ -46,7 +48,7 @@ public class Simulator implements Utilities {
 		final Path savePath = rootPath.resolve(dimension);
 		fileLoaderStations = new FileLoader<>(stations, Station::new, savePath, "stations", false);
 		fileLoaderPlatforms = new FileLoader<>(platforms, Platform::new, savePath, "platforms", true);
-		fileLoaderSidings = new FileLoader<>(sidings, Siding::new, savePath, "sidings", true);
+		fileLoaderSidings = new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings", true);
 		fileLoaderRoutes = new FileLoader<>(routes, Route::new, savePath, "routes", false);
 		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", false);
 		fileLoaderLifts = new FileLoader<>(lifts, Lift::new, savePath, "lifts", true);
@@ -64,12 +66,26 @@ public class Simulator implements Utilities {
 	}
 
 	public void tick() {
-		lastMillis = currentMillis;
-		currentMillis = System.currentTimeMillis();
+		try {
+			lastMillis = currentMillis;
+			currentMillis = System.currentTimeMillis();
 
-		if (autoSave) {
-			save(true);
-			autoSave = false;
+			depots.forEach(Depot::tick);
+			sidings.forEach(Siding::tick);
+			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis));
+
+			if (autoSave) {
+				save(true);
+				autoSave = false;
+			}
+
+			if (generateKey != null) {
+				depots.stream().filter(depot -> depot.name.toLowerCase(Locale.ENGLISH).contains(generateKey)).forEach(Depot::generateMainRoute);
+				generateKey = null;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
 		}
 	}
 
@@ -79,6 +95,10 @@ public class Simulator implements Utilities {
 
 	public void stop() {
 		save(false);
+	}
+
+	public void generatePath(String generateKey) {
+		this.generateKey = generateKey.toLowerCase(Locale.ENGLISH).trim();
 	}
 
 	public boolean matchMillis(long millis) {

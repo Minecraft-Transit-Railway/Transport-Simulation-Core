@@ -49,8 +49,8 @@ public class Main {
 
 		while (true) {
 			try {
-				final String input = new BufferedReader(new InputStreamReader(System.in)).readLine().trim().toLowerCase(Locale.ENGLISH).replaceAll("[^a-z]", "");
-				switch (input) {
+				final String[] input = new BufferedReader(new InputStreamReader(System.in)).readLine().trim().toLowerCase(Locale.ENGLISH).replaceAll("[^a-z ]", "").split(" ");
+				switch (input[0]) {
 					case "exit":
 					case "stop":
 					case "quit":
@@ -64,8 +64,16 @@ public class Main {
 						LOGGER.info("Starting quick save...");
 						simulators.forEach(Simulator::save);
 						break;
+					case "generate":
+					case "regenerate":
+						final StringBuilder generateKey = new StringBuilder();
+						for (int i = 1; i < input.length; i++) {
+							generateKey.append(input[i]).append(" ");
+						}
+						simulators.forEach(simulator -> simulator.generatePath(generateKey.toString()));
+						break;
 					default:
-						LOGGER.info(String.format("Unknown command \"%s\"", input));
+						LOGGER.info(String.format("Unknown command \"%s\"", input[0]));
 						break;
 				}
 			} catch (Exception e) {

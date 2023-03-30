@@ -16,6 +16,7 @@ public class DataFixer {
 	private static final String KEY_POS_2 = "pos_2";
 	private static final String KEY_NODE_POS = "node_pos";
 	private static final String KEY_RAIL_TYPE = "rail_type";
+	private static final String KEY_DWELL_TIME = "dwell_time";
 	private static final String KEY_MAX_MANUAL_SPEED = "max_manual_speed";
 	private static final String KEY_ACCELERATION_CONSTANT = "acceleration_constant";
 	private static final String KEY_BASE_TRAIN_TYPE = "train_type";
@@ -44,9 +45,11 @@ public class DataFixer {
 		);
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void convertRailType(T readerBase, HexConsumer<Integer, Rail.Shape, Boolean, Boolean, Boolean, Boolean> consumer) {
+	public static <T extends ReaderBase<U, T>, U> boolean convertRailType(T readerBase, HexConsumer<Integer, Rail.Shape, Boolean, Boolean, Boolean, Boolean> consumer) {
+		final boolean[] validRail = {true};
 		readerBase.unpackString(KEY_RAIL_TYPE, value -> {
 			final RailType railType = EnumHelper.valueOf(RailType.IRON, value);
+			validRail[0] = railType != RailType.NONE;
 			consumer.accept(
 					railType.speedLimitKilometersPerHour,
 					railType.railSlopeStyle == RailSlopeStyle.CURVE ? Rail.Shape.CURVE : Rail.Shape.STRAIGHT,
@@ -56,6 +59,11 @@ public class DataFixer {
 					railType.canHaveSignal
 			);
 		});
+		return validRail[0];
+	}
+
+	public static <T extends ReaderBase<U, T>, U> void unpackDwellTime(T readerBase, Consumer<Integer> consumer) {
+		readerBase.unpackInt(KEY_DWELL_TIME, value -> consumer.accept(value * 500));
 	}
 
 	public static <T extends ReaderBase<U, T>, U> void unpackMaxManualSpeed(T readerBase, Consumer<Double> consumer) {

@@ -79,9 +79,11 @@ public class Train extends NameColorDataBase {
 		this.totalVehicleLength = totalVehicleLength;
 
 		final List<PathData> tempPath = new ArrayList<>();
-		tempPath.addAll(pathSidingToMainRoute);
-		tempPath.addAll(pathMainRoute);
-		tempPath.addAll(pathMainRouteToSiding);
+		if (!pathSidingToMainRoute.isEmpty() && !pathMainRoute.isEmpty()) {
+			tempPath.addAll(pathSidingToMainRoute);
+			tempPath.addAll(pathMainRoute);
+			tempPath.addAll(pathMainRouteToSiding);
+		}
 		path = new ObjectImmutableList<>(tempPath);
 
 		this.distances = new DoubleImmutableList(distances);
@@ -262,7 +264,7 @@ public class Train extends NameColorDataBase {
 		canDeploy = true;
 	}
 
-	protected final void simulateTrain(double ticksElapsed, Depot depot) {
+	protected final void simulateTrain(long millisElapsed, Depot depot) {
 		try {
 			if (nextStoppingIndex >= path.size()) {
 				return;
@@ -284,7 +286,7 @@ public class Train extends NameColorDataBase {
 					startUp();
 				}
 			} else {
-				final double newAcceleration = acceleration * ticksElapsed;
+				final double newAcceleration = acceleration * millisElapsed;
 
 				if (railProgress >= distances.getDouble(distances.size() - 1) - (railLength - totalVehicleLength) / 2) {
 					isOnRoute = false;
@@ -310,8 +312,8 @@ public class Train extends NameColorDataBase {
 								}
 							}
 
-							if (elapsedDwellMillis < totalDwellTicks - DOOR_MOVE_TIME - DOOR_DELAY - ticksElapsed || !railBlocked) {
-								elapsedDwellMillis += ticksElapsed;
+							if (elapsedDwellMillis < totalDwellTicks - DOOR_MOVE_TIME - DOOR_DELAY - millisElapsed || !railBlocked) {
+								elapsedDwellMillis += millisElapsed;
 							}
 
 							tempDoorOpen = openDoors();
@@ -333,7 +335,7 @@ public class Train extends NameColorDataBase {
 
 						final double stoppingDistance = distances.getDouble(nextStoppingIndex) - railProgress;
 						if (!transportMode.continuousMovement && stoppingDistance < 0.5 * speed * speed / acceleration) {
-							speed = stoppingDistance <= 0 ? Train.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * ticksElapsed, Train.ACCELERATION_DEFAULT);
+							speed = stoppingDistance <= 0 ? Train.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Train.ACCELERATION_DEFAULT);
 							manualNotch = -3;
 						} else {
 							if (isCurrentlyManual) {
@@ -357,14 +359,14 @@ public class Train extends NameColorDataBase {
 						tempDoorOpen = transportMode.continuousMovement && openDoors();
 					}
 
-					railProgress += speed * ticksElapsed;
+					railProgress += speed * millisElapsed;
 					if (!transportMode.continuousMovement && railProgress > distances.getDouble(nextStoppingIndex)) {
 						railProgress = distances.getDouble(nextStoppingIndex);
 						speed = 0;
 						manualNotch = -2;
 					}
 
-					tempDoorValue = Utilities.clamp(doorValue + ticksElapsed * (doorTarget ? 1 : -1) / DOOR_MOVE_TIME, 0, 1);
+					tempDoorValue = Utilities.clamp(doorValue + (double) (millisElapsed * (doorTarget ? 1 : -1)) / DOOR_MOVE_TIME, 0, 1);
 				}
 			}
 
