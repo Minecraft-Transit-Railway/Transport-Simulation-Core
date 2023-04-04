@@ -72,17 +72,18 @@ public interface Utilities {
 	}
 
 	static long circularDifference(long value1, long value2, long totalDegrees) {
-		long tempValue2 = value2;
-		while (tempValue2 < 0) {
-			tempValue2 += totalDegrees;
+		long tempValue1 = value1;
+		final long halfTotalDegrees = totalDegrees / 2;
+
+		while (tempValue1 - halfTotalDegrees > value2) {
+			tempValue1 -= totalDegrees;
 		}
 
-		long tempValue1 = value1;
-		while (tempValue1 < tempValue2) {
+		while (tempValue1 + halfTotalDegrees <= value2) {
 			tempValue1 += totalDegrees;
 		}
 
-		return (tempValue1 - tempValue2) % totalDegrees;
+		return tempValue1 - value2;
 	}
 
 	static void awaitTermination(ExecutorService executorService) {

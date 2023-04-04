@@ -1,10 +1,12 @@
 package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
+import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
 import java.nio.file.Path;
@@ -71,8 +73,9 @@ public class Simulator implements Utilities {
 			currentMillis = System.currentTimeMillis();
 
 			depots.forEach(Depot::tick);
-			sidings.forEach(Siding::tick);
-			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis));
+			final Object2LongAVLTreeMap<Position> vehiclePositions = new Object2LongAVLTreeMap<>();
+			sidings.forEach(siding -> siding.tick(vehiclePositions));
+			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions));
 
 			if (autoSave) {
 				save(true);
@@ -101,10 +104,12 @@ public class Simulator implements Utilities {
 		this.generateKey = generateKey.toLowerCase(Locale.ENGLISH).trim();
 	}
 
-	public boolean matchMillis(long millis) {
-		final long previousDifference = Utilities.circularDifference(millis, lastMillis, MILLIS_PER_DAY);
-		final long currentDifference = Utilities.circularDifference(currentMillis, millis, MILLIS_PER_DAY);
-		return previousDifference > 0 && previousDifference < MILLIS_PER_DAY / 2 && currentDifference < MILLIS_PER_DAY / 2;
+	public int matchMillis(long millis) {
+		if (Utilities.circularDifference(currentMillis % MILLIS_PER_DAY, millis, MILLIS_PER_DAY) < 0) {
+			return 1;
+		} else {
+			return Utilities.circularDifference(millis, lastMillis % MILLIS_PER_DAY, MILLIS_PER_DAY) > 0 ? 0 : -1;
+		}
 	}
 
 	private void save(boolean useReducedHash) {

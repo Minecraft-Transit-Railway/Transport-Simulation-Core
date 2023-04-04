@@ -1,6 +1,8 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
@@ -12,9 +14,7 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 
@@ -23,18 +23,18 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public boolean repeatInfinitely;
 	public int cruisingAltitude = DEFAULT_CRUISING_ALTITUDE;
 	private int deployIndex;
+	private int departureSearchIndex;
 
-	private final Simulator simulator;
-
-	public final List<Long> routeIds = new ArrayList<>();
-	public final List<Integer> departures = new ArrayList<>();
-	public final List<Integer> actualDepartures = new ArrayList<>();
+	public final LongArrayList routeIds = new LongArrayList();
 	public final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 
+	private final Simulator simulator;
+	private final IntArrayList departures = new IntArrayList();
+	private final IntArrayList actualDepartures = new IntArrayList();
 	private final int[] frequencies = new int[HOURS_PER_DAY];
 	private final Long2ObjectAVLTreeMap<Train> deployableSidings = new Long2ObjectAVLTreeMap<>();
-	private final List<Platform> platformsInRoute = new ArrayList<>();
-	private final List<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ArrayList<>();
+	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
+	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
 
 	public static final int DEFAULT_CRUISING_ALTITUDE = 256;
 	private static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
@@ -59,17 +59,17 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
 		super.updateData(readerBase);
 
-		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeIds::add);
+		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeId -> routeIds.add(routeId.longValue()));
 		readerBase.iterateReaderArray(KEY_PATH, pathSection -> path.add(new PathData(pathSection)));
 		readerBase.unpackBoolean(KEY_USE_REAL_TIME, value -> useRealTime = value);
 
-		final List<Integer> frequenciesArray = new ArrayList<>();
-		readerBase.iterateIntArray(KEY_FREQUENCIES, frequenciesArray::add);
+		final IntArrayList frequenciesArray = new IntArrayList();
+		readerBase.iterateIntArray(KEY_FREQUENCIES, frequency -> frequenciesArray.add(frequency.intValue()));
 		for (int i = 0; i < Math.min(frequenciesArray.size(), HOURS_PER_DAY); i++) {
-			frequencies[i] = frequenciesArray.get(i);
+			frequencies[i] = frequenciesArray.getInt(i);
 		}
 
-		readerBase.iterateIntArray(KEY_DEPARTURES, departures::add);
+		readerBase.iterateIntArray(KEY_DEPARTURES, departure -> departures.add(departure.intValue()));
 		readerBase.unpackInt(KEY_DEPLOY_INDEX, value -> deployIndex = value);
 		readerBase.unpackBoolean(KEY_REPEAT_INFINITELY, value -> repeatInfinitely = value);
 		readerBase.unpackInt(KEY_CRUISING_ALTITUDE, value -> cruisingAltitude = value);
@@ -87,7 +87,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			messagePacker.packLong(routeId);
 		}
 
-		MessagePackHelper.writeMessagePackDataset(messagePacker, path, KEY_PATH);
+		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinders.isEmpty() ? path : new ObjectArrayList<>(), KEY_PATH);
 		messagePacker.packString(KEY_USE_REAL_TIME).packBoolean(useRealTime);
 		messagePacker.packString(KEY_REPEAT_INFINITELY).packBoolean(repeatInfinitely);
 		messagePacker.packString(KEY_CRUISING_ALTITUDE).packInt(cruisingAltitude);
@@ -136,7 +136,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			sidingPathFinders.clear();
 
 			routeIds.forEach(routeId -> {
-				final Route route = simulator.dataCache.routeIdMap.get(routeId.longValue());
+				final Route route = simulator.dataCache.routeIdMap.get(routeId);
 				if (route != null) {
 					route.platformIds.forEach(platformId -> {
 						final Platform platform = simulator.dataCache.platformIdMap.get(platformId.platformId);
@@ -168,7 +168,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			}
 		}, () -> Main.LOGGER.info(String.format("Path not found for %s", name)));
 
-		if (!deployableSidings.isEmpty() && actualDepartures.stream().anyMatch(simulator::matchMillis)) {
+		if (!deployableSidings.isEmpty() && matchMillis()) {
 			final ObjectArrayList<Siding> sidingsInDepot = new ObjectArrayList<>(savedRails);
 			Collections.shuffle(sidingsInDepot);
 			Collections.sort(sidingsInDepot);
@@ -192,6 +192,26 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		deployableSidings.put(sidingId, train);
 	}
 
+	private boolean matchMillis() {
+		if (!actualDepartures.isEmpty()) {
+			for (int i = 0; i < actualDepartures.size(); i++) {
+				if (departureSearchIndex >= actualDepartures.size()) {
+					departureSearchIndex = 0;
+				}
+
+				final int match = simulator.matchMillis(actualDepartures.getInt(departureSearchIndex));
+
+				if (match < 0) {
+					departureSearchIndex++;
+				} else {
+					return match == 0;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	private void generateActualDepartures() {
 		actualDepartures.clear();
 
@@ -204,7 +224,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 				actualDepartures.addAll(departures);
 			} else {
 				final int offsetMillis = (int) ((Main.START_MILLIS - simulator.startingGameDayPercentage * simulator.millisPerGameDay) % MILLIS_PER_DAY);
-				final List<Integer> gameDepartures = new ArrayList<>();
+				final IntArrayList gameDepartures = new IntArrayList();
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
 					if (frequencies[i] == 0) {

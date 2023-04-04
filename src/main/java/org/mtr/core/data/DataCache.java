@@ -48,8 +48,8 @@ public class DataCache {
 			routeIdToOneDepot.clear();
 			simulator.routes.forEach(route -> route.platformIds.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId)));
 			simulator.depots.forEach(depot -> {
-				depot.routeIds.removeIf(routeId -> routeIdMap.get(routeId.longValue()) == null);
-				depot.routeIds.forEach(routeId -> routeIdToOneDepot.put(routeId.longValue(), depot));
+				depot.routeIds.removeIf(routeId -> routeIdMap.get(routeId) == null);
+				depot.routeIds.forEach(routeId -> routeIdToOneDepot.put(routeId, depot));
 			});
 
 			stationIdToConnectingStations.clear();

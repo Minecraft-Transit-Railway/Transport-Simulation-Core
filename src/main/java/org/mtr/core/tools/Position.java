@@ -14,6 +14,12 @@ public class Position implements Comparable<Position> {
 		this.z = z;
 	}
 
+	public Position(Vec3 railPosition) {
+		x = (long) Math.floor(railPosition.x);
+		y = (long) Math.floor(railPosition.y);
+		z = (long) Math.floor(railPosition.z);
+	}
+
 	public Position offset(long offsetX, long offsetY, long offsetZ) {
 		return offsetX == 0 && offsetY == 0 && offsetZ == 0 ? this : new Position(x + offsetX, y + offsetY, z + offsetZ);
 	}

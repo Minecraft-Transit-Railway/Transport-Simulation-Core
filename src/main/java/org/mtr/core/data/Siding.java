@@ -1,7 +1,12 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
@@ -15,7 +20,7 @@ import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Random;
 
 public class Siding extends SavedRailBase<Siding, Depot> {
 
@@ -25,6 +30,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	private boolean isManual;
 	private double maxManualSpeed;
 	private double acceleration = Train.ACCELERATION_DEFAULT;
+	private PathData defaultPathData;
 
 	public final Simulator simulator;
 	public final double railLength;
@@ -35,8 +41,8 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	private final ObjectArrayList<PathData> pathMainRouteToSiding = new ObjectArrayList<>();
 	private final DoubleArrayList distances = new DoubleArrayList();
 	private final ObjectArrayList<TimeSegment> timeSegments = new ObjectArrayList<>();
-	private final Map<Long, Map<Long, Double>> platformTimes = new HashMap<>();
-	private final Set<Train> vehicles = new HashSet<>();
+	private final Long2ObjectOpenHashMap<Long2DoubleOpenHashMap> platformTimes = new Long2ObjectOpenHashMap<>();
+	private final ObjectArraySet<Train> vehicles = new ObjectArraySet<>();
 	private final ObjectImmutableList<MessagePackHelper> vehicleMessagePackHelpers;
 
 	private static final String KEY_RAIL_LENGTH = "rail_length";
@@ -67,7 +73,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		railLength = getRailLength(readerBase.getDouble(KEY_RAIL_LENGTH, 0));
 		readerBase.iterateReaderArray(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSection -> pathSidingToMainRoute.add(new PathData(pathSection)));
 		readerBase.iterateReaderArray(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathSection -> pathMainRouteToSiding.add(new PathData(pathSection)));
-		final List<MessagePackHelper> tempVehicleMessagePackHelpers = new ArrayList<>();
+		final ObjectArrayList<MessagePackHelper> tempVehicleMessagePackHelpers = new ObjectArrayList<>();
 		readerBase.iterateReaderArray(KEY_VEHICLES, vehicleReaderBase -> {
 			if (vehicleReaderBase instanceof MessagePackHelper) {
 				tempVehicleMessagePackHelpers.add((MessagePackHelper) vehicleReaderBase);
@@ -99,12 +105,21 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 	@Override
 	public void init() {
-		vehicleMessagePackHelpers.forEach(messagePackHelper -> vehicles.add(new Train(
-				id, railLength, vehicleCars, totalVehicleLength,
-				pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances,
-				acceleration, isManual, maxManualSpeed, getTimeValueMillis(), messagePackHelper
-		)));
-		generateDistances();
+		final Position position1 = positions.left();
+		final Position position2 = positions.right();
+		final Rail rail = DataCache.tryGet(simulator.dataCache.positionToRailConnections, position1, position2);
+		if (rail != null) {
+			defaultPathData = new PathData(rail, -1, position1, position2);
+		}
+
+		validatePath();
+		if (area != null && defaultPathData != null) {
+			vehicleMessagePackHelpers.forEach(messagePackHelper -> vehicles.add(new Train(
+					id, railLength, vehicleCars, totalVehicleLength,
+					pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances, defaultPathData,
+					getRepeatInfinitely(), acceleration, isManual, maxManualSpeed, getTimeValueMillis(), messagePackHelper
+			)));
+		}
 	}
 
 	@Override
@@ -113,8 +128,9 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 		messagePacker.packString(KEY_RAIL_LENGTH).packDouble(railLength);
 		MessagePackHelper.writeMessagePackDataset(messagePacker, vehicleCars, KEY_VEHICLE_CARS);
-		MessagePackHelper.writeMessagePackDataset(messagePacker, pathSidingToMainRoute, KEY_PATH_SIDING_TO_MAIN_ROUTE);
-		MessagePackHelper.writeMessagePackDataset(messagePacker, pathMainRouteToSiding, KEY_PATH_MAIN_ROUTE_TO_SIDING);
+		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinderSidingToMainRoute.isEmpty() ? pathSidingToMainRoute : new ObjectArrayList<>(), KEY_PATH_SIDING_TO_MAIN_ROUTE);
+		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinderMainRouteToSiding.isEmpty() ? pathMainRouteToSiding : new ObjectArrayList<>(), KEY_PATH_MAIN_ROUTE_TO_SIDING);
+		MessagePackHelper.writeMessagePackDataset(messagePacker, vehicles, KEY_VEHICLES);
 		messagePacker.packString(KEY_UNLIMITED_VEHICLES).packBoolean(unlimitedVehicles);
 		messagePacker.packString(KEY_MAX_VEHICLES).packInt(maxVehicles);
 		messagePacker.packString(KEY_IS_MANUAL).packBoolean(isManual);
@@ -124,7 +140,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 	@Override
 	public int messagePackLength() {
-		return super.messagePackLength() + 9;
+		return super.messagePackLength() + 10;
 	}
 
 	@Override
@@ -144,10 +160,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	}
 
 	public void generateRoute(Platform firstPlatform, Platform lastPlatform, int cruisingAltitude) {
-		if (area == null) {
-			vehicles.clear();
-		}
-
+		vehicles.clear();
 		pathSidingToMainRoute.clear();
 		pathMainRouteToSiding.clear();
 		sidingPathFinderSidingToMainRoute.clear();
@@ -158,7 +171,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		}
 	}
 
-	public void tick() {
+	public void tick(Object2LongAVLTreeMap<Position> vehiclePositions) {
 		SidingPathFinder.findPathTick(simulator.dataCache, pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, () -> {
 			// start at this siding fully
 			SidingPathFinder.addPathData(simulator.dataCache, pathSidingToMainRoute, true, this, pathSidingToMainRoute, false, -1);
@@ -171,9 +184,11 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			Main.LOGGER.info(String.format("Path not found from main route to %s siding %s", getDepotName(), name));
 			finishGeneratingPath();
 		});
+
+		vehicles.forEach(train -> train.writeVehiclePositions(vehiclePositions));
 	}
 
-	public void simulateTrain(long millisElapsed) {
+	public void simulateTrain(long millisElapsed, Object2LongAVLTreeMap<Position> vehiclePositions) {
 		if (area == null) {
 			return;
 		}
@@ -181,10 +196,10 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		int trainsAtDepot = 0;
 		boolean spawnTrain = true;
 
-		final Set<Long> railProgressSet = new HashSet<>();
-		final Set<Train> trainsToRemove = new HashSet<>();
+		final LongAVLTreeSet railProgressSet = new LongAVLTreeSet();
+		final ObjectArraySet<Train> trainsToRemove = new ObjectArraySet<>();
 		for (final Train train : vehicles) {
-			train.simulateTrain(millisElapsed, area);
+			train.simulateTrain(millisElapsed, area, vehiclePositions);
 
 			if (train.closeToDepot()) {
 				spawnTrain = false;
@@ -204,13 +219,12 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			railProgressSet.add(roundedRailProgress);
 		}
 
-		if (totalVehicleLength > 0 && (vehicles.isEmpty() || spawnTrain && (unlimitedVehicles || vehicles.size() <= maxVehicles))) {
-			final Train train = new Train(
+		if (defaultPathData != null && totalVehicleLength > 0 && (vehicles.isEmpty() || spawnTrain && (unlimitedVehicles || vehicles.size() <= maxVehicles))) {
+			vehicles.add(new Train(
 					unlimitedVehicles || maxVehicles > 0 ? new Random().nextLong() : id, id, transportMode, railLength, vehicleCars, totalVehicleLength,
-					pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances,
-					acceleration, isManual, maxManualSpeed, getTimeValueMillis()
-			);
-			vehicles.add(train);
+					pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances, defaultPathData,
+					getRepeatInfinitely(), acceleration, isManual, maxManualSpeed, getTimeValueMillis()
+			));
 		}
 
 		if (!trainsToRemove.isEmpty()) {
@@ -246,6 +260,10 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		return area == null ? new ObjectArrayList<>() : area.path;
 	}
 
+	private boolean getRepeatInfinitely() {
+		return area != null && area.repeatInfinitely;
+	}
+
 	private String getDepotName() {
 		return area == null ? "" : area.name;
 	}
@@ -264,126 +282,116 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	}
 
 	private void finishGeneratingPath() {
-		if (sidingPathFinderSidingToMainRoute.isEmpty() && sidingPathFinderMainRouteToSiding.isEmpty()) {
-			vehicles.clear();
-			if (pathSidingToMainRoute.isEmpty()) {
-				generateDefaultPath();
-			} else {
-				Main.LOGGER.info(String.format("Path successfully generated for %s siding %s", getDepotName(), name));
-			}
-			generateDistances();
+		if (sidingPathFinderSidingToMainRoute.isEmpty() && sidingPathFinderMainRouteToSiding.isEmpty() && validatePath()) {
+			Main.LOGGER.info(String.format("Path successfully generated for %s siding %s", getDepotName(), name));
 		}
 	}
 
-	private void generateDefaultPath() {
-		pathSidingToMainRoute.clear();
-		pathMainRouteToSiding.clear();
-
-		final Position position1 = positions.left();
-		final Position position2 = positions.right();
-		final Rail rail = DataCache.tryGet(simulator.dataCache.positionToRailConnections, position1, position2);
-		if (rail != null) {
-			pathSidingToMainRoute.add(new PathData(rail, -1, position1, position2));
-		}
-
-		vehicles.add(new Train(
-				id, id, transportMode, railLength, vehicleCars, totalVehicleLength,
-				pathSidingToMainRoute, getPathMainRoute(), pathMainRouteToSiding, distances,
-				acceleration, isManual, maxManualSpeed, getTimeValueMillis()
-		));
-	}
-
-	private void generateDistances() {
+	private boolean validatePath() {
+		vehicles.clear();
 		distances.clear();
 		timeSegments.clear();
 
-		final ObjectArrayList<PathData> path = new ObjectArrayList<>();
-		path.addAll(pathSidingToMainRoute);
-		path.addAll(getPathMainRoute());
-		path.addAll(pathMainRouteToSiding);
+		if (pathSidingToMainRoute.isEmpty() || getPathMainRoute().isEmpty() || !getRepeatInfinitely() && pathMainRouteToSiding.isEmpty()) {
+			pathSidingToMainRoute.clear();
+			pathMainRouteToSiding.clear();
 
-		double distanceSum = 0;
-		for (final PathData pathData : path) {
-			distanceSum += pathData.rail.getLength();
-			distances.add(distanceSum);
-		}
-
-		if (path.size() != 1) {
-			vehicles.removeIf(train -> (train.id == id) == unlimitedVehicles);
-		}
-
-		double distanceSum1 = 0;
-		final List<Double> stoppingDistances = new ArrayList<>();
-		for (final PathData pathData : path) {
-			distanceSum1 += pathData.rail.getLength();
-			if (pathData.dwellTimeMillis > 0) {
-				stoppingDistances.add(distanceSum1);
+			if (defaultPathData != null) {
+				distances.add(defaultPathData.rail.getLength());
 			}
-		}
 
-		double railProgress = (railLength + totalVehicleLength) / 2;
-		double nextStoppingDistance = 0;
-		double speed = 0;
-		double time = 0;
-		double timeOld = 0;
-		long savedRailBaseIdOld = 0;
-		double distanceSum2 = 0;
-		for (int i = 0; i < path.size(); i++) {
-			if (railProgress >= nextStoppingDistance) {
-				if (stoppingDistances.isEmpty()) {
-					nextStoppingDistance = distanceSum1;
-				} else {
-					nextStoppingDistance = stoppingDistances.remove(0);
+			return false;
+		} else {
+			final ObjectArrayList<PathData> path = new ObjectArrayList<>();
+			path.addAll(pathSidingToMainRoute);
+			path.addAll(getPathMainRoute());
+			path.addAll(pathMainRouteToSiding);
+
+			double distanceSum = 0;
+			for (final PathData pathData : path) {
+				distanceSum += pathData.rail.getLength();
+				distances.add(distanceSum);
+			}
+
+			if (path.size() != 1) {
+				vehicles.removeIf(train -> (train.id == id) == unlimitedVehicles);
+			}
+
+			double distanceSum1 = 0;
+			final DoubleArrayList stoppingDistances = new DoubleArrayList();
+			for (final PathData pathData : path) {
+				distanceSum1 += pathData.rail.getLength();
+				if (pathData.dwellTimeMillis > 0) {
+					stoppingDistances.add(distanceSum1);
 				}
 			}
 
-			final PathData pathData = path.get(i);
-			final double railSpeed = pathData.rail.canAccelerate ? pathData.rail.speedLimitMetersPerMillisecond : Math.max(speed, transportMode.defaultSpeedMetersPerMillisecond);
-			distanceSum2 += pathData.rail.getLength();
-
-			while (railProgress < distanceSum2) {
-				final int speedChange;
-				if (speed > railSpeed || nextStoppingDistance - railProgress + 1 < 0.5 * speed * speed / acceleration) {
-					speed = Math.max(speed - acceleration, acceleration);
-					speedChange = -1;
-				} else if (speed < railSpeed) {
-					speed = Math.min(speed + acceleration, railSpeed);
-					speedChange = 1;
-				} else {
-					speedChange = 0;
-				}
-
-				if (timeSegments.isEmpty() || timeSegments.get(timeSegments.size() - 1).speedChange != speedChange) {
-					timeSegments.add(new TimeSegment(railProgress, speed, time, speedChange, acceleration));
-				}
-
-				railProgress = Math.min(railProgress + speed, distanceSum2);
-				time++;
-
-				final TimeSegment timeSegment = timeSegments.get(timeSegments.size() - 1);
-				timeSegment.endRailProgress = railProgress;
-				timeSegment.endTime = time;
-				timeSegment.savedRailBaseId = nextStoppingDistance != distanceSum1 && railProgress == distanceSum2 && pathData.dwellTimeMillis > 0 ? pathData.savedRailBaseId : 0;
-			}
-
-			time += pathData.dwellTimeMillis * 5;
-
-			if (pathData.savedRailBaseId != 0) {
-				if (savedRailBaseIdOld != 0) {
-					if (!platformTimes.containsKey(savedRailBaseIdOld)) {
-						platformTimes.put(savedRailBaseIdOld, new HashMap<>());
+			double railProgress = (railLength + totalVehicleLength) / 2;
+			double nextStoppingDistance = 0;
+			double speed = 0;
+			double time = 0;
+			double timeOld = 0;
+			long savedRailBaseIdOld = 0;
+			double distanceSum2 = 0;
+			for (int i = 0; i < path.size(); i++) {
+				if (railProgress >= nextStoppingDistance) {
+					if (stoppingDistances.isEmpty()) {
+						nextStoppingDistance = distanceSum1;
+					} else {
+						nextStoppingDistance = stoppingDistances.removeDouble(0);
 					}
-					platformTimes.get(savedRailBaseIdOld).put(pathData.savedRailBaseId, time - timeOld);
 				}
-				savedRailBaseIdOld = pathData.savedRailBaseId;
-				timeOld = time;
+
+				final PathData pathData = path.get(i);
+				final double railSpeed = pathData.rail.canAccelerate ? pathData.rail.speedLimitMetersPerMillisecond : Math.max(speed, transportMode.defaultSpeedMetersPerMillisecond);
+				distanceSum2 += pathData.rail.getLength();
+
+				while (railProgress < distanceSum2) {
+					final int speedChange;
+					if (speed > railSpeed || nextStoppingDistance - railProgress + 1 < 0.5 * speed * speed / acceleration) {
+						speed = Math.max(speed - acceleration, acceleration);
+						speedChange = -1;
+					} else if (speed < railSpeed) {
+						speed = Math.min(speed + acceleration, railSpeed);
+						speedChange = 1;
+					} else {
+						speedChange = 0;
+					}
+
+					if (timeSegments.isEmpty() || timeSegments.get(timeSegments.size() - 1).speedChange != speedChange) {
+						timeSegments.add(new TimeSegment(railProgress, speed, time, speedChange, acceleration));
+					}
+
+					railProgress = Math.min(railProgress + speed, distanceSum2);
+					time++;
+
+					final TimeSegment timeSegment = timeSegments.get(timeSegments.size() - 1);
+					timeSegment.endRailProgress = railProgress;
+					timeSegment.endTime = time;
+					timeSegment.savedRailBaseId = nextStoppingDistance != distanceSum1 && railProgress == distanceSum2 && pathData.dwellTimeMillis > 0 ? pathData.savedRailBaseId : 0;
+				}
+
+				time += pathData.dwellTimeMillis * 5;
+
+				if (pathData.savedRailBaseId != 0) {
+					if (savedRailBaseIdOld != 0) {
+						if (!platformTimes.containsKey(savedRailBaseIdOld)) {
+							platformTimes.put(savedRailBaseIdOld, new Long2DoubleOpenHashMap());
+						}
+						platformTimes.get(savedRailBaseIdOld).put(pathData.savedRailBaseId, time - timeOld);
+					}
+					savedRailBaseIdOld = pathData.savedRailBaseId;
+					timeOld = time;
+				}
+
+				time += pathData.dwellTimeMillis * 5;
+
+				if (i + 1 < path.size() && pathData.isOppositeRail(path.get(i + 1))) {
+					railProgress += totalVehicleLength;
+				}
 			}
 
-			time += pathData.dwellTimeMillis * 5;
-
-			if (i + 1 < path.size() && pathData.isOppositeRail(path.get(i + 1))) {
-				railProgress += totalVehicleLength;
-			}
+			return true;
 		}
 	}
 

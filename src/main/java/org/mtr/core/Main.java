@@ -20,6 +20,7 @@ public class Main {
 
 	public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	public static final long START_MILLIS = System.currentTimeMillis();
+	public static final int MILLISECONDS_PER_TICK = 10;
 
 	public static void main(String[] args) {
 		try {
@@ -45,7 +46,7 @@ public class Main {
 	private static void start(ObjectImmutableList<Simulator> simulators, int webserverPort) {
 		final Webserver webserver = new Webserver(Utilities.clamp(webserverPort, 1025, 65535), simulators);
 		final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
-		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, 2, TimeUnit.MILLISECONDS));
+		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));
 
 		while (true) {
 			try {
