@@ -6,7 +6,7 @@ import org.mtr.core.simulation.Simulator;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class DataServlet extends ServletBase {
+public class OBAServlet extends ServletBase {
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -14,18 +14,17 @@ public class DataServlet extends ServletBase {
 	}
 
 	@Override
-	public JsonObject getContent(HttpServletRequest request, Simulator simulator) {
-		final String[] requestUri = request.getRequestURI().split("/");
-		final String endpoint = requestUri[3].split("\\.")[0];
+	public JsonObject getContent(String endpoint, String data, HttpServletRequest request, Simulator simulator) {
+		final OBAResponse obaResponse = new OBAResponse(data, request, simulator);
 		switch (endpoint) {
 			case "agencies-with-coverage":
-				return buildResponseObject(new JsonObject());
+				return buildResponseObject(obaResponse.getAgenciesWithCoverage());
 			case "agency":
-				return buildResponseObject(new JsonObject());
+				return buildResponseObject(obaResponse.getAgency(), data);
 			case "arrival-and-departure-for-stop":
 				return buildResponseObject(new JsonObject());
 			case "arrivals-and-departures-for-stop":
-				return buildResponseObject(new JsonObject());
+				return buildResponseObject(obaResponse.getArrivalsAndDeparturesForStop(), data);
 			case "arrivals-and-departures-for-location":
 				return buildResponseObject(new JsonObject());
 			case "block":
@@ -59,7 +58,7 @@ public class DataServlet extends ServletBase {
 			case "stop":
 				return buildResponseObject(new JsonObject());
 			case "stops-for-location":
-				return buildResponseObject(new JsonObject());
+				return buildResponseObject(obaResponse.getStopsForLocation());
 			case "stops-for-route":
 				return buildResponseObject(new JsonObject());
 			case "trip-details":

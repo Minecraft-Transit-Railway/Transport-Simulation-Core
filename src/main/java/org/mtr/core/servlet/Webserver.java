@@ -38,8 +38,8 @@ public final class Webserver {
 			}
 		}
 
-		DataServlet.setGetSimulator(this::getSimulator);
-		servletContextHandler.addServlet(DataServlet.class, "/oba/api/*");
+		OBAServlet.setGetSimulator(this::getSimulator);
+		servletContextHandler.addServlet(OBAServlet.class, "/oba/api/where/*");
 
 		final ServletHolder servletHolder = new ServletHolder("default", DefaultServlet.class);
 		servletHolder.setInitParameter("dirAllowed", "true");

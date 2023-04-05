@@ -55,11 +55,15 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 
 	@Override
 	public String getHexId() {
-		return Utilities.longToPaddedHexString(id);
+		return Utilities.numberToPaddedHexString(id);
 	}
 
 	public final boolean isTransportMode(TransportMode transportMode) {
 		return !hasTransportMode() || this.transportMode == transportMode;
+	}
+
+	public String getFormattedName() {
+		return name.replace("|", " ");
 	}
 
 	protected abstract boolean hasTransportMode();

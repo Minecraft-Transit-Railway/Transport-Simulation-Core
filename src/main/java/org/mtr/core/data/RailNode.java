@@ -60,7 +60,7 @@ public class RailNode extends SerializedDataBase {
 
 	@Override
 	public String getHexId() {
-		return String.format("%s-%s-%s", Utilities.longToPaddedHexString(position.x), Utilities.longToPaddedHexString(position.y), Utilities.longToPaddedHexString(position.z));
+		return String.format("%s-%s-%s", Utilities.numberToPaddedHexString(position.x), Utilities.numberToPaddedHexString(position.y), Utilities.numberToPaddedHexString(position.z));
 	}
 
 	private static <T extends ReaderBase<U, T>, U> Position getPosition(T readerBase) {

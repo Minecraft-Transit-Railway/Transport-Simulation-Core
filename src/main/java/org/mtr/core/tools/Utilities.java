@@ -49,8 +49,12 @@ public interface Utilities {
 		return (a + b) / 2;
 	}
 
-	static String longToPaddedHexString(long value) {
-		return String.format("%" + (Long.SIZE / 4) + "s", Long.toHexString(value)).replace(' ', '0').toUpperCase(Locale.ENGLISH);
+	static String numberToPaddedHexString(long value) {
+		return numberToPaddedHexString(value, Long.SIZE / 4);
+	}
+
+	static String numberToPaddedHexString(long value, int length) {
+		return String.format("%" + length + "s", Long.toHexString(value)).replace(' ', '0').toUpperCase(Locale.ENGLISH);
 	}
 
 	static double kilometersPerHourToMetersPerMillisecond(double speedKilometersPerHour) {

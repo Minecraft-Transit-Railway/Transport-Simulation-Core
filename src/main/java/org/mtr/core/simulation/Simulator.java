@@ -3,6 +3,7 @@ package org.mtr.core.simulation;
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
@@ -40,6 +41,7 @@ public class Simulator implements Utilities {
 	private final FileLoader<Depot> fileLoaderDepots;
 	private final FileLoader<Lift> fileLoaderLifts;
 	private final FileLoader<RailNode> fileLoaderRailNodes;
+	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 
 	public Simulator(String dimension, Path rootPath, int millisPerGameDay, float startingGameDayPercentage) {
 		this.dimension = dimension;
@@ -86,6 +88,10 @@ public class Simulator implements Utilities {
 				depots.stream().filter(depot -> depot.name.toLowerCase(Locale.ENGLISH).contains(generateKey)).forEach(Depot::generateMainRoute);
 				generateKey = null;
 			}
+
+			if (!queuedRuns.isEmpty()) {
+				queuedRuns.remove(0).run();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;
@@ -110,6 +116,10 @@ public class Simulator implements Utilities {
 		} else {
 			return Utilities.circularDifference(millis, lastMillis % MILLIS_PER_DAY, MILLIS_PER_DAY) > 0 ? 0 : -1;
 		}
+	}
+
+	public void run(Runnable runnable) {
+		queuedRuns.add(runnable);
 	}
 
 	private void save(boolean useReducedHash) {

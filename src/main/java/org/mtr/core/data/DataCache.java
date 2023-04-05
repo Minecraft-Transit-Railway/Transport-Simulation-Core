@@ -1,13 +1,13 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -25,7 +25,9 @@ public class DataCache {
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionToRailConnections = new Object2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Depot> routeIdToOneDepot = new Long2ObjectOpenHashMap<>();
-	public final Map<Station, Set<Station>> stationIdToConnectingStations = new HashMap<>();
+	public final Object2ObjectOpenHashMap<Station, ObjectAVLTreeSet<Station>> stationIdToConnectingStations = new Object2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<IntArraySet> platformIdToRouteColors = new Long2ObjectOpenHashMap<>();
+	public final Int2ObjectOpenHashMap<Route> routeColorMap = new Int2ObjectOpenHashMap<>();
 
 	private final Simulator simulator;
 
@@ -46,7 +48,18 @@ public class DataCache {
 			simulator.railNodes.forEach(railNode -> positionToRailConnections.put(railNode.position, railNode.connections));
 
 			routeIdToOneDepot.clear();
-			simulator.routes.forEach(route -> route.platformIds.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId)));
+			platformIdToRouteColors.clear();
+			routeColorMap.clear();
+			simulator.routes.forEach(route -> {
+				route.platformIds.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId));
+				route.platformIds.forEach(platformId -> {
+					if (!platformIdToRouteColors.containsKey(platformId.platformId)) {
+						platformIdToRouteColors.put(platformId.platformId, new IntArraySet());
+					}
+					platformIdToRouteColors.get(platformId.platformId).add(route.color);
+				});
+				routeColorMap.put(route.color, route);
+			});
 			simulator.depots.forEach(depot -> {
 				depot.routeIds.removeIf(routeId -> routeIdMap.get(routeId) == null);
 				depot.routeIds.forEach(routeId -> routeIdToOneDepot.put(routeId, depot));
@@ -54,7 +67,7 @@ public class DataCache {
 
 			stationIdToConnectingStations.clear();
 			simulator.stations.forEach(station1 -> {
-				stationIdToConnectingStations.put(station1, new HashSet<>());
+				stationIdToConnectingStations.put(station1, new ObjectAVLTreeSet<>());
 				simulator.stations.forEach(station2 -> {
 					if (station1 != station2 && station1.intersecting(station2)) {
 						stationIdToConnectingStations.get(station1).add(station2);

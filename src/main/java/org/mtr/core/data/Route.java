@@ -1,7 +1,9 @@
 package org.mtr.core.data;
 
+import com.google.gson.JsonObject;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,14 +16,14 @@ public class Route extends NameColorDataBase {
 	public boolean isHidden;
 	public boolean disableNextStationAnnouncements;
 	public CircularState circularState;
-	public String lightRailRouteNumber;
+	public String routeNumber;
 	public final List<RoutePlatform> platformIds = new ArrayList<>();
 
 	private static final String KEY_PLATFORM_IDS = "platform_ids";
 	private static final String KEY_CUSTOM_DESTINATIONS = "custom_destinations";
 	private static final String KEY_ROUTE_TYPE = "route_type";
 	private static final String KEY_IS_LIGHT_RAIL_ROUTE = "is_light_rail_route";
-	private static final String KEY_LIGHT_RAIL_ROUTE_NUMBER = "light_rail_route_number";
+	private static final String KEY_ROUTE_NUMBER = "light_rail_route_number";
 	private static final String KEY_IS_ROUTE_HIDDEN = "is_route_hidden";
 	private static final String KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS = "disable_next_station_announcements";
 	private static final String KEY_CIRCULAR_STATE = "circular_state";
@@ -35,7 +37,7 @@ public class Route extends NameColorDataBase {
 		routeType = RouteType.NORMAL;
 		isLightRailRoute = false;
 		circularState = CircularState.NONE;
-		lightRailRouteNumber = "";
+		routeNumber = "";
 		isHidden = false;
 		disableNextStationAnnouncements = false;
 	}
@@ -62,7 +64,7 @@ public class Route extends NameColorDataBase {
 		readerBase.unpackBoolean(KEY_IS_LIGHT_RAIL_ROUTE, value -> isLightRailRoute = value);
 		readerBase.unpackBoolean(KEY_IS_ROUTE_HIDDEN, value -> isHidden = value);
 		readerBase.unpackBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, value -> disableNextStationAnnouncements = value);
-		readerBase.unpackString(KEY_LIGHT_RAIL_ROUTE_NUMBER, value -> lightRailRouteNumber = value);
+		readerBase.unpackString(KEY_ROUTE_NUMBER, value -> routeNumber = value);
 		readerBase.unpackString(KEY_CIRCULAR_STATE, value -> circularState = EnumHelper.valueOf(CircularState.NONE, value));
 	}
 
@@ -84,7 +86,7 @@ public class Route extends NameColorDataBase {
 		messagePacker.packString(KEY_IS_LIGHT_RAIL_ROUTE).packBoolean(isLightRailRoute);
 		messagePacker.packString(KEY_IS_ROUTE_HIDDEN).packBoolean(isHidden);
 		messagePacker.packString(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS).packBoolean(disableNextStationAnnouncements);
-		messagePacker.packString(KEY_LIGHT_RAIL_ROUTE_NUMBER).packString(lightRailRouteNumber);
+		messagePacker.packString(KEY_ROUTE_NUMBER).packString(routeNumber);
 		messagePacker.packString(KEY_CIRCULAR_STATE).packString(circularState.toString());
 	}
 
@@ -96,6 +98,14 @@ public class Route extends NameColorDataBase {
 	@Override
 	protected boolean hasTransportMode() {
 		return true;
+	}
+
+	public String getFormattedRouteNumber() {
+		return routeNumber.replace("|", " ");
+	}
+
+	public String getTrimmedRouteName() {
+		return name.split("\\|\\|")[0].replace("|", " ");
 	}
 
 	public int getPlatformIdIndex(long platformId) {
@@ -131,8 +141,38 @@ public class Route extends NameColorDataBase {
 		return null;
 	}
 
+	public JsonObject getOBARouteElement() {
+		final JsonObject jsonObject = new JsonObject();
+		jsonObject.addProperty("id", Utilities.numberToPaddedHexString(color, 6));
+		jsonObject.addProperty("shortName", getFormattedRouteNumber());
+		jsonObject.addProperty("longName", getTrimmedRouteName());
+		jsonObject.addProperty("description", getTrimmedRouteName());
+		jsonObject.addProperty("type", getGtfsType());
+		jsonObject.addProperty("color", Utilities.numberToPaddedHexString(color, 6));
+		jsonObject.addProperty("agencyId", "1");
+		return jsonObject;
+	}
+
+	public JsonObject getOBATripElement() {
+		final JsonObject jsonObject = new JsonObject();
+		return jsonObject;
+	}
+
 	public static boolean destinationIsReset(String destination) {
 		return destination.equals("\\r") || destination.equals("\\reset");
+	}
+
+	private int getGtfsType() {
+		switch (transportMode) {
+			case TRAIN:
+				return routeType == RouteType.LIGHT_RAIL ? 0 : 2;
+			case BOAT:
+				return 4;
+			case CABLE_CAR:
+				return 6;
+			default:
+				return 3;
+		}
 	}
 
 	public static class RoutePlatform {
