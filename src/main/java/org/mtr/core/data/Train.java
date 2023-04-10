@@ -1,7 +1,5 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleImmutableList;
 import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
@@ -28,7 +26,6 @@ public class Train extends NameColorDataBase {
 	private boolean isOnRoute = false;
 	private boolean isCurrentlyManual;
 	private int manualNotch;
-	private boolean canDeploy;
 
 	public final long sidingId;
 	public final double railLength;
@@ -37,7 +34,6 @@ public class Train extends NameColorDataBase {
 	public final int vehicleCarCount;
 
 	public final ObjectImmutableList<PathData> path;
-	public final DoubleImmutableList distances;
 	public final int repeatIndex1;
 	public final int repeatIndex2;
 
@@ -47,6 +43,7 @@ public class Train extends NameColorDataBase {
 	public final int manualToAutomaticTime;
 
 	private final ObjectOpenHashSet<UUID> ridingEntities = new ObjectOpenHashSet<>();
+	private final double totalDistance;
 
 	public static final double ACCELERATION_DEFAULT = 1D / 250000;
 	public static final double MAX_ACCELERATION = 1D / 50000;
@@ -65,7 +62,7 @@ public class Train extends NameColorDataBase {
 
 	public Train(
 			long id, long sidingId, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
-			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, DoubleArrayList distances, PathData defaultPathData,
+			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime
 	) {
 		super(id, transportMode);
@@ -78,7 +75,6 @@ public class Train extends NameColorDataBase {
 		this.totalVehicleLength = totalVehicleLength;
 
 		path = createPathData(pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, repeatInfinitely, defaultPathData);
-		this.distances = new DoubleImmutableList(distances);
 		repeatIndex1 = repeatInfinitely ? pathSidingToMainRoute.size() : 0;
 		repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 
@@ -88,11 +84,12 @@ public class Train extends NameColorDataBase {
 		this.manualToAutomaticTime = manualToAutomaticTime;
 
 		isCurrentlyManual = isManualAllowed;
+		totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).endDistance;
 	}
 
 	public <T extends ReaderBase<U, T>, U> Train(
 			long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
-			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, DoubleArrayList distances, PathData defaultPathData,
+			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, T readerBase
 	) {
 		super(readerBase);
@@ -105,7 +102,6 @@ public class Train extends NameColorDataBase {
 		this.totalVehicleLength = totalVehicleLength;
 
 		path = createPathData(pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, repeatInfinitely, defaultPathData);
-		this.distances = new DoubleImmutableList(distances);
 		repeatIndex1 = repeatInfinitely ? pathSidingToMainRoute.size() : 0;
 		repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 
@@ -115,6 +111,7 @@ public class Train extends NameColorDataBase {
 		this.manualToAutomaticTime = manualToAutomaticTime;
 
 		isCurrentlyManual = isManualAllowed;
+		totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).endDistance;
 
 		updateData(readerBase);
 	}
@@ -199,14 +196,8 @@ public class Train extends NameColorDataBase {
 		}
 	}
 
-	public final int getIndex(double railProgressOffset, boolean roundDown) {
-		for (int i = 0; i < path.size(); i++) {
-			final double tempDistance = distances.getDouble(i);
-			if (railProgress + railProgressOffset < tempDistance || roundDown && railProgress + railProgressOffset == tempDistance) {
-				return i;
-			}
-		}
-		return path.size() - 1;
+	public final int getIndex(double railProgressOffset) {
+		return Utilities.getIndexFromConditionalList(path, railProgress + railProgressOffset);
 	}
 
 	public final double getRailSpeed(int railIndex) {
@@ -245,81 +236,80 @@ public class Train extends NameColorDataBase {
 		return path.get(nextStoppingIndex).dwellTimeMillis;
 	}
 
-	public void deployTrain() {
-		canDeploy = true;
-	}
-
 	public void writeVehiclePositions(Object2LongAVLTreeMap<Position> vehiclePositions) {
 		if (isOnRoute) {
-			vehiclePositions.put(getRailPositionRounded(0), id);
+			vehiclePositions.put(getRailPositionRounded(railProgress), id);
 			double railProgressOffset = 0;
 			for (final VehicleCar vehicleCar : vehicleCars) {
-				railProgressOffset -= vehicleCar.length;
-				vehiclePositions.put(getRailPositionRounded(railProgressOffset), id);
+				railProgressOffset += vehicleCar.length;
+				vehiclePositions.put(getRailPositionRounded(railProgress - railProgressOffset), id);
 			}
 		}
 	}
 
-	public final void simulateTrain(long millisElapsed, Depot depot, Object2LongAVLTreeMap<Position> vehiclePositions) {
+	public final void simulateTrain(long millisElapsed, Object2LongAVLTreeMap<Position> vehiclePositions) {
 		try {
 			if (nextStoppingIndex >= path.size()) {
 				railProgress = (railLength + totalVehicleLength) / 2;
 				return;
 			}
 
-			final boolean tempDoorOpen;
+			final boolean tempDoorTarget;
 			final double tempDoorValue;
 			final int totalDwellMillis = getTotalDwellMillis();
 
 			if (!isOnRoute) {
 				railProgress = (railLength + totalVehicleLength) / 2;
 				reversed = false;
-				tempDoorOpen = false;
+				tempDoorTarget = false;
 				tempDoorValue = 0;
 				speed = 0;
 				nextStoppingIndex = 0;
 
-				if (!isCurrentlyManual && canDeploy(depot) || isCurrentlyManual && manualNotch > 0) {
+				if (isCurrentlyManual && manualNotch > 0) {
 					startUp();
 				}
 			} else {
 				final double newAcceleration = acceleration * millisElapsed;
+				final int currentIndex = Utilities.getIndexFromConditionalList(path, railProgress);
 
-				if (railProgress >= distances.getDouble(distances.size() - 1) - (railLength - totalVehicleLength) / 2) {
+				if (railProgress >= totalDistance - (railLength - totalVehicleLength) / 2) {
 					isOnRoute = false;
 					manualNotch = -2;
 					ridingEntities.clear();
-					tempDoorOpen = false;
+					tempDoorTarget = false;
 					tempDoorValue = 0;
 				} else {
 					if (speed <= 0) {
 						speed = 0;
 
-						final boolean railClear = railBlockedDistance(isOppositeRail(), 0, vehiclePositions) < 0;
+						final int nextIndex = isRepeat() && currentIndex >= repeatIndex2 ? repeatIndex1 : currentIndex;
+						final boolean isOpposite = currentIndex > 0 && path.get(currentIndex - 1).isOppositeRail(path.get(nextIndex));
+						final boolean railClear = railBlockedDistance(path.get(nextIndex).startDistance + (isOpposite ? totalVehicleLength : 0), 0, vehiclePositions) < 0;
 
 						if (totalDwellMillis == 0) {
-							tempDoorOpen = false;
+							tempDoorTarget = false;
 						} else {
-							if (elapsedDwellMillis == 0 && isRepeat() && getIndex(0, false) >= repeatIndex2 && distances.size() > repeatIndex1) {
-								railProgress = distances.getDouble(repeatIndex1);
-							}
-
 							if (elapsedDwellMillis + millisElapsed < totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY || railClear) {
 								elapsedDwellMillis += millisElapsed;
 							}
-
-							tempDoorOpen = openDoors();
+							tempDoorTarget = openDoors();
 						}
 
 						if ((isCurrentlyManual || elapsedDwellMillis >= totalDwellMillis) && railClear && (!isCurrentlyManual || manualNotch > 0)) {
+							railProgress = path.get(nextIndex).startDistance;
+							if (isOpposite) {
+								railProgress += totalVehicleLength;
+								reversed = !reversed;
+							}
 							startUp();
 						}
 					} else {
 						final double safeStoppingDistance = 0.5 * speed * speed / acceleration;
 						final double stoppingDistance;
-						final int railBlockedDistance = railBlockedDistance(false, (int) safeStoppingDistance, vehiclePositions);
+						final int railBlockedDistance = railBlockedDistance(railProgress, (int) safeStoppingDistance, vehiclePositions);
 						if (railBlockedDistance < 0) {
-							stoppingDistance = distances.getDouble(nextStoppingIndex) - railProgress;
+							stoppingDistance = path.get(nextStoppingIndex).endDistance - railProgress;
 						} else {
 							stoppingDistance = railBlockedDistance;
 						}
@@ -334,7 +324,7 @@ public class Train extends NameColorDataBase {
 							if (isCurrentlyManual) {
 								speed = Utilities.clamp(speed + manualNotch * newAcceleration / 2, 0, maxManualSpeed);
 							} else {
-								final double railSpeed = getRailSpeed(getIndex(0, false));
+								final double railSpeed = getRailSpeed(currentIndex);
 								if (speed < railSpeed) {
 									speed = Math.min(speed + newAcceleration, railSpeed);
 									manualNotch = 2;
@@ -347,21 +337,21 @@ public class Train extends NameColorDataBase {
 							}
 						}
 
-						tempDoorOpen = transportMode.continuousMovement && openDoors();
-					}
+						tempDoorTarget = transportMode.continuousMovement && openDoors();
 
-					railProgress += speed * millisElapsed;
-					if (!transportMode.continuousMovement && railProgress > distances.getDouble(nextStoppingIndex)) {
-						railProgress = distances.getDouble(nextStoppingIndex);
-						speed = 0;
-						manualNotch = -2;
+						railProgress += speed * millisElapsed;
+						if (!transportMode.continuousMovement && railProgress >= stoppingDistance) {
+							railProgress = stoppingDistance;
+							speed = 0;
+							manualNotch = -2;
+						}
 					}
 
 					tempDoorValue = Utilities.clamp(doorValue + (double) (millisElapsed * (doorTarget ? 1 : -1)) / DOOR_MOVE_TIME, 0, 1);
 				}
 			}
 
-			doorTarget = tempDoorOpen;
+			doorTarget = tempDoorTarget;
 			doorValue = tempDoorValue;
 			if (doorTarget || doorValue != 0) {
 				manualNotch = -2;
@@ -371,25 +361,19 @@ public class Train extends NameColorDataBase {
 		}
 	}
 
-	protected void startUp() {
-		canDeploy = false;
+	public void startUp() {
 		isOnRoute = true;
 		elapsedDwellMillis = 0;
 		speed = Train.ACCELERATION_DEFAULT;
-		if (isOppositeRail()) {
-			railProgress += totalVehicleLength;
-			reversed = !reversed;
-		}
-		nextStoppingIndex = getNextStoppingIndex();
 		doorTarget = false;
 		doorValue = 0;
-	}
-
-	protected boolean canDeploy(Depot depot) {
-		if (path.size() > 1 && depot != null) {
-			depot.requestDeploy(sidingId, this);
+		nextStoppingIndex = path.size() - 1;
+		for (int i = Utilities.getIndexFromConditionalList(path, railProgress); i < path.size(); i++) {
+			if (path.get(i).dwellTimeMillis > 0) {
+				nextStoppingIndex = i;
+				break;
+			}
 		}
-		return canDeploy;
 	}
 
 	protected boolean openDoors() {
@@ -400,9 +384,9 @@ public class Train extends NameColorDataBase {
 		return repeatIndex1 > 0 && repeatIndex2 > 0;
 	}
 
-	private int railBlockedDistance(boolean isOppositeRail, int checkDistance, Object2LongAVLTreeMap<Position> vehiclePositions) {
+	private int railBlockedDistance(double checkRailProgress, int checkDistance, Object2LongAVLTreeMap<Position> vehiclePositions) {
 		for (int i = 2; i <= checkDistance + transportMode.stoppingSpace; i++) {
-			final long blockedId = vehiclePositions.getLong(getRailPositionRounded(railProgress + (isOppositeRail ? totalVehicleLength : 0) + i));
+			final long blockedId = vehiclePositions.getLong(getRailPositionRounded(checkRailProgress + i));
 			if (blockedId != 0 && id != blockedId) {
 				return i;
 			}
@@ -410,27 +394,13 @@ public class Train extends NameColorDataBase {
 		return -1;
 	}
 
-	private boolean isOppositeRail() {
-		return path.size() > nextStoppingIndex + 1 && railProgress == distances.getDouble(nextStoppingIndex) && path.get(nextStoppingIndex).isOppositeRail(path.get(nextStoppingIndex + 1));
+	private Vec3 getRailPosition(double checkRailProgress) {
+		final PathData pathData = path.get(Math.max(Utilities.getIndexFromConditionalList(path, checkRailProgress), 0));
+		return pathData.rail.getPosition(checkRailProgress - pathData.startDistance);
 	}
 
-	private int getNextStoppingIndex() {
-		final int headIndex = getIndex(0, false);
-		for (int i = headIndex; i < path.size(); i++) {
-			if (path.get(i).dwellTimeMillis > 0) {
-				return i;
-			}
-		}
-		return path.size() - 1;
-	}
-
-	private Vec3 getRailPosition(double railProgressOffset) {
-		final int index = getIndex(railProgressOffset, true);
-		return path.get(index).rail.getPosition(railProgress + railProgressOffset - (index == 0 ? 0 : distances.getDouble(index - 1)));
-	}
-
-	private Position getRailPositionRounded(double railProgressOffset) {
-		return new Position(getRailPosition(railProgressOffset));
+	private Position getRailPositionRounded(double checkRailProgress) {
+		return new Position(getRailPosition(checkRailProgress));
 	}
 
 	public static double roundAcceleration(double acceleration) {

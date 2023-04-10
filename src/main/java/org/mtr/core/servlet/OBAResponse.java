@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.simulation.Simulator;
@@ -23,10 +24,16 @@ public class OBAResponse {
 	private static final JsonObject AGENCY = new JsonObject();
 
 	static {
+		AGENCY.addProperty("disclaimer", "");
+		AGENCY.addProperty("email", "");
+		AGENCY.addProperty("fareUrl", "");
 		AGENCY.addProperty("id", "1");
+		AGENCY.addProperty("lang", "en");
 		AGENCY.addProperty("name", "My Agency");
-		AGENCY.addProperty("url", "https://github.com/jonafanho/Transport-Simulation-Core");
+		AGENCY.addProperty("phone", "");
+		AGENCY.addProperty("privateService", false);
 		AGENCY.addProperty("timezone", TimeZone.getDefault().getID());
+		AGENCY.addProperty("url", "https://github.com/jonafanho/Transport-Simulation-Core");
 	}
 
 	public OBAResponse(String data, HttpServletRequest request, Simulator simulator) {
@@ -40,8 +47,8 @@ public class OBAResponse {
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("agencyId", "1");
 		jsonObject.addProperty("lat", 0);
-		jsonObject.addProperty("lon", 0);
 		jsonObject.addProperty("latSpan", LatLon.MAX_LAT * 2);
+		jsonObject.addProperty("lon", 0);
 		jsonObject.addProperty("lonSpan", LatLon.MAX_LON * 2);
 
 		final JsonArray jsonArray = new JsonArray();
@@ -75,14 +82,22 @@ public class OBAResponse {
 				});
 			}
 
-			final IntArraySet colorsUsed = new IntArraySet();
+			final JsonArray arrivalsAndDeparturesArray = new JsonArray();
+			final JsonArray tripsUsedArray = new JsonArray();
+			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.schedule.blocks.forEach(trips -> trips.forEach(trip -> trip.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
+					platform,
+					Math.max(0, (int) getParameter("minutesBefore", 5)),
+					Math.max(0, (int) getParameter("minutesAfter", 35)),
+					arrivalsAndDeparturesArray,
+					tripsUsedArray
+			))));
 
 			final JsonObject jsonObject = new JsonObject();
-			jsonObject.add("arrivalsAndDepartures", new JsonArray());
+			jsonObject.add("arrivalsAndDepartures", arrivalsAndDeparturesArray);
 			jsonObject.add("nearbyStopIds", nearbyPlatformsArray);
 			jsonObject.add("situationIds", new JsonArray());
 			jsonObject.addProperty("stopId", data);
-			return getSingleElement(jsonObject, colorsUsed, platformIdsUsed, null);
+			return getSingleElement(jsonObject, new IntArraySet(), platformIdsUsed, tripsUsedArray);
 		} catch (Exception ignored) {
 		}
 		return null;
@@ -144,7 +159,7 @@ public class OBAResponse {
 		return request.getParameter(name) != null;
 	}
 
-	private JsonObject getReferences(IntArraySet colorsUsed, LongArraySet platformIdsUsed, LongArraySet routesUsed) {
+	private JsonObject getReferences(IntArraySet colorsUsed, LongArraySet platformIdsUsed, JsonArray tripsUsed) {
 		final JsonArray agenciesArray = new JsonArray();
 		if (includeReferences) {
 			agenciesArray.add(AGENCY);
@@ -170,39 +185,29 @@ public class OBAResponse {
 			});
 		}
 
-		final JsonArray tripsArray = new JsonArray();
-		if (includeReferences && routesUsed != null) {
-			routesUsed.forEach(routeId -> {
-				final Route route = simulator.dataCache.routeIdMap.get(routeId);
-				if (route != null) {
-					tripsArray.add(route.getOBATripElement());
-				}
-			});
-		}
-
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.add("agencies", agenciesArray);
-		jsonObject.add("stops", stopsArray);
 		jsonObject.add("routes", routesArray);
-		jsonObject.add("trips", tripsArray);
 		jsonObject.add("situations", new JsonArray());
 		jsonObject.add("stopTimes", new JsonArray());
+		jsonObject.add("stops", stopsArray);
+		jsonObject.add("trips", tripsUsed == null ? new JsonArray() : tripsUsed);
 		return jsonObject;
 	}
 
-	private JsonObject getSingleElement(JsonObject entryObject, IntArraySet colorsUsed, LongArraySet platformIdsUsed, LongArraySet routesUsed) {
+	private JsonObject getSingleElement(JsonObject entryObject, IntArraySet colorsUsed, LongArraySet platformIdsUsed, JsonArray tripsUsed) {
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.add("entry", entryObject);
-		jsonObject.add("references", getReferences(colorsUsed, platformIdsUsed, routesUsed));
+		jsonObject.add("references", getReferences(colorsUsed, platformIdsUsed, tripsUsed));
 		return jsonObject;
 	}
 
-	private JsonObject getListElement(JsonArray listArray, boolean limitExceeded, IntArraySet colorsUsed, LongArraySet platformIdsUsed, LongArraySet routesUsed) {
+	private JsonObject getListElement(JsonArray listArray, boolean limitExceeded, IntArraySet colorsUsed, LongArraySet platformIdsUsed, JsonArray tripsUsed) {
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("limitExceeded", limitExceeded);
-		jsonObject.addProperty("outOfRange", false);
 		jsonObject.add("list", listArray);
-		jsonObject.add("references", getReferences(colorsUsed, platformIdsUsed, routesUsed));
+		jsonObject.addProperty("outOfRange", false);
+		jsonObject.add("references", getReferences(colorsUsed, platformIdsUsed, tripsUsed));
 		return jsonObject;
 	}
 }

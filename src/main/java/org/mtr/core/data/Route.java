@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Utilities;
@@ -100,6 +101,10 @@ public class Route extends NameColorDataBase {
 		return true;
 	}
 
+	public String getColorHex() {
+		return Utilities.numberToPaddedHexString(color, 6);
+	}
+
 	public String getFormattedRouteNumber() {
 		return routeNumber.replace("|", " ");
 	}
@@ -117,44 +122,49 @@ public class Route extends NameColorDataBase {
 		return -1;
 	}
 
-	public boolean containsPlatformId(long platformId) {
-		return getPlatformIdIndex(platformId) >= 0;
-	}
-
-	public long getFirstPlatformId() {
-		return platformIds.isEmpty() ? 0 : platformIds.get(0).platformId;
-	}
-
-	public long getLastPlatformId() {
-		return platformIds.isEmpty() ? 0 : platformIds.get(platformIds.size() - 1).platformId;
-	}
-
-	public String getDestination(int index) {
+	public String getDestination(DataCache dataCache, int index) {
 		for (int i = Math.min(platformIds.size() - 1, index); i >= 0; i--) {
 			final String customDestination = platformIds.get(i).customDestination;
-			if (Route.destinationIsReset(customDestination)) {
-				return null;
+			if (destinationIsReset(customDestination)) {
+				break;
 			} else if (!customDestination.isEmpty()) {
 				return customDestination;
 			}
 		}
-		return null;
+
+		if (platformIds.isEmpty()) {
+			return "";
+		} else {
+			Platform platform = null;
+
+			if (circularState != CircularState.NONE) {
+				for (int i = index + 1; i < platformIds.size(); i++) {
+					platform = dataCache.platformIdMap.get(platformIds.get(i).platformId);
+					if (platform != null && platform.area != null && platform.area.savedRails.stream().anyMatch(checkPlatform -> dataCache.platformIdToRouteColors.getOrDefault(checkPlatform.id, new IntArraySet()).intStream().anyMatch(checkColor -> checkColor != color))) {
+						break;
+					}
+				}
+			}
+
+			if (platform == null) {
+				platform = dataCache.platformIdMap.get(Utilities.getElement(platformIds, -1).platformId);
+			}
+
+			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.name) : "";
+		}
 	}
 
 	public JsonObject getOBARouteElement() {
 		final JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("id", Utilities.numberToPaddedHexString(color, 6));
-		jsonObject.addProperty("shortName", getFormattedRouteNumber());
-		jsonObject.addProperty("longName", getTrimmedRouteName());
-		jsonObject.addProperty("description", getTrimmedRouteName());
-		jsonObject.addProperty("type", getGtfsType());
-		jsonObject.addProperty("color", Utilities.numberToPaddedHexString(color, 6));
 		jsonObject.addProperty("agencyId", "1");
-		return jsonObject;
-	}
-
-	public JsonObject getOBATripElement() {
-		final JsonObject jsonObject = new JsonObject();
+		jsonObject.addProperty("color", getColorHex());
+		jsonObject.addProperty("description", getTrimmedRouteName());
+		jsonObject.addProperty("id", getColorHex());
+		jsonObject.addProperty("longName", getTrimmedRouteName());
+		jsonObject.addProperty("shortName", getFormattedRouteNumber());
+		jsonObject.addProperty("textColor", "");
+		jsonObject.addProperty("type", getGtfsType());
+		jsonObject.addProperty("url", "");
 		return jsonObject;
 	}
 
@@ -186,5 +196,13 @@ public class Route extends NameColorDataBase {
 		}
 	}
 
-	public enum CircularState {NONE, CLOCKWISE, ANTICLOCKWISE}
+	public enum CircularState {
+		NONE(""), CLOCKWISE("\u21A9"), ANTICLOCKWISE("\u21AA");
+
+		private final String emoji;
+
+		CircularState(String emoji) {
+			this.emoji = emoji;
+		}
+	}
 }

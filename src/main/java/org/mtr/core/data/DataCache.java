@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 
@@ -28,6 +29,7 @@ public class DataCache {
 	public final Object2ObjectOpenHashMap<Station, ObjectAVLTreeSet<Station>> stationIdToConnectingStations = new Object2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<IntArraySet> platformIdToRouteColors = new Long2ObjectOpenHashMap<>();
 	public final Int2ObjectOpenHashMap<Route> routeColorMap = new Int2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<ObjectArraySet<Siding>> platformIdToSidings = new Long2ObjectOpenHashMap<>();
 
 	private final Simulator simulator;
 
@@ -43,6 +45,9 @@ public class DataCache {
 			mapIds(routeIdMap, simulator.routes);
 			mapIds(depotIdMap, simulator.depots);
 			mapIds(liftsIdMap, simulator.lifts);
+
+			mapAreasAndSavedRails(simulator.platforms, simulator.stations);
+			mapAreasAndSavedRails(simulator.sidings, simulator.depots);
 
 			positionToRailConnections.clear();
 			simulator.railNodes.forEach(railNode -> positionToRailConnections.put(railNode.position, railNode.connections));
@@ -75,8 +80,16 @@ public class DataCache {
 				});
 			});
 
-			mapAreasAndSavedRails(simulator.platforms, simulator.stations);
-			mapAreasAndSavedRails(simulator.sidings, simulator.depots);
+			simulator.sidings.forEach(siding -> {
+				if (siding.area != null) {
+					siding.area.iterateRoutes(route -> route.platformIds.forEach(platformId -> {
+						if (!platformIdToSidings.containsKey(platformId.platformId)) {
+							platformIdToSidings.put(platformId.platformId, new ObjectArraySet<>());
+						}
+						platformIdToSidings.get(platformId.platformId).add(siding);
+					}));
+				}
+			});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

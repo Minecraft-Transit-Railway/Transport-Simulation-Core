@@ -3,10 +3,7 @@ package org.mtr.core.path;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.mtr.core.data.AreaBase;
-import org.mtr.core.data.DataCache;
-import org.mtr.core.data.Rail;
-import org.mtr.core.data.SavedRailBase;
+import org.mtr.core.data.*;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -38,19 +35,24 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 		} else if (connectionDetailsList.size() < 2) {
 			return new ObjectArrayList<>();
 		} else {
-			// always trim the SavedRail itself
-			final boolean skipFirst = startSavedRail.containsPos(Utilities.getElement(connectionDetailsList, 1).node.position);
-			final boolean skipLast = endSavedRail.containsPos(Utilities.getElement(connectionDetailsList, -2).node.position);
-			final ObjectArrayList<PathData> path = new ObjectArrayList<>();
+			padConnectionDetailsList(connectionDetailsList, startSavedRail, false);
+			padConnectionDetailsList(connectionDetailsList, endSavedRail, true);
 
-			for (int i = skipFirst ? 1 : 0; i < connectionDetailsList.size() - (skipLast ? 2 : 1); i++) {
-				final Position position1 = connectionDetailsList.get(i).node.position;
-				final Position position2 = connectionDetailsList.get(i + 1).node.position;
+			final ObjectArrayList<PathData> path = new ObjectArrayList<>();
+			for (int i = 1; i < connectionDetailsList.size(); i++) {
+				final Position position1 = connectionDetailsList.get(i - 1).node.position;
+				final Position position2 = connectionDetailsList.get(i).node.position;
 				final Rail rail = DataCache.tryGet(positionToRailConnections, position1, position2);
 				if (rail == null) {
 					return new ObjectArrayList<>();
 				}
-				path.add(new PathData(rail, stopIndex, position1, position2));
+				if (i == connectionDetailsList.size() - 1) {
+					path.add(new PathData(rail, endSavedRail.id, endSavedRail instanceof Platform ? endSavedRail.getTimeValueMillis() : 1, stopIndex + 1, position1, position2));
+				} else if (rail.canTurnBack && connectionDetailsList.get(i + 1).node.position.equals(position1)) {
+					path.add(new PathData(rail, 0, 1, stopIndex, position1, position2));
+				} else {
+					path.add(new PathData(rail, 0, 0, stopIndex, position1, position2));
+				}
 			}
 
 			return path;
@@ -64,11 +66,8 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 
 		if (railConnections != null) {
 			railConnections.forEach((position, rail) -> {
-				if (node.angle == null || node.angle == rail.facingStart) {
-					connections.add(getConnectionDetails(position, rail, true));
-					if (rail.canTurnBack) {
-						connections.add(getConnectionDetails(position, rail, false));
-					}
+				if (node.angle == null || node.angle == rail.facingStart || rail.canTurnBack) {
+					connections.add(new ConnectionDetails<>(new PositionAndAngle(position, rail.facingEnd.getOpposite()), Math.round(rail.getLength() / rail.speedLimitMetersPerMillisecond), 0, 0));
 				}
 			});
 		}
@@ -81,7 +80,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 		return node.position.distManhattan(endNode.position);
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(DataCache dataCache, ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Runnable callbackSuccess, Runnable callbackFail) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Runnable callbackSuccess, Runnable callbackFail) {
 		if (!sidingPathFinders.isEmpty()) {
 			final SidingPathFinder<T, U, V, W> sidingPathFinder = sidingPathFinders.get(0);
 			final ObjectArrayList<PathData> tempPath = sidingPathFinder.tick();
@@ -92,13 +91,10 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 					path.clear();
 					callbackFail.run();
 				} else {
-					// add extra PathData if the vehicle is reversing out of the previous SavedRail
-					if (needsReverse(path, tempPath)) {
-						addPathData(dataCache, tempPath, true, sidingPathFinder.startSavedRail, tempPath, false, sidingPathFinder.stopIndex);
+					if (overlappingPaths(path, tempPath)) {
+						tempPath.remove(0);
 					}
 					path.addAll(tempPath);
-					// always arrive at the SavedRail fully
-					addPathData(dataCache, path, false, sidingPathFinder.endSavedRail, tempPath, true, sidingPathFinder.stopIndex + 1);
 					sidingPathFinders.remove(0);
 					if (sidingPathFinders.isEmpty()) {
 						callbackSuccess.run();
@@ -108,28 +104,30 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 		}
 	}
 
-	public static boolean needsReverse(ObjectArrayList<PathData> path, ObjectArrayList<PathData> tempPath) {
-		return !path.isEmpty() && !Utilities.getElement(path, -1).endPosition.equals(Utilities.getElement(tempPath, 0).startPosition);
-	}
+	public static void generatePathDataDistances(ObjectArrayList<PathData> path, double initialDistance) {
+		final ObjectArrayList<PathData> tempPath = new ObjectArrayList<>(path);
+		double endDistance = initialDistance;
+		path.clear();
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void addPathData(DataCache dataCache, ObjectArrayList<PathData> path, boolean isFirst, SavedRailBase<U, T> savedRail, ObjectArrayList<PathData> pathForPosition, boolean useDwellTime, int stopIndex) {
-		final PathData pathData = Utilities.getElement(pathForPosition, isFirst ? 0 : -1);
-		if (pathData != null && savedRail != null) {
-			final Position position1 = isFirst ? pathData.startPosition : pathData.endPosition;
-			final Position position2 = savedRail.getOtherPosition(position1);
-			final Position position3 = isFirst ? position2 : position1;
-			final Position position4 = isFirst ? position1 : position2;
-			final Rail rail = DataCache.tryGet(dataCache.positionToRailConnections, position3, position4);
-			if (useDwellTime) {
-				path.add(isFirst ? 0 : path.size(), new PathData(rail, savedRail.id, savedRail.getTimeValueMillis(), stopIndex, position3, position4));
-			} else {
-				path.add(isFirst ? 0 : path.size(), new PathData(rail, stopIndex, position3, position4));
-			}
+		for (final PathData oldPathData : tempPath) {
+			final double startDistance = endDistance;
+			endDistance += oldPathData.rail.getLength();
+			path.add(new PathData(oldPathData, startDistance, endDistance));
 		}
 	}
 
-	private static ConnectionDetails<PositionAndAngle> getConnectionDetails(Position position, Rail rail, boolean isOpposite) {
-		return new ConnectionDetails<>(new PositionAndAngle(position, isOpposite ? rail.facingEnd.getOpposite() : rail.facingEnd), Math.round(rail.getLength() / rail.speedLimitMetersPerMillisecond), 0, 0);
+	public static boolean overlappingPaths(ObjectArrayList<PathData> path, ObjectArrayList<PathData> newPath) {
+		if (path.isEmpty() || newPath.isEmpty()) {
+			return false;
+		} else {
+			return Utilities.getElement(path, -1).isSameRail(newPath.get(0));
+		}
+	}
+
+	private static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void padConnectionDetailsList(ObjectArrayList<ConnectionDetails<PositionAndAngle>> connectionDetailsList, SavedRailBase<U, T> savedRail, boolean isEnd) {
+		if (!savedRail.containsPos(Utilities.getElement(connectionDetailsList, isEnd ? -2 : 1).node.position)) {
+			connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(Utilities.getElement(connectionDetailsList, isEnd ? -1 : 0).node.position), null), 0, 0, 0));
+		}
 	}
 
 	protected static class PositionAndAngle {

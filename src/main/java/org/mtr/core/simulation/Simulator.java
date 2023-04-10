@@ -59,12 +59,7 @@ public class Simulator implements Utilities {
 		fileLoaderRailNodes = new FileLoader<>(railNodes, RailNode::new, savePath, "rails", true);
 
 		dataCache.sync();
-		stations.forEach(Station::init);
-		platforms.forEach(Platform::init);
-		sidings.forEach(Siding::init);
-		routes.forEach(Route::init);
 		depots.forEach(Depot::init);
-		lifts.forEach(Lift::init);
 
 		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}

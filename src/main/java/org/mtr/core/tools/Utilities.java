@@ -1,6 +1,7 @@
 package org.mtr.core.tools;
 
 import org.mtr.core.Main;
+import org.mtr.core.data.ConditionalList;
 
 import java.util.List;
 import java.util.Locale;
@@ -73,6 +74,31 @@ public interface Utilities {
 			result = collection.get((index < 0 ? collection.size() : 0) + index);
 		}
 		return result == null ? defaultValue : result;
+	}
+
+	static <T extends ConditionalList> int getIndexFromConditionalList(List<T> list, double value) {
+		if (list.isEmpty()) {
+			return -1;
+		} else {
+			final int listSize = list.size();
+			int index = listSize / 2;
+			int lowIndex = -1;
+			int highIndex = listSize;
+
+			while (true) {
+				if (list.get(index).matchesCondition(value)) {
+					lowIndex = index;
+				} else {
+					highIndex = index;
+				}
+
+				if (lowIndex + 1 == highIndex) {
+					return lowIndex < 0 ? -1 : lowIndex;
+				}
+
+				index = Utilities.clamp((lowIndex + highIndex) / 2, 0, listSize - 1);
+			}
+		}
 	}
 
 	static long circularDifference(long value1, long value2, long totalDegrees) {

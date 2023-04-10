@@ -22,7 +22,4 @@ public abstract class SerializedDataBase {
 	public int fullMessagePackLength() {
 		return messagePackLength();
 	}
-
-	public void init() {
-	}
 }
