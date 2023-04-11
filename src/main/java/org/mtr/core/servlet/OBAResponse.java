@@ -86,8 +86,8 @@ public class OBAResponse {
 			final JsonArray tripsUsedArray = new JsonArray();
 			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.schedule.blocks.forEach(trips -> trips.forEach(trip -> trip.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
 					platform,
-					Math.max(0, (int) getParameter("minutesBefore", 5)),
-					Math.max(0, (int) getParameter("minutesAfter", 35)),
+					Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
+					Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000,
 					arrivalsAndDeparturesArray,
 					tripsUsedArray
 			))));

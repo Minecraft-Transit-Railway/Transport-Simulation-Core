@@ -176,16 +176,20 @@ public class Schedule implements Utilities {
 			return String.format("%s_%s_%s_%s", route.getColorHex(), siding.getHexId(), tripIndexInBlock, departureTimeOffset);
 		}
 
-		public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(Platform platform, int minutesBefore, int minutesAfter, JsonArray arrivalsAndDeparturesArray, JsonArray tripsUsedArray) {
+		public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(Platform platform, int millsBefore, int millisAfter, JsonArray arrivalsAndDeparturesArray, JsonArray tripsUsedArray) {
 			final long currentMillis = System.currentTimeMillis();
-			final long startOfDayMillis = currentMillis - (currentMillis % Utilities.MILLIS_PER_DAY);
+			final long startOfDayMillis = currentMillis - (currentMillis % MILLIS_PER_DAY) - MILLIS_PER_DAY;
 			boolean needToAddTrip = true;
 
 			for (final TripStopInfo tripStopInfo : stopTimes) {
-				final long scheduledArrivalTime = startOfDayMillis + tripStopInfo.startTime;
-				final long scheduledDepartureTime = startOfDayMillis + tripStopInfo.endTime;
+				long scheduledArrivalTime = startOfDayMillis + tripStopInfo.startTime;
+				long scheduledDepartureTime = startOfDayMillis + tripStopInfo.endTime;
+				while (currentMillis - scheduledDepartureTime > 600000) {
+					scheduledArrivalTime += MILLIS_PER_DAY;
+					scheduledDepartureTime += MILLIS_PER_DAY;
+				}
 
-				if (tripStopInfo.platformId == platform.id && currentMillis >= scheduledDepartureTime - minutesBefore * 60000L && currentMillis <= scheduledArrivalTime + minutesAfter * 60000L) {
+				if (tripStopInfo.platformId == platform.id && scheduledDepartureTime >= currentMillis - millsBefore && scheduledArrivalTime <= currentMillis + millisAfter) {
 					final JsonObject positionObject = new JsonObject();
 					positionObject.addProperty("lat", 0);
 					positionObject.addProperty("lon", 0);
