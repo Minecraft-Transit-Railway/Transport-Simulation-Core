@@ -84,13 +84,13 @@ public class OBAResponse {
 
 			final JsonArray arrivalsAndDeparturesArray = new JsonArray();
 			final JsonArray tripsUsedArray = new JsonArray();
-			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.schedule.blocks.forEach(trips -> trips.forEach(trip -> trip.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
+			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.schedule.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
 					platform,
 					Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
 					Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000,
 					arrivalsAndDeparturesArray,
 					tripsUsedArray
-			))));
+			));
 
 			final JsonObject jsonObject = new JsonObject();
 			jsonObject.add("arrivalsAndDepartures", arrivalsAndDeparturesArray);

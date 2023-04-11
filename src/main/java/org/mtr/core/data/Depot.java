@@ -153,10 +153,12 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		});
 	}
 
-	public IntArrayList getDepartures(long sidingId) {
-		final IntArrayList departures = new IntArrayList();
-		actualDepartures.stream().filter(departureData -> departureData.right().id == sidingId).forEach(departureData -> departures.add(departureData.leftInt()));
-		return departures;
+	public void getDepartures(long sidingId, Consumer<Integer> consumer) {
+		actualDepartures.forEach(departureData -> {
+			if (departureData.right().id == sidingId) {
+				consumer.accept(departureData.leftInt());
+			}
+		});
 	}
 
 	private void tryToDeploy() {
@@ -171,8 +173,8 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 
 				if (match < 0) {
 					departureSearchIndex++;
-				} else {
-					departureData.right().deployTrain();
+				} else if (match == 0) {
+					departureData.right().deployTrain(departureData.leftInt());
 					return;
 				}
 			}

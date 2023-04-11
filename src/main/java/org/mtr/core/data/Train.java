@@ -26,6 +26,7 @@ public class Train extends NameColorDataBase {
 	private boolean isOnRoute = false;
 	private boolean isCurrentlyManual;
 	private int manualNotch;
+	private int departure;
 
 	public final long sidingId;
 	public final double railLength;
@@ -265,15 +266,16 @@ public class Train extends NameColorDataBase {
 				tempDoorValue = 0;
 				speed = 0;
 				nextStoppingIndex = 0;
+				departure = -1;
 
 				if (isCurrentlyManual && manualNotch > 0) {
-					startUp();
+					startUp(-1);
 				}
 			} else {
 				final double newAcceleration = acceleration * millisElapsed;
 				final int currentIndex = Utilities.getIndexFromConditionalList(path, railProgress);
 
-				if (railProgress >= totalDistance - (railLength - totalVehicleLength) / 2) {
+				if (railProgress >= totalDistance - (railLength - totalVehicleLength) / 2 || !isManualAllowed && departure < 0) {
 					isOnRoute = false;
 					manualNotch = -2;
 					ridingEntities.clear();
@@ -302,7 +304,7 @@ public class Train extends NameColorDataBase {
 								railProgress += totalVehicleLength;
 								reversed = !reversed;
 							}
-							startUp();
+							startUp(departure);
 						}
 					} else {
 						final double safeStoppingDistance = 0.5 * speed * speed / acceleration;
@@ -315,7 +317,7 @@ public class Train extends NameColorDataBase {
 						}
 
 						if (!transportMode.continuousMovement && stoppingDistance < safeStoppingDistance) {
-							speed = stoppingDistance <= 0 ? Train.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Train.ACCELERATION_DEFAULT);
+							speed = stoppingDistance <= 0 ? ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, ACCELERATION_DEFAULT);
 							manualNotch = -3;
 						} else {
 							if (manualNotch < -2) {
@@ -340,8 +342,8 @@ public class Train extends NameColorDataBase {
 						tempDoorTarget = transportMode.continuousMovement && openDoors();
 
 						railProgress += speed * millisElapsed;
-						if (!transportMode.continuousMovement && railProgress >= stoppingDistance) {
-							railProgress = stoppingDistance;
+						if (!transportMode.continuousMovement && stoppingDistance <= 0) {
+							railProgress += stoppingDistance;
 							speed = 0;
 							manualNotch = -2;
 						}
@@ -361,10 +363,11 @@ public class Train extends NameColorDataBase {
 		}
 	}
 
-	public void startUp() {
+	public void startUp(int newDeparture) {
+		departure = newDeparture;
 		isOnRoute = true;
 		elapsedDwellMillis = 0;
-		speed = Train.ACCELERATION_DEFAULT;
+		speed = ACCELERATION_DEFAULT;
 		doorTarget = false;
 		doorValue = 0;
 		nextStoppingIndex = path.size() - 1;
@@ -374,6 +377,10 @@ public class Train extends NameColorDataBase {
 				break;
 			}
 		}
+	}
+
+	public boolean matchDeparture(int checkDeparture) {
+		return departure == checkDeparture;
 	}
 
 	protected boolean openDoors() {

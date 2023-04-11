@@ -80,16 +80,12 @@ public class DataCache {
 				});
 			});
 
-			simulator.sidings.forEach(siding -> {
-				if (siding.area != null) {
-					siding.area.iterateRoutes(route -> route.platformIds.forEach(platformId -> {
-						if (!platformIdToSidings.containsKey(platformId.platformId)) {
-							platformIdToSidings.put(platformId.platformId, new ObjectArraySet<>());
-						}
-						platformIdToSidings.get(platformId.platformId).add(siding);
-					}));
+			simulator.depots.forEach(depot -> depot.iterateRoutes(route -> route.platformIds.forEach(platformId -> {
+				if (!platformIdToSidings.containsKey(platformId.platformId)) {
+					platformIdToSidings.put(platformId.platformId, new ObjectArraySet<>());
 				}
-			});
+				platformIdToSidings.get(platformId.platformId).addAll(depot.savedRails);
+			})));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

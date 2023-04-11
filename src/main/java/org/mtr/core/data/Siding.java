@@ -1,6 +1,5 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
@@ -28,7 +27,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	private double maxManualSpeed;
 	private double acceleration = Train.ACCELERATION_DEFAULT;
 	private PathData defaultPathData;
-	private boolean canDeploy = false;
+	private int departure = -1;
 
 	public final Simulator simulator;
 	public final double railLength;
@@ -62,7 +61,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		unlimitedVehicles = transportMode.continuousMovement;
 		acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.ACCELERATION_DEFAULT;
 		vehicleMessagePackHelpers = ObjectImmutableList.of();
-		schedule = new Schedule(railLength, transportMode);
+		schedule = new Schedule(this, railLength, transportMode);
 	}
 
 	public <T extends ReaderBase<U, T>, U> Siding(T readerBase, Simulator simulator) {
@@ -79,7 +78,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			}
 		});
 		vehicleMessagePackHelpers = new ObjectImmutableList<>(tempVehicleMessagePackHelpers);
-		schedule = new Schedule(railLength, transportMode);
+		schedule = new Schedule(this, railLength, transportMode);
 
 		updateData(readerBase);
 	}
@@ -193,7 +192,6 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		int trainsAtDepot = 0;
 		boolean spawnTrain = true;
 
-		final LongAVLTreeSet railProgressSet = new LongAVLTreeSet();
 		final ObjectArraySet<Train> trainsToRemove = new ObjectArraySet<>();
 		for (final Train train : vehicles) {
 			train.simulateTrain(millisElapsed, vehiclePositions);
@@ -206,17 +204,11 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 				trainsAtDepot++;
 				if (trainsAtDepot > 1) {
 					trainsToRemove.add(train);
-				} else if (!isManual && canDeploy) {
-					train.startUp();
-					canDeploy = false;
+				} else if (!pathSidingToMainRoute.isEmpty() && !isManual && departure >= 0) {
+					train.startUp(departure);
+					departure = -1;
 				}
 			}
-
-			final long roundedRailProgress = Math.round(train.getRailProgress() * 10);
-			if (railProgressSet.contains(roundedRailProgress)) {
-				trainsToRemove.add(train);
-			}
-			railProgressSet.add(roundedRailProgress);
 		}
 
 		if (defaultPathData != null && totalVehicleLength > 0 && (vehicles.isEmpty() || spawnTrain && (unlimitedVehicles || vehicles.size() <= maxVehicles))) {
@@ -232,8 +224,17 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		}
 	}
 
-	public void deployTrain() {
-		canDeploy = true;
+	public void deployTrain(int departure) {
+		this.departure = departure;
+	}
+
+	public double scheduleOffset(int checkDeparture) {
+		for (final Train vehicle : vehicles) {
+			if (vehicle.matchDeparture(checkDeparture)) {
+				return schedule.getTimeAlongRoute(vehicle.getRailProgress());
+			}
+		}
+		return -1;
 	}
 
 	private String getDepotName() {
@@ -286,7 +287,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			SidingPathFinder.generatePathDataDistances(pathSidingToMainRoute, 0);
 			SidingPathFinder.generatePathDataDistances(pathMainRoute, Utilities.getElement(pathSidingToMainRoute, -1).endDistance);
 			SidingPathFinder.generatePathDataDistances(pathMainRouteToSiding, Utilities.getElement(pathMainRoute, -1).endDistance);
-			schedule.generateTimeSegments(this, pathSidingToMainRoute, pathMainRoute, totalVehicleLength, acceleration);
+			schedule.generateTimeSegments(pathSidingToMainRoute, pathMainRoute, totalVehicleLength, acceleration);
 
 			return true;
 		}

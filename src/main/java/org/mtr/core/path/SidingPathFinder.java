@@ -82,22 +82,27 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Runnable callbackSuccess, Runnable callbackFail) {
 		if (!sidingPathFinders.isEmpty()) {
-			final SidingPathFinder<T, U, V, W> sidingPathFinder = sidingPathFinders.get(0);
-			final ObjectArrayList<PathData> tempPath = sidingPathFinder.tick();
+			final long startMillis = System.currentTimeMillis();
+			while (System.currentTimeMillis() - startMillis < 5) {
+				final SidingPathFinder<T, U, V, W> sidingPathFinder = sidingPathFinders.get(0);
+				final ObjectArrayList<PathData> tempPath = sidingPathFinder.tick();
 
-			if (tempPath != null) {
-				if (tempPath.size() < 2) {
-					sidingPathFinders.clear();
-					path.clear();
-					callbackFail.run();
-				} else {
-					if (overlappingPaths(path, tempPath)) {
-						tempPath.remove(0);
-					}
-					path.addAll(tempPath);
-					sidingPathFinders.remove(0);
-					if (sidingPathFinders.isEmpty()) {
-						callbackSuccess.run();
+				if (tempPath != null) {
+					if (tempPath.size() < 2) {
+						sidingPathFinders.clear();
+						path.clear();
+						callbackFail.run();
+						return;
+					} else {
+						if (overlappingPaths(path, tempPath)) {
+							tempPath.remove(0);
+						}
+						path.addAll(tempPath);
+						sidingPathFinders.remove(0);
+						if (sidingPathFinders.isEmpty()) {
+							callbackSuccess.run();
+							return;
+						}
 					}
 				}
 			}
