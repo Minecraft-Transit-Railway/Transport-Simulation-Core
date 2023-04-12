@@ -4,8 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.path.PathData;
 import org.mtr.core.tools.Utilities;
 
@@ -18,6 +22,7 @@ public class Schedule implements Utilities {
 
 	private final Siding siding;
 	private final ObjectArrayList<Trip> trips = new ObjectArrayList<>();
+	private final Long2ObjectAVLTreeMap<ObjectArraySet<TripStopInfo>> platformTripStopInfoSet = new Long2ObjectAVLTreeMap<>();
 	private final double railLength;
 	private final TransportMode transportMode;
 	private final IntArrayList departures = new IntArrayList();
@@ -108,14 +113,22 @@ public class Schedule implements Utilities {
 						break;
 					}
 
+					if (!platformTripStopInfoSet.containsKey(pathData.savedRailBaseId)) {
+						platformTripStopInfoSet.put(pathData.savedRailBaseId, new ObjectArraySet<>());
+					}
+
 					final Trip currentTrip = Utilities.getElement(trips, -1);
 					if (currentTrip == null || routePlatformInfo.route.id != currentTrip.route.id) {
 						final Trip trip = new Trip(routePlatformInfo.route, trips.size());
 						tripStopIndex = 0;
-						trip.stopTimes.add(new TripStopInfo(startTime, endTime, pathData.savedRailBaseId, 0, routePlatformInfo.customDestination));
+						final TripStopInfo tripStopInfo = new TripStopInfo(trip, startTime, endTime, pathData.savedRailBaseId, 0, routePlatformInfo.customDestination);
+						trip.stopTimes.add(tripStopInfo);
 						trips.add(trip);
+						platformTripStopInfoSet.get(pathData.savedRailBaseId).add(tripStopInfo);
 					} else {
-						currentTrip.stopTimes.add(new TripStopInfo(startTime, endTime, pathData.savedRailBaseId, tripStopIndex, routePlatformInfo.customDestination));
+						final TripStopInfo tripStopInfo = new TripStopInfo(currentTrip, startTime, endTime, pathData.savedRailBaseId, tripStopIndex, routePlatformInfo.customDestination);
+						currentTrip.stopTimes.add(tripStopInfo);
+						platformTripStopInfoSet.get(pathData.savedRailBaseId).add(tripStopInfo);
 					}
 
 					tripStopIndex++;
@@ -176,6 +189,16 @@ public class Schedule implements Utilities {
 		return index < 0 ? -1 : timeSegments.get(index).getTimeAlongRoute(railProgress);
 	}
 
+	public long getEndTimeOfPlatform(long platformId) {
+		final ObjectArraySet<TripStopInfo> platformTripStopInfo = platformTripStopInfoSet.get(platformId);
+		if (platformTripStopInfo != null) {
+			for (final TripStopInfo tripStopInfo : platformTripStopInfo) {
+				return tripStopInfo.endTime; // TODO doesn't account for trips that visit the same platform twice
+			}
+		}
+		return -1;
+	}
+
 	public int matchDeparture() {
 		final long repeatInterval = getRepeatInterval(0);
 		final long offset = departures.isEmpty() || repeatInterval == 0 ? 0 : (System.currentTimeMillis() - departures.getInt(0)) / repeatInterval * repeatInterval;
@@ -197,6 +220,140 @@ public class Schedule implements Utilities {
 		return -1;
 	}
 
+	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(Platform platform, int millsBefore, int millisAfter, JsonArray arrivalsAndDeparturesArray, JsonArray tripsUsedArray) {
+		if (siding.area == null || departures.isEmpty()) {
+			return;
+		}
+
+		final ObjectArraySet<TripStopInfo> platformTripStopInfo = platformTripStopInfoSet.get(platform.id);
+		if (platformTripStopInfo == null) {
+			return;
+		}
+
+		final long currentMillis = System.currentTimeMillis();
+		final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
+		final Int2LongAVLTreeMap timesAlongRoute = siding.getTimesAlongRoute();
+		final ObjectAVLTreeSet<String> addedTripIds = new ObjectAVLTreeSet<>();
+
+		platformTripStopInfo.forEach(tripStopInfo -> {
+			for (int i = 0; i < departures.size(); i++) {
+				final int departure = departures.getInt(i);
+				final Trip trip = tripStopInfo.trip;
+				final String tripId = String.format("%s_%s_%s_%s", trip.route.getColorHex(), siding.getHexId(), trip.tripIndexInBlock, i);
+				final long initialOffset = ((currentMillis - (siding.transportMode.continuousMovement ? 0 : millsBefore) - tripStopInfo.endTime - departure) / repeatInterval + 1) * repeatInterval + departure;
+				final long timeAlongRoute = timesAlongRoute.getOrDefault(i, -1);
+				final boolean predicted = timeAlongRoute >= 0;
+				final long deviation = predicted ? Utilities.circularDifference(currentMillis + tripStopInfo.startTime - timeAlongRoute, tripStopInfo.startTime + initialOffset, repeatInterval) : 0;
+				int offset = 0;
+
+				while (true) {
+					final long newOffset = repeatInterval * offset;
+					final long scheduledArrivalTime = tripStopInfo.startTime + initialOffset + newOffset;
+					final long scheduledDepartureTime = tripStopInfo.endTime + initialOffset + newOffset;
+					final long predictedArrivalTime;
+					final long predictedDepartureTime;
+
+					if (predicted) {
+						predictedArrivalTime = scheduledArrivalTime + deviation;
+						predictedDepartureTime = scheduledDepartureTime + deviation;
+					} else {
+						predictedArrivalTime = 0;
+						predictedDepartureTime = 0;
+					}
+
+					if (scheduledArrivalTime > currentMillis + millisAfter) {
+						break;
+					}
+
+					final JsonObject positionObject = new JsonObject();
+					positionObject.addProperty("lat", 0);
+					positionObject.addProperty("lon", 0);
+
+					final JsonObject tripStatusObject = new JsonObject();
+					tripStatusObject.addProperty("activeTripId", tripId);
+					tripStatusObject.addProperty("blockTripSequence", trip.tripIndexInBlock);
+					tripStatusObject.addProperty("closestStop", platform.getHexId());
+					tripStatusObject.addProperty("closestStopTimeOffset", 1);
+					tripStatusObject.addProperty("distanceAlongTrip", 0);
+					tripStatusObject.add("frequency", JsonNull.INSTANCE);
+					tripStatusObject.addProperty("lastKnownDistanceAlongTrip", 0);
+					tripStatusObject.addProperty("lastKnownOrientation", 0);
+					tripStatusObject.addProperty("lastLocationUpdateTime", 0);
+					tripStatusObject.addProperty("lastUpdateTime", 0);
+					tripStatusObject.addProperty("nextStop", platform.getHexId());
+					tripStatusObject.addProperty("nextStopTimeOffset", 1);
+					tripStatusObject.addProperty("occupancyCapacity", 0);
+					tripStatusObject.addProperty("occupancyCount", 0);
+					tripStatusObject.addProperty("occupancyStatus", "");
+					tripStatusObject.addProperty("orientation", 0);
+					tripStatusObject.addProperty("phase", "");
+					tripStatusObject.add("position", positionObject);
+					tripStatusObject.addProperty("predicted", predicted);
+					tripStatusObject.addProperty("scheduleDeviation", deviation);
+					tripStatusObject.addProperty("scheduledDistanceAlongTrip", 0);
+					tripStatusObject.addProperty("serviceDate", 0);
+					tripStatusObject.add("situationIds", new JsonArray());
+					tripStatusObject.addProperty("status", "default");
+					tripStatusObject.addProperty("totalDistanceAlongTrip", 0);
+					tripStatusObject.addProperty("vehicleId", "");
+
+					final JsonObject arrivalAndDepartureObject = new JsonObject();
+					arrivalAndDepartureObject.addProperty("arrivalEnabled", tripStopInfo.tripStopIndex > 0);
+					arrivalAndDepartureObject.addProperty("blockTripSequence", trip.tripIndexInBlock);
+					arrivalAndDepartureObject.addProperty("departureEnabled", tripStopInfo.tripStopIndex < trip.route.platformIds.size() - 1);
+					arrivalAndDepartureObject.addProperty("distanceFromStop", 0);
+					arrivalAndDepartureObject.add("frequency", JsonNull.INSTANCE);
+					arrivalAndDepartureObject.addProperty("historicalOccupancy", "");
+					arrivalAndDepartureObject.addProperty("lastUpdateTime", 0);
+					arrivalAndDepartureObject.addProperty("numberOfStopsAway", 0);
+					arrivalAndDepartureObject.addProperty("occupancyStatus", "");
+					arrivalAndDepartureObject.addProperty("predicted", false);
+					arrivalAndDepartureObject.add("predictedArrivalInterval", JsonNull.INSTANCE);
+					arrivalAndDepartureObject.addProperty("predictedArrivalTime", predictedArrivalTime);
+					arrivalAndDepartureObject.add("predictedDepartureInterval", JsonNull.INSTANCE);
+					arrivalAndDepartureObject.addProperty("predictedDepartureTime", predictedDepartureTime);
+					arrivalAndDepartureObject.addProperty("predictedOccupancy", "");
+					arrivalAndDepartureObject.addProperty("routeId", trip.route.getColorHex());
+					arrivalAndDepartureObject.addProperty("routeLongName", trip.route.getTrimmedRouteName());
+					arrivalAndDepartureObject.addProperty("routeShortName", trip.route.getFormattedRouteNumber());
+					arrivalAndDepartureObject.add("scheduledArrivalInterval", JsonNull.INSTANCE);
+					arrivalAndDepartureObject.addProperty("scheduledArrivalTime", scheduledArrivalTime);
+					arrivalAndDepartureObject.add("scheduledDepartureInterval", JsonNull.INSTANCE);
+					arrivalAndDepartureObject.addProperty("scheduledDepartureTime", scheduledDepartureTime);
+					arrivalAndDepartureObject.addProperty("serviceDate", 0);
+					arrivalAndDepartureObject.add("situationIds", new JsonArray());
+					arrivalAndDepartureObject.addProperty("status", "default");
+					arrivalAndDepartureObject.addProperty("stopId", platform.getHexId());
+					arrivalAndDepartureObject.addProperty("stopSequence", tripStopInfo.tripStopIndex);
+					arrivalAndDepartureObject.addProperty("totalStopsInTrip", trip.route.platformIds.size());
+					arrivalAndDepartureObject.addProperty("tripHeadsign", tripStopInfo.customDestination == null ? "" : tripStopInfo.customDestination.replace("|", " "));
+					arrivalAndDepartureObject.addProperty("tripId", tripId);
+					arrivalAndDepartureObject.add("tripStatus", tripStatusObject);
+					arrivalAndDepartureObject.addProperty("vehicleId", "");
+					arrivalsAndDeparturesArray.add(arrivalAndDepartureObject);
+
+					offset++;
+				}
+
+				if (!addedTripIds.contains(tripId)) {
+					final JsonObject tripObject = new JsonObject();
+					tripObject.addProperty("blockId", String.valueOf(departure));
+					tripObject.addProperty("directionId", 0);
+					tripObject.addProperty("id", tripId);
+					tripObject.addProperty("routeId", trip.route.getColorHex());
+					tripObject.addProperty("routeShortName", trip.route.getFormattedRouteNumber());
+					tripObject.addProperty("serviceId", "1");
+					tripObject.addProperty("shapeId", "");
+					tripObject.addProperty("timeZone", TimeZone.getDefault().getID());
+					tripObject.addProperty("tripHeadsign", "");
+					tripObject.addProperty("tripShortName", trip.route.getFormattedRouteNumber());
+					tripsUsedArray.add(tripObject);
+					addedTripIds.add(tripId);
+				}
+			}
+		});
+	}
+
 	private long getRepeatInterval(long defaultAmount) {
 		final Depot depot = siding.area;
 		if (depot == null) {
@@ -204,138 +361,6 @@ public class Schedule implements Utilities {
 		} else {
 			return depot.repeatInfinitely ? Math.round(timeOffsetForRepeating) : depot.useRealTime ? defaultAmount : siding.simulator.millisPerGameDay;
 		}
-	}
-
-	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(Platform platform, int millsBefore, int millisAfter, JsonArray arrivalsAndDeparturesArray, JsonArray tripsUsedArray) {
-		if (siding.area == null || departures.isEmpty()) {
-			return;
-		}
-
-		final long currentMillis = System.currentTimeMillis();
-		final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
-
-		trips.forEach(trip -> {
-			final boolean[] needToAddTrip = {true};
-			trip.stopTimes.forEach(tripStopInfo -> {
-				if (tripStopInfo.platformId == platform.id) {
-					for (int i = 0; i < departures.size(); i++) {
-						final int departure = departures.getInt(i);
-						final String tripId = String.format("%s_%s_%s_%s", trip.route.getColorHex(), siding.getHexId(), trip.tripIndexInBlock, departure);
-						final long initialOffset = ((currentMillis - millsBefore - tripStopInfo.endTime - departure) / repeatInterval + 1) * repeatInterval + departure;
-						final long timeAlongRoute = Math.round(siding.timeAlongRoute(i));
-						final boolean predicted = timeAlongRoute >= 0;
-						final long deviation = predicted ? Utilities.circularDifference(currentMillis + tripStopInfo.startTime - timeAlongRoute, tripStopInfo.startTime + initialOffset, repeatInterval) : 0;
-
-						int offset = 0;
-
-						while (true) {
-							final long newOffset = repeatInterval * offset;
-							final long scheduledArrivalTime = tripStopInfo.startTime + initialOffset + newOffset;
-							final long scheduledDepartureTime = tripStopInfo.endTime + initialOffset + newOffset;
-							final long predictedArrivalTime;
-							final long predictedDepartureTime;
-
-							if (predicted) {
-								predictedArrivalTime = scheduledArrivalTime + deviation;
-								predictedDepartureTime = scheduledDepartureTime + deviation;
-							} else {
-								predictedArrivalTime = 0;
-								predictedDepartureTime = 0;
-							}
-
-							if (scheduledArrivalTime > currentMillis + millisAfter) {
-								break;
-							}
-
-							final JsonObject positionObject = new JsonObject();
-							positionObject.addProperty("lat", 0);
-							positionObject.addProperty("lon", 0);
-
-							final JsonObject tripStatusObject = new JsonObject();
-							tripStatusObject.addProperty("activeTripId", tripId);
-							tripStatusObject.addProperty("blockTripSequence", trip.tripIndexInBlock);
-							tripStatusObject.addProperty("closestStop", platform.getHexId());
-							tripStatusObject.addProperty("closestStopTimeOffset", 1);
-							tripStatusObject.addProperty("distanceAlongTrip", 0);
-							tripStatusObject.add("frequency", JsonNull.INSTANCE);
-							tripStatusObject.addProperty("lastKnownDistanceAlongTrip", 0);
-							tripStatusObject.addProperty("lastKnownOrientation", 0);
-							tripStatusObject.addProperty("lastLocationUpdateTime", 0);
-							tripStatusObject.addProperty("lastUpdateTime", 0);
-							tripStatusObject.addProperty("nextStop", platform.getHexId());
-							tripStatusObject.addProperty("nextStopTimeOffset", 1);
-							tripStatusObject.addProperty("occupancyCapacity", 0);
-							tripStatusObject.addProperty("occupancyCount", 0);
-							tripStatusObject.addProperty("occupancyStatus", "");
-							tripStatusObject.addProperty("orientation", 0);
-							tripStatusObject.addProperty("phase", "");
-							tripStatusObject.add("position", positionObject);
-							tripStatusObject.addProperty("predicted", predicted);
-							tripStatusObject.addProperty("scheduleDeviation", deviation);
-							tripStatusObject.addProperty("scheduledDistanceAlongTrip", 0);
-							tripStatusObject.addProperty("serviceDate", 0);
-							tripStatusObject.add("situationIds", new JsonArray());
-							tripStatusObject.addProperty("status", "default");
-							tripStatusObject.addProperty("totalDistanceAlongTrip", 0);
-							tripStatusObject.addProperty("vehicleId", "");
-
-							final JsonObject arrivalAndDepartureObject = new JsonObject();
-							arrivalAndDepartureObject.addProperty("arrivalEnabled", tripStopInfo.tripStopIndex > 0);
-							arrivalAndDepartureObject.addProperty("blockTripSequence", trip.tripIndexInBlock);
-							arrivalAndDepartureObject.addProperty("departureEnabled", tripStopInfo.tripStopIndex < trip.route.platformIds.size() - 1);
-							arrivalAndDepartureObject.addProperty("distanceFromStop", 0);
-							arrivalAndDepartureObject.add("frequency", JsonNull.INSTANCE);
-							arrivalAndDepartureObject.addProperty("historicalOccupancy", "");
-							arrivalAndDepartureObject.addProperty("lastUpdateTime", 0);
-							arrivalAndDepartureObject.addProperty("numberOfStopsAway", 0);
-							arrivalAndDepartureObject.addProperty("occupancyStatus", "");
-							arrivalAndDepartureObject.addProperty("predicted", false);
-							arrivalAndDepartureObject.add("predictedArrivalInterval", JsonNull.INSTANCE);
-							arrivalAndDepartureObject.addProperty("predictedArrivalTime", predictedArrivalTime);
-							arrivalAndDepartureObject.add("predictedDepartureInterval", JsonNull.INSTANCE);
-							arrivalAndDepartureObject.addProperty("predictedDepartureTime", predictedDepartureTime);
-							arrivalAndDepartureObject.addProperty("predictedOccupancy", "");
-							arrivalAndDepartureObject.addProperty("routeId", trip.route.getColorHex());
-							arrivalAndDepartureObject.addProperty("routeLongName", trip.route.getTrimmedRouteName());
-							arrivalAndDepartureObject.addProperty("routeShortName", trip.route.getFormattedRouteNumber());
-							arrivalAndDepartureObject.add("scheduledArrivalInterval", JsonNull.INSTANCE);
-							arrivalAndDepartureObject.addProperty("scheduledArrivalTime", scheduledArrivalTime);
-							arrivalAndDepartureObject.add("scheduledDepartureInterval", JsonNull.INSTANCE);
-							arrivalAndDepartureObject.addProperty("scheduledDepartureTime", scheduledDepartureTime);
-							arrivalAndDepartureObject.addProperty("serviceDate", 0);
-							arrivalAndDepartureObject.add("situationIds", new JsonArray());
-							arrivalAndDepartureObject.addProperty("status", "default");
-							arrivalAndDepartureObject.addProperty("stopId", platform.getHexId());
-							arrivalAndDepartureObject.addProperty("stopSequence", tripStopInfo.tripStopIndex);
-							arrivalAndDepartureObject.addProperty("totalStopsInTrip", trip.route.platformIds.size());
-							arrivalAndDepartureObject.addProperty("tripHeadsign", tripStopInfo.customDestination == null ? "" : tripStopInfo.customDestination.replace("|", " "));
-							arrivalAndDepartureObject.addProperty("tripId", tripId);
-							arrivalAndDepartureObject.add("tripStatus", tripStatusObject);
-							arrivalAndDepartureObject.addProperty("vehicleId", "");
-							arrivalsAndDeparturesArray.add(arrivalAndDepartureObject);
-
-							if (needToAddTrip[0]) {
-								final JsonObject tripObject = new JsonObject();
-								tripObject.addProperty("blockId", String.valueOf(departure));
-								tripObject.addProperty("directionId", 0);
-								tripObject.addProperty("id", tripId);
-								tripObject.addProperty("routeId", trip.route.getColorHex());
-								tripObject.addProperty("routeShortName", trip.route.getFormattedRouteNumber());
-								tripObject.addProperty("serviceId", "1");
-								tripObject.addProperty("shapeId", "");
-								tripObject.addProperty("timeZone", TimeZone.getDefault().getID());
-								tripObject.addProperty("tripHeadsign", "");
-								tripObject.addProperty("tripShortName", trip.route.getFormattedRouteNumber());
-								tripsUsedArray.add(tripObject);
-								needToAddTrip[0] = false;
-							}
-
-							offset++;
-						}
-					}
-				}
-			});
-		});
 	}
 
 	private static class Trip {
@@ -365,13 +390,15 @@ public class Schedule implements Utilities {
 
 	private static class TripStopInfo {
 
+		private final Trip trip;
 		private final long startTime;
 		private final long endTime;
 		private final long platformId;
 		private final int tripStopIndex;
 		private final String customDestination;
 
-		private TripStopInfo(long startTime, long endTime, long platformId, int tripStopIndex, String customDestination) {
+		private TripStopInfo(Trip trip, long startTime, long endTime, long platformId, int tripStopIndex, String customDestination) {
+			this.trip = trip;
 			this.startTime = startTime;
 			this.endTime = endTime;
 			this.platformId = platformId;

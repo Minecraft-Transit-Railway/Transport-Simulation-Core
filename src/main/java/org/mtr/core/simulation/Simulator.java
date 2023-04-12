@@ -86,7 +86,10 @@ public class Simulator implements Utilities {
 			}
 
 			if (!queuedRuns.isEmpty()) {
-				queuedRuns.remove(0).run();
+				final Runnable runnable = queuedRuns.remove(0);
+				if (runnable != null) {
+					runnable.run();
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

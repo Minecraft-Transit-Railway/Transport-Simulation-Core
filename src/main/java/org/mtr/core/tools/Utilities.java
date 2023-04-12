@@ -105,6 +105,10 @@ public interface Utilities {
 		long tempValue1 = value1;
 		final long halfTotalDegrees = totalDegrees / 2;
 
+		if (tempValue1 - halfTotalDegrees > value2 || tempValue1 + halfTotalDegrees <= value2) {
+			tempValue1 -= (tempValue1 - halfTotalDegrees - value2) / totalDegrees * totalDegrees;
+		}
+
 		while (tempValue1 - halfTotalDegrees > value2) {
 			tempValue1 -= totalDegrees;
 		}

@@ -20,7 +20,7 @@ public class Train extends NameColorDataBase {
 	private double railProgress;
 	private boolean doorTarget;
 	private double doorValue;
-	private double elapsedDwellMillis;
+	private int elapsedDwellMillis;
 	private int nextStoppingIndex;
 	private boolean reversed;
 	private boolean isOnRoute = false;
@@ -28,7 +28,6 @@ public class Train extends NameColorDataBase {
 	private int manualNotch;
 	private int departureIndex = -1;
 
-	public final long sidingId;
 	public final double railLength;
 	public final ObjectImmutableList<VehicleCar> vehicleCars;
 	public final double totalVehicleLength;
@@ -43,6 +42,7 @@ public class Train extends NameColorDataBase {
 	public final double maxManualSpeed;
 	public final int manualToAutomaticTime;
 
+	private final Siding siding;
 	private final ObjectOpenHashSet<UUID> ridingEntities = new ObjectOpenHashSet<>();
 	private final double totalDistance;
 
@@ -63,13 +63,13 @@ public class Train extends NameColorDataBase {
 	private static final String KEY_RIDING_ENTITIES = "riding_entities";
 
 	public Train(
-			long id, long sidingId, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
+			long id, Siding siding, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime
 	) {
 		super(id, transportMode);
 
-		this.sidingId = sidingId;
+		this.siding = siding;
 		this.railLength = Siding.getRailLength(railLength);
 
 		this.vehicleCars = new ObjectImmutableList<>(vehicleCars);
@@ -90,13 +90,13 @@ public class Train extends NameColorDataBase {
 	}
 
 	public <T extends ReaderBase<U, T>, U> Train(
-			long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
+			Siding siding, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, T readerBase
 	) {
 		super(readerBase);
 
-		this.sidingId = sidingId;
+		this.siding = siding;
 		this.railLength = Siding.getRailLength(railLength);
 
 		this.vehicleCars = new ObjectImmutableList<>(vehicleCars);
@@ -124,7 +124,7 @@ public class Train extends NameColorDataBase {
 
 		readerBase.unpackDouble(KEY_SPEED, value -> speed = value);
 		readerBase.unpackDouble(KEY_RAIL_PROGRESS, value -> railProgress = value);
-		readerBase.unpackDouble(KEY_ELAPSED_DWELL_MILLIS, value -> elapsedDwellMillis = value);
+		readerBase.unpackInt(KEY_ELAPSED_DWELL_MILLIS, value -> elapsedDwellMillis = value);
 		readerBase.unpackInt(KEY_NEXT_STOPPING_INDEX, value -> nextStoppingIndex = value);
 		readerBase.unpackBoolean(KEY_REVERSED, value -> reversed = value);
 		readerBase.unpackBoolean(KEY_IS_ON_ROUTE, value -> isOnRoute = value);
@@ -139,7 +139,7 @@ public class Train extends NameColorDataBase {
 
 		messagePacker.packString(KEY_SPEED).packDouble(speed);
 		messagePacker.packString(KEY_RAIL_PROGRESS).packDouble(railProgress);
-		messagePacker.packString(KEY_ELAPSED_DWELL_MILLIS).packDouble(elapsedDwellMillis);
+		messagePacker.packString(KEY_ELAPSED_DWELL_MILLIS).packInt(elapsedDwellMillis);
 		messagePacker.packString(KEY_NEXT_STOPPING_INDEX).packInt(nextStoppingIndex);
 		messagePacker.packString(KEY_REVERSED).packBoolean(reversed);
 		messagePacker.packString(KEY_IS_ON_ROUTE).packBoolean(isOnRoute);
@@ -283,10 +283,11 @@ public class Train extends NameColorDataBase {
 					if (speed <= 0) {
 						speed = 0;
 
-						final int nextIndex = isRepeat() && currentIndex >= repeatIndex2 ? repeatIndex1 : currentIndex;
-						final boolean isOpposite = currentIndex > 0 && path.get(currentIndex - 1).isOppositeRail(path.get(nextIndex));
-						final boolean railClear = railBlockedDistance(path.get(nextIndex).startDistance + (isOpposite ? totalVehicleLength : 0), 0, vehiclePositions) < 0;
-						final int totalDwellMillis = currentIndex > 0 ? path.get(currentIndex - 1).dwellTimeMillis : 0;
+						final PathData currentPathData = currentIndex > 0 ? path.get(currentIndex - 1) : null;
+						final PathData nextPathData = path.get(isRepeat() && currentIndex >= repeatIndex2 ? repeatIndex1 : currentIndex);
+						final boolean isOpposite = currentPathData != null && currentPathData.isOppositeRail(nextPathData);
+						final boolean railClear = railBlockedDistance(nextPathData.startDistance + (isOpposite ? totalVehicleLength : 0), 0, vehiclePositions) < 0;
+						final int totalDwellMillis = currentPathData == null ? 0 : currentPathData.dwellTimeMillis;
 
 						if (totalDwellMillis == 0) {
 							tempDoorTarget = false;
@@ -298,7 +299,7 @@ public class Train extends NameColorDataBase {
 						}
 
 						if ((isCurrentlyManual || elapsedDwellMillis >= totalDwellMillis) && railClear && (!isCurrentlyManual || manualNotch > 0)) {
-							railProgress = path.get(nextIndex).startDistance;
+							railProgress = nextPathData.startDistance;
 							if (isOpposite) {
 								railProgress += totalVehicleLength;
 								reversed = !reversed;
@@ -377,6 +378,10 @@ public class Train extends NameColorDataBase {
 				break;
 			}
 		}
+	}
+
+	public double getTimeAlongRoute() {
+		return siding.schedule.getTimeAlongRoute(railProgress);
 	}
 
 	public int getDepartureIndex() {

@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -136,7 +137,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		generatePathDistancesAndTimeSegments();
 		if (area != null && defaultPathData != null) {
 			vehicleMessagePackHelpers.forEach(messagePackHelper -> vehicles.add(new Train(
-					id, railLength, vehicleCars, totalVehicleLength,
+					this, railLength, vehicleCars, totalVehicleLength,
 					pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData,
 					area.repeatInfinitely, acceleration, maxVehicles < 0, maxManualSpeed, getTimeValueMillis(), messagePackHelper
 			)));
@@ -216,7 +217,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 		if (defaultPathData != null && totalVehicleLength > 0 && spawnTrain && (maxVehicles == 0 || vehicles.size() < (isManual ? 1 : maxVehicles))) {
 			vehicles.add(new Train(
-					new Random().nextLong(), id, transportMode, railLength, vehicleCars, totalVehicleLength,
+					new Random().nextLong(), this, transportMode, railLength, vehicleCars, totalVehicleLength,
 					pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData,
 					area.repeatInfinitely, acceleration, isManual, maxManualSpeed, getTimeValueMillis()
 			));
@@ -227,13 +228,10 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		}
 	}
 
-	public double timeAlongRoute(int checkDepartureIndex) {
-		for (final Train vehicle : vehicles) {
-			if (vehicle.getDepartureIndex() == checkDepartureIndex) {
-				return schedule.getTimeAlongRoute(vehicle.getRailProgress());
-			}
-		}
-		return -1;
+	public Int2LongAVLTreeMap getTimesAlongRoute() {
+		final Int2LongAVLTreeMap timesAlongRoute = new Int2LongAVLTreeMap();
+		vehicles.forEach(train -> timesAlongRoute.put(train.getDepartureIndex(), Math.round(train.getTimeAlongRoute())));
+		return timesAlongRoute;
 	}
 
 	public int getMaxVehicles() {
