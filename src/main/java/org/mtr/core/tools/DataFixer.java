@@ -17,6 +17,9 @@ public class DataFixer {
 	private static final String KEY_NODE_POS = "node_pos";
 	private static final String KEY_RAIL_TYPE = "rail_type";
 	private static final String KEY_DWELL_TIME = "dwell_time";
+	private static final String KEY_UNLIMITED_VEHICLES = "unlimited_trains";
+	private static final String KEY_MAX_VEHICLES = "max_trains";
+	private static final String KEY_IS_MANUAL = "is_manual";
 	private static final String KEY_MAX_MANUAL_SPEED = "max_manual_speed";
 	private static final String KEY_ACCELERATION_CONSTANT = "acceleration_constant";
 	private static final String KEY_BASE_TRAIN_TYPE = "train_type";
@@ -64,6 +67,22 @@ public class DataFixer {
 
 	public static <T extends ReaderBase<U, T>, U> void unpackDwellTime(T readerBase, Consumer<Integer> consumer) {
 		readerBase.unpackInt(KEY_DWELL_TIME, value -> consumer.accept(value * 500));
+	}
+
+	public static <T extends ReaderBase<U, T>, U> void unpackMaxVehicles(T readerBase, Consumer<Integer> consumer) {
+		readerBase.unpackBoolean(KEY_IS_MANUAL, value1 -> {
+			if (value1) {
+				consumer.accept(-1);
+			} else {
+				readerBase.unpackBoolean(KEY_UNLIMITED_VEHICLES, value2 -> {
+					if (value2) {
+						consumer.accept(0);
+					} else {
+						readerBase.unpackInt(KEY_MAX_VEHICLES, value3 -> consumer.accept(value3 + 1));
+					}
+				});
+			}
+		});
 	}
 
 	public static <T extends ReaderBase<U, T>, U> void unpackMaxManualSpeed(T readerBase, Consumer<Double> consumer) {

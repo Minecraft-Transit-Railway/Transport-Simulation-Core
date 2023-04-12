@@ -15,8 +15,8 @@ import java.util.Locale;
 
 public class Simulator implements Utilities {
 
-	private long lastMillis = Main.START_MILLIS;
-	private long currentMillis = Main.START_MILLIS;
+	private long lastMillis;
+	private long currentMillis;
 	private boolean autoSave = false;
 	private String generateKey = null;
 
@@ -60,6 +60,7 @@ public class Simulator implements Utilities {
 
 		dataCache.sync();
 		depots.forEach(Depot::init);
+		currentMillis = System.currentTimeMillis();
 
 		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}

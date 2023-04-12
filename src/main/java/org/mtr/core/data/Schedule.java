@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.path.PathData;
 import org.mtr.core.tools.Utilities;
@@ -13,11 +14,14 @@ import java.util.TimeZone;
 public class Schedule implements Utilities {
 
 	private double timeOffsetForRepeating;
+	private int departureSearchIndex;
 
 	private final Siding siding;
 	private final ObjectArrayList<Trip> trips = new ObjectArrayList<>();
 	private final double railLength;
 	private final TransportMode transportMode;
+	private final IntArrayList departures = new IntArrayList();
+	private final IntArrayList tempReturnTimes = new IntArrayList();
 	private final ObjectArrayList<TimeSegment> timeSegments = new ObjectArrayList<>();
 
 	public Schedule(Siding siding, double railLength, TransportMode transportMode) {
@@ -129,8 +133,42 @@ public class Schedule implements Utilities {
 		timeOffsetForRepeating = time - timeOffsetForRepeating;
 	}
 
+	public void startGeneratingDepartures() {
+		departures.clear();
+		tempReturnTimes.clear();
+		for (int i = 0; i < siding.getMaxVehicles(); i++) {
+			tempReturnTimes.add(0);
+		}
+	}
+
+	public boolean addDeparture(int departure) {
+		if (siding.getMaxVehicles() < 0) {
+			return false;
+		} else if (siding.getMaxVehicles() == 0) {
+			departures.add(departure);
+			return true;
+		}
+
+		if (!timeSegments.isEmpty() && siding.area != null) {
+			final TimeSegment lastTimeSegment = Utilities.getElement(timeSegments, -1);
+			for (int i = 0; i < tempReturnTimes.size(); i++) {
+				if (departure >= tempReturnTimes.getInt(i)) {
+					departures.add(departure);
+					tempReturnTimes.set(i, siding.area.repeatInfinitely ? Integer.MAX_VALUE : departure + (int) Math.ceil(lastTimeSegment.startTime + lastTimeSegment.startSpeed / lastTimeSegment.acceleration));
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	public void reset() {
 		timeSegments.clear();
+	}
+
+	public int getDepartureCount() {
+		return departures.size();
 	}
 
 	public double getTimeAlongRoute(double railProgress) {
@@ -138,37 +176,75 @@ public class Schedule implements Utilities {
 		return index < 0 ? -1 : timeSegments.get(index).getTimeAlongRoute(railProgress);
 	}
 
+	public int matchDeparture() {
+		final long repeatInterval = getRepeatInterval(0);
+		final long offset = departures.isEmpty() || repeatInterval == 0 ? 0 : (System.currentTimeMillis() - departures.getInt(0)) / repeatInterval * repeatInterval;
+
+		for (int i = 0; i < departures.size(); i++) {
+			if (departureSearchIndex >= departures.size()) {
+				departureSearchIndex = 0;
+			}
+
+			final int match = siding.simulator.matchMillis(departures.getInt(departureSearchIndex) + offset);
+
+			if (match < 0) {
+				departureSearchIndex++;
+			} else if (match == 0) {
+				return departureSearchIndex;
+			}
+		}
+
+		return -1;
+	}
+
+	private long getRepeatInterval(long defaultAmount) {
+		final Depot depot = siding.area;
+		if (depot == null) {
+			return defaultAmount;
+		} else {
+			return depot.repeatInfinitely ? Math.round(timeOffsetForRepeating) : depot.useRealTime ? defaultAmount : siding.simulator.millisPerGameDay;
+		}
+	}
+
 	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(Platform platform, int millsBefore, int millisAfter, JsonArray arrivalsAndDeparturesArray, JsonArray tripsUsedArray) {
-		if (siding.area == null) {
+		if (siding.area == null || departures.isEmpty()) {
 			return;
 		}
 
 		final long currentMillis = System.currentTimeMillis();
-		final long startOfDayMillis = currentMillis - (currentMillis % MILLIS_PER_DAY) - MILLIS_PER_DAY;
+		final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
 
 		trips.forEach(trip -> {
 			final boolean[] needToAddTrip = {true};
 			trip.stopTimes.forEach(tripStopInfo -> {
 				if (tripStopInfo.platformId == platform.id) {
-					siding.area.getDepartures(siding.id, departure -> {
+					for (int i = 0; i < departures.size(); i++) {
+						final int departure = departures.getInt(i);
 						final String tripId = String.format("%s_%s_%s_%s", trip.route.getColorHex(), siding.getHexId(), trip.tripIndexInBlock, departure);
-						long scheduledArrivalTime = startOfDayMillis + tripStopInfo.startTime + departure;
-						long scheduledDepartureTime = startOfDayMillis + tripStopInfo.endTime + departure;
+						final long initialOffset = ((currentMillis - millsBefore - tripStopInfo.endTime - departure) / repeatInterval + 1) * repeatInterval + departure;
+						final long timeAlongRoute = Math.round(siding.timeAlongRoute(i));
+						final boolean predicted = timeAlongRoute >= 0;
+						final long deviation = predicted ? Utilities.circularDifference(currentMillis + tripStopInfo.startTime - timeAlongRoute, tripStopInfo.startTime + initialOffset, repeatInterval) : 0;
 
-						while (currentMillis - scheduledDepartureTime > 600000) {
-							scheduledArrivalTime += MILLIS_PER_DAY;
-							scheduledDepartureTime += MILLIS_PER_DAY;
-						}
+						int offset = 0;
 
-						if (scheduledDepartureTime >= currentMillis - millsBefore && scheduledArrivalTime <= currentMillis + millisAfter) {
-							long predictedArrivalTime = 0;
-							long predictedDepartureTime = 0;
-							final long scheduleOffset = Math.round(siding.scheduleOffset(departure));
-							final boolean predicted = scheduleOffset >= 0;
+						while (true) {
+							final long newOffset = repeatInterval * offset;
+							final long scheduledArrivalTime = tripStopInfo.startTime + initialOffset + newOffset;
+							final long scheduledDepartureTime = tripStopInfo.endTime + initialOffset + newOffset;
+							final long predictedArrivalTime;
+							final long predictedDepartureTime;
 
 							if (predicted) {
-								predictedArrivalTime = scheduledArrivalTime + scheduleOffset;
-								predictedDepartureTime = scheduledDepartureTime + scheduleOffset;
+								predictedArrivalTime = scheduledArrivalTime + deviation;
+								predictedDepartureTime = scheduledDepartureTime + deviation;
+							} else {
+								predictedArrivalTime = 0;
+								predictedDepartureTime = 0;
+							}
+
+							if (scheduledArrivalTime > currentMillis + millisAfter) {
+								break;
 							}
 
 							final JsonObject positionObject = new JsonObject();
@@ -195,9 +271,9 @@ public class Schedule implements Utilities {
 							tripStatusObject.addProperty("phase", "");
 							tripStatusObject.add("position", positionObject);
 							tripStatusObject.addProperty("predicted", predicted);
-							tripStatusObject.addProperty("scheduleDeviation", scheduleOffset);
+							tripStatusObject.addProperty("scheduleDeviation", deviation);
 							tripStatusObject.addProperty("scheduledDistanceAlongTrip", 0);
-							tripStatusObject.addProperty("serviceDate", startOfDayMillis);
+							tripStatusObject.addProperty("serviceDate", 0);
 							tripStatusObject.add("situationIds", new JsonArray());
 							tripStatusObject.addProperty("status", "default");
 							tripStatusObject.addProperty("totalDistanceAlongTrip", 0);
@@ -226,13 +302,13 @@ public class Schedule implements Utilities {
 							arrivalAndDepartureObject.addProperty("scheduledArrivalTime", scheduledArrivalTime);
 							arrivalAndDepartureObject.add("scheduledDepartureInterval", JsonNull.INSTANCE);
 							arrivalAndDepartureObject.addProperty("scheduledDepartureTime", scheduledDepartureTime);
-							arrivalAndDepartureObject.addProperty("serviceDate", startOfDayMillis);
+							arrivalAndDepartureObject.addProperty("serviceDate", 0);
 							arrivalAndDepartureObject.add("situationIds", new JsonArray());
 							arrivalAndDepartureObject.addProperty("status", "default");
 							arrivalAndDepartureObject.addProperty("stopId", platform.getHexId());
 							arrivalAndDepartureObject.addProperty("stopSequence", tripStopInfo.tripStopIndex);
 							arrivalAndDepartureObject.addProperty("totalStopsInTrip", trip.route.platformIds.size());
-							arrivalAndDepartureObject.addProperty("tripHeadsign", tripStopInfo.customDestination == null ? "destination" : tripStopInfo.customDestination.replace("|", " "));
+							arrivalAndDepartureObject.addProperty("tripHeadsign", tripStopInfo.customDestination == null ? "" : tripStopInfo.customDestination.replace("|", " "));
 							arrivalAndDepartureObject.addProperty("tripId", tripId);
 							arrivalAndDepartureObject.add("tripStatus", tripStatusObject);
 							arrivalAndDepartureObject.addProperty("vehicleId", "");
@@ -253,8 +329,10 @@ public class Schedule implements Utilities {
 								tripsUsedArray.add(tripObject);
 								needToAddTrip[0] = false;
 							}
+
+							offset++;
 						}
-					});
+					}
 				}
 			});
 		});

@@ -1,7 +1,8 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntObjectImmutablePair;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.msgpack.core.MessagePacker;
@@ -11,6 +12,7 @@ import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.simulation.Simulator;
+import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
@@ -22,17 +24,16 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public boolean useRealTime;
 	public boolean repeatInfinitely;
 	public int cruisingAltitude = DEFAULT_CRUISING_ALTITUDE;
-	private int departureSearchIndex;
 
 	public final LongArrayList routeIds = new LongArrayList();
 	public final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 
 	private final Simulator simulator;
-	private final IntArrayList departures = new IntArrayList();
-	private final ObjectArrayList<IntObjectImmutablePair<Siding>> actualDepartures = new ObjectArrayList<>();
+	private final IntArrayList realTimeDepartures = new IntArrayList();
 	private final int[] frequencies = new int[HOURS_PER_DAY];
 	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
+	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
 	public static final int DEFAULT_CRUISING_ALTITUDE = 256;
 	private static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
@@ -65,7 +66,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			frequencies[i] = frequenciesArray.getInt(i);
 		}
 
-		readerBase.iterateIntArray(KEY_DEPARTURES, departure -> departures.add(departure.intValue()));
+		readerBase.iterateIntArray(KEY_DEPARTURES, departure -> realTimeDepartures.add(departure.intValue()));
 		readerBase.unpackBoolean(KEY_REPEAT_INFINITELY, value -> repeatInfinitely = value);
 		readerBase.unpackInt(KEY_CRUISING_ALTITUDE, value -> cruisingAltitude = value);
 	}
@@ -89,8 +90,8 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			messagePacker.packInt(frequencies[i]);
 		}
 
-		messagePacker.packString(KEY_DEPARTURES).packArrayHeader(departures.size());
-		for (final int departure : departures) {
+		messagePacker.packString(KEY_DEPARTURES).packArrayHeader(realTimeDepartures.size());
+		for (final int departure : realTimeDepartures) {
 			messagePacker.packInt(departure);
 		}
 	}
@@ -106,8 +107,8 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	}
 
 	public void init() {
-		generateActualDepartures();
 		savedRails.forEach(Siding::init);
+		generatePlatformDirectionsAndWriteDeparturesToSidings();
 	}
 
 	public void generateMainRoute() {
@@ -118,6 +119,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			path.clear();
 			platformsInRoute.clear();
 			sidingPathFinders.clear();
+			generatingSidingIds.clear();
 
 			final long[] previousPlatformId = {0};
 			iterateRoutes(route -> route.platformIds.forEach(platformId -> {
@@ -137,11 +139,20 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public void tick() {
 		SidingPathFinder.findPathTick(path, sidingPathFinders, () -> {
 			if (!platformsInRoute.isEmpty()) {
-				savedRails.forEach(siding -> siding.generateRoute(Utilities.getElement(platformsInRoute, 0), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1), platformsInRoute.size(), cruisingAltitude));
+				savedRails.forEach(siding -> {
+					siding.generateRoute(Utilities.getElement(platformsInRoute, 0), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1), platformsInRoute.size(), cruisingAltitude);
+					generatingSidingIds.add(siding.id);
+				});
 			}
 		}, () -> Main.LOGGER.info(String.format("Path not found for %s", name)));
+	}
 
-		tryToDeploy();
+	public void finishGeneratingPath(long sidingId) {
+		generatingSidingIds.remove(sidingId);
+		if (generatingSidingIds.isEmpty()) {
+			Main.LOGGER.info(String.format("Path generation complete for %s", name));
+			generatePlatformDirectionsAndWriteDeparturesToSidings();
+		}
 	}
 
 	public void iterateRoutes(Consumer<Route> consumer) {
@@ -153,49 +164,46 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		});
 	}
 
-	public void getDepartures(long sidingId, Consumer<Integer> consumer) {
-		actualDepartures.forEach(departureData -> {
-			if (departureData.right().id == sidingId) {
-				consumer.accept(departureData.leftInt());
-			}
-		});
-	}
+	/**
+	 * The first part generates platform directions (N, NE, etc.) for OBA data.
+	 * The second part reads from real-time departures and in-game frequencies and converts them to departures.
+	 * Each departure is mapped to a siding and siding time segments must be generated beforehand.
+	 * Should only be called during initialization (but after siding initialization) and after path generation of all sidings.
+	 */
+	private void generatePlatformDirectionsAndWriteDeparturesToSidings() {
+		final Long2ObjectOpenHashMap<Angle> platformDirections = new Long2ObjectOpenHashMap<>();
 
-	private void tryToDeploy() {
-		if (!actualDepartures.isEmpty()) {
-			for (int i = 0; i < actualDepartures.size(); i++) {
-				if (departureSearchIndex >= actualDepartures.size()) {
-					departureSearchIndex = 0;
-				}
-
-				final IntObjectImmutablePair<Siding> departureData = actualDepartures.get(departureSearchIndex);
-				final int match = simulator.matchMillis(departureData.leftInt());
-
-				if (match < 0) {
-					departureSearchIndex++;
-				} else if (match == 0) {
-					departureData.right().deployTrain(departureData.leftInt());
-					return;
+		for (int i = 1; i < path.size(); i++) {
+			final long platformId = path.get(i - 1).savedRailBaseId;
+			if (platformId != 0) {
+				final Angle angle = platformDirections.get(platformId);
+				final Angle newAngle = path.get(i).rail.facingStart;
+				if (angle == null) {
+					platformDirections.put(platformId, newAngle);
+				} else if (newAngle != angle) {
+					platformDirections.put(platformId, null);
 				}
 			}
 		}
-	}
 
-	private void generateActualDepartures() {
-		final ObjectArrayList<Siding> sidingsInDepot = new ObjectArrayList<>(savedRails);
-		Collections.shuffle(sidingsInDepot);
-		Collections.sort(sidingsInDepot);
-		final IntArrayList tempDepartures = new IntArrayList();
+		platformDirections.forEach((platformId, angle) -> {
+			final Platform platform = simulator.dataCache.platformIdMap.get(platformId.longValue());
+			if (platform != null) {
+				platform.setAngles(id, angle);
+			}
+		});
+
+		final IntArrayList departures = new IntArrayList();
 
 		if (transportMode.continuousMovement) {
 			for (int i = 0; i < MILLIS_PER_DAY; i += CONTINUOUS_MOVEMENT_FREQUENCY) {
-				tempDepartures.add(i);
+				departures.add(i);
 			}
 		} else {
 			if (useRealTime) {
-				tempDepartures.addAll(departures);
+				departures.addAll(realTimeDepartures);
 			} else {
-				final int offsetMillis = (int) ((Main.START_MILLIS - simulator.startingGameDayPercentage * simulator.millisPerGameDay) % MILLIS_PER_DAY);
+				final int offsetMillis = Math.max(0, (int) (Main.START_MILLIS - Main.START_MILLIS / simulator.millisPerGameDay * simulator.millisPerGameDay - simulator.startingGameDayPercentage * simulator.millisPerGameDay));
 				final IntArrayList gameDepartures = new IntArrayList();
 				final float timeRatio = (float) MILLIS_PER_DAY / simulator.millisPerGameDay;
 
@@ -211,37 +219,29 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 					while (true) {
 						final int newDeparture = Math.max(hourMinMillis, Utilities.getElement(gameDepartures, -1, Integer.MIN_VALUE) + intervalMillis);
 						if (newDeparture < hourMaxMillis) {
+							departures.add(offsetMillis + Math.round(newDeparture / timeRatio));
 							gameDepartures.add(newDeparture);
 						} else {
 							break;
 						}
 					}
 				}
-
-				if (!gameDepartures.isEmpty()) {
-					final int startDeparture = offsetMillis + Math.round(gameDepartures.getInt(0) / timeRatio);
-					int gameDayOffset = 0;
-					int gameDepartureIndex = 0;
-					while (true) {
-						final int newDeparture = offsetMillis + Math.round(gameDepartures.getInt(gameDepartureIndex) / timeRatio) + simulator.millisPerGameDay * gameDayOffset;
-						if (newDeparture >= startDeparture + MILLIS_PER_DAY) {
-							break;
-						}
-						tempDepartures.add(newDeparture % MILLIS_PER_DAY);
-						gameDepartureIndex++;
-						if (gameDepartureIndex == gameDepartures.size()) {
-							gameDepartureIndex = 0;
-							gameDayOffset++;
-						}
-					}
-				}
 			}
 		}
 
-		actualDepartures.clear();
+		final ObjectArrayList<Siding> sidingsInDepot = new ObjectArrayList<>(savedRails);
 		if (!sidingsInDepot.isEmpty()) {
-			for (int i = 0; i < tempDepartures.size(); i++) {
-				actualDepartures.add(new IntObjectImmutablePair<>(tempDepartures.getInt(i), sidingsInDepot.get(i % sidingsInDepot.size())));
+			Collections.shuffle(sidingsInDepot);
+			Collections.sort(sidingsInDepot);
+			sidingsInDepot.forEach(siding -> siding.schedule.startGeneratingDepartures());
+			int sidingIndex = 0;
+			for (final int departure : departures) {
+				for (int i = 0; i < sidingsInDepot.size(); i++) {
+					if (sidingsInDepot.get((sidingIndex + i) % sidingsInDepot.size()).schedule.addDeparture(departure)) {
+						sidingIndex++;
+						break;
+					}
+				}
 			}
 		}
 	}

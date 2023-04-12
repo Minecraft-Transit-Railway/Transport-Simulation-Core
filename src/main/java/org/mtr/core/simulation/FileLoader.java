@@ -15,6 +15,7 @@ import org.mtr.core.data.NameColorDataBase;
 import org.mtr.core.data.SerializedDataBase;
 import org.mtr.core.reader.MessagePackHelper;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
@@ -139,8 +140,7 @@ public class FileLoader<T extends SerializedDataBase> {
 					createDirectory(path.resolve(parentFolderName));
 
 					try (final MessagePacker messagePacker = MessagePack.newDefaultPacker(Files.newOutputStream(path.resolve(parentAndFileName), StandardOpenOption.CREATE))) {
-						messagePacker.packMapHeader(data.messagePackLength());
-						data.toMessagePack(messagePacker);
+						packMessage(messagePacker, data, useReducedHash);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -186,25 +186,24 @@ public class FileLoader<T extends SerializedDataBase> {
 	}
 
 	private static int getHash(SerializedDataBase data, boolean useReducedHash) {
-		try {
-			final MessageBufferPacker messageBufferPacker = MessagePack.newDefaultBufferPacker();
-
-			if (useReducedHash) {
-				messageBufferPacker.packMapHeader(data.messagePackLength());
-				data.toMessagePack(messageBufferPacker);
-			} else {
-				messageBufferPacker.packMapHeader(data.fullMessagePackLength());
-				data.toFullMessagePack(messageBufferPacker);
-			}
-
-			final int hash = Arrays.hashCode(messageBufferPacker.toByteArray());
-			messageBufferPacker.close();
-
-			return hash;
+		int hash = 0;
+		try (final MessageBufferPacker messageBufferPacker = MessagePack.newDefaultBufferPacker()) {
+			packMessage(messageBufferPacker, data, useReducedHash);
+			hash = Arrays.hashCode(messageBufferPacker.toByteArray());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return 0;
+		return hash;
+	}
+
+	private static void packMessage(MessagePacker messagePacker, SerializedDataBase data, boolean useReducedHash) throws IOException {
+		if (useReducedHash) {
+			messagePacker.packMapHeader(data.messagePackLength());
+			data.toMessagePack(messagePacker);
+		} else {
+			messagePacker.packMapHeader(data.fullMessagePackLength());
+			data.toFullMessagePack(messagePacker);
+		}
 	}
 
 	private static void createDirectory(Path path) {

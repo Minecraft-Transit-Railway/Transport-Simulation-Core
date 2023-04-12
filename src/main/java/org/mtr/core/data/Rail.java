@@ -326,12 +326,16 @@ public class Rail extends SerializedDataBase {
 		messagePacker.packString(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR).packDouble(speedLimitKilometersPerHour);
 		messagePacker.packString(KEY_SHAPE_START).packString(shapeStart.toString());
 		messagePacker.packString(KEY_SHAPE_END).packString(shapeEnd.toString());
+		messagePacker.packString(KEY_HAS_SAVED_RAIL).packBoolean(hasSavedRail);
+		messagePacker.packString(KEY_CAN_ACCELERATE).packBoolean(canAccelerate);
+		messagePacker.packString(KEY_CAN_TURN_BACK).packBoolean(canTurnBack);
+		messagePacker.packString(KEY_CAN_HAVE_SIGNAL).packBoolean(canHaveSignal);
 		messagePacker.packString(KEY_TRANSPORT_MODE).packString(transportMode.toString());
 	}
 
 	@Override
 	public int messagePackLength() {
-		return 20;
+		return 24;
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
@@ -21,13 +22,10 @@ import java.util.Random;
 public class Siding extends SavedRailBase<Siding, Depot> {
 
 	private double totalVehicleLength;
-	private boolean unlimitedVehicles;
 	private int maxVehicles;
-	private boolean isManual;
 	private double maxManualSpeed;
 	private double acceleration = Train.ACCELERATION_DEFAULT;
 	private PathData defaultPathData;
-	private int departure = -1;
 
 	public final Simulator simulator;
 	public final double railLength;
@@ -47,9 +45,7 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 	private static final String KEY_PATH_SIDING_TO_MAIN_ROUTE = "path_siding_to_main_route";
 	private static final String KEY_PATH_MAIN_ROUTE_TO_SIDING = "path_main_route_to_siding";
 	private static final String KEY_VEHICLES = "trains";
-	private static final String KEY_UNLIMITED_VEHICLES = "unlimited_trains";
-	private static final String KEY_MAX_VEHICLES = "max_trains";
-	private static final String KEY_IS_MANUAL = "is_manual";
+	private static final String KEY_MAX_VEHICLES = "max_vehicles";
 	private static final String KEY_MAX_MANUAL_SPEED = "max_manual_speed_meters_per_millisecond";
 	private static final String KEY_ACCELERATION = "acceleration";
 
@@ -58,7 +54,6 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 		this.simulator = simulator;
 		this.railLength = getRailLength(railLength);
-		unlimitedVehicles = transportMode.continuousMovement;
 		acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.ACCELERATION_DEFAULT;
 		vehicleMessagePackHelpers = ObjectImmutableList.of();
 		schedule = new Schedule(this, railLength, transportMode);
@@ -93,9 +88,8 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		}
 		DataFixer.unpackVehicleCars(readerBase, transportMode, railLength, this::setVehicle);
 
-		readerBase.unpackBoolean(KEY_UNLIMITED_VEHICLES, value -> unlimitedVehicles = transportMode.continuousMovement || value);
-		readerBase.unpackInt(KEY_MAX_VEHICLES, value -> maxVehicles = value);
-		readerBase.unpackBoolean(KEY_IS_MANUAL, value -> isManual = value);
+		readerBase.unpackInt(KEY_MAX_VEHICLES, value -> maxVehicles = transportMode.continuousMovement ? 0 : value);
+		DataFixer.unpackMaxVehicles(readerBase, value -> maxVehicles = transportMode.continuousMovement ? 0 : value);
 		readerBase.unpackDouble(KEY_MAX_MANUAL_SPEED, value -> maxManualSpeed = value);
 		DataFixer.unpackMaxManualSpeed(readerBase, value -> maxManualSpeed = value);
 		readerBase.unpackDouble(KEY_ACCELERATION, value -> acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.roundAcceleration(value));
@@ -110,22 +104,19 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		MessagePackHelper.writeMessagePackDataset(messagePacker, vehicleCars, KEY_VEHICLE_CARS);
 		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinderSidingToMainRoute.isEmpty() ? pathSidingToMainRoute : new ObjectArrayList<>(), KEY_PATH_SIDING_TO_MAIN_ROUTE);
 		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinderMainRouteToSiding.isEmpty() ? pathMainRouteToSiding : new ObjectArrayList<>(), KEY_PATH_MAIN_ROUTE_TO_SIDING);
-		messagePacker.packString(KEY_UNLIMITED_VEHICLES).packBoolean(unlimitedVehicles);
 		messagePacker.packString(KEY_MAX_VEHICLES).packInt(maxVehicles);
-		messagePacker.packString(KEY_IS_MANUAL).packBoolean(isManual);
 		messagePacker.packString(KEY_MAX_MANUAL_SPEED).packDouble(maxManualSpeed);
 		messagePacker.packString(KEY_ACCELERATION).packDouble(acceleration);
 	}
 
 	@Override
 	public int messagePackLength() {
-		return super.messagePackLength() + 9;
+		return super.messagePackLength() + 7;
 	}
 
 	@Override
 	public void toFullMessagePack(MessagePacker messagePacker) throws IOException {
 		super.toFullMessagePack(messagePacker);
-
 		MessagePackHelper.writeMessagePackDataset(messagePacker, vehicles, KEY_VEHICLES);
 	}
 
@@ -142,12 +133,12 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			defaultPathData = new PathData(rail, id, 1, -1, 0, rail.getLength(), position1, position2);
 		}
 
-		validatePath();
+		generatePathDistancesAndTimeSegments();
 		if (area != null && defaultPathData != null) {
 			vehicleMessagePackHelpers.forEach(messagePackHelper -> vehicles.add(new Train(
 					id, railLength, vehicleCars, totalVehicleLength,
 					pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData,
-					area.repeatInfinitely, acceleration, isManual, maxManualSpeed, getTimeValueMillis(), messagePackHelper
+					area.repeatInfinitely, acceleration, maxVehicles < 0, maxManualSpeed, getTimeValueMillis(), messagePackHelper
 			)));
 		}
 	}
@@ -189,10 +180,13 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			return;
 		}
 
+		final boolean isManual = maxVehicles < 0;
+		final int departureCount = schedule.getDepartureCount();
 		int trainsAtDepot = 0;
 		boolean spawnTrain = true;
 
 		final ObjectArraySet<Train> trainsToRemove = new ObjectArraySet<>();
+		final IntArrayList visitedDepartureIndices = new IntArrayList();
 		for (final Train train : vehicles) {
 			train.simulateTrain(millisElapsed, vehiclePositions);
 
@@ -200,20 +194,29 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 				spawnTrain = false;
 			}
 
-			if (!train.getIsOnRoute()) {
+			if (train.getIsOnRoute()) {
+				final int departureIndex = train.getDepartureIndex();
+				if (departureIndex < 0 || departureIndex >= departureCount || visitedDepartureIndices.contains(departureIndex)) {
+					trainsToRemove.add(train);
+				} else {
+					visitedDepartureIndices.add(departureIndex);
+				}
+			} else {
 				trainsAtDepot++;
 				if (trainsAtDepot > 1) {
 					trainsToRemove.add(train);
-				} else if (!pathSidingToMainRoute.isEmpty() && !isManual && departure >= 0) {
-					train.startUp(departure);
-					departure = -1;
+				} else if (!pathSidingToMainRoute.isEmpty() && !isManual) {
+					final int departureIndex = schedule.matchDeparture();
+					if (departureIndex >= 0 && departureIndex < departureCount) {
+						train.startUp(departureIndex);
+					}
 				}
 			}
 		}
 
-		if (defaultPathData != null && totalVehicleLength > 0 && (vehicles.isEmpty() || spawnTrain && (unlimitedVehicles || vehicles.size() <= maxVehicles))) {
+		if (defaultPathData != null && totalVehicleLength > 0 && spawnTrain && (maxVehicles == 0 || vehicles.size() < (isManual ? 1 : maxVehicles))) {
 			vehicles.add(new Train(
-					unlimitedVehicles || maxVehicles > 0 ? new Random().nextLong() : id, id, transportMode, railLength, vehicleCars, totalVehicleLength,
+					new Random().nextLong(), id, transportMode, railLength, vehicleCars, totalVehicleLength,
 					pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData,
 					area.repeatInfinitely, acceleration, isManual, maxManualSpeed, getTimeValueMillis()
 			));
@@ -224,17 +227,17 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		}
 	}
 
-	public void deployTrain(int departure) {
-		this.departure = departure;
-	}
-
-	public double scheduleOffset(int checkDeparture) {
+	public double timeAlongRoute(int checkDepartureIndex) {
 		for (final Train vehicle : vehicles) {
-			if (vehicle.matchDeparture(checkDeparture)) {
+			if (vehicle.getDepartureIndex() == checkDepartureIndex) {
 				return schedule.getTimeAlongRoute(vehicle.getRailProgress());
 			}
 		}
 		return -1;
+	}
+
+	public int getMaxVehicles() {
+		return maxVehicles;
 	}
 
 	private String getDepotName() {
@@ -254,13 +257,23 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 		totalVehicleLength = tempVehicleLength;
 	}
 
+	/**
+	 * Should only be called after a path is generated, whether successful or not.
+	 */
 	private void finishGeneratingPath() {
-		if (sidingPathFinderSidingToMainRoute.isEmpty() && sidingPathFinderMainRouteToSiding.isEmpty() && validatePath()) {
-			Main.LOGGER.info(String.format("Path successfully generated for %s siding %s", getDepotName(), name));
+		if (sidingPathFinderSidingToMainRoute.isEmpty() && sidingPathFinderMainRouteToSiding.isEmpty()) {
+			generatePathDistancesAndTimeSegments();
+			if (area != null) {
+				area.finishGeneratingPath(id);
+			}
 		}
 	}
 
-	private boolean validatePath() {
+	/**
+	 * After a path is set, generate the distance and values.
+	 * Should only be called during initialization and after a path is generated.
+	 */
+	private void generatePathDistancesAndTimeSegments() {
 		vehicles.clear();
 		pathMainRoute.clear();
 
@@ -268,7 +281,6 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			pathSidingToMainRoute.clear();
 			pathMainRouteToSiding.clear();
 			schedule.reset();
-			return false;
 		} else {
 			pathMainRoute.addAll(area.path);
 			final boolean overlappingFromRepeating = SidingPathFinder.overlappingPaths(pathMainRoute, pathMainRoute);
@@ -288,8 +300,6 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			SidingPathFinder.generatePathDataDistances(pathMainRoute, Utilities.getElement(pathSidingToMainRoute, -1).endDistance);
 			SidingPathFinder.generatePathDataDistances(pathMainRouteToSiding, Utilities.getElement(pathMainRoute, -1).endDistance);
 			schedule.generateTimeSegments(pathSidingToMainRoute, pathMainRoute, totalVehicleLength, acceleration);
-
-			return true;
 		}
 	}
 
