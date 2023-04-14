@@ -36,7 +36,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
 	public static final int DEFAULT_CRUISING_ALTITUDE = 256;
-	private static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
+	public static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
 
 	private static final String KEY_ROUTE_IDS = "route_ids";
 	private static final String KEY_PATH = "path";
@@ -196,7 +196,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		final IntArrayList departures = new IntArrayList();
 
 		if (transportMode.continuousMovement) {
-			for (int i = 0; i < MILLIS_PER_DAY; i += CONTINUOUS_MOVEMENT_FREQUENCY) {
+			for (int i = 0; i < savedRails.size(); i += CONTINUOUS_MOVEMENT_FREQUENCY) {
 				departures.add(i);
 			}
 		} else {

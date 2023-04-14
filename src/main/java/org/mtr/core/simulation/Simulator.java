@@ -109,11 +109,15 @@ public class Simulator implements Utilities {
 		this.generateKey = generateKey.toLowerCase(Locale.ENGLISH).trim();
 	}
 
+	/**
+	 * @param millis Milliseconds to check
+	 * @return 1 if upcoming, 0 if current, -1 if passed
+	 */
 	public int matchMillis(long millis) {
-		if (Utilities.circularDifference(currentMillis % MILLIS_PER_DAY, millis, MILLIS_PER_DAY) < 0) {
+		if (Utilities.circularDifference(currentMillis, millis, MILLIS_PER_DAY) < 0) {
 			return 1;
 		} else {
-			return Utilities.circularDifference(millis, lastMillis % MILLIS_PER_DAY, MILLIS_PER_DAY) > 0 ? 0 : -1;
+			return Utilities.circularDifference(millis, lastMillis, MILLIS_PER_DAY) > 0 ? 0 : -1;
 		}
 	}
 

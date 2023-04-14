@@ -196,11 +196,13 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			}
 
 			if (train.getIsOnRoute()) {
-				final int departureIndex = train.getDepartureIndex();
-				if (departureIndex < 0 || departureIndex >= departureCount || visitedDepartureIndices.contains(departureIndex)) {
-					trainsToRemove.add(train);
-				} else {
-					visitedDepartureIndices.add(departureIndex);
+				if (maxVehicles != 0) {
+					final int departureIndex = train.getDepartureIndex();
+					if (departureIndex < 0 || departureIndex >= departureCount || visitedDepartureIndices.contains(departureIndex)) {
+						trainsToRemove.add(train);
+					} else {
+						visitedDepartureIndices.add(departureIndex);
+					}
 				}
 			} else {
 				trainsAtDepot++;
@@ -251,6 +253,9 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 			}
 			vehicleCars.add(vehicleCar);
 			tempVehicleLength += vehicleCar.length;
+			if (vehicleCars.size() >= transportMode.maxLength) {
+				break;
+			}
 		}
 		totalVehicleLength = tempVehicleLength;
 	}

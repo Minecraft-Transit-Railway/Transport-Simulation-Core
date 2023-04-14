@@ -107,8 +107,8 @@ public class DataFixer {
 				} catch (Exception ignored) {
 				}
 				final String[] trainTypeSplit = newBaseTrainType.split("_");
-				final int trainLength = Integer.parseInt(trainTypeSplit[1]) + 1;
-				final int trainWidth = Integer.parseInt(trainTypeSplit[2]);
+				final int trainLength = Integer.parseInt(trainTypeSplit[trainTypeSplit.length - 2]) + 1;
+				final int trainWidth = Integer.parseInt(trainTypeSplit[trainTypeSplit.length - 1]);
 				final int trainCars = Math.min(transportMode.maxLength, (int) Math.floor(railLength / trainLength));
 				final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
 				for (int i = 0; i < trainCars; i++) {

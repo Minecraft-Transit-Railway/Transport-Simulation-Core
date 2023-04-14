@@ -11,7 +11,8 @@ import java.util.concurrent.TimeUnit;
 public interface Utilities {
 
 	int HOURS_PER_DAY = 24;
-	int MILLIS_PER_HOUR = 60 * 60 * 1000;
+	int MILLIS_PER_SECOND = 1000;
+	int MILLIS_PER_HOUR = 60 * 60 * MILLIS_PER_SECOND;
 	int MILLIS_PER_DAY = HOURS_PER_DAY * MILLIS_PER_HOUR;
 
 	static boolean isBetween(double value, double value1, double value2) {

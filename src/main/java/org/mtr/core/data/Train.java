@@ -381,7 +381,7 @@ public class Train extends NameColorDataBase {
 	}
 
 	public double getTimeAlongRoute() {
-		return siding.schedule.getTimeAlongRoute(railProgress);
+		return siding.schedule.getTimeAlongRoute(railProgress) + elapsedDwellMillis;
 	}
 
 	public int getDepartureIndex() {
