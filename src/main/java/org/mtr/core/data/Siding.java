@@ -1,5 +1,8 @@
 package org.mtr.core.data;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
@@ -20,7 +23,7 @@ import org.mtr.core.tools.Utilities;
 import java.io.IOException;
 import java.util.Random;
 
-public class Siding extends SavedRailBase<Siding, Depot> {
+public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 
 	private double totalVehicleLength;
 	private int maxVehicles;
@@ -232,12 +235,27 @@ public class Siding extends SavedRailBase<Siding, Depot> {
 
 	public Int2LongAVLTreeMap getTimesAlongRoute() {
 		final Int2LongAVLTreeMap timesAlongRoute = new Int2LongAVLTreeMap();
-		vehicles.forEach(train -> timesAlongRoute.put(train.getDepartureIndex(), Math.round(train.getTimeAlongRoute())));
+		if (!transportMode.continuousMovement) {
+			vehicles.forEach(train -> timesAlongRoute.put(train.getDepartureIndex(), Math.round(train.getTimeAlongRoute())));
+		}
 		return timesAlongRoute;
 	}
 
 	public int getMaxVehicles() {
 		return maxVehicles;
+	}
+
+	public JsonElement getOBAFrequencyElement(long currentMillis) {
+		if (transportMode.continuousMovement) {
+			final JsonObject frequencyObject = new JsonObject();
+			frequencyObject.addProperty("endTime", currentMillis + MILLIS_PER_DAY);
+			frequencyObject.addProperty("exactTimes", 0);
+			frequencyObject.addProperty("headway", Depot.CONTINUOUS_MOVEMENT_FREQUENCY / MILLIS_PER_SECOND);
+			frequencyObject.addProperty("startTime", 0);
+			return frequencyObject;
+		} else {
+			return JsonNull.INSTANCE;
+		}
 	}
 
 	private String getDepotName() {

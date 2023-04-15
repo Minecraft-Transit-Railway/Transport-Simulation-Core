@@ -176,11 +176,10 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		for (int i = 1; i < path.size(); i++) {
 			final long platformId = path.get(i - 1).savedRailBaseId;
 			if (platformId != 0) {
-				final Angle angle = platformDirections.get(platformId);
 				final Angle newAngle = path.get(i).rail.facingStart;
-				if (angle == null) {
+				if (!platformDirections.containsKey(platformId)) {
 					platformDirections.put(platformId, newAngle);
-				} else if (newAngle != angle) {
+				} else if (newAngle != platformDirections.get(platformId)) {
 					platformDirections.put(platformId, null);
 				}
 			}

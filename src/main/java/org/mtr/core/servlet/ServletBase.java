@@ -20,9 +20,10 @@ public abstract class ServletBase extends HttpServlet {
 
 	public void sendResponse(HttpServletRequest request, HttpServletResponse response) {
 		final AsyncContext asyncContext = request.startAsync();
+		final long currentMillis = System.currentTimeMillis();
 
 		if (getSimulator == null) {
-			sendResponse(response, asyncContext, buildResponseObject(ResponseCode.EXCEPTION));
+			sendResponse(response, asyncContext, buildResponseObject(currentMillis, ResponseCode.EXCEPTION));
 		} else {
 			int dimension = 0;
 			try {
@@ -32,7 +33,7 @@ public abstract class ServletBase extends HttpServlet {
 
 			final Simulator simulator = getSimulator.apply(dimension);
 			if (simulator == null) {
-				sendResponse(response, asyncContext, buildResponseObject(ResponseCode.INVALID, "Invalid dimension"));
+				sendResponse(response, asyncContext, buildResponseObject(currentMillis, ResponseCode.INVALID, "Invalid dimension"));
 			} else {
 				final String endpoint;
 				final String data;
@@ -45,24 +46,24 @@ public abstract class ServletBase extends HttpServlet {
 					endpoint = "";
 					data = "";
 				}
-				simulator.run(() -> sendResponse(response, asyncContext, getContent(endpoint, data, request, simulator)));
+				simulator.run(() -> sendResponse(response, asyncContext, getContent(endpoint, data, request, currentMillis, simulator)));
 			}
 		}
 	}
 
-	public static JsonObject buildResponseObject(JsonObject dataObject, Object... parameters) {
+	public static JsonObject buildResponseObject(long currentMillis, JsonObject dataObject, Object... parameters) {
 		if (dataObject == null) {
-			return buildResponseObject(ResponseCode.NOT_FOUND, parameters);
+			return buildResponseObject(currentMillis, ResponseCode.NOT_FOUND, parameters);
 		} else {
-			return buildResponseObject(dataObject, ResponseCode.SUCCESS);
+			return buildResponseObject(currentMillis, dataObject, ResponseCode.SUCCESS);
 		}
 	}
 
-	public static JsonObject buildResponseObject(ResponseCode responseCode, Object... parameters) {
-		return buildResponseObject(null, responseCode, parameters);
+	public static JsonObject buildResponseObject(long currentMillis, ResponseCode responseCode, Object... parameters) {
+		return buildResponseObject(currentMillis, null, responseCode, parameters);
 	}
 
-	public abstract JsonObject getContent(String endpoint, String data, HttpServletRequest request, Simulator simulator);
+	public abstract JsonObject getContent(String endpoint, String data, HttpServletRequest request, long currentMillis, Simulator simulator);
 
 	private static void sendResponse(HttpServletResponse response, AsyncContext asyncContext, JsonObject responseObject) {
 		final ByteBuffer contentByteBuffer = ByteBuffer.wrap(responseObject.toString().getBytes(StandardCharsets.UTF_8));
@@ -94,10 +95,10 @@ public abstract class ServletBase extends HttpServlet {
 		}
 	}
 
-	private static JsonObject buildResponseObject(JsonObject dataObject, ResponseCode responseCode, Object... parameters) {
+	private static JsonObject buildResponseObject(long currentMillis, JsonObject dataObject, ResponseCode responseCode, Object... parameters) {
 		final JsonObject responseObject = new JsonObject();
 		responseObject.addProperty("code", responseCode.code);
-		responseObject.addProperty("currentTime", System.currentTimeMillis());
+		responseObject.addProperty("currentTime", currentMillis);
 		if (dataObject != null) {
 			responseObject.add("data", dataObject);
 		}

@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
+import org.mtr.core.data.Siding;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.LatLon;
 import org.mtr.core.tools.Utilities;
@@ -18,6 +19,7 @@ public class OBAResponse {
 
 	private final String data;
 	private final HttpServletRequest request;
+	private final long currentMillis;
 	private final Simulator simulator;
 	private final boolean includeReferences;
 
@@ -36,9 +38,10 @@ public class OBAResponse {
 		AGENCY.addProperty("url", "https://github.com/jonafanho/Transport-Simulation-Core");
 	}
 
-	public OBAResponse(String data, HttpServletRequest request, Simulator simulator) {
+	public OBAResponse(String data, HttpServletRequest request, long currentMillis, Simulator simulator) {
 		this.data = data;
 		this.request = request;
+		this.currentMillis = currentMillis;
 		this.simulator = simulator;
 		includeReferences = !("false".equals(request.getParameter("includeReferences")));
 	}
@@ -85,6 +88,7 @@ public class OBAResponse {
 			final JsonArray arrivalsAndDeparturesArray = new JsonArray();
 			final JsonArray tripsUsedArray = new JsonArray();
 			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.schedule.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
+					currentMillis,
 					platform,
 					Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
 					Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000,
@@ -137,6 +141,24 @@ public class OBAResponse {
 
 			return getListElement(jsonArray, count == 100, colorsUsed, null, null);
 		}
+	}
+
+
+	public JsonObject getTripDetails() {
+		final String[] tripIdSplit = data.split("_");
+		try {
+			if (tripIdSplit.length == 4) {
+				final Siding siding = simulator.dataCache.sidingIdMap.get(Long.parseUnsignedLong(tripIdSplit[0], 16));
+				if (siding != null) {
+					final LongArraySet platformIdsUsed = new LongArraySet();
+					final JsonArray tripsUsedArray = new JsonArray();
+					final JsonObject tripDetailsObject = siding.schedule.getOBATripDetailsWithDataUsed(currentMillis, Integer.parseInt(tripIdSplit[1]), Integer.parseInt(tripIdSplit[2]), Long.parseLong(tripIdSplit[3]), platformIdsUsed, tripsUsedArray);
+					return tripDetailsObject == null ? null : getSingleElement(tripDetailsObject, new IntArraySet(), platformIdsUsed, tripsUsedArray);
+				}
+			}
+		} catch (Exception ignored) {
+		}
+		return null;
 	}
 
 	private LatLon getLatLonParameter() {

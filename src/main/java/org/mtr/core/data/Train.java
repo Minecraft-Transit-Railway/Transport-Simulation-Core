@@ -77,7 +77,7 @@ public class Train extends NameColorDataBase {
 		this.totalVehicleLength = totalVehicleLength;
 
 		path = createPathData(pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, repeatInfinitely, defaultPathData);
-		repeatIndex1 = repeatInfinitely ? pathSidingToMainRoute.size() : 0;
+		repeatIndex1 = pathSidingToMainRoute.size();
 		repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 
 		this.acceleration = roundAcceleration(acceleration);
@@ -104,7 +104,7 @@ public class Train extends NameColorDataBase {
 		this.totalVehicleLength = totalVehicleLength;
 
 		path = createPathData(pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, repeatInfinitely, defaultPathData);
-		repeatIndex1 = repeatInfinitely ? pathSidingToMainRoute.size() : 0;
+		repeatIndex1 = pathSidingToMainRoute.size();
 		repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 
 		this.acceleration = roundAcceleration(acceleration);
@@ -273,7 +273,7 @@ public class Train extends NameColorDataBase {
 				final double newAcceleration = acceleration * millisElapsed;
 				final int currentIndex = Utilities.getIndexFromConditionalList(path, railProgress);
 
-				if (!isRepeat() && railProgress >= totalDistance - (railLength - totalVehicleLength) / 2 || !isManualAllowed && departureIndex < 0) {
+				if (repeatIndex2 == 0 && railProgress >= totalDistance - (railLength - totalVehicleLength) / 2 || !isManualAllowed && departureIndex < 0) {
 					isOnRoute = false;
 					manualNotch = -2;
 					ridingEntities.clear();
@@ -284,7 +284,7 @@ public class Train extends NameColorDataBase {
 						speed = 0;
 
 						final PathData currentPathData = currentIndex > 0 ? path.get(currentIndex - 1) : null;
-						final PathData nextPathData = path.get(isRepeat() && currentIndex >= repeatIndex2 ? repeatIndex1 : currentIndex);
+						final PathData nextPathData = path.get(repeatIndex2 > 0 && currentIndex >= repeatIndex2 ? repeatIndex1 : currentIndex);
 						final boolean isOpposite = currentPathData != null && currentPathData.isOppositeRail(nextPathData);
 						final boolean railClear = railBlockedDistance(nextPathData.startDistance + (isOpposite ? totalVehicleLength : 0), 0, vehiclePositions) < 0;
 						final int totalDwellMillis = currentPathData == null ? 0 : currentPathData.dwellTimeMillis;
@@ -390,10 +390,6 @@ public class Train extends NameColorDataBase {
 
 	protected boolean openDoors() {
 		return doorTarget;
-	}
-
-	protected boolean isRepeat() {
-		return repeatIndex1 > 0 && repeatIndex2 > 0;
 	}
 
 	private int railBlockedDistance(double checkRailProgress, int checkDistance, Object2LongAVLTreeMap<Position> vehiclePositions) {

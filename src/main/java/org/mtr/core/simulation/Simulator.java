@@ -62,7 +62,7 @@ public class Simulator implements Utilities {
 		depots.forEach(Depot::init);
 		currentMillis = System.currentTimeMillis();
 
-		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
+		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (currentMillis - startMillis) / 1000F));
 	}
 
 	public void tick() {
