@@ -59,6 +59,10 @@ public interface Utilities {
 		return String.format("%" + length + "s", Long.toHexString(value)).replace(' ', '0').toUpperCase(Locale.ENGLISH);
 	}
 
+	static String formatName(String text) {
+		return text.split("\\|\\|")[0].replace("|", " ");
+	}
+
 	static double kilometersPerHourToMetersPerMillisecond(double speedKilometersPerHour) {
 		return speedKilometersPerHour / 3600;
 	}

@@ -53,7 +53,7 @@ public class Platform extends SavedRailBase<Platform, Station> {
 		jsonObject.addProperty("lat", latLon.lat);
 		jsonObject.addProperty("locationType", 0);
 		jsonObject.addProperty("lon", latLon.lon);
-		final String stationName = area == null ? "" : area.getFormattedName();
+		final String stationName = area == null ? "" : Utilities.formatName(area.name);
 		jsonObject.addProperty("name", String.format("%s%s%s%s", stationName, !stationName.isEmpty() && !name.isEmpty() ? " - " : "", name.isEmpty() ? "" : "Platform ", name));
 		jsonObject.add("routeIds", jsonArray);
 		jsonObject.addProperty("wheelchairBoarding", "UNKNOWN");

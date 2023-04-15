@@ -105,14 +105,6 @@ public class Route extends NameColorDataBase {
 		return Utilities.numberToPaddedHexString(color, 6);
 	}
 
-	public String getFormattedRouteNumber() {
-		return routeNumber.replace("|", " ");
-	}
-
-	public String getTrimmedRouteName() {
-		return name.split("\\|\\|")[0].replace("|", " ");
-	}
-
 	public int getPlatformIdIndex(long platformId) {
 		for (int i = 0; i < platformIds.size(); i++) {
 			if (platformIds.get(i).platformId == platformId) {
@@ -158,10 +150,10 @@ public class Route extends NameColorDataBase {
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("agencyId", "1");
 		jsonObject.addProperty("color", getColorHex());
-		jsonObject.addProperty("description", getTrimmedRouteName());
+		jsonObject.addProperty("description", Utilities.formatName(name));
 		jsonObject.addProperty("id", getColorHex());
-		jsonObject.addProperty("longName", getTrimmedRouteName());
-		jsonObject.addProperty("shortName", getFormattedRouteNumber());
+		jsonObject.addProperty("longName", Utilities.formatName(name));
+		jsonObject.addProperty("shortName", Utilities.formatName(routeNumber));
 		jsonObject.addProperty("textColor", "");
 		jsonObject.addProperty("type", getGtfsType());
 		jsonObject.addProperty("url", "");

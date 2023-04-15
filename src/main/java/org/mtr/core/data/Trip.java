@@ -12,14 +12,16 @@ import java.util.TimeZone;
 public class Trip implements Utilities {
 
 	public final Route route;
-	private final Siding siding;
+	public final int routeIndex;
 	public final int tripIndexInBlock;
+	private final Siding siding;
 	private final ObjectArrayList<StopTime> stopTimes = new ObjectArrayList<>();
 
-	public Trip(Route route, Siding siding, int tripIndexInBlock) {
+	public Trip(Route route, int routeIndex, int tripIndexInBlock, Siding siding) {
 		this.route = route;
-		this.siding = siding;
+		this.routeIndex = routeIndex;
 		this.tripIndexInBlock = tripIndexInBlock;
+		this.siding = siding;
 	}
 
 	public StopTime addStopTime(long startTime, long endTime, long platformId, int tripStopIndex, String customDestination) {
@@ -32,7 +34,7 @@ public class Trip implements Utilities {
 		return String.format("%s_%s_%s_%s", siding.getHexId(), tripIndexInBlock, departureIndex, departureOffset);
 	}
 
-	public JsonObject getOBATripDetailsWithDataUsed(long currentMillis, long offset, int departureIndex, long departureOffset, Trip nextTrip, Trip previousTrip, LongArraySet platformIdsUsed, JsonArray tripsUsedArray) {
+	public JsonObject getOBATripDetailsWithDataUsed(long currentMillis, long offsetMillis, int departureIndex, long departureOffset, Trip nextTrip, Trip previousTrip, LongArraySet platformIdsUsed, JsonArray tripsUsedArray) {
 		if (stopTimes.isEmpty()) {
 			return null;
 		}
@@ -48,8 +50,8 @@ public class Trip implements Utilities {
 		final JsonArray stopTimesArray = new JsonArray();
 		stopTimes.forEach(tripStopTime -> {
 			final JsonObject jsonObject = new JsonObject();
-			jsonObject.addProperty("arrivalTime", (tripStopTime.startTime + offset) / MILLIS_PER_SECOND);
-			jsonObject.addProperty("departureTime", (tripStopTime.endTime + offset) / MILLIS_PER_SECOND);
+			jsonObject.addProperty("arrivalTime", (tripStopTime.startTime + offsetMillis) / MILLIS_PER_SECOND);
+			jsonObject.addProperty("departureTime", (tripStopTime.endTime + offsetMillis) / MILLIS_PER_SECOND);
 			jsonObject.addProperty("distanceAlongTrip", 0);
 			jsonObject.addProperty("historicalOccupancy", "");
 			jsonObject.addProperty("stopHeadsign", tripStopTime.customDestination);
@@ -70,7 +72,7 @@ public class Trip implements Utilities {
 		tripDetailsObject.add("schedule", scheduleObject);
 		tripDetailsObject.addProperty("serviceDate", 0);
 		tripDetailsObject.add("situationIds", new JsonArray());
-		tripDetailsObject.add("status", siding.schedule.getOBATripStatusWithDeviation(currentMillis, stopTimes.get(0), siding.getTimesAlongRoute(), departureIndex, departureOffset, "", "").left());
+		tripDetailsObject.add("status", siding.getOBATripStatusWithDeviation(currentMillis, stopTimes.get(0), departureIndex, departureOffset, "", "").left());
 		tripDetailsObject.addProperty("tripId", getTripId(departureIndex, departureOffset));
 		return tripDetailsObject;
 	}
@@ -81,11 +83,11 @@ public class Trip implements Utilities {
 		jsonObject.addProperty("directionId", 0);
 		jsonObject.addProperty("id", getTripId(departureIndex, departureOffset));
 		jsonObject.addProperty("routeId", route.getColorHex());
-		jsonObject.addProperty("routeShortName", route.getFormattedRouteNumber());
+		jsonObject.addProperty("routeShortName", Utilities.formatName(route.routeNumber));
 		jsonObject.addProperty("serviceId", "1");
 		jsonObject.addProperty("shapeId", "");
 		jsonObject.addProperty("timeZone", TimeZone.getDefault().getID());
-		jsonObject.addProperty("tripHeadsign", route.getTrimmedRouteName());
+		jsonObject.addProperty("tripHeadsign", Utilities.formatName(route.name));
 		jsonObject.addProperty("tripShortName", "");
 		return jsonObject;
 	}

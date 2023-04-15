@@ -17,7 +17,7 @@ import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 
@@ -122,7 +122,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			generatingSidingIds.clear();
 
 			final long[] previousPlatformId = {0};
-			iterateRoutes(route -> route.platformIds.forEach(platformId -> {
+			iterateRoutes((route, routeIndex) -> route.platformIds.forEach(platformId -> {
 				final Platform platform = simulator.dataCache.platformIdMap.get(platformId.platformId);
 				if (platform != null && platform.id != previousPlatformId[0]) {
 					platformsInRoute.add(platform);
@@ -155,13 +155,14 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		}
 	}
 
-	public void iterateRoutes(Consumer<Route> consumer) {
-		routeIds.forEach(routeId -> {
+	public void iterateRoutes(BiConsumer<Route, Integer> consumer) {
+		for (int i = 0; i < routeIds.size(); i++) {
+			final long routeId = routeIds.getLong(i);
 			final Route route = simulator.dataCache.routeIdMap.get(routeId);
 			if (route != null) {
-				consumer.accept(route);
+				consumer.accept(route, i);
 			}
-		});
+		}
 	}
 
 	/**
@@ -232,11 +233,11 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		if (!sidingsInDepot.isEmpty()) {
 			Collections.shuffle(sidingsInDepot);
 			Collections.sort(sidingsInDepot);
-			sidingsInDepot.forEach(siding -> siding.schedule.startGeneratingDepartures());
+			sidingsInDepot.forEach(Siding::startGeneratingDepartures);
 			int sidingIndex = 0;
 			for (final int departure : departures) {
 				for (int i = 0; i < sidingsInDepot.size(); i++) {
-					if (sidingsInDepot.get((sidingIndex + i) % sidingsInDepot.size()).schedule.addDeparture(departure)) {
+					if (sidingsInDepot.get((sidingIndex + i) % sidingsInDepot.size()).addDeparture(departure)) {
 						sidingIndex++;
 						break;
 					}

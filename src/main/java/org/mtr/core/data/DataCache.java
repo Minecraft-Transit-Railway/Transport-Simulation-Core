@@ -80,7 +80,7 @@ public class DataCache {
 				});
 			});
 
-			simulator.depots.forEach(depot -> depot.iterateRoutes(route -> route.platformIds.forEach(platformId -> {
+			simulator.depots.forEach(depot -> depot.iterateRoutes((route, routeIndex) -> route.platformIds.forEach(platformId -> {
 				if (!platformIdToSidings.containsKey(platformId.platformId)) {
 					platformIdToSidings.put(platformId.platformId, new ObjectArraySet<>());
 				}

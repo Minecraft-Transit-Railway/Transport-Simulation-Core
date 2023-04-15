@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
@@ -63,7 +64,7 @@ public class Train extends NameColorDataBase {
 	private static final String KEY_RIDING_ENTITIES = "riding_entities";
 
 	public Train(
-			long id, Siding siding, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
+			long id, Siding siding, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime
 	) {
@@ -74,7 +75,7 @@ public class Train extends NameColorDataBase {
 
 		this.vehicleCars = new ObjectImmutableList<>(vehicleCars);
 		vehicleCarCount = this.vehicleCars.size();
-		this.totalVehicleLength = totalVehicleLength;
+		this.totalVehicleLength = Siding.getTotalVehicleLength(vehicleCars);
 
 		path = createPathData(pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, repeatInfinitely, defaultPathData);
 		repeatIndex1 = pathSidingToMainRoute.size();
@@ -90,7 +91,7 @@ public class Train extends NameColorDataBase {
 	}
 
 	public <T extends ReaderBase<U, T>, U> Train(
-			Siding siding, double railLength, ObjectArrayList<VehicleCar> vehicleCars, double totalVehicleLength,
+			Siding siding, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, T readerBase
 	) {
@@ -101,7 +102,7 @@ public class Train extends NameColorDataBase {
 
 		this.vehicleCars = new ObjectImmutableList<>(vehicleCars);
 		vehicleCarCount = this.vehicleCars.size();
-		this.totalVehicleLength = totalVehicleLength;
+		this.totalVehicleLength = Siding.getTotalVehicleLength(vehicleCars);
 
 		path = createPathData(pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, repeatInfinitely, defaultPathData);
 		repeatIndex1 = pathSidingToMainRoute.size();
@@ -236,7 +237,7 @@ public class Train extends NameColorDataBase {
 		return isOnRoute;
 	}
 
-	public void writeVehiclePositions(Object2LongAVLTreeMap<Position> vehiclePositions) {
+	public void writeVehiclePositionsAndTimes(Object2LongAVLTreeMap<Position> vehiclePositions, Int2LongAVLTreeMap vehicleTimesAlongRoute) {
 		if (isOnRoute) {
 			vehiclePositions.put(getRailPositionRounded(railProgress), id);
 			double railProgressOffset = 0;
@@ -245,6 +246,8 @@ public class Train extends NameColorDataBase {
 				vehiclePositions.put(getRailPositionRounded(railProgress - railProgressOffset), id);
 			}
 		}
+
+		vehicleTimesAlongRoute.put(departureIndex, Math.round(siding.getTimeAlongRoute(railProgress)) + elapsedDwellMillis);
 	}
 
 	public final void simulateTrain(long millisElapsed, Object2LongAVLTreeMap<Position> vehiclePositions) {
@@ -378,10 +381,6 @@ public class Train extends NameColorDataBase {
 				break;
 			}
 		}
-	}
-
-	public double getTimeAlongRoute() {
-		return siding.schedule.getTimeAlongRoute(railProgress) + elapsedDwellMillis;
 	}
 
 	public int getDepartureIndex() {

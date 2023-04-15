@@ -87,7 +87,7 @@ public class OBAResponse {
 
 			final JsonArray arrivalsAndDeparturesArray = new JsonArray();
 			final JsonArray tripsUsedArray = new JsonArray();
-			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.schedule.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
+			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
 					currentMillis,
 					platform,
 					Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
@@ -152,7 +152,7 @@ public class OBAResponse {
 				if (siding != null) {
 					final LongArraySet platformIdsUsed = new LongArraySet();
 					final JsonArray tripsUsedArray = new JsonArray();
-					final JsonObject tripDetailsObject = siding.schedule.getOBATripDetailsWithDataUsed(currentMillis, Integer.parseInt(tripIdSplit[1]), Integer.parseInt(tripIdSplit[2]), Long.parseLong(tripIdSplit[3]), platformIdsUsed, tripsUsedArray);
+					final JsonObject tripDetailsObject = siding.getOBATripDetailsWithDataUsed(currentMillis, Integer.parseInt(tripIdSplit[1]), Integer.parseInt(tripIdSplit[2]), Long.parseLong(tripIdSplit[3]), platformIdsUsed, tripsUsedArray);
 					return tripDetailsObject == null ? null : getSingleElement(tripDetailsObject, new IntArraySet(), platformIdsUsed, tripsUsedArray);
 				}
 			}

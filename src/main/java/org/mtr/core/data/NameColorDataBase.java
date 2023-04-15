@@ -62,10 +62,6 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 		return !hasTransportMode() || this.transportMode == transportMode;
 	}
 
-	public String getFormattedName() {
-		return name.replace("|", " ");
-	}
-
 	protected abstract boolean hasTransportMode();
 
 	private String combineNameColorId() {
