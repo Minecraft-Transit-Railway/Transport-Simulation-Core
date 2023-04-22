@@ -12,6 +12,7 @@ import org.mtr.core.tools.Position;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class DataCache {
 
@@ -111,11 +112,11 @@ public class DataCache {
 		}
 	}
 
-	public static <U> void put(Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<U>> map, long key1, long key2, Function<U, U> putValue) {
-		final Long2ObjectOpenHashMap<U> innerMap = map.get(key1);
-		final Long2ObjectOpenHashMap<U> newInnerMap;
+	public static <T, U, V extends Map<T, W>, W extends Map<T, U>> void put(V map, T key1, T key2, Function<U, U> putValue, Supplier<W> innerMapSupplier) {
+		final W innerMap = map.get(key1);
+		final W newInnerMap;
 		if (innerMap == null) {
-			newInnerMap = new Long2ObjectOpenHashMap<>();
+			newInnerMap = innerMapSupplier.get();
 			map.put(key1, newInnerMap);
 		} else {
 			newInnerMap = innerMap;

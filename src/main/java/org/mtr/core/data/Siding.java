@@ -43,6 +43,8 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 	private final ObjectArrayList<PathData> pathSidingToMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<PathData> pathMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<PathData> pathMainRouteToSiding = new ObjectArrayList<>();
+	private final ObjectImmutableList<MessagePackHelper> pathDataSidingToMainRouteMessagePackHelpers;
+	private final ObjectImmutableList<MessagePackHelper> pathDataMainRouteToSidingMessagePackHelpers;
 	private final ObjectArraySet<Train> vehicles = new ObjectArraySet<>();
 	private final ObjectImmutableList<MessagePackHelper> vehicleMessagePackHelpers;
 	private final ObjectArrayList<Trip> trips = new ObjectArrayList<>();
@@ -67,6 +69,8 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 		this.simulator = simulator;
 		this.railLength = getRailLength(railLength);
 		acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.ACCELERATION_DEFAULT;
+		pathDataSidingToMainRouteMessagePackHelpers = ObjectImmutableList.of();
+		pathDataMainRouteToSidingMessagePackHelpers = ObjectImmutableList.of();
 		vehicleMessagePackHelpers = ObjectImmutableList.of();
 	}
 
@@ -75,15 +79,9 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 
 		this.simulator = simulator;
 		railLength = getRailLength(readerBase.getDouble(KEY_RAIL_LENGTH, 0));
-		readerBase.iterateReaderArray(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSection -> pathSidingToMainRoute.add(new PathData(pathSection)));
-		readerBase.iterateReaderArray(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathSection -> pathMainRouteToSiding.add(new PathData(pathSection)));
-		final ObjectArrayList<MessagePackHelper> tempVehicleMessagePackHelpers = new ObjectArrayList<>();
-		readerBase.iterateReaderArray(KEY_VEHICLES, vehicleReaderBase -> {
-			if (vehicleReaderBase instanceof MessagePackHelper) {
-				tempVehicleMessagePackHelpers.add((MessagePackHelper) vehicleReaderBase);
-			}
-		});
-		vehicleMessagePackHelpers = new ObjectImmutableList<>(tempVehicleMessagePackHelpers);
+		pathDataSidingToMainRouteMessagePackHelpers = savePathDataMessagePackHelper(readerBase, KEY_PATH_SIDING_TO_MAIN_ROUTE);
+		pathDataMainRouteToSidingMessagePackHelpers = savePathDataMessagePackHelper(readerBase, KEY_PATH_MAIN_ROUTE_TO_SIDING);
+		vehicleMessagePackHelpers = savePathDataMessagePackHelper(readerBase, KEY_VEHICLES);
 
 		updateData(readerBase);
 	}
@@ -143,7 +141,10 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 			defaultPathData = new PathData(rail, id, 1, -1, 0, rail.getLength(), position1, position2);
 		}
 
+		readPathDataMessagePackHelper(pathDataSidingToMainRouteMessagePackHelpers, pathSidingToMainRoute, simulator.dataCache);
+		readPathDataMessagePackHelper(pathDataMainRouteToSidingMessagePackHelpers, pathMainRouteToSiding, simulator.dataCache);
 		generatePathDistancesAndTimeSegments();
+
 		if (area != null && defaultPathData != null) {
 			vehicleMessagePackHelpers.forEach(messagePackHelper -> vehicles.add(new Train(
 					this, railLength, vehicleCars,
@@ -165,7 +166,7 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 		}
 	}
 
-	public void tick(Object2LongAVLTreeMap<Position> vehiclePositions) {
+	public void tick() {
 		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, this::finishGeneratingPath, () -> {
 			Main.LOGGER.info(String.format("Path not found from %s siding %s to main route", getDepotName(), name));
 			finishGeneratingPath();
@@ -181,11 +182,13 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 			Main.LOGGER.info(String.format("Path not found from main route to %s siding %s", getDepotName(), name));
 			finishGeneratingPath();
 		});
-
-		vehicles.forEach(train -> train.writeVehiclePositionsAndTimes(vehiclePositions, vehicleTimesAlongRoute));
 	}
 
-	public void simulateTrain(long millisElapsed, Object2LongAVLTreeMap<Position> vehiclePositions) {
+	public void initVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
+		vehicles.forEach(train -> train.writeVehiclePositions(vehiclePositions));
+	}
+
+	public void simulateTrain(long millisElapsed, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
 		if (area == null) {
 			return;
 		}
@@ -197,7 +200,7 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 		final ObjectArraySet<Train> trainsToRemove = new ObjectArraySet<>();
 		final IntArrayList visitedDepartureIndices = new IntArrayList();
 		for (final Train train : vehicles) {
-			train.simulateTrain(millisElapsed, vehiclePositions);
+			train.simulateTrain(millisElapsed, vehiclePositions, vehicleTimesAlongRoute);
 
 			if (train.closeToDepot()) {
 				spawnTrain = false;
@@ -650,6 +653,25 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 
 	public static double getRailLength(double rawRailLength) {
 		return Utilities.round(rawRailLength, 3);
+	}
+
+	public static <T extends ReaderBase<U, T>, U> ObjectImmutableList<MessagePackHelper> savePathDataMessagePackHelper(T readerBase, String key) {
+		final ObjectArrayList<MessagePackHelper> tempMessagePackHelpers = new ObjectArrayList<>();
+		readerBase.iterateReaderArray(key, tempReaderBase -> {
+			if (tempReaderBase instanceof MessagePackHelper) {
+				tempMessagePackHelpers.add((MessagePackHelper) tempReaderBase);
+			}
+		});
+		return new ObjectImmutableList<>(tempMessagePackHelpers);
+	}
+
+	public static void readPathDataMessagePackHelper(ObjectImmutableList<MessagePackHelper> messagePackHelpers, ObjectArrayList<PathData> path, DataCache dataCache) {
+		messagePackHelpers.forEach(messagePackHelper -> {
+			final PathData pathData = new PathData(messagePackHelper, dataCache);
+			if (pathData.validRail) {
+				path.add(pathData);
+			}
+		});
 	}
 
 	public static double getTotalVehicleLength(ObjectArrayList<VehicleCar> vehicleCars) {

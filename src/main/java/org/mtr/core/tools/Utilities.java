@@ -23,6 +23,10 @@ public interface Utilities {
 		return value >= Math.min(value1, value2) - padding && value <= Math.max(value1, value2) + padding;
 	}
 
+	static boolean isIntersecting(double value1, double value2, double value3, double value4) {
+		return isBetween(value3, value1, value2) || isBetween(value4, value1, value2) || isBetween(value1, value3, value4) || isBetween(value2, value3, value4);
+	}
+
 	static int clamp(int value, int min, int max) {
 		return Math.min(max, Math.max(min, value));
 	}

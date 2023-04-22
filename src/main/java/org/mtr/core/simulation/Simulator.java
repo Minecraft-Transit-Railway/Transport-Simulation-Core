@@ -1,10 +1,7 @@
 package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
+import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.tools.Position;
@@ -42,6 +39,7 @@ public class Simulator implements Utilities {
 	private final FileLoader<Lift> fileLoaderLifts;
 	private final FileLoader<RailNode> fileLoaderRailNodes;
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
+	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
 
 	public Simulator(String dimension, Path rootPath, int millisPerGameDay, float startingGameDayPercentage) {
 		this.dimension = dimension;
@@ -62,6 +60,16 @@ public class Simulator implements Utilities {
 		depots.forEach(Depot::init);
 		currentMillis = System.currentTimeMillis();
 
+		final ObjectArrayList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> tempVehiclePositions = new ObjectArrayList<>();
+		for (int i = 0; i < TransportMode.values().length; i++) {
+			final ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositionsForTransportMode = new ObjectArrayList<>();
+			vehiclePositionsForTransportMode.add(new Object2ObjectAVLTreeMap<>());
+			vehiclePositionsForTransportMode.add(new Object2ObjectAVLTreeMap<>());
+			tempVehiclePositions.add(vehiclePositionsForTransportMode);
+		}
+		vehiclePositions = new ObjectImmutableList<>(tempVehiclePositions);
+		sidings.forEach(siding -> siding.initVehiclePositions(vehiclePositions.get(siding.transportMode.ordinal()).get(1)));
+
 		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (currentMillis - startMillis) / 1000F));
 	}
 
@@ -70,10 +78,14 @@ public class Simulator implements Utilities {
 			lastMillis = currentMillis;
 			currentMillis = System.currentTimeMillis();
 
+			vehiclePositions.forEach(vehiclePositionsForTransportMode -> {
+				vehiclePositionsForTransportMode.remove(0);
+				vehiclePositionsForTransportMode.add(new Object2ObjectAVLTreeMap<>());
+			});
+
 			depots.forEach(Depot::tick);
-			final Object2LongAVLTreeMap<Position> vehiclePositions = new Object2LongAVLTreeMap<>();
-			sidings.forEach(siding -> siding.tick(vehiclePositions));
-			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions));
+			sidings.forEach(Siding::tick);
+			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.transportMode.ordinal())));
 
 			if (autoSave) {
 				save(true);

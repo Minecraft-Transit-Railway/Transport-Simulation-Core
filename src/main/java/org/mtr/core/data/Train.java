@@ -1,7 +1,7 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.ints.Int2LongAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.Object2LongAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -10,7 +10,6 @@ import org.mtr.core.path.PathData;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
-import org.mtr.core.tools.Vec3;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -201,10 +200,6 @@ public class Train extends NameColorDataBase {
 		}
 	}
 
-	public final int getIndex(double railProgressOffset) {
-		return Utilities.getIndexFromConditionalList(path, railProgress + railProgressOffset);
-	}
-
 	public final double getRailSpeed(int railIndex) {
 		final Rail thisRail = path.get(railIndex).rail;
 		final double railSpeed;
@@ -237,20 +232,33 @@ public class Train extends NameColorDataBase {
 		return isOnRoute;
 	}
 
-	public void writeVehiclePositionsAndTimes(Object2LongAVLTreeMap<Position> vehiclePositions, Int2LongAVLTreeMap vehicleTimesAlongRoute) {
-		if (isOnRoute) {
-			vehiclePositions.put(getRailPositionRounded(railProgress), id);
-			double railProgressOffset = 0;
-			for (final VehicleCar vehicleCar : vehicleCars) {
-				railProgressOffset += vehicleCar.length;
-				vehiclePositions.put(getRailPositionRounded(railProgress - railProgressOffset), id);
-			}
-		}
-
-		vehicleTimesAlongRoute.put(departureIndex, Math.round(siding.getTimeAlongRoute(railProgress)) + elapsedDwellMillis);
+	public void writeVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
+		writeVehiclePositions(Utilities.getIndexFromConditionalList(path, railProgress), vehiclePositions);
 	}
 
-	public final void simulateTrain(long millisElapsed, Object2LongAVLTreeMap<Position> vehiclePositions) {
+	public void writeVehiclePositions(int currentIndex, Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
+		if (isOnRoute && currentIndex >= 0) {
+			int index = currentIndex;
+			while (true) {
+				final PathData pathData = path.get(index);
+				final double start = Math.max(pathData.startDistance, railProgress - totalVehicleLength);
+				final double end = Math.min(pathData.endDistance, railProgress);
+				if (end - start > 0.01) {
+					DataCache.put(vehiclePositions, pathData.getOrderedPosition1(), pathData.getOrderedPosition2(), vehiclePosition -> {
+						final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
+						newVehiclePosition.addSegment(pathData.reversePositions ? end : start, pathData.reversePositions ? start : end, id);
+						return newVehiclePosition;
+					}, Object2ObjectAVLTreeMap::new);
+				}
+				index--;
+				if (index < 0 || railProgress - totalVehicleLength >= pathData.startDistance) {
+					break;
+				}
+			}
+		}
+	}
+
+	public final void simulateTrain(long millisElapsed, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, Int2LongAVLTreeMap vehicleTimesAlongRoute) {
 		try {
 			if (nextStoppingIndex >= path.size()) {
 				railProgress = (railLength + totalVehicleLength) / 2;
@@ -289,7 +297,7 @@ public class Train extends NameColorDataBase {
 						final PathData currentPathData = currentIndex > 0 ? path.get(currentIndex - 1) : null;
 						final PathData nextPathData = path.get(repeatIndex2 > 0 && currentIndex >= repeatIndex2 ? repeatIndex1 : currentIndex);
 						final boolean isOpposite = currentPathData != null && currentPathData.isOppositeRail(nextPathData);
-						final boolean railClear = railBlockedDistance(nextPathData.startDistance + (isOpposite ? totalVehicleLength : 0), 0, vehiclePositions) < 0;
+						final boolean railClear = railBlockedDistance(currentIndex, nextPathData.startDistance + (isOpposite ? totalVehicleLength : 0), 0, vehiclePositions) < 0;
 						final int totalDwellMillis = currentPathData == null ? 0 : currentPathData.dwellTimeMillis;
 
 						if (totalDwellMillis == 0) {
@@ -312,7 +320,7 @@ public class Train extends NameColorDataBase {
 					} else {
 						final double safeStoppingDistance = 0.5 * speed * speed / acceleration;
 						final double stoppingPoint;
-						final int railBlockedDistance = railBlockedDistance(railProgress, (int) safeStoppingDistance, vehiclePositions);
+						final double railBlockedDistance = railBlockedDistance(currentIndex, railProgress, safeStoppingDistance, vehiclePositions);
 						if (railBlockedDistance < 0) {
 							stoppingPoint = path.get(nextStoppingIndex).endDistance;
 						} else {
@@ -355,7 +363,11 @@ public class Train extends NameColorDataBase {
 
 					tempDoorValue = Utilities.clamp(doorValue + (double) (millisElapsed * (doorTarget ? 1 : -1)) / DOOR_MOVE_TIME, 0, 1);
 				}
+
+				writeVehiclePositions(currentIndex, vehiclePositions.get(1));
 			}
+
+			vehicleTimesAlongRoute.put(departureIndex, Math.round(siding.getTimeAlongRoute(railProgress)) + elapsedDwellMillis);
 
 			doorTarget = tempDoorTarget;
 			doorValue = tempDoorValue;
@@ -391,23 +403,27 @@ public class Train extends NameColorDataBase {
 		return doorTarget;
 	}
 
-	private int railBlockedDistance(double checkRailProgress, int checkDistance, Object2LongAVLTreeMap<Position> vehiclePositions) {
-		for (int i = 2; i <= checkDistance + transportMode.stoppingSpace; i++) {
-			final long blockedId = vehiclePositions.getLong(getRailPositionRounded(checkRailProgress + i));
-			if (blockedId != 0 && id != blockedId) {
-				return i;
+	private double railBlockedDistance(int currentIndex, double checkRailProgress, double checkDistance, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+		int index = currentIndex;
+		while (true) {
+			final PathData pathData = path.get(index);
+			if (Utilities.isIntersecting(pathData.startDistance, pathData.endDistance, checkRailProgress, checkDistance + checkDistance)) {
+				for (int i = 0; i < 2; i++) {
+					final VehiclePosition vehiclePosition = DataCache.tryGet(vehiclePositions.get(i), pathData.getOrderedPosition1(), pathData.getOrderedPosition2());
+					if (vehiclePosition != null) {
+						return vehiclePosition.isBlocked(
+								id,
+								pathData.reversePositions ? pathData.endDistance - checkRailProgress - checkDistance : checkRailProgress - pathData.startDistance,
+								pathData.reversePositions ? pathData.endDistance - checkRailProgress : checkRailProgress + checkDistance - pathData.startDistance
+						);
+					}
+				}
+			}
+			index++;
+			if (index >= path.size()) {
+				return -1;
 			}
 		}
-		return -1;
-	}
-
-	private Vec3 getRailPosition(double checkRailProgress) {
-		final PathData pathData = path.get(Math.max(Utilities.getIndexFromConditionalList(path, checkRailProgress), 0));
-		return pathData.rail.getPosition(checkRailProgress - pathData.startDistance);
-	}
-
-	private Position getRailPositionRounded(double checkRailProgress) {
-		return new Position(getRailPosition(checkRailProgress));
 	}
 
 	public static double roundAcceleration(double acceleration) {

@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
@@ -32,6 +33,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	private final IntArrayList realTimeDepartures = new IntArrayList();
 	private final int[] frequencies = new int[HOURS_PER_DAY];
 	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
+	private final ObjectImmutableList<MessagePackHelper> pathDataMessagePackHelpers;
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
@@ -49,6 +51,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public <T extends ReaderBase<U, T>, U> Depot(T readerBase, Simulator simulator) {
 		super(readerBase);
 		this.simulator = simulator;
+		pathDataMessagePackHelpers = Siding.savePathDataMessagePackHelper(readerBase, KEY_PATH);
 		updateData(readerBase);
 	}
 
@@ -56,17 +59,16 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
 		super.updateData(readerBase);
 
-		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeId -> routeIds.add(routeId.longValue()));
-		readerBase.iterateReaderArray(KEY_PATH, pathSection -> path.add(new PathData(pathSection)));
+		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeIds::add);
 		readerBase.unpackBoolean(KEY_USE_REAL_TIME, value -> useRealTime = value);
 
 		final IntArrayList frequenciesArray = new IntArrayList();
-		readerBase.iterateIntArray(KEY_FREQUENCIES, frequency -> frequenciesArray.add(frequency.intValue()));
+		readerBase.iterateIntArray(KEY_FREQUENCIES, frequenciesArray::add);
 		for (int i = 0; i < Math.min(frequenciesArray.size(), HOURS_PER_DAY); i++) {
 			frequencies[i] = frequenciesArray.getInt(i);
 		}
 
-		readerBase.iterateIntArray(KEY_DEPARTURES, departure -> realTimeDepartures.add(departure.intValue()));
+		readerBase.iterateIntArray(KEY_DEPARTURES, realTimeDepartures::add);
 		readerBase.unpackBoolean(KEY_REPEAT_INFINITELY, value -> repeatInfinitely = value);
 		readerBase.unpackInt(KEY_CRUISING_ALTITUDE, value -> cruisingAltitude = value);
 	}
@@ -107,6 +109,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	}
 
 	public void init() {
+		Siding.readPathDataMessagePackHelper(pathDataMessagePackHelpers, path, simulator.dataCache);
 		savedRails.forEach(Siding::init);
 		generatePlatformDirectionsAndWriteDeparturesToSidings();
 	}

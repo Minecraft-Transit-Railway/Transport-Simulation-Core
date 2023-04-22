@@ -1,5 +1,9 @@
 package org.mtr.core.reader;
 
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
+import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
+import it.unimi.dsi.fastutil.ints.IntConsumer;
+import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
 import java.util.function.BiConsumer;
@@ -27,7 +31,7 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 		map.forEach(consumer);
 	}
 
-	public final void unpackBoolean(String key, Consumer<Boolean> ifExists) {
+	public final void unpackBoolean(String key, BooleanConsumer ifExists) {
 		unpack(key, this::getBoolean, ifExists);
 	}
 
@@ -35,11 +39,11 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 		return getOrDefault(key, defaultValue, this::getBoolean);
 	}
 
-	public final boolean iterateBooleanArray(String key, Consumer<Boolean> ifExists) {
+	public final boolean iterateBooleanArray(String key, BooleanConsumer ifExists) {
 		return iterateArray(key, this::getBoolean, ifExists);
 	}
 
-	public final void unpackInt(String key, Consumer<Integer> ifExists) {
+	public final void unpackInt(String key, IntConsumer ifExists) {
 		unpack(key, this::getInt, ifExists);
 	}
 
@@ -47,11 +51,11 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 		return getOrDefault(key, defaultValue, this::getInt);
 	}
 
-	public final void iterateIntArray(String key, Consumer<Integer> ifExists) {
+	public final void iterateIntArray(String key, IntConsumer ifExists) {
 		iterateArray(key, this::getInt, ifExists);
 	}
 
-	public final void unpackLong(String key, Consumer<Long> ifExists) {
+	public final void unpackLong(String key, LongConsumer ifExists) {
 		unpack(key, this::getLong, ifExists);
 	}
 
@@ -59,11 +63,11 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 		return getOrDefault(key, defaultValue, this::getLong);
 	}
 
-	public final void iterateLongArray(String key, Consumer<Long> ifExists) {
+	public final void iterateLongArray(String key, LongConsumer ifExists) {
 		iterateArray(key, this::getLong, ifExists);
 	}
 
-	public final void unpackDouble(String key, Consumer<Double> ifExists) {
+	public final void unpackDouble(String key, DoubleConsumer ifExists) {
 		unpack(key, this::getDouble, ifExists);
 	}
 
@@ -71,7 +75,7 @@ public abstract class ReaderBase<T, U extends ReaderBase<T, U>> {
 		return getOrDefault(key, defaultValue, this::getDouble);
 	}
 
-	public final void iterateDoubleArray(String key, Consumer<Double> ifExists) {
+	public final void iterateDoubleArray(String key, DoubleConsumer ifExists) {
 		iterateArray(key, this::getDouble, ifExists);
 	}
 

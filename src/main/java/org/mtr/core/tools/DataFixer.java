@@ -1,5 +1,7 @@
 package org.mtr.core.tools;
 
+import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
+import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.data.EnumHelper;
 import org.mtr.core.data.Rail;
@@ -65,11 +67,11 @@ public class DataFixer {
 		return validRail[0];
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackDwellTime(T readerBase, Consumer<Integer> consumer) {
+	public static <T extends ReaderBase<U, T>, U> void unpackDwellTime(T readerBase, IntConsumer consumer) {
 		readerBase.unpackInt(KEY_DWELL_TIME, value -> consumer.accept(value * 500));
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackMaxVehicles(T readerBase, Consumer<Integer> consumer) {
+	public static <T extends ReaderBase<U, T>, U> void unpackMaxVehicles(T readerBase, IntConsumer consumer) {
 		readerBase.unpackBoolean(KEY_IS_MANUAL, value1 -> {
 			if (value1) {
 				consumer.accept(-1);
@@ -85,7 +87,7 @@ public class DataFixer {
 		});
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackMaxManualSpeed(T readerBase, Consumer<Double> consumer) {
+	public static <T extends ReaderBase<U, T>, U> void unpackMaxManualSpeed(T readerBase, DoubleConsumer consumer) {
 		readerBase.unpackInt(KEY_MAX_MANUAL_SPEED, value -> {
 			if (value >= 0 && value <= RailType.DIAMOND.ordinal()) {
 				consumer.accept(RailType.values()[value].speedLimitMetersPerMillisecond);
@@ -93,7 +95,7 @@ public class DataFixer {
 		});
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackAcceleration(T readerBase, Consumer<Double> consumer) {
+	public static <T extends ReaderBase<U, T>, U> void unpackAcceleration(T readerBase, DoubleConsumer consumer) {
 		// meters/tick^2 to meters/millisecond^2
 		readerBase.unpackInt(KEY_ACCELERATION_CONSTANT, value -> consumer.accept(value / 50D / 50D));
 	}

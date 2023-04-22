@@ -1,9 +1,12 @@
 package org.mtr.core.path;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.msgpack.core.MessagePacker;
 import org.mtr.core.data.ConditionalList;
+import org.mtr.core.data.DataCache;
 import org.mtr.core.data.Rail;
 import org.mtr.core.data.SerializedDataBase;
+import org.mtr.core.reader.MessagePackHelper;
 import org.mtr.core.reader.ReaderBase;
 import org.mtr.core.tools.Position;
 
@@ -12,6 +15,7 @@ import java.io.IOException;
 public class PathData extends SerializedDataBase implements ConditionalList {
 
 	public final Rail rail;
+	public final boolean validRail;
 	public final long savedRailBaseId;
 	public final int dwellTimeMillis;
 	public final int stopIndex;
@@ -19,8 +23,8 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 	public final double endDistance;
 	public final Position startPosition;
 	public final Position endPosition;
+	public final boolean reversePositions;
 
-	private static final String KEY_RAIL = "rail";
 	private static final String KEY_SAVED_RAIL_BASE_ID = "saved_rail_base_id";
 	private static final String KEY_DWELL_TIME = "dwell_time";
 	private static final String KEY_STOP_INDEX = "stop_index";
@@ -50,10 +54,11 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 		this.endDistance = endDistance;
 		this.startPosition = startPosition;
 		this.endPosition = endPosition;
+		validRail = true;
+		reversePositions = startPosition.compareTo(endPosition) > 0;
 	}
 
-	public <T extends ReaderBase<U, T>, U> PathData(T readerBase) {
-		rail = new Rail(readerBase.getChild(KEY_RAIL));
+	public <T extends ReaderBase<U, T>, U> PathData(T readerBase, DataCache dataCache) {
 		savedRailBaseId = readerBase.getLong(KEY_SAVED_RAIL_BASE_ID, 0);
 		dwellTimeMillis = readerBase.getInt(KEY_DWELL_TIME, 0);
 		stopIndex = readerBase.getInt(KEY_STOP_INDEX, 0);
@@ -69,6 +74,16 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 				readerBase.getLong(KEY_END_POSITION_Y, 0),
 				readerBase.getLong(KEY_END_POSITION_Z, 0)
 		);
+		reversePositions = startPosition.compareTo(endPosition) > 0;
+
+		final Rail tempRail = DataCache.tryGet(dataCache.positionToRailConnections, startPosition, endPosition);
+		if (tempRail == null) {
+			rail = new Rail(new MessagePackHelper(new Object2ObjectArrayMap<>()));
+			validRail = false;
+		} else {
+			rail = tempRail;
+			validRail = true;
+		}
 	}
 
 	@Override
@@ -77,10 +92,6 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 
 	@Override
 	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		messagePacker.packString(KEY_RAIL);
-		messagePacker.packMapHeader(rail.messagePackLength());
-		rail.toMessagePack(messagePacker);
-
 		messagePacker.packString(KEY_SAVED_RAIL_BASE_ID).packLong(savedRailBaseId);
 		messagePacker.packString(KEY_DWELL_TIME).packInt(dwellTimeMillis);
 		messagePacker.packString(KEY_STOP_INDEX).packInt(stopIndex);
@@ -96,7 +107,7 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 
 	@Override
 	public int messagePackLength() {
-		return 12;
+		return 11;
 	}
 
 	@Override
@@ -115,5 +126,13 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 
 	public boolean isOppositeRail(PathData pathData) {
 		return startPosition.equals(pathData.endPosition) && endPosition.equals(pathData.startPosition);
+	}
+
+	public Position getOrderedPosition1() {
+		return reversePositions ? endPosition : startPosition;
+	}
+
+	public Position getOrderedPosition2() {
+		return reversePositions ? startPosition : endPosition;
 	}
 }

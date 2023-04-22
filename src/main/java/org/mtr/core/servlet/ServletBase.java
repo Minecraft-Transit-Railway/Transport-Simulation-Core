@@ -12,11 +12,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Function;
+import java.util.function.IntFunction;
 
 public abstract class ServletBase extends HttpServlet {
 
-	private static Function<Integer, Simulator> getSimulator;
+	private static IntFunction<Simulator> getSimulator;
 
 	public void sendResponse(HttpServletRequest request, HttpServletResponse response) {
 		final AsyncContext asyncContext = request.startAsync();
@@ -107,7 +107,7 @@ public abstract class ServletBase extends HttpServlet {
 		return responseObject;
 	}
 
-	public static void setGetSimulator(Function<Integer, Simulator> function) {
+	public static void setGetSimulator(IntFunction<Simulator> function) {
 		getSimulator = function;
 	}
 }
