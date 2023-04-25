@@ -1,10 +1,141 @@
 <!DOCTYPE html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Test</title>
+	<title>Transport System Map</title>
+	<link rel="stylesheet" href="index.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif+TC">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif+SC">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif+JP">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif+KR">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<script src="fabric.min.js"></script>
+	<script src="fontfaceobserver.standalone.js"></script>
+	<script type="module" src="index.js"></script>
+	<script type="module" src="drawing.js"></script>
+	<script type="module" src="data.js"></script>
+	<script type="module" src="document.js"></script>
+	<script type="module" src="actions.js"></script>
+	<script type="module" src="settings.js"></script>
+	<script type="module" src="utilities.js"></script>
+	<script type="module" src="fetch.js"></script>
+	<script type="module" src="version.js"></script>
 </head>
 <body>
-Hello
+<canvas id="canvas"></canvas>
+<div id="loading" class="material-icons large">refresh</div>
+<div id="search" class="box">
+	<div class="search-top">
+		<span class="material-icons">search</span>
+		<label for="search-box">Search</label>
+		<input id="search-box" class="text text-box" type="text"/>
+		<span id="clear-search-icon" class="material-icons clickable right-align" style="display: none">clear</span>
+		<span id="settings-icon" class="material-icons clickable right-align">settings</span>
+	</div>
+	<div id="search-results-stations" class="search-results"></div>
+	<div id="search-results-routes" class="search-results"></div>
+	<div id="station-info" class="search-results" style="display: none">
+		<div class="info-top">
+			<span class="material-icons right-align" style="opacity: 0">clear</span>
+			<div id="station-name" class="info-name text"></div>
+			<span id="clear-station-info-button" class="material-icons clickable right-align">clear</span>
+		</div>
+		<div class="info-middle">
+			<span class="material-icons small">my_location</span>
+			<span id="station-coordinates" class="text"></span>
+			&nbsp;&nbsp;&nbsp;
+			<span class="material-icons small">sell</span>
+			<span id="station-zone" class="text"></span>
+		</div>
+		<div class="info-middle">
+			<span id="station-copy" class="material-icons clickable">content_copy</span>
+			<span id="station-directions-1" class="material-icons clickable">home</span>
+			<span id="station-directions-2" class="material-icons clickable">directions</span>
+		</div>
+		<div id="station-line" class="info-line"></div>
+		<div id="station-routes"></div>
+	</div>
+	<div id="route-info" class="search-results" style="display: none">
+		<div class="info-top">
+			<span class="material-icons right-align" style="opacity: 0">clear</span>
+			<div id="route-name" class="info-name text"></div>
+			<span id="clear-route-info-button" class="material-icons clickable right-align">clear</span>
+		</div>
+		<div class="info-middle">
+			<span id="route-stations-tab" class="material-icons clickable">commit</span>
+			<span id="route-delays-tab" class="material-icons clickable"></span>
+		</div>
+		<div id="route-line" class="info-line"></div>
+		<div id="route-details" class="text"></div>
+		<div id="delays" class="text"></div>
+	</div>
+	<div id="directions" class="search-results" style="display: none">
+		<div class="spacer"></div>
+		<div class="search-top">
+			<span class="material-icons">home</span>
+			<label for="directions-box-1">Directions From</label>
+			<input id="directions-box-1" class="text text-box" type="text"/>
+			<span id="clear-directions-1-icon" class="material-icons clickable right-align"></span>
+		</div>
+		<div id="search-results-stations-1" class="search-results search-results-directions"></div>
+		<div class="search-top">
+			<span class="material-icons">place</span>
+			<label for="directions-box-2">Directions To</label>
+			<input id="directions-box-2" class="text text-box" type="text"/>
+			<span id="clear-directions-2-icon" class="material-icons clickable right-align"></span>
+		</div>
+		<div id="search-results-stations-2" class="search-results search-results-directions"></div>
+		<div id="directions-result" style="display: none">
+			<div class="spacer"></div>
+			<div id="directions-result-route" class="station-list"></div>
+		</div>
+	</div>
+	<div id="settings" class="search-results" style="display: none">
+		<div id="settings-route-types" style="display: none">
+			<div class="spacer"></div>
+			<div>
+				<span id="settings-route-type-train_normal" class="material-icons clickable">directions_train</span>
+				<span id="settings-route-type-train_light_rail" class="material-icons clickable">tram</span>
+				<span id="settings-route-type-train_high_speed" class="material-icons clickable">train</span>
+				<span id="settings-route-type-boat_normal" class="material-icons clickable">sailing</span>
+				<span id="settings-route-type-boat_light_rail" class="material-icons clickable">directions_boat</span>
+				<span id="settings-route-type-boat_high_speed" class="material-icons clickable">snowmobile</span>
+				<span id="settings-route-type-cable_car_normal" class="material-icons clickable">airline_seat_recline_extra</span>
+				<span id="settings-route-type-airplane_normal" class="material-icons clickable">flight</span>
+				<span id="settings-route-type-bus_normal" class="material-icons clickable">directions_bus</span>
+				<span id="settings-route-type-bus_light_rail" class="material-icons clickable">local_taxi</span>
+				<span id="settings-route-type-bus_high_speed" class="material-icons clickable">airport_shuttle</span>
+			</div>
+		</div>
+		<div id="settings-dimensions">
+			<div class="spacer"></div>
+			<div id="settings-dimensions-buttons"></div>
+		</div>
+		<div>
+			<div class="spacer"></div>
+			<div>
+				<span id="zoom-in-icon" class="material-icons clickable ">zoom_in</span>
+				<span id="zoom-out-icon" class="material-icons clickable ">zoom_out</span>
+				<span id="text-zoom-in-icon" class="material-icons clickable ">text_increase</span>
+				<span id="text-zoom-out-icon" class="material-icons clickable ">text_decrease</span>
+				<span id="toggle-text-icon" class="material-icons clickable ">font_download_off</span>
+				<span id="directions-icon" class="material-icons clickable ">directions</span>
+				<span id="density-view-icon" class="material-icons clickable ">person</span>
+				<span id="toggle-legend-icon" class="material-icons clickable ">playlist_remove</span>
+				<span id="toggle-theme-icon" class="material-icons clickable "></span>
+			</div>
+		</div>
+		<div>
+			<div class="spacer"></div>
+			<div id="player-list"></div>
+			<div class="version">Transportation Simulation Core</div>
+			<div id="version" class="version"></div>
+		</div>
+	</div>
+</div>
+<div id="legend" class="box" style="display: none">
+</div>
 </body>
 </html>

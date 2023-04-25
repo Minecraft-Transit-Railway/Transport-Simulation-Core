@@ -27,3 +27,7 @@ bin/
 # macos
 
 *.DS_Store
+
+fabric.min.js
+fontfaceobserver.standalone.js
+version.js

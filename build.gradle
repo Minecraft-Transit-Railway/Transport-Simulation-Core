@@ -1,11 +1,15 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
 	id "java"
+	id "de.undercouch.download" version "+"
 }
 
 group "org.mtr.core"
 
 repositories {
 	mavenCentral()
+	maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -16,18 +20,38 @@ dependencies {
 	implementation "com.github.jonafanho:Socket-IO-Webserver:master-SNAPSHOT"
 }
 
+java {
+	toolchain {
+		languageVersion.set(JavaLanguageVersion.of(8))
+	}
+}
+
 jar {
 	manifest {
 		attributes("Main-Class": "org.mtr.core.Main")
 	}
 }
 
-allprojects {
-	repositories {
-		maven { url "https://jitpack.io" }
+tasks.register("downloadResources") {
+	download.run {
+		src "https://unpkg.com/fabric/dist/fabric.min.js"
+		dest "src/main/resources/org/mtr/core/website/fabric.min.js"
+		overwrite true
+		retries - 1
+	}
+	download.run {
+		src "https://raw.githubusercontent.com/bramstein/fontfaceobserver/master/fontfaceobserver.standalone.js"
+		dest "src/main/resources/org/mtr/core/website/fontfaceobserver.standalone.js"
+		overwrite true
+		retries - 1
+	}
+	copy {
+		outputs.upToDateWhen { false }
+		from "src/main/templates/version-template.js"
+		into "src/main/resources/org/mtr/core/website"
+		filter(ReplaceTokens, tokens: ["version": version])
+		rename "(.+)-template.js", "\$1.js"
 	}
 }
 
-tasks.withType(JavaCompile) {
-	options.release = 8;
-}
+tasks.build.dependsOn downloadResources
