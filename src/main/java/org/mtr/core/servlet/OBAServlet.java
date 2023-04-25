@@ -1,80 +1,79 @@
 package org.mtr.core.servlet;
 
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.simulation.Simulator;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.mtr.webserver.Webserver;
 
 public class OBAServlet extends ServletBase {
 
-	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-		sendResponse(request, response);
+	public OBAServlet(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
+		super(webserver, path, simulators);
 	}
 
 	@Override
-	public JsonObject getContent(String endpoint, String data, HttpServletRequest request, long currentMillis, Simulator simulator) {
-		final OBAResponse obaResponse = new OBAResponse(data, request, currentMillis, simulator);
+	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
+		final OBAResponse obaResponse = new OBAResponse(data, parameters, currentMillis, simulator);
 		switch (endpoint) {
 			case "agencies-with-coverage":
-				return buildResponseObject(currentMillis, obaResponse.getAgenciesWithCoverage());
+				return obaResponse.getAgenciesWithCoverage();
 			case "agency":
-				return buildResponseObject(currentMillis, obaResponse.getAgency(), data);
+				return obaResponse.getAgency();
 			case "arrival-and-departure-for-stop":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "arrivals-and-departures-for-stop":
-				return buildResponseObject(currentMillis, obaResponse.getArrivalsAndDeparturesForStop(), data);
+				return obaResponse.getArrivalsAndDeparturesForStop();
 			case "arrivals-and-departures-for-location":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "block":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "cancel-alarm":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "current-time":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "register-alarm-for-arrival-and-departure-at-stop":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "report-problem-with-stop":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "report-problem-with-trip":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "route-ids-for-agency":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "route":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "routes-for-agency":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "routes-for-location":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "schedule-for-route":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "schedule-for-stop":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "shape":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "stop-ids-for-agency":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "stop":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "stops-for-location":
-				return buildResponseObject(currentMillis, obaResponse.getStopsForLocation());
+				return obaResponse.getStopsForLocation();
 			case "stops-for-route":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "trip-details":
-				return buildResponseObject(currentMillis, obaResponse.getTripDetails(), data);
+				return obaResponse.getTripDetails();
 			case "trip-for-vehicle":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "trip":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "trips-for-location":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "trips-for-route":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			case "vehicles-for-agency":
-				return buildResponseObject(currentMillis, new JsonObject());
+				return new JsonObject();
 			default:
-				return buildResponseObject(currentMillis, ResponseCode.NOT_FOUND, endpoint);
+				return null;
 		}
 	}
 }

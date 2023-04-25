@@ -11,19 +11,20 @@ repositories {
 dependencies {
 	implementation "com.google.code.gson:gson:+"
 	implementation "it.unimi.dsi:fastutil:+"
+	implementation "com.corundumstudio.socketio:netty-socketio:+"
 	implementation "org.msgpack:msgpack-core:+"
-	implementation "org.eclipse.jetty:jetty-http:9.+"
-	implementation "org.eclipse.jetty:jetty-io:9.+"
-	implementation "org.eclipse.jetty:jetty-security:9.+"
-	implementation "org.eclipse.jetty:jetty-server:9.+"
-	implementation "org.eclipse.jetty:jetty-servlet:9.+"
-	implementation "org.eclipse.jetty:jetty-util:9.+"
-	implementation "org.eclipse.jetty:jetty-util-ajax:9.+"
+	implementation "com.github.jonafanho:Socket-IO-Webserver:master-SNAPSHOT"
 }
 
 jar {
 	manifest {
 		attributes("Main-Class": "org.mtr.core.Main")
+	}
+}
+
+allprojects {
+	repositories {
+		maven { url "https://jitpack.io" }
 	}
 }
 

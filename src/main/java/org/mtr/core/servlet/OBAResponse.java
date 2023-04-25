@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
@@ -12,13 +13,12 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.LatLon;
 import org.mtr.core.tools.Utilities;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.TimeZone;
 
 public class OBAResponse {
 
 	private final String data;
-	private final HttpServletRequest request;
+	private final Object2ObjectAVLTreeMap<String, String> parameters;
 	private final long currentMillis;
 	private final Simulator simulator;
 	private final boolean includeReferences;
@@ -38,12 +38,12 @@ public class OBAResponse {
 		AGENCY.addProperty("url", "https://github.com/jonafanho/Transport-Simulation-Core");
 	}
 
-	public OBAResponse(String data, HttpServletRequest request, long currentMillis, Simulator simulator) {
+	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
 		this.data = data;
-		this.request = request;
+		this.parameters = parameters;
 		this.currentMillis = currentMillis;
 		this.simulator = simulator;
-		includeReferences = !("false".equals(request.getParameter("includeReferences")));
+		includeReferences = !("false".equals(parameters.get("includeReferences")));
 	}
 
 	public JsonObject getAgenciesWithCoverage() {
@@ -143,7 +143,6 @@ public class OBAResponse {
 		}
 	}
 
-
 	public JsonObject getTripDetails() {
 		final String[] tripIdSplit = data.split("_");
 		try {
@@ -163,7 +162,7 @@ public class OBAResponse {
 
 	private LatLon getLatLonParameter() {
 		try {
-			return new LatLon(Double.parseDouble(request.getParameter("lat")), Double.parseDouble(request.getParameter("lon")));
+			return new LatLon(Double.parseDouble(parameters.get("lat")), Double.parseDouble(parameters.get("lon")));
 		} catch (Exception ignored) {
 		}
 		return null;
@@ -171,14 +170,14 @@ public class OBAResponse {
 
 	private double getParameter(String name, double defaultValue) {
 		try {
-			return Double.parseDouble(request.getParameter(name));
+			return Double.parseDouble(parameters.get(name));
 		} catch (Exception ignored) {
 		}
 		return defaultValue;
 	}
 
 	private boolean containsParameter(String name) {
-		return request.getParameter(name) != null;
+		return parameters.get(name) != null;
 	}
 
 	private JsonObject getReferences(IntArraySet colorsUsed, LongArraySet platformIdsUsed, JsonArray tripsUsed) {
