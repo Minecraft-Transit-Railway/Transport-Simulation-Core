@@ -9,6 +9,7 @@ import org.mtr.webserver.Webserver;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
@@ -45,7 +46,7 @@ public class Main {
 	}
 
 	private static void start(ObjectImmutableList<Simulator> simulators, int webserverPort) {
-		final Webserver webserver = new Webserver(Main.class, "website", Utilities.clamp(webserverPort, 1025, 65535), jsonObject -> 0);
+		final Webserver webserver = new Webserver(Main.class, "website", Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
 		webserver.start();
 		final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
