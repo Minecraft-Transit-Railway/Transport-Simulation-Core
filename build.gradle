@@ -34,14 +34,14 @@ jar {
 
 tasks.register("downloadResources") {
 	download.run {
-		src "https://unpkg.com/fabric/dist/fabric.min.js"
-		dest "src/main/resources/org/mtr/core/website/fabric.min.js"
+		src "https://raw.githubusercontent.com/mrdoob/three.js/dev/build/three.module.min.js"
+		dest "src/main/resources/org/mtr/core/website/three.module.min.js"
 		overwrite true
 		retries - 1
 	}
 	download.run {
-		src "https://raw.githubusercontent.com/bramstein/fontfaceobserver/master/fontfaceobserver.standalone.js"
-		dest "src/main/resources/org/mtr/core/website/fontfaceobserver.standalone.js"
+		src "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/utils/BufferGeometryUtils.js"
+		dest "src/main/resources/org/mtr/core/website/BufferGeometryUtils.js"
 		overwrite true
 		retries - 1
 	}
