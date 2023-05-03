@@ -1,5 +1,6 @@
 * {
 	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
+	font-weight: bolder;
 	margin: 0;
 	user-select: none;
 }
@@ -48,11 +49,15 @@ html, body {
 }
 
 #labels > div {
-	cursor: pointer;
-	left: 0;
+	margin: 0;
+	padding: 0;
 	position: absolute;
 	text-align: center;
-	top: 0;
+}
+
+.station-name {
+	font-size: 0.6em;
+	line-height: 1.2em;
 	user-select: none;
 	white-space: nowrap;
 	text-shadow: -2px -2px 0 var(--backgroundColor),
@@ -63,4 +68,8 @@ html, body {
 	0 2px 0 var(--backgroundColor),
 	-2px 2px 0 var(--backgroundColor),
 	-2px 0 0 var(--backgroundColor);
+}
+
+.station-name.cjk {
+	font-size: 1.2em;
 }
