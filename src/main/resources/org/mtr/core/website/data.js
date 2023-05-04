@@ -31,10 +31,12 @@ export function transform(data) {
 
 				if (station2 !== undefined) {
 					const nextStationId = station2.id;
-					if (currentStation.groups[nextStationId] === undefined) {
-						currentStation.groups[nextStationId] = [];
+					if (nextStationId !== currentStation.id) {
+						if (currentStation.groups[nextStationId] === undefined) {
+							currentStation.groups[nextStationId] = [];
+						}
+						pushIfNotExists(currentStation.groups[nextStationId], route.color);
 					}
-					pushIfNotExists(currentStation.groups[nextStationId], route.color);
 				}
 			}
 		};
@@ -100,28 +102,26 @@ export function transform(data) {
 			height: Math.max(0, routesForDirection[rotate ? 3 : 2].length - 1),
 		});
 
+		routesForDirection.forEach(routesForOneDirection => routesForOneDirection.sort());
+
 		Object.entries(station.groups).forEach(groupEntry => {
 			const [stationId, routeColors] = groupEntry;
-			if (station.id !== stationId) {
-				const reverse = station.id > stationId;
-				const key = `${reverse ? stationId : station.id}_${reverse ? station.id : stationId}`;
-				const [firstRouteColor] = routeColors;
-				if (connections[key] === undefined) {
-					connections[key] = {colors: routeColors};
-					connectionsCount += routeColors.length;
-				}
-				if (connections[key].colors.length !== routeColors.length) {
-					console.error("Colors mismatch", station);
-				}
-				const index = reverse ? 2 : 1;
-				const direction = station.routes[firstRouteColor.toString()];
-				const offset = routesForDirection[direction].indexOf(firstRouteColor) - routesForDirection[direction].length / 2 + routeColors.length / 2;
-				connections[key][`direction${index}`] = direction;
-				connections[key][`x${index}`] = station.x;
-				connections[key][`z${index}`] = station.z;
-				connections[key][`offsetX${index}`] = offset * getOffsetX(direction);
-				connections[key][`offsetY${index}`] = offset * getOffsetY(direction);
+			const reverse = station.id > stationId;
+			const key = `${reverse ? stationId : station.id}_${reverse ? station.id : stationId}`;
+			routeColors.sort();
+			if (connections[key] === undefined) {
+				connections[key] = {colors: routeColors};
+				connectionsCount += routeColors.length;
 			}
+			if (connections[key].colors.length !== routeColors.length) {
+				console.error("Colors mismatch", station);
+			}
+			const index = reverse ? 2 : 1;
+			const direction = station.routes[routeColors[0].toString()];
+			connections[key][`direction${index}`] = direction;
+			connections[key][`x${index}`] = station.x;
+			connections[key][`z${index}`] = station.z;
+			connections[key][`offsets${index}`] = routeColors.map(color => routesForDirection[direction].indexOf(color) - routesForDirection[direction].length / 2 + 0.5);
 		});
 	});
 
@@ -140,30 +140,4 @@ export function transform(data) {
 	});
 
 	return [connections, connectionsCount];
-}
-
-function getOffsetX(direction) {
-	switch (direction % 4) {
-		case 0:
-			return 1;
-		case 1:
-			return Math.SQRT1_2;
-		case 2:
-			return 0;
-		case 3:
-			return Math.SQRT1_2;
-	}
-}
-
-function getOffsetY(direction) {
-	switch (direction % 4) {
-		case 0:
-			return 0;
-		case 1:
-			return -Math.SQRT1_2;
-		case 2:
-			return 1;
-		case 3:
-			return Math.SQRT1_2;
-	}
 }

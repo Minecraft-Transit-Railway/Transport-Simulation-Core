@@ -1,7 +1,8 @@
 import * as THREE from "./three.module.min.js";
 import * as BufferGeometryUtils from "./BufferGeometryUtils.js";
-import {atan45, getColorStyle, isCJK, rotate, trig45} from "./utilities.js"
+import {getColorStyle, isCJK} from "./utilities.js"
 import {transform} from "./data.js"
+import {connectStations} from "./drawing.js";
 import {
 	addCanvasElement,
 	getCoordinates,
@@ -13,9 +14,9 @@ import {
 
 const canvas = document.querySelector("#canvas");
 const url = document.location.origin + document.location.pathname.replace("index.html", "");
-const tan225 = Math.tan(Math.PI / 8);
 const scale = 1;
-const maxText = 32;
+const maxText = 0;
+const blackAndWhite = false;
 
 function setup() {
 	const resize = () => {
@@ -50,78 +51,13 @@ function setColor(colorAttribute, color) {
 }
 
 function setColorByIndex(colorAttribute, color, index) {
-	const colorComponents = [(color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF];
+	const r = (color >> 16) & 0xFF;
+	const g = (color >> 8) & 0xFF;
+	const b = color & 0xFF;
+	const average = (r + g + b) / 3;
+	const colorComponents = blackAndWhite ? [average, average, average] : [r, g, b];
 	for (let i = 0; i < 3; i++) {
 		colorAttribute[index * 3 + i] = colorComponents[i];
-	}
-}
-
-function drawLine(positionAttribute, points, index, count, lineOffset, offsetX, offsetY, direction) {
-	const newPoints = [];
-	points.forEach(point => {
-		const lastPoint = newPoints[newPoints.length - 1];
-		let addPoint = true;
-		if (lastPoint !== undefined) {
-			const [x1, y1, z1] = lastPoint;
-			const [x2, y2, z2] = point;
-			if (x1 === x2 && y1 === y2 && z1 === z2) {
-				addPoint = false;
-			}
-		}
-		if (addPoint) {
-			newPoints.push(point);
-		} else {
-			newPoints.pop();
-		}
-	});
-
-	const angleChanges = [];
-
-	for (let i = 0; i < newPoints.length; i++) {
-		const point1 = newPoints[i - 1];
-		const point2 = newPoints[i];
-		const point3 = newPoints[i + 1];
-		const [point2X, point2Y] = point2;
-		let angleChange = 0;
-		if (point1 !== undefined && point3 !== undefined) {
-			const [point1X, point1Y] = point1;
-			const [point3X, point3Y] = point3;
-			const angle1 = atan45(point2Y - point1Y, point2X - point1X);
-			const angle2 = atan45(point3Y - point2Y, point3X - point2X);
-			angleChange = (angle2 - angle1 + 8) % 4;
-		}
-		angleChanges.push(angleChange === 3 ? -1 : angleChange);
-	}
-
-	for (let i = 1; i < newPoints.length; i++) {
-		const [point1X, point1Y] = newPoints[i - 1];
-		const [point2X, point2Y] = newPoints[i];
-		const angleChange1 = angleChanges[i - 1];
-		const angleChange2 = angleChanges[i];
-		const angle = atan45(point2Y - point1Y, point2X - point1X);
-		const [endOffsetX1, endOffsetY1] = trig45(angle + 2, 3 * scale);
-		const [endOffsetX2, endOffsetY2] = trig45(angle, tan225 * 3 * scale);
-		const lineOffsetX1 = (endOffsetX1 + endOffsetX2 * angleChange1) * 2 * lineOffset;
-		const lineOffsetY1 = (endOffsetY1 + endOffsetY2 * angleChange1) * 2 * lineOffset;
-		const lineOffsetX2 = (endOffsetX1 - endOffsetX2 * angleChange2) * 2 * lineOffset;
-		const lineOffsetY2 = (endOffsetY1 - endOffsetY2 * angleChange2) * 2 * lineOffset;
-		const [newPoint1X, newPoint1Y] = rotate(point1X + endOffsetX1 - endOffsetX2 + lineOffsetX1, point1Y + endOffsetY1 - endOffsetY2 + lineOffsetY1, direction);
-		const [newPoint2X, newPoint2Y] = rotate(point2X + endOffsetX1 + endOffsetX2 + lineOffsetX2, point2Y + endOffsetY1 + endOffsetY2 + lineOffsetY2, direction);
-		const [newPoint3X, newPoint3Y] = rotate(point2X - endOffsetX1 + endOffsetX2 + lineOffsetX2, point2Y - endOffsetY1 + endOffsetY2 + lineOffsetY2, direction);
-		const [newPoint4X, newPoint4Y] = rotate(point1X - endOffsetX1 - endOffsetX2 + lineOffsetX1, point1Y - endOffsetY1 - endOffsetY2 + lineOffsetY1, direction);
-
-		positionAttribute.setXYZ(index * count + i * 6 + 0, newPoint1X + offsetX, -(newPoint1Y + offsetY), -2);
-		positionAttribute.setXYZ(index * count + i * 6 + 1, newPoint2X + offsetX, -(newPoint2Y + offsetY), -2);
-		positionAttribute.setXYZ(index * count + i * 6 + 2, newPoint3X + offsetX, -(newPoint3Y + offsetY), -2);
-		positionAttribute.setXYZ(index * count + i * 6 + 3, newPoint3X + offsetX, -(newPoint3Y + offsetY), -2);
-		positionAttribute.setXYZ(index * count + i * 6 + 4, newPoint4X + offsetX, -(newPoint4Y + offsetY), -2);
-		positionAttribute.setXYZ(index * count + i * 6 + 5, newPoint1X + offsetX, -(newPoint1Y + offsetY), -2);
-	}
-
-	for (let i = newPoints.length; i < count; i++) {
-		for (let j = 0; j < 6; j++) {
-			positionAttribute.setXYZ(index * count + i * 6 + j, 0, 0, 0);
-		}
 	}
 }
 
@@ -209,12 +145,12 @@ function main() {
 
 		const connectionValues = Object.values(connections);
 		const geometry = new THREE.BufferGeometry();
-		const count = 48;
+		const count = 144;
 		const positionAttribute = new THREE.BufferAttribute(new Float32Array(connectionsCount * count * 3), 3);
 		geometry.setAttribute("position", positionAttribute);
 		const colorAttribute = configureGeometry(geometry);
 
-		let j2 = 0;
+		let lineIndex = 0;
 		connectionValues.forEach(connectionValue => {
 			const {
 				colors,
@@ -224,57 +160,38 @@ function main() {
 				z1,
 				x2,
 				z2,
-				offsetX1,
-				offsetY1,
-				offsetX2,
-				offsetY2,
+				offsets1,
+				offsets2,
 			} = connectionValue;
+
 			for (let i = 0; i < colors.length; i++) {
-				const j = j2;
-				const colorOffset = i - (colors.length - 1) / 2;
+				const lineArrayIndex = lineIndex * count;
+				const offset1 = offsets1[i] * 6 * scale;
+				const offset2 = offsets2[i] * 6 * scale;
+				const colorOffset = (i - colors.length / 2 + 0.5) * 6 * scale;
+
 				for (let k = 0; k < count; k++) {
-					setColorByIndex(colorAttribute, colors[i], j * count + k);
+					setColorByIndex(colorAttribute, colors[i], lineArrayIndex + k);
 				}
 
-				const update = () => {
-					const direction = (direction2 - direction1 + 4) % 4;
-					const canvasX1 = getXCoordinate(x1) + offsetX1 * 6 * scale;
-					const canvasY1 = getYCoordinate(z1) + offsetY1 * 6 * scale;
-					const canvasX2 = getXCoordinate(x2) + offsetX2 * 6 * scale;
-					const canvasY2 = getYCoordinate(z2) + offsetY2 * 6 * scale;
-					const [x, y] = rotate(canvasX2 - canvasX1, canvasY2 - canvasY1, -direction1);
-					const points = [[0, 0, -2]];
-					const extraX = Math.max(0, Math.abs(x) - Math.abs(y)) * Math.sign(x);
-					const extraY = Math.max(0, Math.abs(y) - Math.abs(x)) * Math.sign(y);
-					const halfExtraX = extraX / 2;
-					const halfExtraY = extraY / 2;
-					const halfX = x / 2;
-					const halfY = y / 2;
-					const sign1 = x > 0 === y > 0 ? -1 : 1;
-					const sign2 = x > 0 === y < 0 ? -1 : 1;
-					const horizontal = Math.abs(x) > Math.abs(y);
-
-					if (direction === 0) {
-						points.push([0, halfExtraY, -4]);
-						points.push([halfX - halfExtraX, halfY, -4]);
-						points.push([halfX + halfExtraX, halfY, -4]);
-						points.push([x, y - halfExtraY, -4]);
-						points.push([x, y, -2]);
-					} else if (direction === 2) {
-						points.push([0, extraY]);
-						points.push([x - extraX, y]);
-						points.push([x, y, -2]);
-					} else if (!horizontal && (sign1 >= 0 && direction === 3 || sign1 < 0 && direction === 1)) {
-						points.push([0, extraY]);
-						points.push([x, y, -2]);
-					}
-
-					drawLine(positionAttribute, points, j, count, colorOffset, canvasX1, canvasY1, direction1);
-				};
+				const update = () => connectStations(
+					positionAttribute,
+					lineArrayIndex,
+					getXCoordinate(x1),
+					getYCoordinate(z1),
+					getXCoordinate(x2),
+					getYCoordinate(z2),
+					direction1,
+					direction2,
+					offset1,
+					offset2,
+					colorOffset,
+					scale
+				);
 
 				update();
 				addCanvasElement(update);
-				j2++;
+				lineIndex++;
 			}
 		});
 
