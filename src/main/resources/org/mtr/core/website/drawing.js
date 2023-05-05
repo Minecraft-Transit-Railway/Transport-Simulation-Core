@@ -33,6 +33,7 @@ export function connectStations(positionAttribute, index, canvasX1, canvasY1, ca
 	const [x, y] = rotate(canvasX2 - canvasX1, canvasY2 - canvasY1, -direction1);
 	const [offset1X] = rotate(offset1 * getOffsetX(direction1), offset1 * getOffsetY(direction1), -direction1);
 	const [offset2X, offset2Y] = rotate(offset2 * getOffsetX(direction2), offset2 * getOffsetY(direction2), -direction1);
+	const newColorOffset = (direction1 < 2 ? 1 : -1) * colorOffset;
 	const signX = Math.sign(x);
 	const signY = Math.sign(y);
 	const extraX = Math.max(0, Math.abs(x) - Math.abs(y)) * signX;
@@ -49,10 +50,10 @@ export function connectStations(positionAttribute, index, canvasX1, canvasY1, ca
 		points.push([offset1X, 0, false]);
 		if (horizontal) {
 			const diagonalLength = Math.abs(y / 3);
-			points.push([signX * diagonalLength + quadrant * colorOffset * tan225, halfY + colorOffset, true]);
-			points.push([x - signX * diagonalLength + quadrant * colorOffset * tan225, halfY + colorOffset, true]);
+			points.push([signX * diagonalLength + newColorOffset * tan225, halfY + quadrant * newColorOffset, true]);
+			points.push([x - signX * diagonalLength + newColorOffset * tan225, halfY + quadrant * newColorOffset, true]);
 		} else {
-			points.push([offset1X, halfExtraY - quadrant * offset1X + quadrant * colorOffset * Math.SQRT2, true]);
+			points.push([offset1X, halfExtraY - quadrant * offset1X + quadrant * newColorOffset * Math.SQRT2, true]);
 		}
 		points.push([x + offset2X, y]);
 	} else if (direction === 2) {
@@ -62,15 +63,21 @@ export function connectStations(positionAttribute, index, canvasX1, canvasY1, ca
 	} else if (quadrant > 0 && direction === 3 || quadrant < 0 && direction === 1) {
 		points.push([offset1X, 0, false]);
 		if (horizontal) {
-			points.push([signX * Math.abs(y / 3) + quadrant * colorOffset * tan225, halfY + colorOffset, false]);
+			points.push([signX * Math.abs(y / 3) + newColorOffset * tan225, halfY + quadrant * newColorOffset, false]);
 		}
+		points.push([x + offset2X, y + offset2Y]);
+	} else if (horizontal) {
+		points.push([offset1X, 0, false]);
+		points.push([x / 3 + newColorOffset * tan225, y + signY * Math.abs(x / 3) + quadrant * newColorOffset, false]);
 		points.push([x + offset2X, y + offset2Y]);
 	}
 
-	if (quit) {
-		// TODO some lines are not being drawn
-	} else if (points.length === 0) {
-		connectStations(positionAttribute, index, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, scale, true);
+	if (points.length === 0) {
+		if (quit) {
+			console.error("Line not drawn", quadrant, direction);
+		} else {
+			connectStations(positionAttribute, index, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, scale, true);
+		}
 	} else {
 		const newPoints = [];
 
@@ -86,6 +93,10 @@ export function connectStations(positionAttribute, index, canvasX1, canvasY1, ca
 			const [point1X, point1Y] = newPoints[i - 1];
 			const [point2X, point2Y] = newPoints[i];
 			drawLine(positionAttribute, index + i * 6, point1X, point1Y, point2X, point2Y, scale);
+		}
+
+		for (let i = 0; i < 6; i++) {
+			drawLine(positionAttribute, index + newPoints.length * 6 + i * 6, 0, 0, 0, 0, 0);
 		}
 	}
 }

@@ -3,6 +3,7 @@ package org.mtr.core;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.servlet.OBAServlet;
+import org.mtr.core.servlet.SystemMapServlet;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 import org.mtr.webserver.Webserver;
@@ -47,6 +48,7 @@ public class Main {
 
 	private static void start(ObjectImmutableList<Simulator> simulators, int webserverPort) {
 		final Webserver webserver = new Webserver(Main.class, "website", Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
+		new SystemMapServlet(webserver, "/mtr/api/data/*", simulators);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
 		webserver.start();
 		final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());

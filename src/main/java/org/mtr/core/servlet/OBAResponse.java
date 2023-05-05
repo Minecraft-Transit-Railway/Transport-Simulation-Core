@@ -15,12 +15,8 @@ import org.mtr.core.tools.Utilities;
 
 import java.util.TimeZone;
 
-public class OBAResponse {
+public class OBAResponse extends ResponseBase {
 
-	private final String data;
-	private final Object2ObjectAVLTreeMap<String, String> parameters;
-	private final long currentMillis;
-	private final Simulator simulator;
 	private final boolean includeReferences;
 
 	private static final JsonObject AGENCY = new JsonObject();
@@ -39,10 +35,7 @@ public class OBAResponse {
 	}
 
 	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
-		this.data = data;
-		this.parameters = parameters;
-		this.currentMillis = currentMillis;
-		this.simulator = simulator;
+		super(data, parameters, currentMillis, simulator);
 		includeReferences = !("false".equals(parameters.get("includeReferences")));
 	}
 

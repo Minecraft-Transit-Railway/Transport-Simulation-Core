@@ -48,81 +48,83 @@ export function transform(data) {
 	const connections = {};
 	let connectionsCount = 0;
 	stations.forEach(station => {
-		const combinedGroups = [];
-		Object.entries(station.groups).forEach(groupEntry1 => {
-			const [, routeColors1] = groupEntry1;
-			const combinedGroup = [...routeColors1];
-			Object.entries(station.groups).forEach(groupEntry2 => {
-				const [, routeColors2] = groupEntry2;
-				if (combinedGroup.some(routeColor => routeColors2.includes(routeColor))) {
-					routeColors2.forEach(routeColor => pushIfNotExists(combinedGroup, routeColor));
+		if (station.groups !== undefined) {
+			const combinedGroups = [];
+			Object.entries(station.groups).forEach(groupEntry1 => {
+				const [, routeColors1] = groupEntry1;
+				const combinedGroup = [...routeColors1];
+				Object.entries(station.groups).forEach(groupEntry2 => {
+					const [, routeColors2] = groupEntry2;
+					if (combinedGroup.some(routeColor => routeColors2.includes(routeColor))) {
+						routeColors2.forEach(routeColor => pushIfNotExists(combinedGroup, routeColor));
+					}
+				});
+				const groupToAddTo = combinedGroups.find(existingCombinedGroup => existingCombinedGroup.some(routeColor => combinedGroup.includes(routeColor)));
+				if (groupToAddTo === undefined) {
+					combinedGroups.push(combinedGroup);
+				} else {
+					combinedGroup.forEach(routeColor => pushIfNotExists(groupToAddTo, routeColor));
 				}
 			});
-			const groupToAddTo = combinedGroups.find(existingCombinedGroup => existingCombinedGroup.some(routeColor => combinedGroup.includes(routeColor)));
-			if (groupToAddTo === undefined) {
-				combinedGroups.push(combinedGroup);
-			} else {
-				combinedGroup.forEach(routeColor => pushIfNotExists(groupToAddTo, routeColor));
-			}
-		});
 
-		const testRouteColors = [];
-		combinedGroups.forEach(combinedGroup => combinedGroup.forEach(routeColor => {
-			if (testRouteColors.includes(routeColor)) {
-				console.error("Duplicates in combined groups", combinedGroups);
-			}
-			testRouteColors.push(routeColor);
-		}));
-
-		const routesForDirection = [[], [], [], []];
-		combinedGroups.forEach(combinedGroup => {
-			const directionsCount = [0, 0, 0, 0];
-			combinedGroup.forEach(routeColor => station.routes[routeColor.toString()].forEach(direction => directionsCount[direction]++));
-			let direction = 0;
-			let max = 0;
-
-			for (let i = 0; i < 4; i++) {
-				if (directionsCount[i] > max) {
-					direction = i;
-					max = directionsCount[i];
+			const testRouteColors = [];
+			combinedGroups.forEach(combinedGroup => combinedGroup.forEach(routeColor => {
+				if (testRouteColors.includes(routeColor)) {
+					console.error("Duplicates in combined groups", combinedGroups);
 				}
-			}
+				testRouteColors.push(routeColor);
+			}));
 
-			combinedGroup.forEach(routeColor => {
-				routesForDirection[direction].push(routeColor);
-				station.routes[routeColor.toString()] = direction;
+			const routesForDirection = [[], [], [], []];
+			combinedGroups.forEach(combinedGroup => {
+				const directionsCount = [0, 0, 0, 0];
+				combinedGroup.forEach(routeColor => station.routes[routeColor.toString()].forEach(direction => directionsCount[direction]++));
+				let direction = 0;
+				let max = 0;
+
+				for (let i = 0; i < 4; i++) {
+					if (directionsCount[i] > max) {
+						direction = i;
+						max = directionsCount[i];
+					}
+				}
+
+				combinedGroup.forEach(routeColor => {
+					routesForDirection[direction].push(routeColor);
+					station.routes[routeColor.toString()] = direction;
+				});
 			});
-		});
 
-		const rotate = routesForDirection[1].length + routesForDirection[3].length > routesForDirection[0].length + routesForDirection[2].length;
-		Object.assign(station, {
-			rotate,
-			routeCount: Object.keys(station.routes).length,
-			width: Math.max(0, routesForDirection[rotate ? 1 : 0].length - 1),
-			height: Math.max(0, routesForDirection[rotate ? 3 : 2].length - 1),
-		});
+			const rotate = routesForDirection[1].length + routesForDirection[3].length > routesForDirection[0].length + routesForDirection[2].length;
+			Object.assign(station, {
+				rotate,
+				routeCount: Object.keys(station.routes).length,
+				width: Math.max(0, routesForDirection[rotate ? 1 : 0].length - 1),
+				height: Math.max(0, routesForDirection[rotate ? 3 : 2].length - 1),
+			});
 
-		routesForDirection.forEach(routesForOneDirection => routesForOneDirection.sort());
+			routesForDirection.forEach(routesForOneDirection => routesForOneDirection.sort());
 
-		Object.entries(station.groups).forEach(groupEntry => {
-			const [stationId, routeColors] = groupEntry;
-			const reverse = station.id > stationId;
-			const key = `${reverse ? stationId : station.id}_${reverse ? station.id : stationId}`;
-			routeColors.sort();
-			if (connections[key] === undefined) {
-				connections[key] = {colors: routeColors};
-				connectionsCount += routeColors.length;
-			}
-			if (connections[key].colors.length !== routeColors.length) {
-				console.error("Colors mismatch", station);
-			}
-			const index = reverse ? 2 : 1;
-			const direction = station.routes[routeColors[0].toString()];
-			connections[key][`direction${index}`] = direction;
-			connections[key][`x${index}`] = station.x;
-			connections[key][`z${index}`] = station.z;
-			connections[key][`offsets${index}`] = routeColors.map(color => routesForDirection[direction].indexOf(color) - routesForDirection[direction].length / 2 + 0.5);
-		});
+			Object.entries(station.groups).forEach(groupEntry => {
+				const [stationId, routeColors] = groupEntry;
+				const reverse = station.id > stationId;
+				const key = `${reverse ? stationId : station.id}_${reverse ? station.id : stationId}`;
+				routeColors.sort();
+				if (connections[key] === undefined) {
+					connections[key] = {colors: routeColors};
+					connectionsCount += routeColors.length;
+				}
+				if (connections[key].colors.length !== routeColors.length) {
+					console.error("Colors mismatch", station);
+				}
+				const index = reverse ? 2 : 1;
+				const direction = station.routes[routeColors[0].toString()];
+				connections[key][`direction${index}`] = direction;
+				connections[key][`x${index}`] = station.x;
+				connections[key][`z${index}`] = station.z;
+				connections[key][`offsets${index}`] = routeColors.map(color => routesForDirection[direction].indexOf(color) - routesForDirection[direction].length / 2 + 0.5);
+			});
+		}
 	});
 
 	stations.sort((station1, station2) => {

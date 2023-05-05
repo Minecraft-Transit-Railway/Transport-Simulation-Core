@@ -13,9 +13,9 @@ import {
 } from "./mouse.js";
 
 const canvas = document.querySelector("#canvas");
-const url = document.location.origin + document.location.pathname.replace("index.html", "");
+const url = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/data/`;
 const scale = 1;
-const maxText = 0;
+const maxText = 32;
 const blackAndWhite = false;
 
 function setup() {
@@ -78,74 +78,76 @@ function main() {
 	const {scene, resize} = setup();
 	const materialWithVertexColors = new THREE.MeshBasicMaterial({vertexColors: true});
 
-	fetch(url + "data").then(data => data.json()).then(data => {
+	fetch(url + "stations-and-routes").then(data => data.json()).then(data => {
 		const labelElement = document.querySelector("#labels");
-		const {stations} = data[0];
-		const [connections, connectionsCount] = transform(data[0]);
+		const {stations} = data.data;
+		const [connections, connectionsCount] = transform(data.data);
 		resetCanvasElements();
 		scene.clear();
 
 		stations.forEach(station => {
 			const {name, x, z, rotate, width, height} = station;
-			const newWidth = width * 3 * scale;
-			const newHeight = height * 3 * scale;
-			const textOffset = (rotate ? Math.max(newHeight, newWidth) * Math.SQRT1_2 : newHeight) + 9 * scale;
-			const element = document.createElement("div");
-			name.split("|").forEach(namePart => {
-				const namePartElement = document.createElement("p");
-				namePartElement.innerText = namePart;
-				namePartElement.className = `station-name ${isCJK(namePart) ? "cjk" : ""}`;
-				element.appendChild(namePartElement);
-			});
-			labelElement.appendChild(element);
+			if (width !== undefined || height !== undefined) {
+				const newWidth = width * 3 * scale;
+				const newHeight = height * 3 * scale;
+				const textOffset = (rotate ? Math.max(newHeight, newWidth) * Math.SQRT1_2 : newHeight) + 9 * scale;
+				const element = document.createElement("div");
+				name.split("|").forEach(namePart => {
+					const namePartElement = document.createElement("p");
+					namePartElement.innerText = namePart;
+					namePartElement.className = `station-name ${isCJK(namePart) ? "cjk" : ""}`;
+					element.appendChild(namePartElement);
+				});
+				labelElement.appendChild(element);
 
-			const createShape = radius => {
-				const newRadius = radius * scale;
-				const shape = new THREE.Shape();
-				const toRadians = angle => angle * Math.PI / 180;
-				shape.moveTo(-newWidth, newHeight + newRadius);
-				shape.arc(0, -newRadius, newRadius, toRadians(90), toRadians(180));
-				shape.lineTo(-newWidth - newRadius, -newHeight);
-				shape.arc(newRadius, 0, newRadius, toRadians(180), toRadians(270));
-				shape.lineTo(newWidth, -newHeight - newRadius);
-				shape.arc(0, newRadius, newRadius, toRadians(270), toRadians(360));
-				shape.lineTo(newWidth + newRadius, newHeight);
-				shape.arc(-newRadius, 0, newRadius, toRadians(0), toRadians(90));
-				return shape;
-			};
+				const createShape = radius => {
+					const newRadius = radius * scale;
+					const shape = new THREE.Shape();
+					const toRadians = angle => angle * Math.PI / 180;
+					shape.moveTo(-newWidth, newHeight + newRadius);
+					shape.arc(0, -newRadius, newRadius, toRadians(90), toRadians(180));
+					shape.lineTo(-newWidth - newRadius, -newHeight);
+					shape.arc(newRadius, 0, newRadius, toRadians(180), toRadians(270));
+					shape.lineTo(newWidth, -newHeight - newRadius);
+					shape.arc(0, newRadius, newRadius, toRadians(270), toRadians(360));
+					shape.lineTo(newWidth + newRadius, newHeight);
+					shape.arc(-newRadius, 0, newRadius, toRadians(0), toRadians(90));
+					return shape;
+				};
 
-			const geometry1 = new THREE.ShapeGeometry(createShape(11));
-			const geometry2 = new THREE.ShapeGeometry(createShape(7));
-			const geometry3 = new THREE.ShapeGeometry(createShape(5));
-			setColor(configureGeometry(geometry1, -3, rotate ? Math.PI / 4 : 0), getColorStyle("backgroundColor"));
-			setColor(configureGeometry(geometry2, -1, rotate ? Math.PI / 4 : 0), getColorStyle("textColor"));
-			setColor(configureGeometry(geometry3, 0, rotate ? Math.PI / 4 : 0), getColorStyle("backgroundColor"));
-			const blob = new THREE.Mesh(BufferGeometryUtils.mergeGeometries([geometry1, geometry2, geometry3], false), materialWithVertexColors);
+				const geometry1 = new THREE.ShapeGeometry(createShape(11));
+				const geometry2 = new THREE.ShapeGeometry(createShape(7));
+				const geometry3 = new THREE.ShapeGeometry(createShape(5));
+				setColor(configureGeometry(geometry1, -3, rotate ? Math.PI / 4 : 0), getColorStyle("backgroundColor"));
+				setColor(configureGeometry(geometry2, -1, rotate ? Math.PI / 4 : 0), getColorStyle("textColor"));
+				setColor(configureGeometry(geometry3, 0, rotate ? Math.PI / 4 : 0), getColorStyle("backgroundColor"));
+				const blob = new THREE.Mesh(BufferGeometryUtils.mergeGeometries([geometry1, geometry2, geometry3], false), materialWithVertexColors);
 
-			const update = (renderedTextCount, renderCallback) => {
-				const [canvasX, canvasY] = getCoordinates(x, z);
-				blob.position.x = canvasX;
-				blob.position.y = -canvasY;
-				const halfCanvasWidth = canvas.clientWidth / 2;
-				const halfCanvasHeight = canvas.clientHeight / 2;
-				if (renderedTextCount < maxText && Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight) {
-					element.style.transform = `translate(-50%, 0) translate(${canvasX + halfCanvasWidth}px,${canvasY + halfCanvasHeight + textOffset}px)`;
-					element.style.display = "";
-					renderCallback();
-				} else {
-					element.style.display = "none";
-				}
-			};
+				const update = (renderedTextCount, renderCallback) => {
+					const [canvasX, canvasY] = getCoordinates(x, z);
+					blob.position.x = canvasX;
+					blob.position.y = -canvasY;
+					const halfCanvasWidth = canvas.clientWidth / 2;
+					const halfCanvasHeight = canvas.clientHeight / 2;
+					if (renderedTextCount < maxText && Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight) {
+						element.style.transform = `translate(-50%, 0) translate(${canvasX + halfCanvasWidth}px,${canvasY + halfCanvasHeight + textOffset}px)`;
+						element.style.display = "";
+						renderCallback();
+					} else {
+						element.style.display = "none";
+					}
+				};
 
-			update(0, () => {
-			});
-			scene.add(blob);
-			addCanvasElement(update);
+				update(0, () => {
+				});
+				scene.add(blob);
+				addCanvasElement(update);
+			}
 		});
 
 		const connectionValues = Object.values(connections);
 		const geometry = new THREE.BufferGeometry();
-		const count = 144;
+		const count = 54;
 		const positionAttribute = new THREE.BufferAttribute(new Float32Array(connectionsCount * count * 3), 3);
 		geometry.setAttribute("position", positionAttribute);
 		const colorAttribute = configureGeometry(geometry);
