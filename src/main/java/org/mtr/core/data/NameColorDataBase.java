@@ -58,6 +58,10 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 		return Utilities.numberToPaddedHexString(id);
 	}
 
+	public final String getColorHex() {
+		return Utilities.numberToPaddedHexString(color, 6);
+	}
+
 	public final boolean isTransportMode(TransportMode transportMode) {
 		return !hasTransportMode() || this.transportMode == transportMode;
 	}

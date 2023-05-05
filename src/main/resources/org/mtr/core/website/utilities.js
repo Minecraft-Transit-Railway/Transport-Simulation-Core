@@ -1,10 +1,20 @@
-export function getColorStyle(style) {
-	return parseInt(getComputedStyle(document.body).getPropertyValue(`--${style}`).replace(/#/g, ""), 16);
+export function getColorStyle(style, parseString = false) {
+	const color = getComputedStyle(document.body).getPropertyValue(`--${style}`).replace(/#/g, "");
+	return parseString ? parseInt(color, 16) : color;
 }
 
 export function pushIfNotExists(array, element) {
 	if (!array.includes(element)) {
 		array.push(element);
+	}
+}
+
+export function setIfUndefined(object, key, newValue, callback) {
+	if (object[key] === undefined) {
+		object[key] = newValue;
+		if (callback !== undefined) {
+			callback();
+		}
 	}
 }
 

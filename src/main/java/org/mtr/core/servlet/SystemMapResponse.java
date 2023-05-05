@@ -25,7 +25,7 @@ public class SystemMapResponse extends ResponseBase {
 				final JsonObject jsonObject = new JsonObject();
 				jsonObject.addProperty("id", station.id);
 				jsonObject.addProperty("name", station.name);
-				jsonObject.addProperty("color", station.color);
+				jsonObject.addProperty("color", station.getColorHex());
 				jsonObject.addProperty("zone", station.zone);
 				jsonObject.addProperty("x", position.x);
 				jsonObject.addProperty("z", position.z);
@@ -47,7 +47,7 @@ public class SystemMapResponse extends ResponseBase {
 
 			final JsonObject jsonObject = new JsonObject();
 			jsonObject.addProperty("name", route.name);
-			jsonObject.addProperty("color", route.color);
+			jsonObject.addProperty("color", route.getColorHex());
 			jsonObject.addProperty("number", route.routeNumber);
 			jsonObject.addProperty("type", route.transportMode.toString());
 			jsonObject.addProperty("circular", route.circularState == Route.CircularState.NONE ? "" : route.circularState.toString());

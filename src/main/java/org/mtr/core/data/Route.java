@@ -101,10 +101,6 @@ public class Route extends NameColorDataBase {
 		return true;
 	}
 
-	public String getColorHex() {
-		return Utilities.numberToPaddedHexString(color, 6);
-	}
-
 	public int getPlatformIdIndex(long platformId) {
 		for (int i = 0; i < platformIds.size(); i++) {
 			if (platformIds.get(i).platformId == platformId) {

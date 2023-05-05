@@ -1,9 +1,10 @@
 const canvas = document.querySelector("#canvas");
-let canvasElements = [];
+let canvasCallbacks = [];
 let zoom = 1;
 let centerX = 0;
 let centerY = 0;
 let isMouseDown = false;
+let dirty = false;
 let draw = () => {
 };
 
@@ -15,9 +16,7 @@ document.addEventListener("wheel", event => {
 	zoom *= zoomFactor;
 	centerX += x - x * zoomFactor;
 	centerY += y - y * zoomFactor;
-	let i = 0;
-	canvasElements.forEach(update => update(i, () => i++));
-	draw();
+	queueAnimationFrame();
 	event.preventDefault();
 }, {passive: false});
 document.addEventListener("mousemove", event => {
@@ -25,9 +24,7 @@ document.addEventListener("mousemove", event => {
 		const {movementX, movementY} = event;
 		centerX += movementX;
 		centerY += movementY;
-		let i = 0;
-		canvasElements.forEach(update => update(i, () => i++));
-		draw();
+		queueAnimationFrame();
 	}
 });
 document.addEventListener("mousedown", () => isMouseDown = true);
@@ -46,14 +43,29 @@ export function getYCoordinate(y) {
 	return y * zoom + centerY;
 }
 
-export function addCanvasElement(update) {
-	canvasElements.push(update);
+export function addCanvasCallback(update) {
+	canvasCallbacks.push(update);
 }
 
-export function resetCanvasElements() {
-	canvasElements = [];
+export function resetCanvasObjects() {
+	canvasCallbacks = [];
 }
 
 export function setDrawFunction(callback) {
 	draw = callback;
+}
+
+function queueAnimationFrame() {
+	if (!dirty) {
+		requestAnimationFrame(onAnimationFrame);
+	}
+	dirty = true;
+}
+
+function onAnimationFrame() {
+	if (dirty) {
+		canvasCallbacks.forEach(update => update());
+		draw();
+	}
+	dirty = false;
 }
