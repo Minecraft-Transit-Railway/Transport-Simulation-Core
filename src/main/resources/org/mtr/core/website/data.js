@@ -1,15 +1,15 @@
 import {pushIfNotExists, setIfUndefined} from "./utilities.js";
+import {setCenter} from "./mouse.js";
 import SETTINGS from "./settings.js";
 
+const loadingElement = document.querySelector("#loading");
 let stations = [];
 let routes = [];
 let connections = {};
 
 export function getData(callback1, stationCallback, connectionsCallback, callback2) {
 	fetch(SETTINGS.url + "stations-and-routes").then(data => data.json()).then(data => {
-		stations = [];
 		routes = [];
-		connections = {};
 
 		data.data.routes.forEach(route => {
 			const routeStations = [];
@@ -20,8 +20,24 @@ export function getData(callback1, stationCallback, connectionsCallback, callbac
 				}
 			});
 			route.stations = routeStations;
+			if (routeStations.length > 0) {
+				routes.push(route);
+			}
+		});
 
+		updateData(callback1, stationCallback, connectionsCallback, callback2);
+	});
+}
+
+export function updateData(callback1, stationCallback, connectionsCallback, callback2) {
+	loadingElement.style.opacity = "1";
+	requestAnimationFrame(() => requestAnimationFrame(() => {
+		stations = [];
+		connections = {};
+
+		routes.forEach(route => {
 			const iterateStations = reverse => {
+				const routeStations = route.stations;
 				for (let i = 0; i < routeStations.length; i++) {
 					const index = reverse ? routeStations.length - i - 1 : i;
 					const currentStation = routeStations[index];
@@ -30,21 +46,27 @@ export function getData(callback1, stationCallback, connectionsCallback, callbac
 					const station3 = station1 === undefined ? currentStation : station1;
 					const station4 = station2 === undefined ? currentStation : station2;
 
-					if (currentStation.routes === undefined || currentStation.groups === undefined) {
+					if (currentStation.routes === undefined || currentStation.groups === undefined || currentStation.types === undefined) {
 						currentStation.routes = {};
 						currentStation.groups = {};
-						stations.push(currentStation);
+						currentStation.types = [];
 					}
 
-					setIfUndefined(currentStation.routes, route.color, []);
-					currentStation.routes[route.color].push((Math.round(Math.atan2(station4.x - station3.x, station4.z - station3.z) * 4 / Math.PI) + 8) % 4);
+					if (SETTINGS.routeTypes.includes(route.type)) {
+						setIfUndefined(currentStation.routes, route.color, []);
+						currentStation.routes[route.color].push((Math.round(Math.atan2(station4.x - station3.x, station4.z - station3.z) * 4 / Math.PI) + 8) % 4);
 
-					if (station2 !== undefined) {
-						const nextStationId = station2.id;
-						if (nextStationId !== currentStation.id) {
-							setIfUndefined(currentStation.groups, nextStationId, []);
-							pushIfNotExists(currentStation.groups[nextStationId], route.color);
+						if (station2 !== undefined) {
+							const nextStationId = station2.id;
+							if (nextStationId !== currentStation.id) {
+								setIfUndefined(currentStation.groups, nextStationId, []);
+								pushIfNotExists(currentStation.groups[nextStationId], route.color);
+							}
 						}
+
+						pushIfNotExists(stations, currentStation);
+					} else {
+						pushIfNotExists(currentStation.types, route.type);
 					}
 				}
 			};
@@ -114,7 +136,7 @@ export function getData(callback1, stationCallback, connectionsCallback, callbac
 				const reverse = station.id > stationId;
 				const key = `${reverse ? stationId : station.id}_${reverse ? station.id : stationId}`;
 				routeColors.sort();
-				setIfUndefined(connections, key, {colorsAndOffsets: routeColors.map(color => Object.create(null))}, () => connectionsCount += routeColors.length);
+				setIfUndefined(connections, key, {colorsAndOffsets: routeColors.map(() => Object.create(null))}, () => connectionsCount += routeColors.length);
 				const index = reverse ? 2 : 1;
 				const direction = station.routes[routeColors[0]];
 				const connection = connections[key];
@@ -142,11 +164,21 @@ export function getData(callback1, stationCallback, connectionsCallback, callbac
 			}
 		});
 
+		let closestDistance;
+		stations.forEach(station => {
+			const distance = Math.abs(station.x) + Math.abs(station.z);
+			if (closestDistance === undefined || distance < closestDistance) {
+				closestDistance = distance;
+				setCenter(station.x, station.z);
+			}
+		});
+
 		callback1();
 		stations.forEach(stationCallback);
 		const connectionValues = Object.values(connections);
 		connectionValues.forEach(connection => console.assert(connection.x1 !== undefined && connection.x2 !== undefined, "Incomplete connection", connection));
 		connectionsCallback(connectionValues, connectionsCount);
 		callback2();
-	});
+		requestAnimationFrame(() => loadingElement.style.opacity = "0");
+	}));
 }

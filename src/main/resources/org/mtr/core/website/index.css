@@ -1,6 +1,5 @@
 * {
 	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
-	font-weight: bolder;
 	margin: 0;
 	user-select: none;
 }
@@ -12,6 +11,7 @@
 	--textColorDisabled: #BBBBBB;
 	--textColorGray: #666666;
 	--textColor: #000000;
+	--backgroundColorTransparent: rgba(255, 255, 255, 0.8);
 }
 
 .dark-theme {
@@ -21,11 +21,27 @@
 	--textColorDisabled: #666666;
 	--textColorGray: #BBBBBB;
 	--textColor: #FFFFFF;
+	--backgroundColorTransparent: rgba(0, 0, 0, 0.8);
 }
 
 html, body {
 	height: 100%;
 	margin: 0;
+}
+
+#loading.material-symbols-outlined {
+	align-items: center;
+	background-color: var(--backgroundColorTransparent);
+	color: var(--textColorDisabled);
+	display: flex;
+	font-size: 4em;
+	justify-content: center;
+	left: 0;
+	top: 0;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	transition: opacity 0.2s;
 }
 
 #container {
@@ -44,8 +60,8 @@ html, body {
 #labels {
 	color: var(--textColor);
 	left: 0;
-	position: absolute;
 	top: 0;
+	position: absolute;
 }
 
 #labels > div {
@@ -68,6 +84,10 @@ html, body {
 	0 2px 0 var(--backgroundColor),
 	-2px 2px 0 var(--backgroundColor),
 	-2px 0 0 var(--backgroundColor);
+}
+
+.station-name.material-symbols-outlined {
+	font-size: 1.2em;
 }
 
 .station-name.cjk {

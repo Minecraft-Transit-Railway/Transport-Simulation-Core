@@ -4,7 +4,7 @@ import SETTINGS from "./settings.js";
 
 const tan225 = Math.tan(Math.PI / 8);
 
-export function connectStations(positionAttribute, index, canvasX1, canvasY1, canvasX2, canvasY2, direction1, direction2, offset1, offset2, colorOffset, retry = true) {
+export function connectStations(positionAttribute, index, count, canvasX1, canvasY1, canvasX2, canvasY2, direction1, direction2, offset1, offset2, colorOffset, retry = true) {
 	const getOffsetX = direction => {
 		switch (direction % 4) {
 			case 0:
@@ -73,7 +73,7 @@ export function connectStations(positionAttribute, index, canvasX1, canvasY1, ca
 	if (points.length === 0) {
 		console.assert(retry, "Line not drawn", quadrant, direction);
 		if (retry) {
-			connectStations(positionAttribute, index, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, false);
+			connectStations(positionAttribute, index, count, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, false);
 		}
 	} else {
 		const newPoints = [];
@@ -86,14 +86,16 @@ export function connectStations(positionAttribute, index, canvasX1, canvasY1, ca
 			connectWith45(newPoints, x1 + canvasX1, y1 + canvasY1, x2 + canvasX1, y2 + canvasY1, ((direction1 % 2) === 0) === start45);
 		}
 
-		for (let i = 1; i < newPoints.length; i++) {
-			const [point1X, point1Y] = newPoints[i - 1];
-			const [point2X, point2Y] = newPoints[i];
-			drawLine(positionAttribute, index + i * 6, point1X, point1Y, point2X, point2Y);
-		}
-
-		for (let i = 0; i < 36; i++) {
-			positionAttribute.setXYZ(index + newPoints.length * 6 + i, 0, 0, 0, 0, 0);
+		for (let i = 0; i < count / 6; i++) {
+			if (i < newPoints.length - 1) {
+				const [point1X, point1Y] = newPoints[i];
+				const [point2X, point2Y] = newPoints[i + 1];
+				drawLine(positionAttribute, index + i * 6, point1X, point1Y, point2X, point2Y);
+			} else {
+				for (let j = 0; j < 6; j++) {
+					positionAttribute.setXYZ(index + i * 6 + j, 0, 0, -2);
+				}
+			}
 		}
 	}
 }

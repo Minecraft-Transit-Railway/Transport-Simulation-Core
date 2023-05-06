@@ -1,6 +1,6 @@
 import * as THREE from "./three.module.min.js";
 import * as BufferGeometryUtils from "./BufferGeometryUtils.js";
-import {getColorStyle, isCJK} from "./utilities.js"
+import {getColorStyle, getRouteTypeIcon, isCJK} from "./utilities.js"
 import {getData} from "./data.js"
 import {configureGeometry, connectStations, setColor, setColorByIndex} from "./drawing.js";
 import {
@@ -52,7 +52,7 @@ function main() {
 		scene.clear();
 		labelElement.innerHTML = "";
 	}, station => {
-		const {name, x, z, rotate, width, height} = station;
+		const {name, types, x, z, rotate, width, height} = station;
 		const newWidth = width * 3 * SETTINGS.scale;
 		const newHeight = height * 3 * SETTINGS.scale;
 		const textOffset = (rotate ? Math.max(newHeight, newWidth) * Math.SQRT1_2 : newHeight) + 9 * SETTINGS.scale;
@@ -63,6 +63,10 @@ function main() {
 			namePartElement.className = `station-name ${isCJK(namePart) ? "cjk" : ""}`;
 			element.appendChild(namePartElement);
 		});
+		const routeTypesElement = document.createElement("p");
+		routeTypesElement.className = "station-name material-symbols-outlined";
+		routeTypesElement.innerText = types.map(getRouteTypeIcon).join("");
+		element.appendChild(routeTypesElement);
 		labelElement.appendChild(element);
 
 		const createShape = radius => {
@@ -108,7 +112,7 @@ function main() {
 		scene.add(blob);
 	}, (connections, connectionsCount) => {
 		const geometry = new THREE.BufferGeometry();
-		const count = 72;
+		const count = 54;
 		const positionAttribute = new THREE.BufferAttribute(new Float32Array(connectionsCount * count * 3), 3);
 		geometry.setAttribute("position", positionAttribute);
 		const colorAttribute = configureGeometry(geometry);
@@ -129,6 +133,7 @@ function main() {
 				const update = () => connectStations(
 					positionAttribute,
 					lineArrayIndex,
+					count,
 					getXCoordinate(x1),
 					getYCoordinate(z1),
 					getXCoordinate(x2),
@@ -145,6 +150,10 @@ function main() {
 				lineIndex++;
 			}
 		});
+
+		for (let i = 0; i < positionAttribute.count; i++) {
+			console.assert(positionAttribute.getZ(i) !== 0, "Position attribute not populated", i);
+		}
 
 		addCanvasCallback(() => {
 			positionAttribute.needsUpdate = true;

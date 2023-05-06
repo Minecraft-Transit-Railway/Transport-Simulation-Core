@@ -8,6 +8,8 @@ import org.mtr.core.data.Route;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 
+import java.util.Locale;
+
 public class SystemMapResponse extends ResponseBase {
 
 	public SystemMapResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
@@ -49,7 +51,7 @@ public class SystemMapResponse extends ResponseBase {
 			jsonObject.addProperty("name", route.name);
 			jsonObject.addProperty("color", route.getColorHex());
 			jsonObject.addProperty("number", route.routeNumber);
-			jsonObject.addProperty("type", route.transportMode.toString());
+			jsonObject.addProperty("type", String.format("%s_%s", route.transportMode.toString(), route.routeType.toString()).toLowerCase(Locale.ENGLISH));
 			jsonObject.addProperty("circular", route.circularState == Route.CircularState.NONE ? "" : route.circularState.toString());
 			jsonObject.add("stations", routeStationsArray);
 

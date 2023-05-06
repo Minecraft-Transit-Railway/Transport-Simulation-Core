@@ -1,4 +1,4 @@
-const canvas = document.querySelector("#canvas");
+const canvasElement = document.querySelector("#canvas");
 let canvasCallbacks = [];
 let zoom = 1;
 let centerX = 0;
@@ -11,8 +11,8 @@ let draw = () => {
 document.addEventListener("wheel", event => {
 	const {clientX, clientY, deltaY} = event;
 	const zoomFactor = 0.999 ** deltaY;
-	const x = clientX - canvas.clientWidth / 2 - centerX;
-	const y = clientY - canvas.clientHeight / 2 - centerY;
+	const x = clientX - canvasElement.clientWidth / 2 - centerX;
+	const y = clientY - canvasElement.clientHeight / 2 - centerY;
 	zoom *= zoomFactor;
 	centerX += x - x * zoomFactor;
 	centerY += y - y * zoomFactor;
@@ -30,6 +30,12 @@ document.addEventListener("mousemove", event => {
 document.addEventListener("mousedown", () => isMouseDown = true);
 document.addEventListener("mouseup", () => isMouseDown = false);
 document.addEventListener("mouseleave", () => isMouseDown = false);
+
+export function setCenter(x, y) {
+	centerX = -x;
+	centerY = -y;
+	zoom = 1;
+}
 
 export function getCoordinates(x, y) {
 	return [x * zoom + centerX, y * zoom + centerY];

@@ -63,3 +63,32 @@ export function rotate(x, z, angle) {
 	const [cos, sin] = trig45(angle);
 	return [x * cos + z * sin, z * cos - x * sin];
 }
+
+export function getRouteTypeIcon(type) {
+	switch (type) {
+		case "train_normal":
+			return "directions_train";
+		case "train_light_rail":
+			return "tram";
+		case "train_high_speed":
+			return "train";
+		case "boat_normal":
+			return "sailing";
+		case "boat_light_rail":
+			return "directions_boat";
+		case "boat_high_speed":
+			return "snowmobile";
+		case "cable_car_normal":
+			return "airline_seat_recline_extra";
+		case "bus_normal":
+			return "directions_bus";
+		case "bus_light_rail":
+			return "local_taxi";
+		case "bus_high_speed":
+			return "airport_shuttle";
+		case "airplane_normal":
+			return "flight";
+		default:
+			return "";
+	}
+}
