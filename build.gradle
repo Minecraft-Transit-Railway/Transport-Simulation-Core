@@ -41,9 +41,15 @@ tasks.register("downloadResources") {
 	}
 	download.run {
 		src "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/utils/BufferGeometryUtils.js"
-		dest "src/main/resources/org/mtr/core/website/BufferGeometryUtils.js"
+		dest "src/main/resources/org/mtr/core/website/temp/BufferGeometryUtils.js"
 		overwrite true
 		retries - 1
+	}
+	copy {
+		outputs.upToDateWhen { false }
+		from "src/main/resources/org/mtr/core/website/temp/BufferGeometryUtils.js"
+		into "src/main/resources/org/mtr/core/website"
+		filter { line -> line.replaceAll("from 'three'", "from './three.module.min.js'") }
 	}
 	copy {
 		outputs.upToDateWhen { false }
