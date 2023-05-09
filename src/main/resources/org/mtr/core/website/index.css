@@ -1,6 +1,7 @@
 * {
 	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
 	margin: 0;
+	padding: 0;
 	user-select: none;
 }
 
@@ -26,12 +27,23 @@
 
 html, body {
 	height: 100%;
-	margin: 0;
+}
+
+label {
+	display: none;
+}
+
+input {
+	background-color: transparent;
+	border: none;
+	font-size: 1em;
+	outline-width: 0;
+	text-align: left;
 }
 
 #loading.material-symbols-outlined {
 	align-items: center;
-	background-color: var(--backgroundColorTransparent);
+	background-color: var(--backgroundColor);
 	color: var(--textColorDisabled);
 	display: flex;
 	font-size: 4em;
@@ -44,7 +56,7 @@ html, body {
 	transition: opacity 0.2s;
 }
 
-#container {
+#container-main {
 	overflow: hidden;
 	position: relative;
 	width: 100%;
@@ -57,22 +69,58 @@ html, body {
 	height: 100%;
 }
 
-#labels {
+#container-labels {
 	color: var(--textColor);
 	left: 0;
 	top: 0;
 	position: absolute;
 }
 
-#labels > div {
-	margin: 0;
-	padding: 0;
+#container-labels > div {
 	position: absolute;
 	text-align: center;
 }
 
+.panel {
+	background-color: var(--backgroundColor);
+	left: 0;
+	top: 0;
+	padding: 1em;
+	position: absolute;
+	box-shadow: 0 0 0.5em var(--textColor);
+}
+
+.clickable {
+	cursor: pointer;
+}
+
+.clickable:hover {
+	color: var(--textColor);
+	background: var(--backgroundHover);
+}
+
+.clickable.selected {
+	background: var(--boxBorder);
+}
+
+.spacer {
+	background-color: var(--boxBorder);
+	height: 1px;
+	margin: 0.5em 0;
+}
+
+.one-row {
+	display: flex;
+	column-gap: 0.5em;
+}
+
+.text-box {
+	width: 100%;
+}
+
 .station-name {
 	font-size: 0.6em;
+	font-weight: 600;
 	line-height: 1.2em;
 	user-select: none;
 	white-space: nowrap;

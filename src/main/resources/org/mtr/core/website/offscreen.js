@@ -5,16 +5,21 @@ import Callback from "./callback.js";
 import SETTINGS from "./settings.js";
 
 const handlers = {setup, resize, draw, main};
-const callback = new Callback(() => renderer.render(scene, camera));
+const callback = new Callback(data => {
+	if (data !== undefined) {
+		postMessage("");
+	}
+	renderer.render(scene, camera);
+});
 const materialWithVertexColors = new THREE.MeshBasicMaterial({vertexColors: true});
 let renderer;
 let scene;
 let camera;
 
-onmessage = event => {
-	const handler = handlers[event.data.type];
+onmessage = ({data}) => {
+	const handler = handlers[data.type];
 	if (handler !== undefined) {
-		handler(event.data);
+		handler(data);
 	}
 };
 
@@ -40,8 +45,8 @@ function resize(data) {
 }
 
 function draw(data) {
-	const {zoom, centerX, centerY} = data;
-	callback.update(zoom, centerX, centerY);
+	const {zoom, centerX, centerY, connectionsCount} = data;
+	callback.update([zoom, centerX, centerY], connectionsCount);
 }
 
 function main(data) {
@@ -79,7 +84,7 @@ function main(data) {
 		const blob = new THREE.Mesh(BufferGeometryUtils.mergeGeometries([geometry1, geometry2, geometry3], false), materialWithVertexColors);
 		scene.add(blob);
 
-		callback.add((zoom, centerX, centerY) => {
+		callback.add(([zoom, centerX, centerY]) => {
 			const canvasX = x * zoom + centerX;
 			const canvasY = z * zoom + centerY;
 			blob.position.x = canvasX;
@@ -107,7 +112,7 @@ function main(data) {
 				setColorByIndex(colorAttribute, color, lineArrayIndex + j);
 			}
 
-			callback.add((zoom, centerX, centerY) => connectStations(
+			callback.add(([zoom, centerX, centerY]) => connectStations(
 				positionAttribute,
 				lineArrayIndex,
 				count,

@@ -6,16 +6,32 @@
 	<title>Transport System Map</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@600&family=Noto+Serif+JP:wght@600&family=Noto+Serif+KR:wght@600&family=Noto+Serif+SC:wght@600&family=Noto+Serif+TC:wght@600&display=swap">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans&family=Noto+Serif+JP&family=Noto+Serif+KR&family=Noto+Serif+SC&family=Noto+Serif+TC&display=swap">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,1,0"/>
 	<link rel="stylesheet" href="index.css">
 </head>
 <body>
-<div id="container">
+<div id="container-main">
 	<canvas id="canvas"></canvas>
-	<div id="labels"></div>
+	<div id="container-labels"></div>
 </div>
 <div id="loading" class="material-symbols-outlined">refresh</div>
+<div id="main-panel" class="panel">
+	<div class="one-row">
+		<span id="button-search" class="material-symbols-outlined">search</span>
+		<label for="input-search">Search Box</label>
+		<input id="input-search" class="text-box" type="text" placeholder="Search for anything..." autocomplete="false"/>
+		<span id="button-clear-search" class="material-symbols-outlined clickable" style="display: none">clear</span>
+	</div>
+	<div class="spacer"></div>
+	<div id="button-center-map" class="one-row clickable">
+		<span class="material-symbols-outlined">center_focus_weak</span>
+		<span>Centre Map</span>
+	</div>
+	<div id="container-dimensions"></div>
+	<div id="container-route-types"></div>
+	<div id="container-settings"></div>
+</div>
 </body>
 <script type="module" src="three.module.min.js"></script>
 <script type="module" src="BufferGeometryUtils.js"></script>

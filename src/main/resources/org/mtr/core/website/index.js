@@ -1,23 +1,45 @@
-import {setCenter, setMouseCallback, setResizeCallback} from "./mouse.js";
-import {getData, iterateData} from "./data.js";
+import {
+	animateCenter,
+	getCurrentWindowValues,
+	setCenterOnFirstDraw,
+	setLoading,
+	setMouseCallback,
+	setResizeCallback,
+} from "./mouse.js";
+import {getData, updateData} from "./data.js";
 import {getColorStyle, getRouteTypeIcon, isCJK} from "./utilities.js";
 import Callback from "./callback.js";
 import SETTINGS from "./settings.js";
 
 const callback = new Callback();
-const loadingElement = document.querySelector("#loading");
 const canvasElement = document.querySelector("#canvas");
-const labelElement = document.querySelector("#labels");
+const containerLabelsElement = document.querySelector("#container-labels");
+const mainPanelElement = document.querySelector("#main-panel");
+const searchElement = document.querySelector("#input-search");
+const buttonSearchElement = document.querySelector("#button-search");
+const buttonClearSearchElement = document.querySelector("#button-clear-search");
+const containerRouteTypesElement = document.querySelector("#container-route-types");
+const buttonCenterMapElement = document.querySelector("#button-center-map");
+
+function setup() {
+	setMainPanelWidth();
+	searchElement.onchange = onSearch;
+	searchElement.onpaste = onSearch;
+	searchElement.oninput = onSearch;
+	buttonSearchElement.onclick = () => searchElement.focus();
+	buttonClearSearchElement.onclick = () => clearSearch(true);
+}
 
 function main() {
 	const offscreen = canvasElement.transferControlToOffscreen();
 	const worker = new Worker("offscreen.js", {type: "module"});
 	worker.postMessage({type: "setup", canvas: offscreen}, [offscreen]);
+	worker.onmessage = () => setLoading(false);
 	let renderedTextCount = 0;
 
 	setMouseCallback((zoom, centerX, centerY) => {
 		worker.postMessage({type: "draw", zoom, centerX, centerY});
-		callback.update(zoom, centerX, centerY);
+		callback.update([zoom, centerX, centerY]);
 	});
 
 	setResizeCallback((zoom, centerX, centerY) => {
@@ -30,16 +52,16 @@ function main() {
 			canvasHeight: canvasElement.clientHeight * devicePixelRatio,
 			devicePixelRatio,
 		});
-		callback.update(zoom, centerX, centerY);
+		callback.update([zoom, centerX, centerY]);
+		setMainPanelWidth();
 	});
 
-	getData((initialCenterX, initialCenterY) => {
-		labelElement.innerHTML = "";
+	const draw = (initialCenterX, initialCenterY, stations, routeTypes, connectionValues, connectionsCount) => {
+		containerLabelsElement.innerHTML = "";
 		callback.reset();
 		callback.add(() => renderedTextCount = 0);
-		setCenter(initialCenterX, initialCenterY);
 
-		const [stations, connectionValues, connectionsCount] = iterateData(station => {
+		stations.forEach(station => {
 			const {name, types, x, z, rotate, width, height} = station;
 			const newWidth = width * 3 * SETTINGS.scale;
 			const newHeight = height * 3 * SETTINGS.scale;
@@ -51,14 +73,14 @@ function main() {
 				namePartElement.className = `station-name ${isCJK(namePart) ? "cjk" : ""}`;
 				element.appendChild(namePartElement);
 			});
-			const routeTypesElement = document.createElement("p");
-			routeTypesElement.className = "station-name material-symbols-outlined";
-			routeTypesElement.innerText = types.map(getRouteTypeIcon).join("");
+			const routeTypesIconsElement = document.createElement("p");
+			routeTypesIconsElement.className = "station-name material-symbols-outlined";
+			routeTypesIconsElement.innerText = types.filter(type => !SETTINGS.routeTypes.includes(type)).map(getRouteTypeIcon).join("");
 			element.style.display = "none";
-			element.appendChild(routeTypesElement);
-			labelElement.appendChild(element);
+			element.appendChild(routeTypesIconsElement);
+			containerLabelsElement.appendChild(element);
 
-			callback.add((zoom, centerX, centerY) => {
+			callback.add(([zoom, centerX, centerY]) => {
 				const canvasX = x * zoom + centerX;
 				const canvasY = z * zoom + centerY;
 				const halfCanvasWidth = canvasElement.clientWidth / 2;
@@ -73,24 +95,70 @@ function main() {
 			});
 		});
 
+		setCenterOnFirstDraw(initialCenterX, initialCenterY);
+		buttonCenterMapElement.onclick = () => animateCenter(initialCenterX, initialCenterY);
+		const [zoom, centerX, centerY] = getCurrentWindowValues();
 		worker.postMessage({
 			type: "main",
 			stations,
 			connectionValues,
 			connectionsCount,
-			zoom: 1,
-			centerX: initialCenterX,
-			centerY: initialCenterY,
+			zoom,
+			centerX,
+			centerY,
 			canvasWidth: canvasElement.clientWidth * devicePixelRatio,
 			canvasHeight: canvasElement.clientHeight * devicePixelRatio,
 			devicePixelRatio,
 			backgroundColor: getColorStyle("backgroundColor"),
 			textColor: getColorStyle("textColor"),
 		});
+		callback.update([zoom, centerX, centerY]);
+		containerRouteTypesElement.innerHTML = getSpacer();
 
-		callback.update(1, initialCenterX, initialCenterY);
-		loadingElement.style.opacity = "0";
-	});
+		routeTypes.forEach(routeType => {
+			const routeTypeElement = document.createElement("input");
+			const isSelected = () => SETTINGS.routeTypes.includes(routeType);
+			const setClassName = () => routeTypeElement.className = `clickable ${isSelected() ? "selected" : ""}`
+			setClassName();
+			routeTypeElement.value = routeType;
+			routeTypeElement.onclick = () => {
+				if (isSelected()) {
+					SETTINGS.routeTypes = SETTINGS.routeTypes.filter(checkRouteType => checkRouteType !== routeType);
+				} else {
+					SETTINGS.routeTypes.push(routeType);
+				}
+				setClassName();
+				setLoading(true);
+				updateData(draw);
+			}
+			containerRouteTypesElement.appendChild(routeTypeElement);
+		});
+	};
+
+	getData(draw);
 }
 
+function onSearch() {
+	const search = searchElement.value.toLowerCase().replace(/\|/g, " ");
+	document.querySelector("#icon-clear-search").style.display = search === "" ? "none" : "";
+
+}
+
+function clearSearch(focus) {
+	searchElement.value = "";
+	if (focus) {
+		searchElement.focus();
+	}
+	onSearch();
+}
+
+function setMainPanelWidth() {
+	mainPanelElement.style.width = `${Math.min(canvasElement.clientWidth - 32, 320)}px`;
+}
+
+function getSpacer() {
+	return "<div class='spacer'></div>";
+}
+
+setup();
 main();

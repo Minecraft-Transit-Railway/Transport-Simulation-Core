@@ -1,6 +1,6 @@
 const SETTINGS = {
 	scale: 1,
-	maxText: 32,
+	maxText: 16,
 	blackAndWhite: false,
 	routeTypes: ["train_normal"],
 };

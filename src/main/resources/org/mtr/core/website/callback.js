@@ -17,18 +17,18 @@ export default class Callback {
 	}
 
 
-	update(a, b, c) {
+	update(updateParameters, drawParameters) {
 		if (!this.#dirty) {
-			requestAnimationFrame(() => this.#onAnimationFrame(a, b, c));
+			requestAnimationFrame(() => this.#onAnimationFrame(updateParameters, drawParameters));
 		}
 		this.#dirty = true;
 	}
 
-	#onAnimationFrame(a, b, c) {
+	#onAnimationFrame(updateParameters, drawParameters) {
 		if (this.#dirty) {
-			this.#callbacks.forEach(update => update(a, b, c));
+			this.#callbacks.forEach(update => update(updateParameters));
 			if (this.#draw !== undefined) {
-				this.#draw();
+				this.#draw(drawParameters);
 			}
 		}
 		this.#dirty = false;

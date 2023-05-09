@@ -19,22 +19,17 @@ public class SystemMapResponse extends ResponseBase {
 	public JsonObject getData() {
 		final JsonArray stationsArray = new JsonArray();
 		simulator.stations.forEach(station -> {
-			final Position position = station.getCenter();
-			if (position != null) {
-				final JsonArray connectionsArray = new JsonArray();
-				simulator.dataCache.stationIdToConnectingStations.get(station).forEach(connectingStation -> connectionsArray.add(connectingStation.id));
+			final JsonArray connectionsArray = new JsonArray();
+			simulator.dataCache.stationIdToConnectingStations.get(station).forEach(connectingStation -> connectionsArray.add(connectingStation.getHexId()));
 
-				final JsonObject jsonObject = new JsonObject();
-				jsonObject.addProperty("id", station.id);
-				jsonObject.addProperty("name", station.name);
-				jsonObject.addProperty("color", station.getColorHex());
-				jsonObject.addProperty("zone", station.zone);
-				jsonObject.addProperty("x", position.x);
-				jsonObject.addProperty("z", position.z);
-				jsonObject.add("connections", connectionsArray);
+			final JsonObject jsonObject = new JsonObject();
+			jsonObject.addProperty("id", station.getHexId());
+			jsonObject.addProperty("name", station.name);
+			jsonObject.addProperty("color", station.getColorHex());
+			jsonObject.addProperty("zone", station.zone);
+			jsonObject.add("connections", connectionsArray);
 
-				stationsArray.add(jsonObject);
-			}
+			stationsArray.add(jsonObject);
 		});
 
 		final JsonArray routesArray = new JsonArray();
@@ -43,7 +38,13 @@ public class SystemMapResponse extends ResponseBase {
 			route.platformIds.forEach(routePlatform -> {
 				final Platform platform = simulator.dataCache.platformIdMap.get(routePlatform.platformId);
 				if (platform != null && platform.area != null) {
-					routeStationsArray.add(platform.area.id);
+					final JsonObject jsonObject = new JsonObject();
+					jsonObject.addProperty("id", platform.area.getHexId());
+					final Position position = platform.getMidPosition();
+					jsonObject.addProperty("x", position.x);
+					jsonObject.addProperty("y", position.y);
+					jsonObject.addProperty("z", position.z);
+					routeStationsArray.add(jsonObject);
 				}
 			});
 

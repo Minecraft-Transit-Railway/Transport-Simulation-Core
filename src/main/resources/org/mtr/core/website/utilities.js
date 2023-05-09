@@ -9,9 +9,9 @@ export function pushIfNotExists(array, element) {
 	}
 }
 
-export function setIfUndefined(object, key, newValue, callback) {
-	if (object[key] === undefined) {
-		object[key] = newValue;
+export function setIfUndefined(object, setValue, callback) {
+	if (object === undefined) {
+		setValue();
 		if (callback !== undefined) {
 			callback();
 		}
@@ -67,7 +67,7 @@ export function rotate(x, z, angle) {
 export function getRouteTypeIcon(type) {
 	switch (type) {
 		case "train_normal":
-			return "directions_train";
+			return "directions_railway";
 		case "train_light_rail":
 			return "tram";
 		case "train_high_speed":
