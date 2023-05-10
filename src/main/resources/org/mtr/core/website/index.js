@@ -56,7 +56,7 @@ function main() {
 		setMainPanelWidth();
 	});
 
-	const draw = (initialCenterX, initialCenterY, stations, routeTypes, connectionValues, connectionsCount) => {
+	const draw = (initialCenterX, initialCenterY, stations, routeTypes, connectionValues, maxConnectionLength) => {
 		containerLabelsElement.innerHTML = "";
 		callback.reset();
 		callback.add(() => renderedTextCount = 0);
@@ -102,7 +102,7 @@ function main() {
 			type: "main",
 			stations,
 			connectionValues,
-			connectionsCount,
+			maxConnectionLength,
 			zoom,
 			centerX,
 			centerY,
@@ -116,11 +116,11 @@ function main() {
 		containerRouteTypesElement.innerHTML = getSpacer();
 
 		routeTypes.forEach(routeType => {
-			const routeTypeElement = document.createElement("input");
+			const routeTypeElement = document.createElement("div");
 			const isSelected = () => SETTINGS.routeTypes.includes(routeType);
 			const setClassName = () => routeTypeElement.className = `clickable ${isSelected() ? "selected" : ""}`
 			setClassName();
-			routeTypeElement.value = routeType;
+			routeTypeElement.innerText = routeType;
 			routeTypeElement.onclick = () => {
 				if (isSelected()) {
 					SETTINGS.routeTypes = SETTINGS.routeTypes.filter(checkRouteType => checkRouteType !== routeType);
@@ -140,7 +140,7 @@ function main() {
 
 function onSearch() {
 	const search = searchElement.value.toLowerCase().replace(/\|/g, " ");
-	document.querySelector("#icon-clear-search").style.display = search === "" ? "none" : "";
+	document.querySelector("#button-clear-search").style.display = search === "" ? "none" : "";
 
 }
 

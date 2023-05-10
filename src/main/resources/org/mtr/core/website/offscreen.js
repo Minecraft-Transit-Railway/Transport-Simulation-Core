@@ -45,12 +45,12 @@ function resize(data) {
 }
 
 function draw(data) {
-	const {zoom, centerX, centerY, connectionsCount} = data;
-	callback.update([zoom, centerX, centerY], connectionsCount);
+	const {zoom, centerX, centerY, maxConnectionLength} = data;
+	callback.update([zoom, centerX, centerY], maxConnectionLength);
 }
 
 function main(data) {
-	const {stations, connectionValues, connectionsCount, backgroundColor, textColor} = data;
+	const {stations, connectionValues, maxConnectionLength, backgroundColor, textColor} = data;
 	scene.background = new THREE.Color(parseInt(backgroundColor, 16));
 	scene.clear();
 	callback.reset();
@@ -78,7 +78,7 @@ function main(data) {
 		const geometry1 = new THREE.ShapeGeometry(createShape(11));
 		const geometry2 = new THREE.ShapeGeometry(createShape(7));
 		const geometry3 = new THREE.ShapeGeometry(createShape(5));
-		setColor(configureGeometry(geometry1, -3, rotate ? Math.PI / 4 : 0), backgroundColor);
+		setColor(configureGeometry(geometry1, -7, rotate ? Math.PI / 4 : 0), backgroundColor);
 		setColor(configureGeometry(geometry2, -1, rotate ? Math.PI / 4 : 0), textColor);
 		setColor(configureGeometry(geometry3, 0, rotate ? Math.PI / 4 : 0), backgroundColor);
 		const blob = new THREE.Mesh(BufferGeometryUtils.mergeGeometries([geometry1, geometry2, geometry3], false), materialWithVertexColors);
@@ -92,48 +92,82 @@ function main(data) {
 		});
 	});
 
-	const geometry = new THREE.BufferGeometry();
-	const count = 54;
-	const positionAttribute = new THREE.BufferAttribute(new Float32Array(connectionsCount * count * 3), 3);
-	geometry.setAttribute("position", positionAttribute);
-	const colorAttribute = configureGeometry(geometry);
-	let lineIndex = 0;
+	const geometryLines = new THREE.BufferGeometry();
+	const geometryArrows = new THREE.BufferGeometry();
+	let positionArrayLines = [];
+	let colorArrayLines = [];
+	let positionArrayArrows = [];
+	let colorArrayArrows = [];
+
+	callback.add(() => {
+		positionArrayLines = [];
+		colorArrayLines = [];
+		positionArrayArrows = [];
+		colorArrayArrows = [];
+	});
 
 	connectionValues.forEach(connection => {
-		const {colorsAndOffsets, direction1, direction2, x1, z1, x2, z2} = connection;
+		const {colorsAndOffsets, direction1, direction2, x1, z1, x2, z2, length} = connection;
 
 		for (let i = 0; i < colorsAndOffsets.length; i++) {
-			const {color, offset1, offset2} = colorsAndOffsets[i];
-			const lineArrayIndex = lineIndex * count;
+			const {color, offset1, offset2, oneWay} = colorsAndOffsets[i];
 			const colorOffset = (i - colorsAndOffsets.length / 2 + 0.5) * 6 * SETTINGS.scale;
-			lineIndex++;
 
-			for (let j = 0; j < count; j++) {
-				setColorByIndex(colorAttribute, color, lineArrayIndex + j);
-			}
+			callback.add(([zoom, centerX, centerY]) => {
+				const tempPositionArrayLines = [];
+				const tempPositionArrayArrows = [];
 
-			callback.add(([zoom, centerX, centerY]) => connectStations(
-				positionAttribute,
-				lineArrayIndex,
-				count,
-				x1 * zoom + centerX,
-				z1 * zoom + centerY,
-				x2 * zoom + centerX,
-				z2 * zoom + centerY,
-				direction1,
-				direction2,
-				offset1 * 6 * SETTINGS.scale,
-				offset2 * 6 * SETTINGS.scale,
-				colorOffset
-			));
+				const pushPositionsAndColor = (tempPositionArray, positionArray, z, colorArray, newColor) => {
+					for (let j = 0; j < tempPositionArray.length; j++) {
+						tempPositionArray[j].push(z);
+						positionArray.push(tempPositionArray[j]);
+						colorArray.push(newColor);
+					}
+				};
+
+				connectStations(
+					tempPositionArrayLines,
+					tempPositionArrayArrows,
+					x1 * zoom + centerX,
+					z1 * zoom + centerY,
+					x2 * zoom + centerX,
+					z2 * zoom + centerY,
+					direction1,
+					direction2,
+					offset1 * 6 * SETTINGS.scale,
+					offset2 * 6 * SETTINGS.scale,
+					colorOffset,
+					oneWay,
+				);
+
+				pushPositionsAndColor(tempPositionArrayLines, positionArrayLines, (oneWay === 0 ? 3 : 5) + length / maxConnectionLength, colorArrayLines, color);
+				pushPositionsAndColor(tempPositionArrayArrows, positionArrayArrows, 4, colorArrayArrows, backgroundColor);
+			});
 		}
 	});
 
 	callback.add(() => {
-		positionAttribute.needsUpdate = true;
-		geometry.computeBoundingSphere();
+		const setPositionAttribute = (geometry, positionArray, colorArray) => {
+			const positionAttribute = new THREE.BufferAttribute(new Float32Array(positionArray.length * 3), 3);
+			for (let i = 0; i < positionArray.length; i++) {
+				positionAttribute.setXYZ(i, positionArray[i][0], -positionArray[i][1], -positionArray[i][2]);
+			}
+
+			const colorAttributeArray = new Uint8Array(colorArray.length * 3);
+			for (let i = 0; i < colorArray.length; i++) {
+				setColorByIndex(colorAttributeArray, colorArray[i], i);
+			}
+
+			geometry.setAttribute("position", positionAttribute);
+			geometry.setAttribute("color", new THREE.BufferAttribute(colorAttributeArray, 3, true));
+			geometry.computeBoundingSphere();
+		};
+
+		setPositionAttribute(geometryLines, positionArrayLines, colorArrayLines);
+		setPositionAttribute(geometryArrows, positionArrayArrows, colorArrayArrows);
 	});
 
-	scene.add(new THREE.Mesh(geometry, materialWithVertexColors));
+	scene.add(new THREE.Mesh(geometryLines, materialWithVertexColors));
+	scene.add(new THREE.Mesh(geometryArrows, materialWithVertexColors));
 	resize(data);
 }

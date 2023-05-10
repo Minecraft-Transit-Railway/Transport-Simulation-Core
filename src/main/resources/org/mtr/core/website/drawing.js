@@ -3,8 +3,9 @@ import {atan45, rotate, trig45} from "./utilities.js";
 import SETTINGS from "./settings.js";
 
 const tan225 = Math.tan(Math.PI / 8);
+const arrowSpacing = 80;
 
-export function connectStations(positionAttribute, index, count, canvasX1, canvasY1, canvasX2, canvasY2, direction1, direction2, offset1, offset2, colorOffset, retry = true) {
+export function connectStations(positionArrayLines, positionArrayArrows, canvasX1, canvasY1, canvasX2, canvasY2, direction1, direction2, offset1, offset2, colorOffset, oneWay, retry = true) {
 	const getOffsetX = direction => {
 		switch (direction % 4) {
 			case 0:
@@ -73,7 +74,7 @@ export function connectStations(positionAttribute, index, count, canvasX1, canva
 	if (points.length === 0) {
 		console.assert(retry, "Line not drawn", quadrant, direction);
 		if (retry) {
-			connectStations(positionAttribute, index, count, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, false);
+			connectStations(positionArrayLines, positionArrayArrows, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, oneWay, false);
 		}
 	} else {
 		const newPoints = [];
@@ -86,14 +87,21 @@ export function connectStations(positionAttribute, index, count, canvasX1, canva
 			connectWith45(newPoints, x1 + canvasX1, y1 + canvasY1, x2 + canvasX1, y2 + canvasY1, ((direction1 % 2) === 0) === start45);
 		}
 
-		for (let i = 0; i < count / 6; i++) {
-			if (i < newPoints.length - 1) {
-				const [point1X, point1Y] = newPoints[i];
-				const [point2X, point2Y] = newPoints[i + 1];
-				drawLine(positionAttribute, index + i * 6, point1X, point1Y, point2X, point2Y);
-			} else {
-				for (let j = 0; j < 6; j++) {
-					positionAttribute.setXYZ(index + i * 6 + j, 0, 0, -2);
+		for (let i = 1; i < newPoints.length; i++) {
+			const [point1X, point1Y] = newPoints[i - 1];
+			const [point2X, point2Y] = newPoints[i];
+			drawLine(positionArrayLines, point1X, point1Y, point2X, point2Y);
+			if (oneWay !== 0) {
+				const differenceX = point2X - point1X;
+				const differenceY = point2Y - point1Y;
+				const totalLength = Math.abs(differenceX) + Math.abs(differenceY);
+				const newArrowSpacing = totalLength < arrowSpacing * SETTINGS.scale && totalLength > 6 ? totalLength : arrowSpacing * SETTINGS.scale;
+				const arrowCount = Math.floor(totalLength / newArrowSpacing);
+				const extraSpace = (totalLength - newArrowSpacing * arrowCount) / 2;
+				const arrowAngle = -atan45(differenceY, differenceX) + (retry === (oneWay > 0) ? 2 : -2);
+				for (let j = 0; j < arrowCount; j++) {
+					const offsetFactor = (extraSpace + newArrowSpacing * (j + 0.5)) / totalLength;
+					drawArrow(positionArrayArrows, arrowAngle, point1X + differenceX * offsetFactor, point1Y + differenceY * offsetFactor);
 				}
 			}
 		}
@@ -112,16 +120,30 @@ function connectWith45(points, x1, y1, x2, y2, start45) {
 	points.push([x2, y2]);
 }
 
-function drawLine(positionAttribute, index, x1, y1, x2, y2) {
+function drawLine(positionArray, x1, y1, x2, y2) {
 	const angle = atan45(y2 - y1, x2 - x1);
 	const [endOffsetX1, endOffsetY1] = trig45(angle + 2, 3 * SETTINGS.scale);
 	const [endOffsetX2, endOffsetY2] = trig45(angle, tan225 * 3 * SETTINGS.scale);
-	positionAttribute.setXYZ(index + 0, x1 + endOffsetX1 - endOffsetX2, -(y1 + endOffsetY1 - endOffsetY2), -2);
-	positionAttribute.setXYZ(index + 1, x2 + endOffsetX1 + endOffsetX2, -(y2 + endOffsetY1 + endOffsetY2), -2);
-	positionAttribute.setXYZ(index + 2, x2 - endOffsetX1 + endOffsetX2, -(y2 - endOffsetY1 + endOffsetY2), -2);
-	positionAttribute.setXYZ(index + 3, x2 - endOffsetX1 + endOffsetX2, -(y2 - endOffsetY1 + endOffsetY2), -2);
-	positionAttribute.setXYZ(index + 4, x1 - endOffsetX1 - endOffsetX2, -(y1 - endOffsetY1 - endOffsetY2), -2);
-	positionAttribute.setXYZ(index + 5, x1 + endOffsetX1 - endOffsetX2, -(y1 + endOffsetY1 - endOffsetY2), -2);
+	positionArray.push([x1 + endOffsetX1 - endOffsetX2, y1 + endOffsetY1 - endOffsetY2]);
+	positionArray.push([x2 + endOffsetX1 + endOffsetX2, y2 + endOffsetY1 + endOffsetY2]);
+	positionArray.push([x2 - endOffsetX1 + endOffsetX2, y2 - endOffsetY1 + endOffsetY2]);
+	positionArray.push([x2 - endOffsetX1 + endOffsetX2, y2 - endOffsetY1 + endOffsetY2]);
+	positionArray.push([x1 - endOffsetX1 - endOffsetX2, y1 - endOffsetY1 - endOffsetY2]);
+	positionArray.push([x1 + endOffsetX1 - endOffsetX2, y1 + endOffsetY1 - endOffsetY2]);
+}
+
+function drawArrow(positionArray, angle, x, y) {
+	const [offset1X, offset1Y] = rotate(3 * SETTINGS.scale, 0, angle);
+	const [offset2X, offset2Y] = rotate(0, 3 * SETTINGS.scale, angle);
+	positionArray.push([x - offset1X, y - offset1Y]);
+	positionArray.push([x + offset2X, y + offset2Y]);
+	positionArray.push([x + offset1X, y + offset1Y]);
+	positionArray.push([x, y]);
+	positionArray.push([x + offset1X, y + offset1Y]);
+	positionArray.push([x + offset1X - offset2X, y + offset1Y - offset2Y]);
+	positionArray.push([x - offset1X - offset2X, y - offset1Y - offset2Y]);
+	positionArray.push([x - offset1X, y - offset1Y]);
+	positionArray.push([x, y]);
 }
 
 export function setColor(colorAttribute, color) {

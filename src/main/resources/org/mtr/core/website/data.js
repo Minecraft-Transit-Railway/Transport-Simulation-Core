@@ -65,15 +65,21 @@ export function updateData(callback) {
 		setSum("z");
 	});
 
+	const connectionsOneWay = {};
+	const getKeyAndReverseFromStationIds = (stationId1, stationId2) => {
+		const reverse = stationId1 > stationId2;
+		return [`${reverse ? stationId2 : stationId1}_${reverse ? stationId1 : stationId2}`, reverse];
+	};
+
 	routes.forEach(route => {
 		if (SETTINGS.routeTypes.includes(route.type)) {
-			const iterateStations = reverse => {
+			const iterateStations = iterateForwards => {
 				const routeStations = route.stations;
 				for (let i = 0; i < routeStations.length; i++) {
-					const index = reverse ? routeStations.length - i - 1 : i;
+					const index = iterateForwards ? i : routeStations.length - i - 1;
 					const currentStation = routeStations[index].station;
-					const station1Data = routeStations[index + (reverse ? 1 : -1)];
-					const station2Data = routeStations[index + (reverse ? -1 : 1)];
+					const station1Data = routeStations[index + (iterateForwards ? -1 : 1)];
+					const station2Data = routeStations[index + (iterateForwards ? 1 : -1)];
 					const station1 = station1Data === undefined ? currentStation : station1Data.station;
 					const station2 = station2Data === undefined ? currentStation : station2Data.station;
 
@@ -85,29 +91,33 @@ export function updateData(callback) {
 						if (nextStationId !== currentStation.id) {
 							setIfUndefined(currentStation.groups[nextStationId], () => currentStation.groups[nextStationId] = []);
 							pushIfNotExists(currentStation.groups[nextStationId], route.color);
+							if (iterateForwards) {
+								const [key, reverse] = getKeyAndReverseFromStationIds(currentStation.id, nextStationId);
+								const newKey = `${key}_${route.color}`;
+								setIfUndefined(connectionsOneWay[newKey], () => connectionsOneWay[newKey] = {});
+								connectionsOneWay[newKey][reverse ? "backwards" : "forwards"] = true;
+							}
 						}
 					}
 				}
 			};
 
-			iterateStations(false);
 			iterateStations(true);
+			iterateStations(false);
 		}
 	});
 
 	const connections = {};
-	let connectionsCount = 0;
+	let maxConnectionLength = 0;
 	let closestDistance;
 	let centerX = 0;
 	let centerY = 0;
 
 	stations.forEach(station => {
 		const combinedGroups = [];
-		Object.entries(station.groups).forEach(groupEntry1 => {
-			const [, routeColors1] = groupEntry1;
+		Object.values(station.groups).forEach(routeColors1 => {
 			const combinedGroup = [...routeColors1];
-			Object.entries(station.groups).forEach(groupEntry2 => {
-				const [, routeColors2] = groupEntry2;
+			Object.values(station.groups).forEach(routeColors2 => {
 				if (combinedGroup.some(routeColor => routeColors2.includes(routeColor))) {
 					routeColors2.forEach(routeColor => pushIfNotExists(combinedGroup, routeColor));
 				}
@@ -150,30 +160,38 @@ export function updateData(callback) {
 		Object.assign(station, {
 			rotate,
 			routeCount: Object.keys(station.routes).length,
-			width: Math.max(0, routesForDirection[rotate ? 1 : 0].length - 1),
-			height: Math.max(0, routesForDirection[rotate ? 3 : 2].length - 1),
+			width: Math.max(Math.max(0, routesForDirection[rotate ? 1 : 0].length - 1), Math.max(0, routesForDirection[rotate ? 0 : 1].length - 1) * Math.SQRT1_2),
+			height: Math.max(Math.max(0, routesForDirection[rotate ? 3 : 2].length - 1), Math.max(0, routesForDirection[rotate ? 2 : 3].length - 1) * Math.SQRT1_2),
 		});
 
 		routesForDirection.forEach(routesForOneDirection => routesForOneDirection.sort());
 
 		Object.entries(station.groups).forEach(groupEntry => {
 			const [stationId, routeColors] = groupEntry;
-			const reverse = station.id > stationId;
-			const key = `${reverse ? stationId : station.id}_${reverse ? station.id : stationId}`;
+			const [key, reverse] = getKeyAndReverseFromStationIds(station.id, stationId)
 			routeColors.sort();
-			setIfUndefined(connections[key], () => connections[key] = {colorsAndOffsets: routeColors.map(() => Object.create(null))}, () => connectionsCount += routeColors.length);
+			setIfUndefined(connections[key], () => connections[key] = {colorsAndOffsets: routeColors.map(() => Object.create(null))});
 			const index = reverse ? 2 : 1;
 			const direction = station.routes[routeColors[0]];
 			const connection = connections[key];
 			connection[`direction${index}`] = direction;
 			connection[`x${index}`] = station.x;
 			connection[`z${index}`] = station.z;
+
 			for (let i = 0; i < routeColors.length; i++) {
 				const color = routeColors[i];
 				const colorAndOffset = connection.colorsAndOffsets[i];
 				console.assert(colorAndOffset.color === undefined || colorAndOffset.color === color, "Color and offsets mismatch", colorAndOffset);
 				colorAndOffset.color = color;
 				colorAndOffset[`offset${index}`] = routesForDirection[direction].indexOf(color) - routesForDirection[direction].length / 2 + 0.5;
+				const {forwards, backwards} = connectionsOneWay[`${key}_${color}`];
+				colorAndOffset.oneWay = forwards && backwards ? 0 : forwards ? 1 : -1;
+			}
+
+			if (connection.hasOwnProperty("x1") && connection.hasOwnProperty("z1") && connection.hasOwnProperty("x2") && connection.hasOwnProperty("z2")) {
+				const connectionLength = Math.abs(connection.x2 - connection.x1) + Math.abs(connection.z2 - connection.z1);
+				connection.length = connectionLength;
+				maxConnectionLength = Math.max(maxConnectionLength, connectionLength);
 			}
 		});
 
@@ -196,5 +214,5 @@ export function updateData(callback) {
 		}
 	});
 
-	callback(centerX, centerY, stations, routeTypes, Object.values(connections), connectionsCount);
+	callback(centerX, centerY, stations, routeTypes, Object.values(connections), maxConnectionLength);
 }

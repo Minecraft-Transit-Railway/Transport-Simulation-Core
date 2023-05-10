@@ -9,12 +9,9 @@ export function pushIfNotExists(array, element) {
 	}
 }
 
-export function setIfUndefined(object, setValue, callback) {
+export function setIfUndefined(object, setValue) {
 	if (object === undefined) {
 		setValue();
-		if (callback !== undefined) {
-			callback();
-		}
 	}
 }
 
