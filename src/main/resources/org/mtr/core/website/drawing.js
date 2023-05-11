@@ -1,11 +1,10 @@
-import * as THREE from "./three.module.min.js";
 import {atan45, rotate, trig45} from "./utilities.js";
 import SETTINGS from "./settings.js";
 
 const tan225 = Math.tan(Math.PI / 8);
 const arrowSpacing = 80;
 
-export function connectStations(positionArrayLines, positionArrayArrows, canvasX1, canvasY1, canvasX2, canvasY2, direction1, direction2, offset1, offset2, colorOffset, oneWay, retry = true) {
+export function connectStations(positionAttribute, colorArray, color, backgroundColor, textColor, blackAndWhite, index, canvasX1, canvasY1, canvasX2, canvasY2, direction1, direction2, offset1, offset2, colorOffset, lineZ, arrowZ, hollowZ, canvasWidth, canvasHeight, oneWay, hollow, retry = true) {
 	const getOffsetX = direction => {
 		switch (direction % 4) {
 			case 0:
@@ -74,7 +73,7 @@ export function connectStations(positionArrayLines, positionArrayArrows, canvasX
 	if (points.length === 0) {
 		console.assert(retry, "Line not drawn", quadrant, direction);
 		if (retry) {
-			connectStations(positionArrayLines, positionArrayArrows, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, oneWay, false);
+			return connectStations(positionAttribute, colorArray, color, backgroundColor, textColor, blackAndWhite, index, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, lineZ, arrowZ, hollowZ, canvasWidth, canvasHeight, oneWay, hollow, false);
 		}
 	} else {
 		const newPoints = [];
@@ -90,21 +89,34 @@ export function connectStations(positionArrayLines, positionArrayArrows, canvasX
 		for (let i = 1; i < newPoints.length; i++) {
 			const [point1X, point1Y] = newPoints[i - 1];
 			const [point2X, point2Y] = newPoints[i];
-			drawLine(positionArrayLines, point1X, point1Y, point2X, point2Y);
-			if (oneWay !== 0) {
-				const differenceX = point2X - point1X;
-				const differenceY = point2Y - point1Y;
-				const totalLength = Math.abs(differenceX) + Math.abs(differenceY);
-				const newArrowSpacing = totalLength < arrowSpacing * SETTINGS.scale && totalLength > 6 ? totalLength : arrowSpacing * SETTINGS.scale;
-				const arrowCount = Math.floor(totalLength / newArrowSpacing);
-				const extraSpace = (totalLength - newArrowSpacing * arrowCount) / 2;
-				const arrowAngle = -atan45(differenceY, differenceX) + (retry === (oneWay > 0) ? 2 : -2);
-				for (let j = 0; j < arrowCount; j++) {
-					const offsetFactor = (extraSpace + newArrowSpacing * (j + 0.5)) / totalLength;
-					drawArrow(positionArrayArrows, arrowAngle, point1X + differenceX * offsetFactor, point1Y + differenceY * offsetFactor);
+
+			if (inBounds1(point1X, point1Y, canvasWidth, canvasHeight) || inBounds1(point2X, point2Y, canvasWidth, canvasHeight) || inBounds2(point1X, point1Y, point2X, point2Y, canvasWidth, canvasHeight)) {
+				index = drawLine(positionAttribute, colorArray, color, blackAndWhite, index, point1X, point1Y, point2X, point2Y, lineZ, 6);
+				if (hollow) {
+					index = drawLine(positionAttribute, colorArray, backgroundColor, blackAndWhite, index, point1X, point1Y, point2X, point2Y, hollowZ, 3);
+				}
+
+				if (oneWay !== 0) {
+					const differenceX = point2X - point1X;
+					const differenceY = point2Y - point1Y;
+					const totalLength = Math.abs(differenceX) + Math.abs(differenceY);
+					const newArrowSpacing = totalLength < arrowSpacing * SETTINGS.scale && totalLength > 24 ? totalLength : arrowSpacing * SETTINGS.scale;
+					const arrowCount = Math.floor(totalLength / newArrowSpacing);
+					const extraSpace = (totalLength - newArrowSpacing * arrowCount) / 2;
+					const arrowAngle = -atan45(differenceY, differenceX) + (retry === (oneWay > 0) ? 2 : -2);
+					for (let j = 0; j < arrowCount; j++) {
+						const offsetFactor = (extraSpace + newArrowSpacing * (j + 0.5)) / totalLength;
+						const arrowX = point1X + differenceX * offsetFactor;
+						const arrowY = point1Y + differenceY * offsetFactor;
+						if (inBounds1(arrowX, arrowY, canvasWidth, canvasHeight)) {
+							index = drawArrow(positionAttribute, colorArray, hollow ? color : backgroundColor, blackAndWhite, index, arrowAngle, arrowX, arrowY, arrowZ);
+						}
+					}
 				}
 			}
 		}
+
+		return index;
 	}
 }
 
@@ -120,58 +132,71 @@ function connectWith45(points, x1, y1, x2, y2, start45) {
 	points.push([x2, y2]);
 }
 
-function drawLine(positionArray, x1, y1, x2, y2) {
+export function drawLine(positionAttribute, colorArray, color, blackAndWhite, index, x1, y1, x2, y2, z, width) {
 	const angle = atan45(y2 - y1, x2 - x1);
-	const [endOffsetX1, endOffsetY1] = trig45(angle + 2, 3 * SETTINGS.scale);
-	const [endOffsetX2, endOffsetY2] = trig45(angle, tan225 * 3 * SETTINGS.scale);
-	positionArray.push([x1 + endOffsetX1 - endOffsetX2, y1 + endOffsetY1 - endOffsetY2]);
-	positionArray.push([x2 + endOffsetX1 + endOffsetX2, y2 + endOffsetY1 + endOffsetY2]);
-	positionArray.push([x2 - endOffsetX1 + endOffsetX2, y2 - endOffsetY1 + endOffsetY2]);
-	positionArray.push([x2 - endOffsetX1 + endOffsetX2, y2 - endOffsetY1 + endOffsetY2]);
-	positionArray.push([x1 - endOffsetX1 - endOffsetX2, y1 - endOffsetY1 - endOffsetY2]);
-	positionArray.push([x1 + endOffsetX1 - endOffsetX2, y1 + endOffsetY1 - endOffsetY2]);
+	const [endOffsetX1, endOffsetY1] = trig45(angle + 2, width / 2 * SETTINGS.scale);
+	const [endOffsetX2, endOffsetY2] = trig45(angle, tan225 * width / 2 * SETTINGS.scale);
+	positionAttribute.setXYZ(index + 0, x1 + endOffsetX1 - endOffsetX2, -(y1 + endOffsetY1 - endOffsetY2), -z);
+	positionAttribute.setXYZ(index + 1, x2 + endOffsetX1 + endOffsetX2, -(y2 + endOffsetY1 + endOffsetY2), -z);
+	positionAttribute.setXYZ(index + 2, x2 - endOffsetX1 + endOffsetX2, -(y2 - endOffsetY1 + endOffsetY2), -z);
+	positionAttribute.setXYZ(index + 3, x2 - endOffsetX1 + endOffsetX2, -(y2 - endOffsetY1 + endOffsetY2), -z);
+	positionAttribute.setXYZ(index + 4, x1 - endOffsetX1 - endOffsetX2, -(y1 - endOffsetY1 - endOffsetY2), -z);
+	positionAttribute.setXYZ(index + 5, x1 + endOffsetX1 - endOffsetX2, -(y1 + endOffsetY1 - endOffsetY2), -z);
+	for (let i = 0; i < 6; i++) {
+		setColorByIndex(colorArray, color, index + i, blackAndWhite);
+	}
+	return index + 6;
 }
 
-function drawArrow(positionArray, angle, x, y) {
+function drawArrow(positionAttribute, colorArray, color, blackAndWhite, index, angle, x, y, z) {
 	const [offset1X, offset1Y] = rotate(3 * SETTINGS.scale, 0, angle);
 	const [offset2X, offset2Y] = rotate(0, 3 * SETTINGS.scale, angle);
-	positionArray.push([x - offset1X, y - offset1Y]);
-	positionArray.push([x + offset2X, y + offset2Y]);
-	positionArray.push([x + offset1X, y + offset1Y]);
-	positionArray.push([x, y]);
-	positionArray.push([x + offset1X, y + offset1Y]);
-	positionArray.push([x + offset1X - offset2X, y + offset1Y - offset2Y]);
-	positionArray.push([x - offset1X - offset2X, y - offset1Y - offset2Y]);
-	positionArray.push([x - offset1X, y - offset1Y]);
-	positionArray.push([x, y]);
-}
-
-export function setColor(colorAttribute, color) {
-	for (let i = 0; i < colorAttribute.length / 3; i++) {
-		setColorByIndex(colorAttribute, color, i);
+	positionAttribute.setXYZ(index + 0, x - offset1X, -(y - offset1Y), -z);
+	positionAttribute.setXYZ(index + 1, x + offset2X, -(y + offset2Y), -z);
+	positionAttribute.setXYZ(index + 2, x + offset1X, -(y + offset1Y), -z);
+	positionAttribute.setXYZ(index + 3, x, -y, -z);
+	positionAttribute.setXYZ(index + 4, x + offset1X, -(y + offset1Y), -z);
+	positionAttribute.setXYZ(index + 5, x + offset1X - offset2X, -(y + offset1Y - offset2Y), -z);
+	positionAttribute.setXYZ(index + 6, x - offset1X - offset2X, -(y - offset1Y - offset2Y), -z);
+	positionAttribute.setXYZ(index + 7, x - offset1X, -(y - offset1Y), -z);
+	positionAttribute.setXYZ(index + 8, x, -y, -z);
+	for (let i = 0; i < 9; i++) {
+		setColorByIndex(colorArray, color, index + i, blackAndWhite);
 	}
+	return index + 9;
 }
 
-export function setColorByIndex(colorAttribute, color, index) {
+export function setColorByIndex(colorArray, color, index, blackAndWhite) {
 	const colorInt = parseInt(color, 16);
 	const r = (colorInt >> 16) & 0xFF;
 	const g = (colorInt >> 8) & 0xFF;
 	const b = colorInt & 0xFF;
 	const colorComponents = [r, g, b];
 	for (let i = 0; i < 3; i++) {
-		colorAttribute[index * 3 + i] = SETTINGS.blackAndWhite ? (r + g + b) / 3 : colorComponents[i];
+		colorArray[index * 3 + i] = blackAndWhite ? (r + g + b) / 3 : colorComponents[i];
 	}
 }
 
-export function configureGeometry(geometry, offset = 0, rotation = 0) {
-	const count = geometry.getAttribute("position").count;
-	const colors = new Uint8Array(count * 3);
-	geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3, true));
-	if (offset !== 0) {
-		geometry.translate(0, 0, offset);
-	}
-	if (rotation !== 0) {
-		geometry.rotateZ(rotation);
-	}
-	return colors;
+function inBounds1(x, y, canvasWidth, canvasHeight) {
+	const check = (value, space) => Math.abs(value) <= space / 2;
+	return check(x, canvasWidth) && check(y, canvasHeight);
+}
+
+function inBounds2(x1, y1, x2, y2, canvasWidth, canvasHeight) {
+	const halfWidth = canvasWidth / 2;
+	const halfHeight = canvasHeight / 2;
+	const check = (check1a, check1b, check2a, check2b, border, space) => {
+		const reverse = check1a > check2a;
+		const check3a = reverse ? check2a : check1a;
+		const check3b = reverse ? check2b : check1b;
+		const check4a = reverse ? check1a : check2a;
+		const check4b = reverse ? check1b : check2b;
+
+		if (check3a < border && check4a > border) {
+			return Math.abs(check3b + (border - check3a) * Math.sign(check4b - check3b)) <= space;
+		} else {
+			return false;
+		}
+	};
+	return check(x1, y1, x2, y2, -halfWidth, halfHeight) || check(x1, y1, x2, y2, halfWidth, halfHeight) || check(y1, x1, y2, x2, -halfHeight, halfWidth) || check(y1, x1, y2, x2, halfHeight, halfWidth);
 }

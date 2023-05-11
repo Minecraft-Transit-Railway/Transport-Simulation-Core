@@ -1,8 +1,9 @@
 const SETTINGS = {
 	scale: 1,
 	maxText: 16,
-	blackAndWhite: false,
-	routeTypes: ["train_normal"],
+	maxVertices: 99999,
+	interchangeStyle: 0,
+	routeTypes: {},
 };
 
 export default SETTINGS;

@@ -6,6 +6,7 @@ const animateSteps = 50;
 let zoom = 1;
 let centerX = 0;
 let centerY = 0;
+let blackAndWhite = false;
 let animateTarget;
 let isMouseDown = false;
 let enabled = false;
@@ -141,15 +142,19 @@ export function animateCenter(x, y) {
 }
 
 export function getCurrentWindowValues() {
-	return [zoom, centerX, centerY];
+	return [zoom, centerX, centerY, blackAndWhite];
 }
 
 export function setMouseCallback(callback) {
-	mouseCallback = () => callback(zoom, centerX, centerY);
+	mouseCallback = () => callback(zoom, centerX, centerY, canvasElement.clientWidth, canvasElement.clientHeight);
 }
 
 export function setResizeCallback(callback) {
-	window.onresize = () => callback(zoom, centerX, centerY);
+	window.onresize = () => callback(zoom, centerX, centerY, canvasElement.clientWidth, canvasElement.clientHeight);
+}
+
+export function setBlackAndWhite(newBlackAndWhite) {
+	blackAndWhite = newBlackAndWhite;
 }
 
 export function setLoading(loading) {

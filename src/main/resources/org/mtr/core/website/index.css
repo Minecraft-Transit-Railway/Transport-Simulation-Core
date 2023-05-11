@@ -1,7 +1,9 @@
 * {
+	color: var(--textColor);
 	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
 	margin: 0;
 	padding: 0;
+	transition: background-color 0.2s, box-shadow 0.2s, color 0.2s, opacity 0.2s, text-shadow 0.2s;
 	user-select: none;
 }
 
@@ -15,7 +17,7 @@
 	--backgroundColorTransparent: rgba(255, 255, 255, 0.8);
 }
 
-.dark-theme {
+.dark-mode {
 	--backgroundColor: #222222;
 	--backgroundHover: #444444;
 	--boxBorder: #555555;
@@ -53,7 +55,6 @@ input {
 	position: absolute;
 	width: 100%;
 	height: 100%;
-	transition: opacity 0.2s;
 }
 
 #container-main {
@@ -70,7 +71,6 @@ input {
 }
 
 #container-labels {
-	color: var(--textColor);
 	left: 0;
 	top: 0;
 	position: absolute;
@@ -83,11 +83,12 @@ input {
 
 .panel {
 	background-color: var(--backgroundColor);
+	box-shadow: 0 0 0.5em var(--textColor);
 	left: 0;
 	top: 0;
 	padding: 1em;
 	position: absolute;
-	box-shadow: 0 0 0.5em var(--textColor);
+	width: 0;
 }
 
 .clickable {
@@ -95,12 +96,15 @@ input {
 }
 
 .clickable:hover {
-	color: var(--textColor);
-	background: var(--backgroundHover);
+	background-color: var(--backgroundHover);
 }
 
 .clickable.selected {
-	background: var(--boxBorder);
+	background-color: var(--boxBorder);
+}
+
+.clickable.selected:hover {
+	background-color: var(--textColorDisabled);
 }
 
 .spacer {
@@ -110,8 +114,13 @@ input {
 }
 
 .one-row {
-	display: flex;
+	align-items: center;
 	column-gap: 0.5em;
+	display: flex;
+}
+
+.push-right {
+	margin-left: auto;
 }
 
 .text-box {
