@@ -25,7 +25,6 @@ public class Simulator implements Utilities {
 	public final ObjectAVLTreeSet<Siding> sidings = new ObjectAVLTreeSet<>();
 	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();
 	public final ObjectAVLTreeSet<Depot> depots = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Lift> lifts = new ObjectAVLTreeSet<>();
 	public final ObjectOpenHashBigSet<RailNode> railNodes = new ObjectOpenHashBigSet<>();
 	public final SignalBlocks signalBlocks = new SignalBlocks();
 	public final DataCache dataCache = new DataCache(this);
@@ -36,7 +35,6 @@ public class Simulator implements Utilities {
 	private final FileLoader<Siding> fileLoaderSidings;
 	private final FileLoader<Route> fileLoaderRoutes;
 	private final FileLoader<Depot> fileLoaderDepots;
-	private final FileLoader<Lift> fileLoaderLifts;
 	private final FileLoader<RailNode> fileLoaderRailNodes;
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
@@ -44,7 +42,6 @@ public class Simulator implements Utilities {
 	public Simulator(String dimension, Path rootPath, int millisPerGameDay, float startingGameDayPercentage) {
 		this.dimension = dimension;
 		this.millisPerGameDay = millisPerGameDay;
-		this.startingGameDayPercentage = startingGameDayPercentage;
 
 		final long startMillis = System.currentTimeMillis();
 		final Path savePath = rootPath.resolve(dimension);
@@ -53,12 +50,14 @@ public class Simulator implements Utilities {
 		fileLoaderSidings = new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings", true);
 		fileLoaderRoutes = new FileLoader<>(routes, Route::new, savePath, "routes", false);
 		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", false);
-		fileLoaderLifts = new FileLoader<>(lifts, Lift::new, savePath, "lifts", true);
 		fileLoaderRailNodes = new FileLoader<>(railNodes, RailNode::new, savePath, "rails", true);
+
+		currentMillis = System.currentTimeMillis();
+		this.startingGameDayPercentage = (startingGameDayPercentage + (float) (currentMillis - startMillis) / millisPerGameDay) % startingGameDayPercentage;
+		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (currentMillis - startMillis) / 1000F));
 
 		dataCache.sync();
 		depots.forEach(Depot::init);
-		currentMillis = System.currentTimeMillis();
 
 		final ObjectArrayList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> tempVehiclePositions = new ObjectArrayList<>();
 		for (int i = 0; i < TransportMode.values().length; i++) {
@@ -69,8 +68,6 @@ public class Simulator implements Utilities {
 		}
 		vehiclePositions = new ObjectImmutableList<>(tempVehiclePositions);
 		sidings.forEach(siding -> siding.initVehiclePositions(vehiclePositions.get(siding.transportMode.ordinal()).get(1)));
-
-		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (currentMillis - startMillis) / 1000F));
 	}
 
 	public void tick() {
@@ -144,7 +141,6 @@ public class Simulator implements Utilities {
 		save(fileLoaderSidings, useReducedHash);
 		save(fileLoaderRoutes, useReducedHash);
 		save(fileLoaderDepots, useReducedHash);
-		save(fileLoaderLifts, useReducedHash);
 		save(fileLoaderRailNodes, useReducedHash);
 		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}

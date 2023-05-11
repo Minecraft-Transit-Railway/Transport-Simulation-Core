@@ -23,7 +23,6 @@ public class DataCache {
 	public final Long2ObjectOpenHashMap<Siding> sidingIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Route> routeIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Depot> depotIdMap = new Long2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Lift> liftsIdMap = new Long2ObjectOpenHashMap<>();
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionToRailConnections = new Object2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Depot> routeIdToOneDepot = new Long2ObjectOpenHashMap<>();
@@ -45,7 +44,6 @@ public class DataCache {
 			mapIds(sidingIdMap, simulator.sidings);
 			mapIds(routeIdMap, simulator.routes);
 			mapIds(depotIdMap, simulator.depots);
-			mapIds(liftsIdMap, simulator.lifts);
 
 			mapAreasAndSavedRails(simulator.platforms, simulator.stations);
 			mapAreasAndSavedRails(simulator.sidings, simulator.depots);
