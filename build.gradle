@@ -2,10 +2,12 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
 	id "java"
+	id "maven-publish"
 	id "de.undercouch.download" version "+"
 }
 
 group "org.mtr.core"
+version rootProject.properties.version
 
 repositories {
 	mavenCentral()
@@ -23,6 +25,16 @@ dependencies {
 java {
 	toolchain {
 		languageVersion.set(JavaLanguageVersion.of(8))
+	}
+	withSourcesJar()
+	withJavadocJar()
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			from components.java
+		}
 	}
 }
 
