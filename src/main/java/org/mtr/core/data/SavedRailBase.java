@@ -1,12 +1,10 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
-
-import java.io.IOException;
 
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends NameColorDataBase {
 
@@ -31,7 +29,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		timeValue = transportMode.continuousMovement ? 1 : DEFAULT_TIME_VALUE;
 	}
 
-	public <V extends ReaderBase<W, V>, W> SavedRailBase(V readerBase) {
+	public SavedRailBase(ReaderBase readerBase) {
 		super(readerBase);
 
 		final long[] newPositions = {0, 0, 0, 0, 0, 0};
@@ -56,7 +54,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	}
 
 	@Override
-	public <V extends ReaderBase<W, V>, W> void updateData(V readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
 		readerBase.unpackInt(KEY_TIME_VALUE, value -> timeValue = transportMode.continuousMovement ? 1 : value);
@@ -64,16 +62,16 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toMessagePack(messagePacker);
+	public void toMessagePack(WriterBase writerBase) {
+		super.toMessagePack(writerBase);
 
-		messagePacker.packString(KEY_POS_1_X).packLong(positions.left().x);
-		messagePacker.packString(KEY_POS_1_Y).packLong(positions.left().y);
-		messagePacker.packString(KEY_POS_1_Z).packLong(positions.left().z);
-		messagePacker.packString(KEY_POS_2_X).packLong(positions.right().x);
-		messagePacker.packString(KEY_POS_2_Y).packLong(positions.right().y);
-		messagePacker.packString(KEY_POS_2_Z).packLong(positions.right().z);
-		messagePacker.packString(KEY_TIME_VALUE).packInt(timeValue);
+		writerBase.writeLong(KEY_POS_1_X, positions.left().x);
+		writerBase.writeLong(KEY_POS_1_Y, positions.left().y);
+		writerBase.writeLong(KEY_POS_1_Z, positions.left().z);
+		writerBase.writeLong(KEY_POS_2_X, positions.right().x);
+		writerBase.writeLong(KEY_POS_2_Y, positions.right().y);
+		writerBase.writeLong(KEY_POS_2_Z, positions.right().z);
+		writerBase.writeInt(KEY_TIME_VALUE, timeValue);
 	}
 
 	@Override

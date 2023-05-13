@@ -6,17 +6,15 @@ import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
 import org.mtr.core.path.SidingPathFinder;
-import org.mtr.core.reader.MessagePackHelper;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Utilities;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.function.BiConsumer;
 
@@ -33,7 +31,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	private final IntArrayList realTimeDepartures = new IntArrayList();
 	private final int[] frequencies = new int[HOURS_PER_DAY];
 	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
-	private final ObjectImmutableList<MessagePackHelper> pathDataMessagePackHelpers;
+	private final ObjectImmutableList<ReaderBase> pathDataReaders;
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
@@ -48,15 +46,15 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	private static final String KEY_REPEAT_INFINITELY = "repeat_infinitely";
 	private static final String KEY_CRUISING_ALTITUDE = "cruising_altitude";
 
-	public <T extends ReaderBase<U, T>, U> Depot(T readerBase, Simulator simulator) {
+	public Depot(ReaderBase readerBase, Simulator simulator) {
 		super(readerBase);
 		this.simulator = simulator;
-		pathDataMessagePackHelpers = Siding.savePathDataMessagePackHelper(readerBase, KEY_PATH);
+		pathDataReaders = Siding.savePathDataReaderBase(readerBase, KEY_PATH);
 		updateData(readerBase);
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
 		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeIds::add);
@@ -74,28 +72,24 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toMessagePack(messagePacker);
+	public void toMessagePack(WriterBase writerBase) {
+		super.toMessagePack(writerBase);
 
-		messagePacker.packString(KEY_ROUTE_IDS).packArrayHeader(routeIds.size());
-		for (final long routeId : routeIds) {
-			messagePacker.packLong(routeId);
-		}
+		final WriterBase.Array writerBaseArrayRouteIds = writerBase.writeArray(KEY_ROUTE_IDS, routeIds.size());
+		routeIds.forEach(writerBaseArrayRouteIds::writeLong);
 
-		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinders.isEmpty() ? path : new ObjectArrayList<>(), KEY_PATH);
-		messagePacker.packString(KEY_USE_REAL_TIME).packBoolean(useRealTime);
-		messagePacker.packString(KEY_REPEAT_INFINITELY).packBoolean(repeatInfinitely);
-		messagePacker.packString(KEY_CRUISING_ALTITUDE).packInt(cruisingAltitude);
+		writerBase.writeDataset(sidingPathFinders.isEmpty() ? path : new ObjectArrayList<>(), KEY_PATH);
+		writerBase.writeBoolean(KEY_USE_REAL_TIME, useRealTime);
+		writerBase.writeBoolean(KEY_REPEAT_INFINITELY, repeatInfinitely);
+		writerBase.writeInt(KEY_CRUISING_ALTITUDE, cruisingAltitude);
 
-		messagePacker.packString(KEY_FREQUENCIES).packArrayHeader(HOURS_PER_DAY);
+		final WriterBase.Array writerBaseArrayFrequencies = writerBase.writeArray(KEY_FREQUENCIES, HOURS_PER_DAY);
 		for (int i = 0; i < HOURS_PER_DAY; i++) {
-			messagePacker.packInt(frequencies[i]);
+			writerBaseArrayFrequencies.writeInt(frequencies[i]);
 		}
 
-		messagePacker.packString(KEY_DEPARTURES).packArrayHeader(realTimeDepartures.size());
-		for (final int departure : realTimeDepartures) {
-			messagePacker.packInt(departure);
-		}
+		final WriterBase.Array writerBaseArrayRealTimeDepartures = writerBase.writeArray(KEY_DEPARTURES, realTimeDepartures.size());
+		realTimeDepartures.forEach(writerBaseArrayRealTimeDepartures::writeInt);
 	}
 
 	@Override
@@ -109,7 +103,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	}
 
 	public void init() {
-		Siding.readPathDataMessagePackHelper(pathDataMessagePackHelpers, path, simulator.dataCache);
+		Siding.readPathDataReaderBase(pathDataReaders, path, simulator.dataCache);
 		savedRails.forEach(Siding::init);
 		generatePlatformDirectionsAndWriteDeparturesToSidings();
 	}

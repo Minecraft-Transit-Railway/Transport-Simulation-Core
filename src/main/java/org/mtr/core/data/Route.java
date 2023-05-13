@@ -2,11 +2,10 @@ package org.mtr.core.data;
 
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.Utilities;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,13 +42,13 @@ public class Route extends NameColorDataBase {
 		disableNextStationAnnouncements = false;
 	}
 
-	public <T extends ReaderBase<U, T>, U> Route(T readerBase) {
+	public Route(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
 		readerBase.iterateLongArray(KEY_PLATFORM_IDS, platformId -> platformIds.add(new RoutePlatform(platformId)));
@@ -70,25 +69,21 @@ public class Route extends NameColorDataBase {
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toMessagePack(messagePacker);
+	public void toMessagePack(WriterBase writerBase) {
+		super.toMessagePack(writerBase);
 
-		messagePacker.packString(KEY_PLATFORM_IDS).packArrayHeader(platformIds.size());
-		for (final RoutePlatform routePlatform : platformIds) {
-			messagePacker.packLong(routePlatform.platformId);
-		}
+		final WriterBase.Array writerBaseArrayPlatformIds = writerBase.writeArray(KEY_PLATFORM_IDS, platformIds.size());
+		platformIds.forEach(routePlatform -> writerBaseArrayPlatformIds.writeLong(routePlatform.platformId));
 
-		messagePacker.packString(KEY_CUSTOM_DESTINATIONS).packArrayHeader(platformIds.size());
-		for (final RoutePlatform routePlatform : platformIds) {
-			messagePacker.packString(routePlatform.customDestination);
-		}
+		final WriterBase.Array writerBaseArrayCustomDestinations = writerBase.writeArray(KEY_CUSTOM_DESTINATIONS, platformIds.size());
+		platformIds.forEach(routePlatform -> writerBaseArrayCustomDestinations.writeString(routePlatform.customDestination));
 
-		messagePacker.packString(KEY_ROUTE_TYPE).packString(routeType.toString());
-		messagePacker.packString(KEY_IS_LIGHT_RAIL_ROUTE).packBoolean(isLightRailRoute);
-		messagePacker.packString(KEY_IS_ROUTE_HIDDEN).packBoolean(isHidden);
-		messagePacker.packString(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS).packBoolean(disableNextStationAnnouncements);
-		messagePacker.packString(KEY_ROUTE_NUMBER).packString(routeNumber);
-		messagePacker.packString(KEY_CIRCULAR_STATE).packString(circularState.toString());
+		writerBase.writeString(KEY_ROUTE_TYPE, routeType.toString());
+		writerBase.writeBoolean(KEY_IS_LIGHT_RAIL_ROUTE, isLightRailRoute);
+		writerBase.writeBoolean(KEY_IS_ROUTE_HIDDEN, isHidden);
+		writerBase.writeBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, disableNextStationAnnouncements);
+		writerBase.writeString(KEY_ROUTE_NUMBER, routeNumber);
+		writerBase.writeString(KEY_CIRCULAR_STATE, circularState.toString());
 	}
 
 	@Override

@@ -1,16 +1,14 @@
 package org.mtr.core.path;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import org.msgpack.core.MessagePacker;
 import org.mtr.core.data.ConditionalList;
 import org.mtr.core.data.DataCache;
 import org.mtr.core.data.Rail;
 import org.mtr.core.data.SerializedDataBase;
-import org.mtr.core.reader.MessagePackHelper;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.MessagePackReader;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.Position;
-
-import java.io.IOException;
 
 public class PathData extends SerializedDataBase implements ConditionalList {
 
@@ -58,7 +56,7 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 		reversePositions = startPosition.compareTo(endPosition) > 0;
 	}
 
-	public <T extends ReaderBase<U, T>, U> PathData(T readerBase, DataCache dataCache) {
+	public PathData(ReaderBase readerBase, DataCache dataCache) {
 		savedRailBaseId = readerBase.getLong(KEY_SAVED_RAIL_BASE_ID, 0);
 		dwellTimeMillis = readerBase.getInt(KEY_DWELL_TIME, 0);
 		stopIndex = readerBase.getInt(KEY_STOP_INDEX, 0);
@@ -78,7 +76,7 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 
 		final Rail tempRail = DataCache.tryGet(dataCache.positionToRailConnections, startPosition, endPosition);
 		if (tempRail == null) {
-			rail = new Rail(new MessagePackHelper(new Object2ObjectArrayMap<>()));
+			rail = new Rail(new MessagePackReader(new Object2ObjectArrayMap<>()));
 			validRail = false;
 		} else {
 			rail = tempRail;
@@ -87,22 +85,22 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		messagePacker.packString(KEY_SAVED_RAIL_BASE_ID).packLong(savedRailBaseId);
-		messagePacker.packString(KEY_DWELL_TIME).packInt(dwellTimeMillis);
-		messagePacker.packString(KEY_STOP_INDEX).packInt(stopIndex);
-		messagePacker.packString(KEY_START_DISTANCE).packDouble(startDistance);
-		messagePacker.packString(KEY_END_DISTANCE).packDouble(endDistance);
-		messagePacker.packString(KEY_START_POSITION_X).packLong(startPosition.x);
-		messagePacker.packString(KEY_START_POSITION_Y).packLong(startPosition.y);
-		messagePacker.packString(KEY_START_POSITION_Z).packLong(startPosition.z);
-		messagePacker.packString(KEY_END_POSITION_X).packLong(endPosition.x);
-		messagePacker.packString(KEY_END_POSITION_Y).packLong(endPosition.y);
-		messagePacker.packString(KEY_END_POSITION_Z).packLong(endPosition.z);
+	public void toMessagePack(WriterBase writerBase) {
+		writerBase.writeLong(KEY_SAVED_RAIL_BASE_ID, savedRailBaseId);
+		writerBase.writeInt(KEY_DWELL_TIME, dwellTimeMillis);
+		writerBase.writeInt(KEY_STOP_INDEX, stopIndex);
+		writerBase.writeDouble(KEY_START_DISTANCE, startDistance);
+		writerBase.writeDouble(KEY_END_DISTANCE, endDistance);
+		writerBase.writeLong(KEY_START_POSITION_X, startPosition.x);
+		writerBase.writeLong(KEY_START_POSITION_Y, startPosition.y);
+		writerBase.writeLong(KEY_START_POSITION_Z, startPosition.z);
+		writerBase.writeLong(KEY_END_POSITION_X, endPosition.x);
+		writerBase.writeLong(KEY_END_POSITION_Y, endPosition.y);
+		writerBase.writeLong(KEY_END_POSITION_Z, endPosition.z);
 	}
 
 	@Override

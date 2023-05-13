@@ -1,9 +1,10 @@
 package org.mtr.core.data;
 
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.Map;
 public class Station extends AreaBase<Station, Platform> {
 
 	public int zone;
-	public final Map<String, List<String>> exits = new HashMap<>();
+	public final Object2ObjectArrayMap<String, ObjectArrayList<String>> exits = new Object2ObjectArrayMap<>();
 
 	private static final String KEY_ZONE = "zone";
 	private static final String KEY_EXITS = "exits";
@@ -21,40 +22,33 @@ public class Station extends AreaBase<Station, Platform> {
 		super(id);
 	}
 
-	public <T extends ReaderBase<U, T>, U> Station(T readerBase) {
+	public Station(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
 		readerBase.unpackInt(KEY_ZONE, value -> zone = value);
-		final T exitReaderBase = readerBase.getChild(KEY_EXITS);
-		exitReaderBase.forEach((key, value) -> {
-			final List<String> destinations = new ArrayList<>();
-			exitReaderBase.iterateStringArray(key, destinations::add);
+		readerBase.iterateKeys(KEY_EXITS, (key, readerBaseMap) -> {
+			final ObjectArrayList<String> destinations = new ObjectArrayList<>();
+			readerBaseMap.iterateStringArray(key, destinations::add);
 			exits.put(key, destinations);
 		});
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toMessagePack(messagePacker);
+	public void toMessagePack(WriterBase writerBase) {
+		super.toMessagePack(writerBase);
 
-		messagePacker.packString(KEY_ZONE).packInt(zone);
-		messagePacker.packString(KEY_EXITS);
-		messagePacker.packMapHeader(exits.size());
-		for (final Map.Entry<String, List<String>> entry : exits.entrySet()) {
-			final String key = entry.getKey();
-			final List<String> destinations = entry.getValue();
-			messagePacker.packString(key);
-			messagePacker.packArrayHeader(destinations.size());
-			for (String destination : destinations) {
-				messagePacker.packString(destination);
-			}
-		}
+		writerBase.writeInt(KEY_ZONE, zone);
+		final WriterBase writerBaseChild = writerBase.writeChild(KEY_EXITS, exits.size());
+		exits.forEach((key, destinations) -> {
+			final WriterBase.Array writerBaseArray = writerBaseChild.writeArray(key, destinations.size());
+			destinations.forEach(writerBaseArray::writeString);
+		});
 	}
 
 	@Override
@@ -87,11 +81,11 @@ public class Station extends AreaBase<Station, Platform> {
 
 	private void setExitParent(String oldParent, String newParent) {
 		if (parentExists(oldParent)) {
-			final List<String> existingDestinations = exits.get(oldParent);
+			final ObjectArrayList<String> existingDestinations = exits.get(oldParent);
 			exits.remove(oldParent);
-			exits.put(newParent, existingDestinations == null ? new ArrayList<>() : existingDestinations);
+			exits.put(newParent, existingDestinations == null ? new ObjectArrayList<>() : existingDestinations);
 		} else {
-			exits.put(newParent, new ArrayList<>());
+			exits.put(newParent, new ObjectArrayList<>());
 		}
 	}
 

@@ -1,10 +1,8 @@
 package org.mtr.core.data;
 
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.*;
-
-import java.io.IOException;
 
 public class Rail extends SerializedDataBase {
 
@@ -250,7 +248,7 @@ public class Rail extends SerializedDataBase {
 		}
 	}
 
-	public <T extends ReaderBase<U, T>, U> Rail(T readerBase) {
+	public Rail(ReaderBase readerBase) {
 		updateData(readerBase);
 
 		h1 = readerBase.getDouble(KEY_H_1, 0);
@@ -302,35 +300,35 @@ public class Rail extends SerializedDataBase {
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		messagePacker.packString(KEY_H_1).packDouble(h1);
-		messagePacker.packString(KEY_K_1).packDouble(k1);
-		messagePacker.packString(KEY_H_2).packDouble(h2);
-		messagePacker.packString(KEY_K_2).packDouble(k2);
-		messagePacker.packString(KEY_R_1).packDouble(r1);
-		messagePacker.packString(KEY_R_2).packDouble(r2);
-		messagePacker.packString(KEY_T_START_1).packDouble(tStart1);
-		messagePacker.packString(KEY_T_END_1).packDouble(tEnd1);
-		messagePacker.packString(KEY_T_START_2).packDouble(tStart2);
-		messagePacker.packString(KEY_T_END_2).packDouble(tEnd2);
-		messagePacker.packString(KEY_Y_START).packDouble(yStart);
-		messagePacker.packString(KEY_Y_END).packDouble(yEnd);
-		messagePacker.packString(KEY_REVERSE_T_1).packBoolean(reverseT1);
-		messagePacker.packString(KEY_IS_STRAIGHT_1).packBoolean(isStraight1);
-		messagePacker.packString(KEY_REVERSE_T_2).packBoolean(reverseT2);
-		messagePacker.packString(KEY_IS_STRAIGHT_2).packBoolean(isStraight2);
-		messagePacker.packString(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR).packDouble(speedLimitKilometersPerHour);
-		messagePacker.packString(KEY_SHAPE_START).packString(shapeStart.toString());
-		messagePacker.packString(KEY_SHAPE_END).packString(shapeEnd.toString());
-		messagePacker.packString(KEY_HAS_SAVED_RAIL).packBoolean(hasSavedRail);
-		messagePacker.packString(KEY_CAN_ACCELERATE).packBoolean(canAccelerate);
-		messagePacker.packString(KEY_CAN_TURN_BACK).packBoolean(canTurnBack);
-		messagePacker.packString(KEY_CAN_HAVE_SIGNAL).packBoolean(canHaveSignal);
-		messagePacker.packString(KEY_TRANSPORT_MODE).packString(transportMode.toString());
+	public void toMessagePack(WriterBase writerBase) {
+		writerBase.writeDouble(KEY_H_1, h1);
+		writerBase.writeDouble(KEY_K_1, k1);
+		writerBase.writeDouble(KEY_H_2, h2);
+		writerBase.writeDouble(KEY_K_2, k2);
+		writerBase.writeDouble(KEY_R_1, r1);
+		writerBase.writeDouble(KEY_R_2, r2);
+		writerBase.writeDouble(KEY_T_START_1, tStart1);
+		writerBase.writeDouble(KEY_T_END_1, tEnd1);
+		writerBase.writeDouble(KEY_T_START_2, tStart2);
+		writerBase.writeDouble(KEY_T_END_2, tEnd2);
+		writerBase.writeDouble(KEY_Y_START, yStart);
+		writerBase.writeDouble(KEY_Y_END, yEnd);
+		writerBase.writeBoolean(KEY_REVERSE_T_1, reverseT1);
+		writerBase.writeBoolean(KEY_IS_STRAIGHT_1, isStraight1);
+		writerBase.writeBoolean(KEY_REVERSE_T_2, reverseT2);
+		writerBase.writeBoolean(KEY_IS_STRAIGHT_2, isStraight2);
+		writerBase.writeDouble(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR, speedLimitKilometersPerHour);
+		writerBase.writeString(KEY_SHAPE_START, shapeStart.toString());
+		writerBase.writeString(KEY_SHAPE_END, shapeEnd.toString());
+		writerBase.writeBoolean(KEY_HAS_SAVED_RAIL, hasSavedRail);
+		writerBase.writeBoolean(KEY_CAN_ACCELERATE, canAccelerate);
+		writerBase.writeBoolean(KEY_CAN_TURN_BACK, canTurnBack);
+		writerBase.writeBoolean(KEY_CAN_HAVE_SIGNAL, canHaveSignal);
+		writerBase.writeString(KEY_TRANSPORT_MODE, transportMode.toString());
 	}
 
 	@Override

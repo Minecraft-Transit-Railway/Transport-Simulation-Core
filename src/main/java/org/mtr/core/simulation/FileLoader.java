@@ -13,7 +13,8 @@ import org.msgpack.value.Value;
 import org.mtr.core.Main;
 import org.mtr.core.data.NameColorDataBase;
 import org.mtr.core.data.SerializedDataBase;
-import org.mtr.core.reader.MessagePackHelper;
+import org.mtr.core.serializers.MessagePackReader;
+import org.mtr.core.serializers.MessagePackWriter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +38,7 @@ public class FileLoader<T extends SerializedDataBase> {
 	private final boolean skipVerifyNameIsNotEmpty;
 	private final Object2IntAVLTreeMap<String> fileHashes = new Object2IntAVLTreeMap<>();
 
-	public FileLoader(Set<T> dataSet, Function<MessagePackHelper, T> getData, Path rootPath, String key, boolean skipVerifyNameIsNotEmpty) {
+	public FileLoader(Set<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key, boolean skipVerifyNameIsNotEmpty) {
 		this.key = key;
 		this.dataSet = dataSet;
 		this.skipVerifyNameIsNotEmpty = skipVerifyNameIsNotEmpty;
@@ -70,7 +71,7 @@ public class FileLoader<T extends SerializedDataBase> {
 		return new IntIntImmutablePair(filesWritten, filesDeleted);
 	}
 
-	private void readMessagePackFromFile(Function<MessagePackHelper, T> getData) {
+	private void readMessagePackFromFile(Function<MessagePackReader, T> getData) {
 		final Object2ObjectArrayMap<String, Future<T>> futureDataMap = new Object2ObjectArrayMap<>();
 		final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -87,7 +88,7 @@ public class FileLoader<T extends SerializedDataBase> {
 									result.put(messageUnpacker.unpackString(), messageUnpacker.unpackValue());
 								}
 
-								return getData.apply(new MessagePackHelper(result));
+								return getData.apply(new MessagePackReader(result));
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -199,10 +200,10 @@ public class FileLoader<T extends SerializedDataBase> {
 	private static void packMessage(MessagePacker messagePacker, SerializedDataBase data, boolean useReducedHash) throws IOException {
 		if (useReducedHash) {
 			messagePacker.packMapHeader(data.messagePackLength());
-			data.toMessagePack(messagePacker);
+			data.toMessagePack(new MessagePackWriter(messagePacker));
 		} else {
 			messagePacker.packMapHeader(data.fullMessagePackLength());
-			data.toFullMessagePack(messagePacker);
+			data.toFullMessagePack(new MessagePackWriter(messagePacker));
 		}
 	}
 

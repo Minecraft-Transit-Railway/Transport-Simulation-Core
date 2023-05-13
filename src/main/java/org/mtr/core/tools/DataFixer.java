@@ -7,7 +7,7 @@ import org.mtr.core.data.EnumHelper;
 import org.mtr.core.data.Rail;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.data.VehicleCar;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
 
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -33,12 +33,12 @@ public class DataFixer {
 	private static final int Z_OFFSET = PACKED_Y_LENGTH;
 	private static final int X_OFFSET = PACKED_Y_LENGTH + PACKED_Z_LENGTH;
 
-	public static <T extends ReaderBase<U, T>, U> void unpackSavedRailBase(T readerBase, Consumer<Position> consumer1, Consumer<Position> consumer2) {
+	public static void unpackSavedRailBase(ReaderBase readerBase, Consumer<Position> consumer1, Consumer<Position> consumer2) {
 		readerBase.unpackLong(KEY_POS_1, value -> consumer1.accept(convertCoordinates(value)));
 		readerBase.unpackLong(KEY_POS_2, value -> consumer2.accept(convertCoordinates(value)));
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackRailEntry(T readerBase, Consumer<Position> consumer) {
+	public static void unpackRailEntry(ReaderBase readerBase, Consumer<Position> consumer) {
 		readerBase.unpackLong(KEY_NODE_POS, value -> consumer.accept(convertCoordinates(value)));
 	}
 
@@ -50,7 +50,7 @@ public class DataFixer {
 		);
 	}
 
-	public static <T extends ReaderBase<U, T>, U> boolean convertRailType(T readerBase, HexConsumer<Integer, Rail.Shape, Boolean, Boolean, Boolean, Boolean> consumer) {
+	public static boolean convertRailType(ReaderBase readerBase, HexConsumer<Integer, Rail.Shape, Boolean, Boolean, Boolean, Boolean> consumer) {
 		final boolean[] validRail = {true};
 		readerBase.unpackString(KEY_RAIL_TYPE, value -> {
 			final RailType railType = EnumHelper.valueOf(RailType.IRON, value);
@@ -67,11 +67,11 @@ public class DataFixer {
 		return validRail[0];
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackDwellTime(T readerBase, IntConsumer consumer) {
+	public static void unpackDwellTime(ReaderBase readerBase, IntConsumer consumer) {
 		readerBase.unpackInt(KEY_DWELL_TIME, value -> consumer.accept(value * 500));
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackMaxVehicles(T readerBase, IntConsumer consumer) {
+	public static void unpackMaxVehicles(ReaderBase readerBase, IntConsumer consumer) {
 		readerBase.unpackBoolean(KEY_IS_MANUAL, value1 -> {
 			if (value1) {
 				consumer.accept(-1);
@@ -87,7 +87,7 @@ public class DataFixer {
 		});
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackMaxManualSpeed(T readerBase, DoubleConsumer consumer) {
+	public static void unpackMaxManualSpeed(ReaderBase readerBase, DoubleConsumer consumer) {
 		readerBase.unpackInt(KEY_MAX_MANUAL_SPEED, value -> {
 			if (value >= 0 && value <= RailType.DIAMOND.ordinal()) {
 				consumer.accept(RailType.values()[value].speedLimitMetersPerMillisecond);
@@ -95,12 +95,12 @@ public class DataFixer {
 		});
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackAcceleration(T readerBase, DoubleConsumer consumer) {
+	public static void unpackAcceleration(ReaderBase readerBase, DoubleConsumer consumer) {
 		// meters/tick^2 to meters/millisecond^2
-		readerBase.unpackInt(KEY_ACCELERATION_CONSTANT, value -> consumer.accept(value / 50D / 50D));
+		readerBase.unpackDouble(KEY_ACCELERATION_CONSTANT, value -> consumer.accept(value / 50D / 50D));
 	}
 
-	public static <T extends ReaderBase<U, T>, U> void unpackVehicleCars(T readerBase, TransportMode transportMode, double railLength, Consumer<ObjectArrayList<VehicleCar>> consumer) {
+	public static void unpackVehicleCars(ReaderBase readerBase, TransportMode transportMode, double railLength, Consumer<ObjectArrayList<VehicleCar>> consumer) {
 		readerBase.unpackString(KEY_BASE_TRAIN_TYPE, baseTrainType -> readerBase.unpackString(KEY_TRAIN_ID, trainId -> {
 			try {
 				String newBaseTrainType = baseTrainType;

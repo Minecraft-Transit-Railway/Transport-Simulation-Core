@@ -1,11 +1,10 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleImmutableList;
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.Utilities;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class VehicleCar extends SerializedDataBase {
 		this.doorRightPositions = new DoubleImmutableList(doorRightPositions);
 	}
 
-	public <T extends ReaderBase<U, T>, U> VehicleCar(T readerBase) {
+	public VehicleCar(ReaderBase readerBase) {
 		vehicleId = readerBase.getString(KEY_VEHICLE_ID, "");
 		length = readerBase.getDouble(KEY_LENGTH, 0);
 		width = readerBase.getDouble(KEY_WIDTH, 0);
@@ -51,24 +50,20 @@ public class VehicleCar extends SerializedDataBase {
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		messagePacker.packString(KEY_VEHICLE_ID).packString(vehicleId);
-		messagePacker.packString(KEY_LENGTH).packDouble(length);
-		messagePacker.packString(KEY_WIDTH).packDouble(width);
-		messagePacker.packString(KEY_BOGIE_1_POSITION).packDouble(bogie1Position);
-		messagePacker.packString(KEY_BOGIE_2_POSITION).packDouble(bogie2Position);
-		messagePacker.packString(KEY_DOOR_LEFT_POSITIONS).packArrayHeader(doorLeftPositions.size());
-		for (final double doorPosition : doorLeftPositions) {
-			messagePacker.packDouble(doorPosition);
-		}
-		messagePacker.packString(KEY_DOOR_RIGHT_POSITIONS).packArrayHeader(doorRightPositions.size());
-		for (final double doorPosition : doorRightPositions) {
-			messagePacker.packDouble(doorPosition);
-		}
+	public void toMessagePack(WriterBase writerBase) {
+		writerBase.writeString(KEY_VEHICLE_ID, vehicleId);
+		writerBase.writeDouble(KEY_LENGTH, length);
+		writerBase.writeDouble(KEY_WIDTH, width);
+		writerBase.writeDouble(KEY_BOGIE_1_POSITION, bogie1Position);
+		writerBase.writeDouble(KEY_BOGIE_2_POSITION, bogie2Position);
+		final WriterBase.Array writerBaseArrayDoorLeftPositions = writerBase.writeArray(KEY_DOOR_LEFT_POSITIONS, doorLeftPositions.size());
+		doorLeftPositions.forEach(writerBaseArrayDoorLeftPositions::writeDouble);
+		final WriterBase.Array writerBaseArrayDoorRightPositions = writerBase.writeArray(KEY_DOOR_RIGHT_POSITIONS, doorRightPositions.size());
+		doorRightPositions.forEach(writerBaseArrayDoorRightPositions::writeDouble);
 	}
 
 	@Override
@@ -81,7 +76,7 @@ public class VehicleCar extends SerializedDataBase {
 		return "";
 	}
 
-	private static <T extends ReaderBase<U, T>, U> DoubleImmutableList getDoorPositions(T readerBase, String key) {
+	private static DoubleImmutableList getDoorPositions(ReaderBase readerBase, String key) {
 		final List<Double> tempDoorPositions = new ArrayList<>();
 		readerBase.iterateDoubleArray(key, tempDoorPositions::add);
 		return new DoubleImmutableList(tempDoorPositions);

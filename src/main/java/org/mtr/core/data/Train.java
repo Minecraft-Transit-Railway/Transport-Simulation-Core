@@ -5,13 +5,12 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.msgpack.core.MessagePacker;
 import org.mtr.core.path.PathData;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
-import java.io.IOException;
 import java.util.UUID;
 
 public class Train extends NameColorDataBase {
@@ -89,10 +88,10 @@ public class Train extends NameColorDataBase {
 		totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).endDistance;
 	}
 
-	public <T extends ReaderBase<U, T>, U> Train(
+	public Train(
 			Siding siding, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
-			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, T readerBase
+			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, ReaderBase readerBase
 	) {
 		super(readerBase);
 
@@ -119,7 +118,7 @@ public class Train extends NameColorDataBase {
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
 		readerBase.unpackDouble(KEY_SPEED, value -> speed = value);
@@ -134,21 +133,19 @@ public class Train extends NameColorDataBase {
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toMessagePack(messagePacker);
+	public void toMessagePack(WriterBase writerBase) {
+		super.toMessagePack(writerBase);
 
-		messagePacker.packString(KEY_SPEED).packDouble(speed);
-		messagePacker.packString(KEY_RAIL_PROGRESS).packDouble(railProgress);
-		messagePacker.packString(KEY_ELAPSED_DWELL_MILLIS).packInt(elapsedDwellMillis);
-		messagePacker.packString(KEY_NEXT_STOPPING_INDEX).packInt(nextStoppingIndex);
-		messagePacker.packString(KEY_REVERSED).packBoolean(reversed);
-		messagePacker.packString(KEY_IS_ON_ROUTE).packBoolean(isOnRoute);
-		messagePacker.packString(KEY_IS_CURRENTLY_MANUAL).packBoolean(isCurrentlyManual);
-		messagePacker.packString(KEY_DEPARTURE_INDEX).packInt(departureIndex);
-		messagePacker.packString(KEY_RIDING_ENTITIES).packArrayHeader(ridingEntities.size());
-		for (final UUID uuid : ridingEntities) {
-			messagePacker.packString(uuid.toString());
-		}
+		writerBase.writeDouble(KEY_SPEED, speed);
+		writerBase.writeDouble(KEY_RAIL_PROGRESS, railProgress);
+		writerBase.writeInt(KEY_ELAPSED_DWELL_MILLIS, elapsedDwellMillis);
+		writerBase.writeInt(KEY_NEXT_STOPPING_INDEX, nextStoppingIndex);
+		writerBase.writeBoolean(KEY_REVERSED, reversed);
+		writerBase.writeBoolean(KEY_IS_ON_ROUTE, isOnRoute);
+		writerBase.writeBoolean(KEY_IS_CURRENTLY_MANUAL, isCurrentlyManual);
+		writerBase.writeInt(KEY_DEPARTURE_INDEX, departureIndex);
+		final WriterBase.Array writerBaseArray = writerBase.writeArray(KEY_RIDING_ENTITIES, ridingEntities.size());
+		ridingEntities.forEach(uuid -> writerBaseArray.writeString(uuid.toString()));
 	}
 
 	@Override

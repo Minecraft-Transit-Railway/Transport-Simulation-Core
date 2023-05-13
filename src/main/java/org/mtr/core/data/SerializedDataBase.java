@@ -1,22 +1,20 @@
 package org.mtr.core.data;
 
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
-
-import java.io.IOException;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 
 public abstract class SerializedDataBase {
 
-	public abstract <T extends ReaderBase<U, T>, U> void updateData(T readerBase);
+	public abstract void updateData(ReaderBase readerBase);
 
-	public abstract void toMessagePack(MessagePacker messagePacker) throws IOException;
+	public abstract void toMessagePack(WriterBase writerBase);
 
 	public abstract int messagePackLength();
 
 	public abstract String getHexId();
 
-	public void toFullMessagePack(MessagePacker messagePacker) throws IOException {
-		toMessagePack(messagePacker);
+	public void toFullMessagePack(WriterBase writerBase) {
+		toMessagePack(writerBase);
 	}
 
 	public int fullMessagePackLength() {

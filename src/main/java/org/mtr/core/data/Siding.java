@@ -11,18 +11,16 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.objects.*;
-import org.msgpack.core.MessagePacker;
 import org.mtr.core.Main;
 import org.mtr.core.path.PathData;
 import org.mtr.core.path.SidingPathFinder;
-import org.mtr.core.reader.MessagePackHelper;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
-import java.io.IOException;
 import java.util.Random;
 
 public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
@@ -43,10 +41,10 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 	private final ObjectArrayList<PathData> pathSidingToMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<PathData> pathMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<PathData> pathMainRouteToSiding = new ObjectArrayList<>();
-	private final ObjectImmutableList<MessagePackHelper> pathDataSidingToMainRouteMessagePackHelpers;
-	private final ObjectImmutableList<MessagePackHelper> pathDataMainRouteToSidingMessagePackHelpers;
+	private final ObjectImmutableList<ReaderBase> pathDataSidingToMainRouteReaders;
+	private final ObjectImmutableList<ReaderBase> pathDataMainRouteToSidingReaders;
 	private final ObjectArraySet<Train> vehicles = new ObjectArraySet<>();
-	private final ObjectImmutableList<MessagePackHelper> vehicleMessagePackHelpers;
+	private final ObjectImmutableList<ReaderBase> vehicleReaders;
 	private final ObjectArrayList<Trip> trips = new ObjectArrayList<>();
 	private final Long2ObjectAVLTreeMap<ObjectArraySet<Trip.StopTime>> platformTripStopTimes = new Long2ObjectAVLTreeMap<>();
 	private final IntArrayList departures = new IntArrayList();
@@ -69,29 +67,29 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 		this.simulator = simulator;
 		this.railLength = getRailLength(railLength);
 		acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.ACCELERATION_DEFAULT;
-		pathDataSidingToMainRouteMessagePackHelpers = ObjectImmutableList.of();
-		pathDataMainRouteToSidingMessagePackHelpers = ObjectImmutableList.of();
-		vehicleMessagePackHelpers = ObjectImmutableList.of();
+		pathDataSidingToMainRouteReaders = ObjectImmutableList.of();
+		pathDataMainRouteToSidingReaders = ObjectImmutableList.of();
+		vehicleReaders = ObjectImmutableList.of();
 	}
 
-	public <T extends ReaderBase<U, T>, U> Siding(T readerBase, Simulator simulator) {
+	public Siding(ReaderBase readerBase, Simulator simulator) {
 		super(readerBase);
 
 		this.simulator = simulator;
 		railLength = getRailLength(readerBase.getDouble(KEY_RAIL_LENGTH, 0));
-		pathDataSidingToMainRouteMessagePackHelpers = savePathDataMessagePackHelper(readerBase, KEY_PATH_SIDING_TO_MAIN_ROUTE);
-		pathDataMainRouteToSidingMessagePackHelpers = savePathDataMessagePackHelper(readerBase, KEY_PATH_MAIN_ROUTE_TO_SIDING);
-		vehicleMessagePackHelpers = savePathDataMessagePackHelper(readerBase, KEY_VEHICLES);
+		pathDataSidingToMainRouteReaders = savePathDataReaderBase(readerBase, KEY_PATH_SIDING_TO_MAIN_ROUTE);
+		pathDataMainRouteToSidingReaders = savePathDataReaderBase(readerBase, KEY_PATH_MAIN_ROUTE_TO_SIDING);
+		vehicleReaders = savePathDataReaderBase(readerBase, KEY_VEHICLES);
 
 		updateData(readerBase);
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
 		final ObjectArrayList<VehicleCar> tempVehicleCars = new ObjectArrayList<>();
-		if ((readerBase instanceof MessagePackHelper) && readerBase.iterateReaderArray(KEY_VEHICLE_CARS, vehicleCar -> tempVehicleCars.add(new VehicleCar((MessagePackHelper) vehicleCar)))) {
+		if (readerBase.iterateReaderArray(KEY_VEHICLE_CARS, vehicleCar -> tempVehicleCars.add(new VehicleCar(vehicleCar)))) {
 			setVehicle(tempVehicleCars);
 		}
 		DataFixer.unpackVehicleCars(readerBase, transportMode, railLength, this::setVehicle);
@@ -105,16 +103,16 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toMessagePack(messagePacker);
+	public void toMessagePack(WriterBase writerBase) {
+		super.toMessagePack(writerBase);
 
-		messagePacker.packString(KEY_RAIL_LENGTH).packDouble(railLength);
-		MessagePackHelper.writeMessagePackDataset(messagePacker, vehicleCars, KEY_VEHICLE_CARS);
-		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinderSidingToMainRoute.isEmpty() ? pathSidingToMainRoute : new ObjectArrayList<>(), KEY_PATH_SIDING_TO_MAIN_ROUTE);
-		MessagePackHelper.writeMessagePackDataset(messagePacker, sidingPathFinderMainRouteToSiding.isEmpty() ? pathMainRouteToSiding : new ObjectArrayList<>(), KEY_PATH_MAIN_ROUTE_TO_SIDING);
-		messagePacker.packString(KEY_MAX_VEHICLES).packInt(maxVehicles);
-		messagePacker.packString(KEY_MAX_MANUAL_SPEED).packDouble(maxManualSpeed);
-		messagePacker.packString(KEY_ACCELERATION).packDouble(acceleration);
+		writerBase.writeDouble(KEY_RAIL_LENGTH, railLength);
+		writerBase.writeDataset(vehicleCars, KEY_VEHICLE_CARS);
+		writerBase.writeDataset(sidingPathFinderSidingToMainRoute.isEmpty() ? pathSidingToMainRoute : new ObjectArrayList<>(), KEY_PATH_SIDING_TO_MAIN_ROUTE);
+		writerBase.writeDataset(sidingPathFinderMainRouteToSiding.isEmpty() ? pathMainRouteToSiding : new ObjectArrayList<>(), KEY_PATH_MAIN_ROUTE_TO_SIDING);
+		writerBase.writeInt(KEY_MAX_VEHICLES, maxVehicles);
+		writerBase.writeDouble(KEY_MAX_MANUAL_SPEED, maxManualSpeed);
+		writerBase.writeDouble(KEY_ACCELERATION, acceleration);
 	}
 
 	@Override
@@ -123,9 +121,9 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 	}
 
 	@Override
-	public void toFullMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toFullMessagePack(messagePacker);
-		MessagePackHelper.writeMessagePackDataset(messagePacker, vehicles, KEY_VEHICLES);
+	public void toFullMessagePack(WriterBase writerBase) {
+		super.toFullMessagePack(writerBase);
+		writerBase.writeDataset(vehicles, KEY_VEHICLES);
 	}
 
 	@Override
@@ -141,15 +139,15 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 			defaultPathData = new PathData(rail, id, 1, -1, 0, rail.getLength(), position1, position2);
 		}
 
-		readPathDataMessagePackHelper(pathDataSidingToMainRouteMessagePackHelpers, pathSidingToMainRoute, simulator.dataCache);
-		readPathDataMessagePackHelper(pathDataMainRouteToSidingMessagePackHelpers, pathMainRouteToSiding, simulator.dataCache);
+		readPathDataReaderBase(pathDataSidingToMainRouteReaders, pathSidingToMainRoute, simulator.dataCache);
+		readPathDataReaderBase(pathDataMainRouteToSidingReaders, pathMainRouteToSiding, simulator.dataCache);
 		generatePathDistancesAndTimeSegments();
 
 		if (area != null && defaultPathData != null) {
-			vehicleMessagePackHelpers.forEach(messagePackHelper -> vehicles.add(new Train(
+			vehicleReaders.forEach(readerBase -> vehicles.add(new Train(
 					this, railLength, vehicleCars,
 					pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData,
-					area.repeatInfinitely, acceleration, maxVehicles < 0, maxManualSpeed, getTimeValueMillis(), messagePackHelper
+					area.repeatInfinitely, acceleration, maxVehicles < 0, maxManualSpeed, getTimeValueMillis(), readerBase
 			)));
 		}
 	}
@@ -655,19 +653,15 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 		return Utilities.round(rawRailLength, 3);
 	}
 
-	public static <T extends ReaderBase<U, T>, U> ObjectImmutableList<MessagePackHelper> savePathDataMessagePackHelper(T readerBase, String key) {
-		final ObjectArrayList<MessagePackHelper> tempMessagePackHelpers = new ObjectArrayList<>();
-		readerBase.iterateReaderArray(key, tempReaderBase -> {
-			if (tempReaderBase instanceof MessagePackHelper) {
-				tempMessagePackHelpers.add((MessagePackHelper) tempReaderBase);
-			}
-		});
-		return new ObjectImmutableList<>(tempMessagePackHelpers);
+	public static ObjectImmutableList<ReaderBase> savePathDataReaderBase(ReaderBase readerBase, String key) {
+		final ObjectArrayList<ReaderBase> tempReaders = new ObjectArrayList<>();
+		readerBase.iterateReaderArray(key, tempReaders::add);
+		return new ObjectImmutableList<>(tempReaders);
 	}
 
-	public static void readPathDataMessagePackHelper(ObjectImmutableList<MessagePackHelper> messagePackHelpers, ObjectArrayList<PathData> path, DataCache dataCache) {
-		messagePackHelpers.forEach(messagePackHelper -> {
-			final PathData pathData = new PathData(messagePackHelper, dataCache);
+	public static void readPathDataReaderBase(ObjectImmutableList<ReaderBase> readers, ObjectArrayList<PathData> path, DataCache dataCache) {
+		readers.forEach(readerBase -> {
+			final PathData pathData = new PathData(readerBase, dataCache);
 			if (pathData.validRail) {
 				path.add(pathData);
 			}

@@ -1,10 +1,9 @@
 package org.mtr.core.data;
 
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.DyeColor;
 
-import java.io.IOException;
 import java.util.*;
 
 public class SignalBlocks {
@@ -160,7 +159,7 @@ public class SignalBlocks {
 			rails.add(rail);
 		}
 
-		public <T extends ReaderBase<U, T>, U> SignalBlock(T readerBase) {
+		public SignalBlock(ReaderBase readerBase) {
 			super(readerBase);
 			DyeColor savedColor;
 			try {
@@ -175,14 +174,12 @@ public class SignalBlocks {
 		}
 
 		@Override
-		public void toMessagePack(MessagePacker messagePacker) throws IOException {
-			super.toMessagePack(messagePacker);
+		public void toMessagePack(WriterBase writerBase) {
+			super.toMessagePack(writerBase);
 
-			messagePacker.packString(KEY_COLOR).packInt(color.ordinal());
-			messagePacker.packString(KEY_RAILS).packArrayHeader(rails.size());
-			for (final UUID rail : rails) {
-				messagePacker.packString(rail.toString());
-			}
+			writerBase.writeInt(KEY_COLOR, color.ordinal());
+			final WriterBase.Array writerBaseArray = writerBase.writeArray(KEY_RAILS, rails.size());
+			rails.forEach(rail -> writerBaseArray.writeString(rail.toString()));
 		}
 
 		@Override

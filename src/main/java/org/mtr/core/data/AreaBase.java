@@ -1,12 +1,10 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
-
-import java.io.IOException;
 
 public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends NameColorDataBase {
 
@@ -29,12 +27,12 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 		super(id, transportMode);
 	}
 
-	public <V extends ReaderBase<W, V>, W> AreaBase(V readerBase) {
+	public AreaBase(ReaderBase readerBase) {
 		super(readerBase);
 	}
 
 	@Override
-	public <V extends ReaderBase<W, V>, W> void updateData(V readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
 		readerBase.unpackLong(KEY_X_MIN, value -> cornerXMin = value);
@@ -55,13 +53,13 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		super.toMessagePack(messagePacker);
+	public void toMessagePack(WriterBase writerBase) {
+		super.toMessagePack(writerBase);
 
-		messagePacker.packString(KEY_X_MIN).packLong(cornerXMin);
-		messagePacker.packString(KEY_Z_MIN).packLong(cornerZMin);
-		messagePacker.packString(KEY_X_MAX).packLong(cornerXMax);
-		messagePacker.packString(KEY_Z_MAX).packLong(cornerZMax);
+		writerBase.writeLong(KEY_X_MIN, cornerXMin);
+		writerBase.writeLong(KEY_Z_MIN, cornerZMin);
+		writerBase.writeLong(KEY_X_MAX, cornerXMax);
+		writerBase.writeLong(KEY_Z_MAX, cornerZMax);
 	}
 
 	@Override

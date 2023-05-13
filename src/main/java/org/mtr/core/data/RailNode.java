@@ -1,14 +1,11 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
-
-import java.io.IOException;
-import java.util.Map;
 
 public class RailNode extends SerializedDataBase {
 
@@ -25,32 +22,31 @@ public class RailNode extends SerializedDataBase {
 		this.connections = connections;
 	}
 
-	public <T extends ReaderBase<U, T>, U> RailNode(T readerBase) {
+	public RailNode(ReaderBase readerBase) {
 		position = getPosition(readerBase);
 		connections = new Object2ObjectOpenHashMap<>();
 		updateData(readerBase);
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		readerBase.iterateReaderArray(KEY_RAIL_CONNECTIONS, value -> connections.put(getPosition(value), new Rail(value)));
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		messagePacker.packString(KEY_NODE_POSITION_X).packLong(position.x);
-		messagePacker.packString(KEY_NODE_POSITION_Y).packLong(position.y);
-		messagePacker.packString(KEY_NODE_POSITION_Z).packLong(position.z);
+	public void toMessagePack(WriterBase writerBase) {
+		writerBase.writeLong(KEY_NODE_POSITION_X, position.x);
+		writerBase.writeLong(KEY_NODE_POSITION_Y, position.y);
+		writerBase.writeLong(KEY_NODE_POSITION_Z, position.z);
 
-		messagePacker.packString(KEY_RAIL_CONNECTIONS).packArrayHeader(connections.size());
-		for (final Map.Entry<Position, Rail> entry : connections.entrySet()) {
-			final Position endNodePosition = entry.getKey();
-			messagePacker.packMapHeader(entry.getValue().messagePackLength() + 3);
-			messagePacker.packString(KEY_NODE_POSITION_X).packLong(endNodePosition.x);
-			messagePacker.packString(KEY_NODE_POSITION_Y).packLong(endNodePosition.y);
-			messagePacker.packString(KEY_NODE_POSITION_Z).packLong(endNodePosition.z);
-			entry.getValue().toMessagePack(messagePacker);
-		}
+		final WriterBase.Array writerBaseArray = writerBase.writeArray(KEY_RAIL_CONNECTIONS, connections.size());
+		connections.forEach((position, rail) -> {
+			final WriterBase writerBaseChild = writerBaseArray.writeChild(rail.messagePackLength() + 3);
+			writerBaseChild.writeLong(KEY_NODE_POSITION_X, position.x);
+			writerBaseChild.writeLong(KEY_NODE_POSITION_Y, position.y);
+			writerBaseChild.writeLong(KEY_NODE_POSITION_Z, position.z);
+			rail.toMessagePack(writerBaseChild);
+		});
 	}
 
 	@Override
@@ -63,7 +59,7 @@ public class RailNode extends SerializedDataBase {
 		return String.format("%s-%s-%s", Utilities.numberToPaddedHexString(position.x), Utilities.numberToPaddedHexString(position.y), Utilities.numberToPaddedHexString(position.z));
 	}
 
-	private static <T extends ReaderBase<U, T>, U> Position getPosition(T readerBase) {
+	private static Position getPosition(ReaderBase readerBase) {
 		final long x = readerBase.getLong(KEY_NODE_POSITION_X, 0);
 		final long y = readerBase.getLong(KEY_NODE_POSITION_Y, 0);
 		final long z = readerBase.getLong(KEY_NODE_POSITION_Z, 0);

@@ -1,10 +1,9 @@
 package org.mtr.core.data;
 
-import org.msgpack.core.MessagePacker;
-import org.mtr.core.reader.ReaderBase;
+import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.tools.Utilities;
 
-import java.io.IOException;
 import java.util.Locale;
 import java.util.Random;
 
@@ -29,23 +28,23 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 		this.transportMode = transportMode;
 	}
 
-	public <T extends ReaderBase<U, T>, U> NameColorDataBase(T readerBase) {
+	public NameColorDataBase(ReaderBase readerBase) {
 		id = readerBase.getLong(KEY_ID, 0);
 		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, readerBase.getString(KEY_TRANSPORT_MODE, ""));
 	}
 
 	@Override
-	public <T extends ReaderBase<U, T>, U> void updateData(T readerBase) {
+	public void updateData(ReaderBase readerBase) {
 		readerBase.unpackString(KEY_NAME, value -> name = value);
 		readerBase.unpackInt(KEY_COLOR, value -> color = value);
 	}
 
 	@Override
-	public void toMessagePack(MessagePacker messagePacker) throws IOException {
-		messagePacker.packString(KEY_ID).packLong(id);
-		messagePacker.packString(KEY_TRANSPORT_MODE).packString(transportMode.toString());
-		messagePacker.packString(KEY_NAME).packString(name);
-		messagePacker.packString(KEY_COLOR).packInt(color);
+	public void toMessagePack(WriterBase writerBase) {
+		writerBase.writeLong(KEY_ID, id);
+		writerBase.writeString(KEY_TRANSPORT_MODE, transportMode.toString());
+		writerBase.writeString(KEY_NAME, name);
+		writerBase.writeInt(KEY_COLOR, color);
 	}
 
 	@Override
