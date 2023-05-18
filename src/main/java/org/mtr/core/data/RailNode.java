@@ -39,19 +39,14 @@ public class RailNode extends SerializedDataBase {
 		writerBase.writeLong(KEY_NODE_POSITION_Y, position.y);
 		writerBase.writeLong(KEY_NODE_POSITION_Z, position.z);
 
-		final WriterBase.Array writerBaseArray = writerBase.writeArray(KEY_RAIL_CONNECTIONS, connections.size());
+		final WriterBase.Array writerBaseArray = writerBase.writeArray(KEY_RAIL_CONNECTIONS);
 		connections.forEach((position, rail) -> {
-			final WriterBase writerBaseChild = writerBaseArray.writeChild(rail.messagePackLength() + 3);
+			final WriterBase writerBaseChild = writerBaseArray.writeChild();
 			writerBaseChild.writeLong(KEY_NODE_POSITION_X, position.x);
 			writerBaseChild.writeLong(KEY_NODE_POSITION_Y, position.y);
 			writerBaseChild.writeLong(KEY_NODE_POSITION_Z, position.z);
 			rail.toMessagePack(writerBaseChild);
 		});
-	}
-
-	@Override
-	public int messagePackLength() {
-		return 4;
 	}
 
 	@Override

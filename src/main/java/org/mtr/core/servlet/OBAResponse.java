@@ -34,8 +34,8 @@ public class OBAResponse extends ResponseBase {
 		AGENCY.addProperty("url", "https://github.com/jonafanho/Transport-Simulation-Core");
 	}
 
-	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
-		super(data, parameters, currentMillis, simulator);
+	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
+		super(data, parameters, bodyObject, currentMillis, simulator);
 		includeReferences = !("false".equals(parameters.get("includeReferences")));
 	}
 

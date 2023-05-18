@@ -62,11 +62,11 @@ public class Train extends NameColorDataBase {
 	private static final String KEY_RIDING_ENTITIES = "riding_entities";
 
 	public Train(
-			long id, Siding siding, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
+			Siding siding, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime
 	) {
-		super(id, transportMode);
+		super(transportMode, siding.simulator);
 
 		this.siding = siding;
 		this.railLength = Siding.getRailLength(railLength);
@@ -93,7 +93,7 @@ public class Train extends NameColorDataBase {
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, int manualToAutomaticTime, ReaderBase readerBase
 	) {
-		super(readerBase);
+		super(readerBase, siding.simulator);
 
 		this.siding = siding;
 		this.railLength = Siding.getRailLength(railLength);
@@ -144,13 +144,8 @@ public class Train extends NameColorDataBase {
 		writerBase.writeBoolean(KEY_IS_ON_ROUTE, isOnRoute);
 		writerBase.writeBoolean(KEY_IS_CURRENTLY_MANUAL, isCurrentlyManual);
 		writerBase.writeInt(KEY_DEPARTURE_INDEX, departureIndex);
-		final WriterBase.Array writerBaseArray = writerBase.writeArray(KEY_RIDING_ENTITIES, ridingEntities.size());
+		final WriterBase.Array writerBaseArray = writerBase.writeArray(KEY_RIDING_ENTITIES);
 		ridingEntities.forEach(uuid -> writerBaseArray.writeString(uuid.toString()));
-	}
-
-	@Override
-	public int messagePackLength() {
-		return super.messagePackLength() + 9;
 	}
 
 	@Override

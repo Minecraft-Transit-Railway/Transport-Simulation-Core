@@ -2,6 +2,7 @@ package org.mtr.core.data;
 
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
 import java.util.Locale;
@@ -11,6 +12,7 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 
 	public final long id;
 	public final TransportMode transportMode;
+	public final Simulator simulator;
 	public String name = "";
 	public int color;
 
@@ -19,18 +21,16 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 	private static final String KEY_NAME = "name";
 	private static final String KEY_COLOR = "color";
 
-	public NameColorDataBase(long id) {
-		this(id, TransportMode.TRAIN);
-	}
-
-	public NameColorDataBase(long id, TransportMode transportMode) {
-		this.id = id == 0 ? new Random().nextLong() : id;
+	public NameColorDataBase(TransportMode transportMode, Simulator simulator) {
+		id = generateId();
 		this.transportMode = transportMode;
+		this.simulator = simulator;
 	}
 
-	public NameColorDataBase(ReaderBase readerBase) {
-		id = readerBase.getLong(KEY_ID, 0);
+	public NameColorDataBase(ReaderBase readerBase, Simulator simulator) {
+		id = readerBase.getLong(KEY_ID, generateId());
 		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, readerBase.getString(KEY_TRANSPORT_MODE, ""));
+		this.simulator = simulator;
 	}
 
 	@Override
@@ -45,11 +45,6 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 		writerBase.writeString(KEY_TRANSPORT_MODE, transportMode.toString());
 		writerBase.writeString(KEY_NAME, name);
 		writerBase.writeInt(KEY_COLOR, color);
-	}
-
-	@Override
-	public int messagePackLength() {
-		return 4;
 	}
 
 	@Override
@@ -69,6 +64,10 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 
 	private String combineNameColorId() {
 		return (name + color + id).toLowerCase(Locale.ENGLISH);
+	}
+
+	private static long generateId() {
+		return new Random().nextLong();
 	}
 
 	@Override

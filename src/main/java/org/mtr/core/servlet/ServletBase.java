@@ -14,9 +14,8 @@ import java.util.stream.Collectors;
 public abstract class ServletBase {
 
 	protected ServletBase(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
-		webserver.addGetListener(path, (queryStringDecoder, sendResponse) -> {
+		webserver.addHttpListener(path, (queryStringDecoder, bodyObject, sendResponse) -> {
 			final long currentMillis = System.currentTimeMillis();
-			// TODO addHeader("Access-Control-Allow-Origin", "*");
 
 			int dimension = 0;
 			try {
@@ -46,14 +45,14 @@ public abstract class ServletBase {
 					}
 				});
 				simulator.run(() -> {
-					final JsonObject jsonObject = getContent(endpoint, data, parameters, currentMillis, simulator);
+					final JsonObject jsonObject = getContent(endpoint, data, parameters, bodyObject, currentMillis, simulator);
 					buildResponseObject(sendResponse, currentMillis, jsonObject, jsonObject == null ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, endpoint, data);
 				});
 			}
 		});
 	}
 
-	protected abstract JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator);
+	protected abstract JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator);
 
 	private static void buildResponseObject(BiConsumer<JsonObject, HttpResponseStatus> sendResponse, long currentMillis, JsonObject dataObject, HttpResponseStatus httpResponseStatus, String... parameters) {
 		final JsonObject responseObject = new JsonObject();

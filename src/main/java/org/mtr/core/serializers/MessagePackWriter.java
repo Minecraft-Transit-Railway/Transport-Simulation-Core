@@ -1,10 +1,12 @@
 package org.mtr.core.serializers;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.msgpack.core.MessagePacker;
 
 public final class MessagePackWriter extends WriterBase {
 
 	private final MessagePacker messagePacker;
+	private final ObjectArrayList<Pack> instructions = new ObjectArrayList<>();
 
 	public MessagePackWriter(MessagePacker messagePacker) {
 		this.messagePacker = messagePacker;
@@ -36,29 +38,52 @@ public final class MessagePackWriter extends WriterBase {
 	}
 
 	@Override
-	public MessagePackArrayWriter writeArray(String key, int length) {
-		pack(key, () -> messagePacker.packArrayHeader(length));
-		return new MessagePackArrayWriter(messagePacker);
+	public MessagePackArrayWriter writeArray(String key) {
+		final MessagePackArrayWriter messagePackerArrayWriter = new MessagePackArrayWriter(messagePacker);
+		pack(key, () -> messagePacker.packArrayHeader(messagePackerArrayWriter.instructions.size()), messagePackerArrayWriter::serializePart);
+		return messagePackerArrayWriter;
 	}
 
 	@Override
-	public WriterBase writeChild(String key, int length) {
-		pack(key, () -> messagePacker.packMapHeader(length));
-		return this;
+	public WriterBase writeChild(String key) {
+		final MessagePackWriter messagePackerWriter = new MessagePackWriter(messagePacker);
+		pack(key, () -> messagePacker.packMapHeader(messagePackerWriter.instructions.size()), messagePackerWriter::serializePart);
+		return messagePackerWriter;
 	}
 
-	private void pack(String key, Pack pack) {
+	public void serialize() {
 		try {
-			messagePacker.packString(key);
-			pack.pack();
+			messagePacker.packMapHeader(instructions.size());
+			serializePart();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void pack(String key, Pack instruction) {
+		pack(key, instruction, null);
+	}
+
+	private void pack(String key, Pack instruction, Pack additionalInstructions) {
+		instructions.add(() -> {
+			messagePacker.packString(key);
+			instruction.pack();
+			if (additionalInstructions != null) {
+				additionalInstructions.pack();
+			}
+		});
+	}
+
+	private void serializePart() throws Exception {
+		for (final Pack instruction : instructions) {
+			instruction.pack();
 		}
 	}
 
 	private static final class MessagePackArrayWriter extends Array {
 
 		private final MessagePacker messagePacker;
+		private final ObjectArrayList<Pack> instructions = new ObjectArrayList<>();
 
 		private MessagePackArrayWriter(MessagePacker messagePacker) {
 			this.messagePacker = messagePacker;
@@ -90,16 +115,28 @@ public final class MessagePackWriter extends WriterBase {
 		}
 
 		@Override
-		public WriterBase writeChild(int length) {
-			pack(() -> messagePacker.packMapHeader(length));
-			return new MessagePackWriter(messagePacker);
+		public WriterBase writeChild() {
+			final MessagePackWriter messagePackerWriter = new MessagePackWriter(messagePacker);
+			pack(() -> messagePacker.packMapHeader(messagePackerWriter.instructions.size()), messagePackerWriter::serializePart);
+			return messagePackerWriter;
 		}
 
-		private void pack(Pack pack) {
-			try {
-				pack.pack();
-			} catch (Exception e) {
-				e.printStackTrace();
+		private void pack(Pack instruction) {
+			pack(instruction, null);
+		}
+
+		private void pack(Pack instruction, Pack additionalInstructions) {
+			instructions.add(() -> {
+				instruction.pack();
+				if (additionalInstructions != null) {
+					additionalInstructions.pack();
+				}
+			});
+		}
+
+		private void serializePart() throws Exception {
+			for (final Pack instruction : instructions) {
+				instruction.pack();
 			}
 		}
 	}

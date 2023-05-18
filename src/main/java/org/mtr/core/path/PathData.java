@@ -1,6 +1,5 @@
 package org.mtr.core.path;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.mtr.core.data.ConditionalList;
 import org.mtr.core.data.DataCache;
 import org.mtr.core.data.Rail;
@@ -76,7 +75,7 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 
 		final Rail tempRail = DataCache.tryGet(dataCache.positionToRailConnections, startPosition, endPosition);
 		if (tempRail == null) {
-			rail = new Rail(new MessagePackReader(new Object2ObjectArrayMap<>()));
+			rail = new Rail(new MessagePackReader());
 			validRail = false;
 		} else {
 			rail = tempRail;
@@ -101,11 +100,6 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 		writerBase.writeLong(KEY_END_POSITION_X, endPosition.x);
 		writerBase.writeLong(KEY_END_POSITION_Y, endPosition.y);
 		writerBase.writeLong(KEY_END_POSITION_Z, endPosition.z);
-	}
-
-	@Override
-	public int messagePackLength() {
-		return 11;
 	}
 
 	@Override

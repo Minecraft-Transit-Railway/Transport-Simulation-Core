@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.LatLon;
 import org.mtr.core.tools.Position;
@@ -14,12 +15,12 @@ public class Platform extends SavedRailBase<Platform, Station> {
 
 	private final Long2ObjectOpenHashMap<Angle> anglesFromDepot = new Long2ObjectOpenHashMap<>();
 
-	public Platform(long id, TransportMode transportMode, Position pos1, Position pos2) {
-		super(id, transportMode, pos1, pos2);
+	public Platform(TransportMode transportMode, Position pos1, Position pos2, Simulator simulator) {
+		super(transportMode, pos1, pos2, simulator);
 	}
 
-	public Platform(ReaderBase readerBase) {
-		super(readerBase);
+	public Platform(ReaderBase readerBase, Simulator simulator) {
+		super(readerBase, simulator);
 		updateData(readerBase);
 	}
 

@@ -3,8 +3,6 @@ on: [ pull_request, push ]
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,6 +18,8 @@ jobs:
         run: chmod +x ./gradlew
       - name: Build
         run: ./gradlew build
+      - name: Run JUnits
+        run: ./gradlew test
       - name: Capture build artifacts
         uses: actions/upload-artifact@main
         with:

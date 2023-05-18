@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.Value;
 
 import java.util.function.BiConsumer;
@@ -15,8 +16,20 @@ public final class MessagePackReader extends ReaderBase {
 
 	private final Object2ObjectArrayMap<String, Value> map;
 
-	public MessagePackReader(Object2ObjectArrayMap<String, Value> map) {
-		this.map = map;
+	public MessagePackReader() {
+		this.map = new Object2ObjectArrayMap<>();
+	}
+
+	public MessagePackReader(MessageUnpacker messageUnpacker) {
+		map = new Object2ObjectArrayMap<>();
+		try {
+			final int size = messageUnpacker.unpackMapHeader();
+			for (int i = 0; i < size; i++) {
+				map.put(messageUnpacker.unpackString(), messageUnpacker.unpackValue());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private MessagePackReader(Value value) {

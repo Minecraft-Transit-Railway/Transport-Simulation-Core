@@ -60,15 +60,10 @@ public class VehicleCar extends SerializedDataBase {
 		writerBase.writeDouble(KEY_WIDTH, width);
 		writerBase.writeDouble(KEY_BOGIE_1_POSITION, bogie1Position);
 		writerBase.writeDouble(KEY_BOGIE_2_POSITION, bogie2Position);
-		final WriterBase.Array writerBaseArrayDoorLeftPositions = writerBase.writeArray(KEY_DOOR_LEFT_POSITIONS, doorLeftPositions.size());
+		final WriterBase.Array writerBaseArrayDoorLeftPositions = writerBase.writeArray(KEY_DOOR_LEFT_POSITIONS);
 		doorLeftPositions.forEach(writerBaseArrayDoorLeftPositions::writeDouble);
-		final WriterBase.Array writerBaseArrayDoorRightPositions = writerBase.writeArray(KEY_DOOR_RIGHT_POSITIONS, doorRightPositions.size());
+		final WriterBase.Array writerBaseArrayDoorRightPositions = writerBase.writeArray(KEY_DOOR_RIGHT_POSITIONS);
 		doorRightPositions.forEach(writerBaseArrayDoorRightPositions::writeDouble);
-	}
-
-	@Override
-	public int messagePackLength() {
-		return 7;
 	}
 
 	@Override

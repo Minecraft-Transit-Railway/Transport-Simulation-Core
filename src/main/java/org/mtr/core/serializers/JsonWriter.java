@@ -37,14 +37,14 @@ public final class JsonWriter extends WriterBase {
 	}
 
 	@Override
-	public JsonArrayWriter writeArray(String key, int length) {
+	public JsonArrayWriter writeArray(String key) {
 		final JsonArray jsonArray = new JsonArray();
 		jsonObject.add(key, jsonArray);
 		return new JsonArrayWriter(jsonArray);
 	}
 
 	@Override
-	public WriterBase writeChild(String key, int length) {
+	public WriterBase writeChild(String key) {
 		final JsonObject childObject = new JsonObject();
 		jsonObject.add(key, childObject);
 		return new JsonWriter(childObject);
@@ -84,7 +84,7 @@ public final class JsonWriter extends WriterBase {
 		}
 
 		@Override
-		public WriterBase writeChild(int length) {
+		public WriterBase writeChild() {
 			final JsonObject childObject = new JsonObject();
 			jsonArray.add(childObject);
 			return new JsonWriter(childObject);

@@ -13,8 +13,8 @@ public class OBAServlet extends ServletBase {
 	}
 
 	@Override
-	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
-		final OBAResponse obaResponse = new OBAResponse(data, parameters, currentMillis, simulator);
+	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
+		final OBAResponse obaResponse = new OBAResponse(data, parameters, bodyObject, currentMillis, simulator);
 		switch (endpoint) {
 			case "agencies-with-coverage":
 				return obaResponse.getAgenciesWithCoverage();

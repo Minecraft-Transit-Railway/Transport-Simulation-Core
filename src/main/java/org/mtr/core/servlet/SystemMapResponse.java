@@ -12,8 +12,8 @@ import java.util.Locale;
 
 public class SystemMapResponse extends ResponseBase {
 
-	public SystemMapResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
-		super(data, parameters, currentMillis, simulator);
+	public SystemMapResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
+		super(data, parameters, bodyObject, currentMillis, simulator);
 	}
 
 	public JsonObject getData() {

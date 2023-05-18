@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 
@@ -22,15 +23,14 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	private static final String KEY_POS_2_Z = "pos_2_z";
 	private static final String KEY_TIME_VALUE = "time_value";
 
-	public SavedRailBase(long id, TransportMode transportMode, Position pos1, Position pos2) {
-		super(id, transportMode);
+	public SavedRailBase(TransportMode transportMode, Position pos1, Position pos2, Simulator simulator) {
+		super(transportMode, simulator);
 		name = "1";
 		positions = createPositions(pos1, pos2);
-		timeValue = transportMode.continuousMovement ? 1 : DEFAULT_TIME_VALUE;
 	}
 
-	public SavedRailBase(ReaderBase readerBase) {
-		super(readerBase);
+	public SavedRailBase(ReaderBase readerBase, Simulator simulator) {
+		super(readerBase, simulator);
 
 		final long[] newPositions = {0, 0, 0, 0, 0, 0};
 		DataFixer.unpackSavedRailBase(readerBase, position -> {
@@ -57,8 +57,8 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
-		readerBase.unpackInt(KEY_TIME_VALUE, value -> timeValue = transportMode.continuousMovement ? 1 : value);
-		DataFixer.unpackDwellTime(readerBase, value -> timeValue = transportMode.continuousMovement ? 1 : value);
+		readerBase.unpackInt(KEY_TIME_VALUE, value -> timeValue = value);
+		DataFixer.unpackDwellTime(readerBase, value -> timeValue = value);
 	}
 
 	@Override
@@ -72,11 +72,6 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		writerBase.writeLong(KEY_POS_2_Y, positions.right().y);
 		writerBase.writeLong(KEY_POS_2_Z, positions.right().z);
 		writerBase.writeInt(KEY_TIME_VALUE, timeValue);
-	}
-
-	@Override
-	public int messagePackLength() {
-		return super.messagePackLength() + 7;
 	}
 
 	@Override
@@ -103,6 +98,10 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		final Position position1 = positions.left();
 		final Position position2 = positions.right();
 		return position.equals(position1) ? position2 : position1;
+	}
+
+	public void setTimeValue(int timeValue) {
+		this.timeValue = timeValue;
 	}
 
 	public int getTimeValueMillis() {

@@ -16,13 +16,13 @@ public abstract class WriterBase {
 
 	public abstract void writeString(String key, String value);
 
-	public abstract Array writeArray(String key, int length);
+	public abstract Array writeArray(String key);
 
-	public abstract WriterBase writeChild(String key, int length);
+	public abstract WriterBase writeChild(String key);
 
 	public final void writeDataset(Collection<? extends SerializedDataBase> dataSet, String key) {
-		final WriterBase.Array writerBaseArray = writeArray(key, dataSet.size());
-		dataSet.forEach(data -> data.toMessagePack(writerBaseArray.writeChild(data.messagePackLength())));
+		final WriterBase.Array writerBaseArray = writeArray(key);
+		dataSet.forEach(data -> data.toMessagePack(writerBaseArray.writeChild()));
 	}
 
 	public abstract static class Array {
@@ -37,6 +37,6 @@ public abstract class WriterBase {
 
 		public abstract void writeString(String value);
 
-		public abstract WriterBase writeChild(int length);
+		public abstract WriterBase writeChild();
 	}
 }

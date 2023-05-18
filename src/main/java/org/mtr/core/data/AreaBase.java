@@ -3,15 +3,16 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
 public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends NameColorDataBase {
 
-	public long cornerXMin;
-	public long cornerZMin;
-	public long cornerXMax;
-	public long cornerZMax;
+	private long cornerXMin;
+	private long cornerZMin;
+	private long cornerXMax;
+	private long cornerZMax;
 	public final ObjectAVLTreeSet<U> savedRails = new ObjectAVLTreeSet<>();
 
 	private static final String KEY_X_MIN = "x_min";
@@ -19,37 +20,25 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	private static final String KEY_X_MAX = "x_max";
 	private static final String KEY_Z_MAX = "z_max";
 
-	public AreaBase(long id) {
-		super(id);
+	public AreaBase(TransportMode transportMode, Simulator simulator) {
+		super(transportMode, simulator);
 	}
 
-	public AreaBase(long id, TransportMode transportMode) {
-		super(id, transportMode);
-	}
-
-	public AreaBase(ReaderBase readerBase) {
-		super(readerBase);
+	public AreaBase(ReaderBase readerBase, Simulator simulator) {
+		super(readerBase, simulator);
 	}
 
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
 
-		readerBase.unpackLong(KEY_X_MIN, value -> cornerXMin = value);
-		readerBase.unpackLong(KEY_Z_MIN, value -> cornerZMin = value);
-		readerBase.unpackLong(KEY_X_MAX, value -> cornerXMax = value);
-		readerBase.unpackLong(KEY_Z_MAX, value -> cornerZMax = value);
+		final long[] corners = {0, 0, 0, 0};
+		readerBase.unpackLong(KEY_X_MIN, value -> corners[0] = value);
+		readerBase.unpackLong(KEY_Z_MIN, value -> corners[1] = value);
+		readerBase.unpackLong(KEY_X_MAX, value -> corners[2] = value);
+		readerBase.unpackLong(KEY_Z_MAX, value -> corners[3] = value);
 
-		if (cornerXMax < cornerXMin) {
-			long temp = cornerXMax;
-			cornerXMax = cornerXMin;
-			cornerXMin = temp;
-		}
-		if (cornerZMax < cornerZMin) {
-			long temp = cornerZMax;
-			cornerZMax = cornerZMin;
-			cornerZMin = temp;
-		}
+		setCorners(corners[0], corners[1], corners[2], corners[3]);
 	}
 
 	@Override
@@ -62,9 +51,11 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 		writerBase.writeLong(KEY_Z_MAX, cornerZMax);
 	}
 
-	@Override
-	public int messagePackLength() {
-		return super.messagePackLength() + 4;
+	public void setCorners(long cornerX1, long cornerZ1, long cornerX2, long cornerZ2) {
+		cornerXMin = Math.min(cornerX1, cornerX2);
+		cornerXMax = Math.max(cornerX1, cornerX2);
+		cornerZMin = Math.min(cornerZ1, cornerZ2);
+		cornerZMax = Math.max(cornerZ1, cornerZ2);
 	}
 
 	public boolean inArea(long x, long z) {

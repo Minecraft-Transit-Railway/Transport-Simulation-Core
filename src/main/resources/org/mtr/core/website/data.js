@@ -1,7 +1,7 @@
 import {pushIfNotExists, ROUTE_TYPES, setIfUndefined} from "./utilities.js";
 import SETTINGS from "./settings.js";
 
-const url = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/data/`;
+const url = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/map/`;
 let routes = [];
 
 export function getData(callback) {

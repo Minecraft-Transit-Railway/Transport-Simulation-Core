@@ -332,11 +332,6 @@ public class Rail extends SerializedDataBase {
 	}
 
 	@Override
-	public int messagePackLength() {
-		return 24;
-	}
-
-	@Override
 	public String getHexId() {
 		return "";
 	}

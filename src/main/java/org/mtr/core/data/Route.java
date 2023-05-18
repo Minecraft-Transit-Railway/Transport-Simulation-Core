@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
 import java.util.ArrayList;
@@ -11,12 +12,12 @@ import java.util.List;
 
 public class Route extends NameColorDataBase {
 
-	public RouteType routeType;
+	public RouteType routeType = RouteType.NORMAL;
 	public boolean isLightRailRoute;
 	public boolean isHidden;
 	public boolean disableNextStationAnnouncements;
-	public CircularState circularState;
-	public String routeNumber;
+	public CircularState circularState = CircularState.NONE;
+	public String routeNumber = "";
 	public final List<RoutePlatform> platformIds = new ArrayList<>();
 
 	private static final String KEY_PLATFORM_IDS = "platform_ids";
@@ -28,22 +29,12 @@ public class Route extends NameColorDataBase {
 	private static final String KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS = "disable_next_station_announcements";
 	private static final String KEY_CIRCULAR_STATE = "circular_state";
 
-	public Route(TransportMode transportMode) {
-		this(0, transportMode);
+	public Route(TransportMode transportMode, Simulator simulator) {
+		super(transportMode, simulator);
 	}
 
-	public Route(long id, TransportMode transportMode) {
-		super(id, transportMode);
-		routeType = RouteType.NORMAL;
-		isLightRailRoute = false;
-		circularState = CircularState.NONE;
-		routeNumber = "";
-		isHidden = false;
-		disableNextStationAnnouncements = false;
-	}
-
-	public Route(ReaderBase readerBase) {
-		super(readerBase);
+	public Route(ReaderBase readerBase, Simulator simulator) {
+		super(readerBase, simulator);
 		updateData(readerBase);
 	}
 
@@ -72,10 +63,10 @@ public class Route extends NameColorDataBase {
 	public void toMessagePack(WriterBase writerBase) {
 		super.toMessagePack(writerBase);
 
-		final WriterBase.Array writerBaseArrayPlatformIds = writerBase.writeArray(KEY_PLATFORM_IDS, platformIds.size());
+		final WriterBase.Array writerBaseArrayPlatformIds = writerBase.writeArray(KEY_PLATFORM_IDS);
 		platformIds.forEach(routePlatform -> writerBaseArrayPlatformIds.writeLong(routePlatform.platformId));
 
-		final WriterBase.Array writerBaseArrayCustomDestinations = writerBase.writeArray(KEY_CUSTOM_DESTINATIONS, platformIds.size());
+		final WriterBase.Array writerBaseArrayCustomDestinations = writerBase.writeArray(KEY_CUSTOM_DESTINATIONS);
 		platformIds.forEach(routePlatform -> writerBaseArrayCustomDestinations.writeString(routePlatform.customDestination));
 
 		writerBase.writeString(KEY_ROUTE_TYPE, routeType.toString());
@@ -84,11 +75,6 @@ public class Route extends NameColorDataBase {
 		writerBase.writeBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, disableNextStationAnnouncements);
 		writerBase.writeString(KEY_ROUTE_NUMBER, routeNumber);
 		writerBase.writeString(KEY_CIRCULAR_STATE, circularState.toString());
-	}
-
-	@Override
-	public int messagePackLength() {
-		return super.messagePackLength() + 8;
 	}
 
 	@Override

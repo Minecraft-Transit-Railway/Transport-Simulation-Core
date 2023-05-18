@@ -26,9 +26,8 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 
 	public final LongArrayList routeIds = new LongArrayList();
 	public final ObjectArrayList<PathData> path = new ObjectArrayList<>();
+	public final IntArrayList realTimeDepartures = new IntArrayList();
 
-	private final Simulator simulator;
-	private final IntArrayList realTimeDepartures = new IntArrayList();
 	private final int[] frequencies = new int[HOURS_PER_DAY];
 	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
 	private final ObjectImmutableList<ReaderBase> pathDataReaders;
@@ -46,9 +45,13 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	private static final String KEY_REPEAT_INFINITELY = "repeat_infinitely";
 	private static final String KEY_CRUISING_ALTITUDE = "cruising_altitude";
 
+	public Depot(TransportMode transportMode, Simulator simulator) {
+		super(transportMode, simulator);
+		pathDataReaders = ObjectImmutableList.of();
+	}
+
 	public Depot(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase);
-		this.simulator = simulator;
+		super(readerBase, simulator);
 		pathDataReaders = Siding.savePathDataReaderBase(readerBase, KEY_PATH);
 		updateData(readerBase);
 	}
@@ -63,7 +66,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		final IntArrayList frequenciesArray = new IntArrayList();
 		readerBase.iterateIntArray(KEY_FREQUENCIES, frequenciesArray::add);
 		for (int i = 0; i < Math.min(frequenciesArray.size(), HOURS_PER_DAY); i++) {
-			frequencies[i] = frequenciesArray.getInt(i);
+			setFrequency(i, frequenciesArray.getInt(i));
 		}
 
 		readerBase.iterateIntArray(KEY_DEPARTURES, realTimeDepartures::add);
@@ -75,7 +78,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public void toMessagePack(WriterBase writerBase) {
 		super.toMessagePack(writerBase);
 
-		final WriterBase.Array writerBaseArrayRouteIds = writerBase.writeArray(KEY_ROUTE_IDS, routeIds.size());
+		final WriterBase.Array writerBaseArrayRouteIds = writerBase.writeArray(KEY_ROUTE_IDS);
 		routeIds.forEach(writerBaseArrayRouteIds::writeLong);
 
 		writerBase.writeDataset(sidingPathFinders.isEmpty() ? path : new ObjectArrayList<>(), KEY_PATH);
@@ -83,18 +86,13 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 		writerBase.writeBoolean(KEY_REPEAT_INFINITELY, repeatInfinitely);
 		writerBase.writeInt(KEY_CRUISING_ALTITUDE, cruisingAltitude);
 
-		final WriterBase.Array writerBaseArrayFrequencies = writerBase.writeArray(KEY_FREQUENCIES, HOURS_PER_DAY);
+		final WriterBase.Array writerBaseArrayFrequencies = writerBase.writeArray(KEY_FREQUENCIES);
 		for (int i = 0; i < HOURS_PER_DAY; i++) {
 			writerBaseArrayFrequencies.writeInt(frequencies[i]);
 		}
 
-		final WriterBase.Array writerBaseArrayRealTimeDepartures = writerBase.writeArray(KEY_DEPARTURES, realTimeDepartures.size());
+		final WriterBase.Array writerBaseArrayRealTimeDepartures = writerBase.writeArray(KEY_DEPARTURES);
 		realTimeDepartures.forEach(writerBaseArrayRealTimeDepartures::writeInt);
-	}
-
-	@Override
-	public int messagePackLength() {
-		return super.messagePackLength() + 7;
 	}
 
 	@Override
@@ -159,6 +157,12 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			if (route != null) {
 				consumer.accept(route, i);
 			}
+		}
+	}
+
+	public void setFrequency(int hour, int frequency) {
+		if (hour >= 0 && hour < HOURS_PER_DAY) {
+			frequencies[hour] = Math.max(0, frequency);
 		}
 	}
 

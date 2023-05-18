@@ -13,8 +13,8 @@ public class SystemMapServlet extends ServletBase {
 	}
 
 	@Override
-	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
-		final SystemMapResponse systemMapResponse = new SystemMapResponse(data, parameters, currentMillis, simulator);
+	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
+		final SystemMapResponse systemMapResponse = new SystemMapResponse(data, parameters, bodyObject, currentMillis, simulator);
 		switch (endpoint) {
 			case "stations-and-routes":
 				return systemMapResponse.getData();

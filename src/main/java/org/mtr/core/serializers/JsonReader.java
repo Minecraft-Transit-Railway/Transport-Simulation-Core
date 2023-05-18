@@ -16,13 +16,13 @@ public final class JsonReader extends ReaderBase {
 
 	private final Object2ObjectArrayMap<String, JsonElement> map;
 
-	public JsonReader(Object2ObjectArrayMap<String, JsonElement> map) {
-		this.map = map;
-	}
-
-	private JsonReader(JsonElement value) {
+	public JsonReader(JsonElement value) {
 		map = new Object2ObjectArrayMap<>();
 		iterateMap(value, map::put);
+	}
+
+	private JsonReader(Object2ObjectArrayMap<String, JsonElement> map) {
+		this.map = map;
 	}
 
 	@Override

@@ -9,7 +9,6 @@ import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessagePacker;
 import org.msgpack.core.MessageUnpacker;
-import org.msgpack.value.Value;
 import org.mtr.core.Main;
 import org.mtr.core.data.NameColorDataBase;
 import org.mtr.core.data.SerializedDataBase;
@@ -81,14 +80,7 @@ public class FileLoader<T extends SerializedDataBase> {
 					folderStream.forEach(idFile -> futureDataMap.put(combineAsPath(idFolder, idFile), executorService.submit(() -> {
 						try (final InputStream inputStream = Files.newInputStream(idFile)) {
 							try (final MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(inputStream)) {
-								final int size = messageUnpacker.unpackMapHeader();
-								final Object2ObjectArrayMap<String, Value> result = new Object2ObjectArrayMap<>(size);
-
-								for (int i = 0; i < size; i++) {
-									result.put(messageUnpacker.unpackString(), messageUnpacker.unpackValue());
-								}
-
-								return getData.apply(new MessagePackReader(result));
+								return getData.apply(new MessagePackReader(messageUnpacker));
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -198,13 +190,13 @@ public class FileLoader<T extends SerializedDataBase> {
 	}
 
 	private static void packMessage(MessagePacker messagePacker, SerializedDataBase data, boolean useReducedHash) throws IOException {
+		final MessagePackWriter messagePackWriter = new MessagePackWriter(messagePacker);
 		if (useReducedHash) {
-			messagePacker.packMapHeader(data.messagePackLength());
-			data.toMessagePack(new MessagePackWriter(messagePacker));
+			data.toMessagePack(messagePackWriter);
 		} else {
-			messagePacker.packMapHeader(data.fullMessagePackLength());
-			data.toFullMessagePack(new MessagePackWriter(messagePacker));
+			data.toFullMessagePack(messagePackWriter);
 		}
+		messagePackWriter.serialize();
 	}
 
 	private static void createDirectory(Path path) {

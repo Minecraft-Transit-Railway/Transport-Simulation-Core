@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
+import org.mtr.core.simulation.Simulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,12 +19,12 @@ public class Station extends AreaBase<Station, Platform> {
 	private static final String KEY_ZONE = "zone";
 	private static final String KEY_EXITS = "exits";
 
-	public Station(long id) {
-		super(id);
+	public Station(TransportMode transportMode, Simulator simulator) {
+		super(transportMode, simulator);
 	}
 
-	public Station(ReaderBase readerBase) {
-		super(readerBase);
+	public Station(ReaderBase readerBase, Simulator simulator) {
+		super(readerBase, simulator);
 		updateData(readerBase);
 	}
 
@@ -44,16 +45,11 @@ public class Station extends AreaBase<Station, Platform> {
 		super.toMessagePack(writerBase);
 
 		writerBase.writeInt(KEY_ZONE, zone);
-		final WriterBase writerBaseChild = writerBase.writeChild(KEY_EXITS, exits.size());
+		final WriterBase writerBaseChild = writerBase.writeChild(KEY_EXITS);
 		exits.forEach((key, destinations) -> {
-			final WriterBase.Array writerBaseArray = writerBaseChild.writeArray(key, destinations.size());
+			final WriterBase.Array writerBaseArray = writerBaseChild.writeArray(key);
 			destinations.forEach(writerBaseArray::writeString);
 		});
-	}
-
-	@Override
-	public int messagePackLength() {
-		return super.messagePackLength() + 2;
 	}
 
 	@Override

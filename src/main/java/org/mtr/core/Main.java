@@ -2,6 +2,7 @@ package org.mtr.core;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.core.servlet.IntegrationServlet;
 import org.mtr.core.servlet.OBAServlet;
 import org.mtr.core.servlet.SystemMapServlet;
 import org.mtr.core.simulation.Simulator;
@@ -21,6 +22,10 @@ import java.util.logging.Logger;
 
 public class Main {
 
+	private final ObjectImmutableList<Simulator> simulators;
+	private final Webserver webserver;
+	private final ScheduledExecutorService scheduledExecutorService;
+
 	public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	public static final long START_MILLIS = System.currentTimeMillis();
 	public static final int MILLISECONDS_PER_TICK = 10;
@@ -32,28 +37,51 @@ public class Main {
 			final float startingGameDayPercentage = Float.parseFloat(args[i++]);
 			final Path rootPath = Paths.get(args[i++]);
 			final int webserverPort = Integer.parseInt(args[i++]);
-			final ObjectArrayList<Simulator> simulators = new ObjectArrayList<>();
-
-			LOGGER.info("Loading files...");
-			while (i < args.length) {
-				simulators.add(new Simulator(args[i++], rootPath, millisPerGameDay, startingGameDayPercentage));
-			}
-
-			start(new ObjectImmutableList<>(simulators), webserverPort);
+			final String[] dimensions = new String[args.length - i];
+			System.arraycopy(args, i, dimensions, 0, dimensions.length);
+			final Main main = new Main(millisPerGameDay, startingGameDayPercentage, rootPath, webserverPort, dimensions);
+			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
 			e.printStackTrace();
 		}
 	}
 
-	private static void start(ObjectImmutableList<Simulator> simulators, int webserverPort) {
-		final Webserver webserver = new Webserver(Main.class, "website", Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
-		new SystemMapServlet(webserver, "/mtr/api/data/*", simulators);
+	public Main(int millisPerGameDay, float startingGameDayPercentage, Path rootPath, int webserverPort, String... dimensions) {
+		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
+
+		LOGGER.info("Loading files...");
+		for (final String dimension : dimensions) {
+			tempSimulators.add(new Simulator(dimension, rootPath, millisPerGameDay, startingGameDayPercentage));
+		}
+
+		simulators = new ObjectImmutableList<>(tempSimulators);
+		webserver = new Webserver(Main.class, "website", Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
+		new IntegrationServlet(webserver, "/mtr/api/data/*", simulators);
+		new SystemMapServlet(webserver, "/mtr/api/map/*", simulators);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
 		webserver.start();
-		final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
+		scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
 		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));
+		LOGGER.info("Server started");
+	}
 
+	public void save() {
+		LOGGER.info("Starting quick save...");
+		simulators.forEach(Simulator::save);
+	}
+
+	public void stop() {
+		LOGGER.info("Stopping...");
+		webserver.stop();
+		scheduledExecutorService.shutdown();
+		Utilities.awaitTermination(scheduledExecutorService);
+		LOGGER.info("Starting full save...");
+		simulators.forEach(Simulator::stop);
+		LOGGER.info("Stopped");
+	}
+
+	private void readConsoleInput() {
 		while (true) {
 			try {
 				final String[] input = new BufferedReader(new InputStreamReader(System.in)).readLine().trim().toLowerCase(Locale.ENGLISH).replaceAll("[^a-z ]", "").split(" ");
@@ -61,15 +89,11 @@ public class Main {
 					case "exit":
 					case "stop":
 					case "quit":
-						LOGGER.info("Stopping...");
-						stop(webserver, scheduledExecutorService);
-						LOGGER.info("Starting full save...");
-						simulators.forEach(Simulator::stop);
+						stop();
 						return;
 					case "save":
 					case "save-all":
-						LOGGER.info("Starting quick save...");
-						simulators.forEach(Simulator::save);
+						save();
 						break;
 					case "generate":
 					case "regenerate":
@@ -85,16 +109,10 @@ public class Main {
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				stop(webserver, scheduledExecutorService);
+				stop();
 				return;
 			}
 		}
-	}
-
-	private static void stop(Webserver webserver, ScheduledExecutorService scheduledExecutorService) {
-		webserver.stop();
-		scheduledExecutorService.shutdown();
-		Utilities.awaitTermination(scheduledExecutorService);
 	}
 
 	private static void printHelp() {
