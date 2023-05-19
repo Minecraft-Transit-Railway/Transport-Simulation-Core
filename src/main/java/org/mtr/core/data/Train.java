@@ -120,7 +120,6 @@ public class Train extends NameColorDataBase {
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
-
 		readerBase.unpackDouble(KEY_SPEED, value -> speed = value);
 		readerBase.unpackDouble(KEY_RAIL_PROGRESS, value -> railProgress = value);
 		readerBase.unpackInt(KEY_ELAPSED_DWELL_MILLIS, value -> elapsedDwellMillis = value);
@@ -133,9 +132,8 @@ public class Train extends NameColorDataBase {
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
-		super.toMessagePack(writerBase);
-
+	public void serializeData(WriterBase writerBase) {
+		super.serializeData(writerBase);
 		writerBase.writeDouble(KEY_SPEED, speed);
 		writerBase.writeDouble(KEY_RAIL_PROGRESS, railProgress);
 		writerBase.writeInt(KEY_ELAPSED_DWELL_MILLIS, elapsedDwellMillis);

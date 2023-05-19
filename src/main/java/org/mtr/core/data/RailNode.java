@@ -34,7 +34,7 @@ public class RailNode extends SerializedDataBase {
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
+	public void serializeData(WriterBase writerBase) {
 		writerBase.writeLong(KEY_NODE_POSITION_X, position.x);
 		writerBase.writeLong(KEY_NODE_POSITION_Y, position.y);
 		writerBase.writeLong(KEY_NODE_POSITION_Z, position.z);
@@ -45,7 +45,7 @@ public class RailNode extends SerializedDataBase {
 			writerBaseChild.writeLong(KEY_NODE_POSITION_X, position.x);
 			writerBaseChild.writeLong(KEY_NODE_POSITION_Y, position.y);
 			writerBaseChild.writeLong(KEY_NODE_POSITION_Z, position.z);
-			rail.toMessagePack(writerBaseChild);
+			rail.serializeData(writerBaseChild);
 		});
 	}
 

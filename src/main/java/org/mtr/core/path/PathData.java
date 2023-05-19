@@ -88,7 +88,7 @@ public class PathData extends SerializedDataBase implements ConditionalList {
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
+	public void serializeData(WriterBase writerBase) {
 		writerBase.writeLong(KEY_SAVED_RAIL_BASE_ID, savedRailBaseId);
 		writerBase.writeInt(KEY_DWELL_TIME, dwellTimeMillis);
 		writerBase.writeInt(KEY_STOP_INDEX, stopIndex);

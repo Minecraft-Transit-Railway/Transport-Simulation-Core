@@ -25,8 +25,8 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public int cruisingAltitude = DEFAULT_CRUISING_ALTITUDE;
 
 	public final LongArrayList routeIds = new LongArrayList();
-	public final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 	public final IntArrayList realTimeDepartures = new IntArrayList();
+	public final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 
 	private final int[] frequencies = new int[HOURS_PER_DAY];
 	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
@@ -37,13 +37,13 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	public static final int DEFAULT_CRUISING_ALTITUDE = 256;
 	public static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
 
-	private static final String KEY_ROUTE_IDS = "route_ids";
-	private static final String KEY_PATH = "path";
 	private static final String KEY_USE_REAL_TIME = "use_real_time";
-	private static final String KEY_FREQUENCIES = "frequencies";
-	private static final String KEY_DEPARTURES = "departures";
 	private static final String KEY_REPEAT_INFINITELY = "repeat_infinitely";
 	private static final String KEY_CRUISING_ALTITUDE = "cruising_altitude";
+	private static final String KEY_ROUTE_IDS = "route_ids";
+	private static final String KEY_DEPARTURES = "departures";
+	private static final String KEY_FREQUENCIES = "frequencies";
+	private static final String KEY_PATH = "path";
 
 	public Depot(TransportMode transportMode, Simulator simulator) {
 		super(transportMode, simulator);
@@ -59,45 +59,69 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
-
-		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeIds::add);
 		readerBase.unpackBoolean(KEY_USE_REAL_TIME, value -> useRealTime = value);
+		readerBase.unpackBoolean(KEY_REPEAT_INFINITELY, value -> repeatInfinitely = value);
+		readerBase.unpackInt(KEY_CRUISING_ALTITUDE, value -> cruisingAltitude = value);
+		readerBase.iterateLongArray(KEY_ROUTE_IDS, routeIds::add);
+		readerBase.iterateIntArray(KEY_DEPARTURES, realTimeDepartures::add);
 
 		final IntArrayList frequenciesArray = new IntArrayList();
 		readerBase.iterateIntArray(KEY_FREQUENCIES, frequenciesArray::add);
 		for (int i = 0; i < Math.min(frequenciesArray.size(), HOURS_PER_DAY); i++) {
 			setFrequency(i, frequenciesArray.getInt(i));
 		}
-
-		readerBase.iterateIntArray(KEY_DEPARTURES, realTimeDepartures::add);
-		readerBase.unpackBoolean(KEY_REPEAT_INFINITELY, value -> repeatInfinitely = value);
-		readerBase.unpackInt(KEY_CRUISING_ALTITUDE, value -> cruisingAltitude = value);
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
-		super.toMessagePack(writerBase);
-
-		final WriterBase.Array writerBaseArrayRouteIds = writerBase.writeArray(KEY_ROUTE_IDS);
-		routeIds.forEach(writerBaseArrayRouteIds::writeLong);
-
+	public void serializeData(WriterBase writerBase) {
+		super.serializeData(writerBase);
+		serializeUseRealTime(writerBase);
+		serializeRepeatInfinitely(writerBase);
+		serializeCruisingAltitude(writerBase);
+		serializeRouteIds(writerBase);
+		serializeDepartures(writerBase);
+		serializeFrequencies(writerBase);
 		writerBase.writeDataset(sidingPathFinders.isEmpty() ? path : new ObjectArrayList<>(), KEY_PATH);
-		writerBase.writeBoolean(KEY_USE_REAL_TIME, useRealTime);
-		writerBase.writeBoolean(KEY_REPEAT_INFINITELY, repeatInfinitely);
-		writerBase.writeInt(KEY_CRUISING_ALTITUDE, cruisingAltitude);
-
-		final WriterBase.Array writerBaseArrayFrequencies = writerBase.writeArray(KEY_FREQUENCIES);
-		for (int i = 0; i < HOURS_PER_DAY; i++) {
-			writerBaseArrayFrequencies.writeInt(frequencies[i]);
-		}
-
-		final WriterBase.Array writerBaseArrayRealTimeDepartures = writerBase.writeArray(KEY_DEPARTURES);
-		realTimeDepartures.forEach(writerBaseArrayRealTimeDepartures::writeInt);
 	}
 
 	@Override
 	protected boolean hasTransportMode() {
 		return true;
+	}
+
+	public void serializeUseRealTime(WriterBase writerBase) {
+		writerBase.writeBoolean(KEY_USE_REAL_TIME, useRealTime);
+	}
+
+	public void serializeRepeatInfinitely(WriterBase writerBase) {
+		writerBase.writeBoolean(KEY_REPEAT_INFINITELY, repeatInfinitely);
+	}
+
+	public void serializeCruisingAltitude(WriterBase writerBase) {
+		writerBase.writeInt(KEY_CRUISING_ALTITUDE, cruisingAltitude);
+	}
+
+	public void serializeRouteIds(WriterBase writerBase) {
+		final WriterBase.Array writerBaseArrayRouteIds = writerBase.writeArray(KEY_ROUTE_IDS);
+		routeIds.forEach(writerBaseArrayRouteIds::writeLong);
+	}
+
+	public void serializeDepartures(WriterBase writerBase) {
+		final WriterBase.Array writerBaseArrayRealTimeDepartures = writerBase.writeArray(KEY_DEPARTURES);
+		realTimeDepartures.forEach(writerBaseArrayRealTimeDepartures::writeInt);
+	}
+
+	public void serializeFrequencies(WriterBase writerBase) {
+		final WriterBase.Array writerBaseArrayFrequencies = writerBase.writeArray(KEY_FREQUENCIES);
+		for (int i = 0; i < HOURS_PER_DAY; i++) {
+			writerBaseArrayFrequencies.writeInt(frequencies[i]);
+		}
+	}
+
+	public void setFrequency(int hour, int frequency) {
+		if (hour >= 0 && hour < HOURS_PER_DAY) {
+			frequencies[hour] = Math.max(0, frequency);
+		}
 	}
 
 	public void init() {
@@ -117,7 +141,7 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			generatingSidingIds.clear();
 
 			final long[] previousPlatformId = {0};
-			iterateRoutes((route, routeIndex) -> route.platformIds.forEach(platformId -> {
+			iterateRoutes((route, routeIndex) -> route.routePlatforms.forEach(platformId -> {
 				final Platform platform = simulator.dataCache.platformIdMap.get(platformId.platformId);
 				if (platform != null && platform.id != previousPlatformId[0]) {
 					platformsInRoute.add(platform);
@@ -157,12 +181,6 @@ public class Depot extends AreaBase<Depot, Siding> implements Utilities {
 			if (route != null) {
 				consumer.accept(route, i);
 			}
-		}
-	}
-
-	public void setFrequency(int hour, int frequency) {
-		if (hour >= 0 && hour < HOURS_PER_DAY) {
-			frequencies[hour] = Math.max(0, frequency);
 		}
 	}
 

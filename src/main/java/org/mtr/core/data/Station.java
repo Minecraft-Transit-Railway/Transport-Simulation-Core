@@ -31,7 +31,6 @@ public class Station extends AreaBase<Station, Platform> {
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
-
 		readerBase.unpackInt(KEY_ZONE, value -> zone = value);
 		readerBase.iterateKeys(KEY_EXITS, (key, readerBaseMap) -> {
 			final ObjectArrayList<String> destinations = new ObjectArrayList<>();
@@ -41,20 +40,27 @@ public class Station extends AreaBase<Station, Platform> {
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
-		super.toMessagePack(writerBase);
-
-		writerBase.writeInt(KEY_ZONE, zone);
-		final WriterBase writerBaseChild = writerBase.writeChild(KEY_EXITS);
-		exits.forEach((key, destinations) -> {
-			final WriterBase.Array writerBaseArray = writerBaseChild.writeArray(key);
-			destinations.forEach(writerBaseArray::writeString);
-		});
+	public void serializeData(WriterBase writerBase) {
+		super.serializeData(writerBase);
+		serializeZone(writerBase);
+		serializeExits(writerBase);
 	}
 
 	@Override
 	protected boolean hasTransportMode() {
 		return false;
+	}
+
+	public void serializeZone(WriterBase writerBase) {
+		writerBase.writeInt(KEY_ZONE, zone);
+	}
+
+	public void serializeExits(WriterBase writerBase) {
+		final WriterBase writerBaseChild = writerBase.writeChild(KEY_EXITS);
+		exits.forEach((key, destinations) -> {
+			final WriterBase.Array writerBaseArray = writerBaseChild.writeArray(key);
+			destinations.forEach(writerBaseArray::writeString);
+		});
 	}
 
 	public Map<String, List<String>> getGeneratedExits() {

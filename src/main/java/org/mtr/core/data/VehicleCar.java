@@ -54,7 +54,7 @@ public class VehicleCar extends SerializedDataBase {
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
+	public void serializeData(WriterBase writerBase) {
 		writerBase.writeString(KEY_VEHICLE_ID, vehicleId);
 		writerBase.writeDouble(KEY_LENGTH, length);
 		writerBase.writeDouble(KEY_WIDTH, width);

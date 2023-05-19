@@ -45,7 +45,7 @@ public class IntegrationResponse extends ResponseBase {
 
 	private static <T extends SerializedDataBase> JsonObject getDataAsJson(T data) {
 		final JsonObject jsonObject = new JsonObject();
-		data.toMessagePack(new JsonWriter(jsonObject));
+		data.serializeData(new JsonWriter(jsonObject));
 		return jsonObject;
 	}
 }

@@ -7,11 +7,11 @@ public abstract class SerializedDataBase {
 
 	public abstract void updateData(ReaderBase readerBase);
 
-	public abstract void toMessagePack(WriterBase writerBase);
+	public abstract void serializeData(WriterBase writerBase);
 
 	public abstract String getHexId();
 
-	public void toFullMessagePack(WriterBase writerBase) {
-		toMessagePack(writerBase);
+	public void serializeFullData(WriterBase writerBase) {
+		serializeData(writerBase);
 	}
 }

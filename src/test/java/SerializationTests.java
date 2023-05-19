@@ -132,14 +132,14 @@ public class SerializationTests implements Utilities, TestUtilities {
 		Assertions.assertEquals("", route.name);
 		route.name = TestUtilities.randomString();
 		route.color = TestUtilities.randomColor();
-		route.isLightRailRoute = RANDOM.nextBoolean();
+		route.hasRouteNumber = RANDOM.nextBoolean();
 		route.isHidden = RANDOM.nextBoolean();
 		route.circularState = TestUtilities.randomEnum(Route.CircularState.values());
 		route.routeNumber = TestUtilities.randomString();
 
 		TestUtilities.randomLoop(() -> {
 			final Route.RoutePlatform routePlatform = new Route.RoutePlatform(RANDOM.nextLong());
-			route.platformIds.add(routePlatform);
+			route.routePlatforms.add(routePlatform);
 			if (RANDOM.nextBoolean()) {
 				routePlatform.customDestination = TestUtilities.randomString();
 			}
@@ -177,7 +177,7 @@ public class SerializationTests implements Utilities, TestUtilities {
 
 		try (final MessageBufferPacker messageBufferPacker = MessagePack.newDefaultBufferPacker()) {
 			final MessagePackWriter messagePackWriter = new MessagePackWriter(messageBufferPacker);
-			data.toMessagePack(messagePackWriter);
+			data.serializeData(messagePackWriter);
 			messagePackWriter.serialize();
 			try (final MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(messageBufferPacker.toByteArray())) {
 				TestUtilities.compareObjects(data, newInstance.apply(new MessagePackReader(messageUnpacker), TestUtilities.getDefaultSimulator()));

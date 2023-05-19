@@ -99,22 +99,80 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
-		super.toMessagePack(writerBase);
-
+	public void serializeData(WriterBase writerBase) {
+		super.serializeData(writerBase);
 		writerBase.writeDouble(KEY_RAIL_LENGTH, railLength);
-		writerBase.writeDataset(vehicleCars, KEY_VEHICLE_CARS);
 		writerBase.writeDataset(sidingPathFinderSidingToMainRoute.isEmpty() ? pathSidingToMainRoute : new ObjectArrayList<>(), KEY_PATH_SIDING_TO_MAIN_ROUTE);
 		writerBase.writeDataset(sidingPathFinderMainRouteToSiding.isEmpty() ? pathMainRouteToSiding : new ObjectArrayList<>(), KEY_PATH_MAIN_ROUTE_TO_SIDING);
-		writerBase.writeInt(KEY_MAX_VEHICLES, maxVehicles);
-		writerBase.writeDouble(KEY_MAX_MANUAL_SPEED, maxManualSpeed);
-		writerBase.writeDouble(KEY_ACCELERATION, acceleration);
+		serializeMaxManualSpeed(writerBase);
+		serializeMaxVehicles(writerBase);
+		serializeAcceleration(writerBase);
+		serializeVehicleCars(writerBase);
 	}
 
 	@Override
-	public void toFullMessagePack(WriterBase writerBase) {
-		super.toFullMessagePack(writerBase);
+	public void serializeFullData(WriterBase writerBase) {
+		super.serializeFullData(writerBase);
 		writerBase.writeDataset(vehicles, KEY_VEHICLES);
+	}
+
+	public void serializeMaxManualSpeed(WriterBase writerBase) {
+		writerBase.writeDouble(KEY_MAX_MANUAL_SPEED, maxManualSpeed);
+	}
+
+	public void serializeMaxVehicles(WriterBase writerBase) {
+		writerBase.writeInt(KEY_MAX_VEHICLES, maxVehicles);
+	}
+
+	public void serializeAcceleration(WriterBase writerBase) {
+		writerBase.writeDouble(KEY_ACCELERATION, acceleration);
+	}
+
+	public void serializeVehicleCars(WriterBase writerBase) {
+		writerBase.writeDataset(vehicleCars, KEY_VEHICLE_CARS);
+	}
+
+	public boolean getIsManual() {
+		return maxVehicles < 0;
+	}
+
+	public boolean getIsUnlimited() {
+		return maxVehicles == 0;
+	}
+
+	public int getMaxVehicles() {
+		return getIsManual() ? 1 : maxVehicles;
+	}
+
+	public void setVehicleCars(ObjectArrayList<VehicleCar> newVehicleCars) {
+		vehicleCars.clear();
+		int tempVehicleLength = 0;
+		for (final VehicleCar vehicleCar : newVehicleCars) {
+			if (tempVehicleLength + vehicleCar.length > railLength) {
+				break;
+			}
+			vehicleCars.add(vehicleCar);
+			tempVehicleLength += vehicleCar.length;
+			if (vehicleCars.size() >= transportMode.maxLength) {
+				break;
+			}
+		}
+	}
+
+	public void setIsManual(boolean isManual) {
+		maxVehicles = transportMode.continuousMovement ? 0 : isManual ? -1 : 1;
+	}
+
+	public void setUnlimitedVehicles(boolean unlimitedVehicles) {
+		maxVehicles = transportMode.continuousMovement ? 0 : unlimitedVehicles ? 0 : 1;
+	}
+
+	public void setMaxVehicles(int newMaxVehicles) {
+		maxVehicles = transportMode.continuousMovement ? 0 : Math.max(1, newMaxVehicles);
+	}
+
+	public void setAcceleration(double newAcceleration) {
+		acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.roundAcceleration(newAcceleration);
 	}
 
 	public void init() {
@@ -259,49 +317,6 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 		return index < 0 ? -1 : timeSegments.get(index).getTimeAlongRoute(railProgress);
 	}
 
-	public boolean getIsManual() {
-		return maxVehicles < 0;
-	}
-
-	public boolean getIsUnlimited() {
-		return maxVehicles == 0;
-	}
-
-	public int getMaxVehicles() {
-		return getIsManual() ? 1 : maxVehicles;
-	}
-
-	public void setVehicleCars(ObjectArrayList<VehicleCar> newVehicleCars) {
-		vehicleCars.clear();
-		int tempVehicleLength = 0;
-		for (final VehicleCar vehicleCar : newVehicleCars) {
-			if (tempVehicleLength + vehicleCar.length > railLength) {
-				break;
-			}
-			vehicleCars.add(vehicleCar);
-			tempVehicleLength += vehicleCar.length;
-			if (vehicleCars.size() >= transportMode.maxLength) {
-				break;
-			}
-		}
-	}
-
-	public void setIsManual(boolean isManual) {
-		maxVehicles = transportMode.continuousMovement ? 0 : isManual ? -1 : 1;
-	}
-
-	public void setUnlimitedVehicles(boolean unlimitedVehicles) {
-		maxVehicles = transportMode.continuousMovement ? 0 : unlimitedVehicles ? 0 : 1;
-	}
-
-	public void setMaxVehicles(int newMaxVehicles) {
-		maxVehicles = transportMode.continuousMovement ? 0 : Math.max(1, newMaxVehicles);
-	}
-
-	public void setAcceleration(double newAcceleration) {
-		acceleration = transportMode.continuousMovement ? Train.MAX_ACCELERATION : Train.roundAcceleration(newAcceleration);
-	}
-
 	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(long currentMillis, Platform platform, int millsBefore, int millisAfter, JsonArray arrivalsAndDeparturesArray, JsonArray tripsUsedArray) {
 		if (area == null || departures.isEmpty()) {
 			return;
@@ -359,7 +374,7 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 					final JsonObject arrivalAndDepartureObject = new JsonObject();
 					arrivalAndDepartureObject.addProperty("arrivalEnabled", stopTime.tripStopIndex > 0);
 					arrivalAndDepartureObject.addProperty("blockTripSequence", trip.tripIndexInBlock);
-					arrivalAndDepartureObject.addProperty("departureEnabled", stopTime.tripStopIndex < trip.route.platformIds.size() - 1);
+					arrivalAndDepartureObject.addProperty("departureEnabled", stopTime.tripStopIndex < trip.route.routePlatforms.size() - 1);
 					arrivalAndDepartureObject.addProperty("distanceFromStop", 0);
 					arrivalAndDepartureObject.add("frequency", getOBAFrequencyElement(currentMillis));
 					arrivalAndDepartureObject.addProperty("historicalOccupancy", "");
@@ -384,7 +399,7 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 					arrivalAndDepartureObject.addProperty("status", "default");
 					arrivalAndDepartureObject.addProperty("stopId", platform.getHexId());
 					arrivalAndDepartureObject.addProperty("stopSequence", stopTime.tripStopIndex);
-					arrivalAndDepartureObject.addProperty("totalStopsInTrip", trip.route.platformIds.size());
+					arrivalAndDepartureObject.addProperty("totalStopsInTrip", trip.route.routePlatforms.size());
 					arrivalAndDepartureObject.addProperty("tripHeadsign", stopTime.customDestination);
 					arrivalAndDepartureObject.addProperty("tripId", tripId);
 					arrivalAndDepartureObject.add("tripStatus", vehicleStatusWithDeviation.left());
@@ -573,8 +588,8 @@ public class Siding extends SavedRailBase<Siding, Depot> implements Utilities {
 
 			final ObjectArrayList<RoutePlatformInfo> routePlatformInfoList = new ObjectArrayList<>();
 			area.iterateRoutes((route, routeIndex) -> {
-				for (int i = 0; i < route.platformIds.size(); i++) {
-					routePlatformInfoList.add(new RoutePlatformInfo(route, routeIndex, route.platformIds.get(i).platformId, route.getDestination(simulator.dataCache, i)));
+				for (int i = 0; i < route.routePlatforms.size(); i++) {
+					routePlatformInfoList.add(new RoutePlatformInfo(route, routeIndex, route.routePlatforms.get(i).platformId, route.getDestination(simulator.dataCache, i)));
 				}
 			});
 

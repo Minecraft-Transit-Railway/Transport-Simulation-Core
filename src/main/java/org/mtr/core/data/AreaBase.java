@@ -31,20 +31,21 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
-
 		final long[] corners = {0, 0, 0, 0};
 		readerBase.unpackLong(KEY_X_MIN, value -> corners[0] = value);
 		readerBase.unpackLong(KEY_Z_MIN, value -> corners[1] = value);
 		readerBase.unpackLong(KEY_X_MAX, value -> corners[2] = value);
 		readerBase.unpackLong(KEY_Z_MAX, value -> corners[3] = value);
-
 		setCorners(corners[0], corners[1], corners[2], corners[3]);
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
-		super.toMessagePack(writerBase);
+	public void serializeData(WriterBase writerBase) {
+		super.serializeData(writerBase);
+		serializeCorners(writerBase);
+	}
 
+	public void serializeCorners(WriterBase writerBase) {
 		writerBase.writeLong(KEY_X_MIN, cornerXMin);
 		writerBase.writeLong(KEY_Z_MIN, cornerZMin);
 		writerBase.writeLong(KEY_X_MAX, cornerXMax);

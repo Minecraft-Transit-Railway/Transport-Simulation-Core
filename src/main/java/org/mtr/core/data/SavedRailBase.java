@@ -48,6 +48,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		readerBase.unpackLong(KEY_POS_2_X, value -> newPositions[3] = value);
 		readerBase.unpackLong(KEY_POS_2_Y, value -> newPositions[4] = value);
 		readerBase.unpackLong(KEY_POS_2_Z, value -> newPositions[5] = value);
+
 		final Position position1 = new Position(newPositions[0], newPositions[1], newPositions[2]);
 		final Position position2 = new Position(newPositions[3], newPositions[4], newPositions[5]);
 		positions = createPositions(position1, position2);
@@ -56,27 +57,29 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
-
 		readerBase.unpackInt(KEY_TIME_VALUE, value -> timeValue = value);
 		DataFixer.unpackDwellTime(readerBase, value -> timeValue = value);
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
-		super.toMessagePack(writerBase);
-
+	public void serializeData(WriterBase writerBase) {
+		super.serializeData(writerBase);
 		writerBase.writeLong(KEY_POS_1_X, positions.left().x);
 		writerBase.writeLong(KEY_POS_1_Y, positions.left().y);
 		writerBase.writeLong(KEY_POS_1_Z, positions.left().z);
 		writerBase.writeLong(KEY_POS_2_X, positions.right().x);
 		writerBase.writeLong(KEY_POS_2_Y, positions.right().y);
 		writerBase.writeLong(KEY_POS_2_Z, positions.right().z);
-		writerBase.writeInt(KEY_TIME_VALUE, timeValue);
+		serializeTimeValue(writerBase);
 	}
 
 	@Override
 	protected final boolean hasTransportMode() {
 		return true;
+	}
+
+	public void serializeTimeValue(WriterBase writerBase) {
+		writerBase.writeInt(KEY_TIME_VALUE, timeValue);
 	}
 
 	public boolean containsPos(Position pos) {

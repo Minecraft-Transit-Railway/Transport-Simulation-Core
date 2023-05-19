@@ -32,7 +32,7 @@ public interface TestUtilities {
 
 	static <T extends SerializedDataBase> JsonObject getJsonObjectFromData(T data) {
 		final JsonObject jsonObject = new JsonObject();
-		data.toMessagePack(new JsonWriter(jsonObject));
+		data.serializeData(new JsonWriter(jsonObject));
 		return jsonObject;
 	}
 

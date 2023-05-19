@@ -2,32 +2,30 @@ package org.mtr.core.data;
 
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Route extends NameColorDataBase {
 
 	public RouteType routeType = RouteType.NORMAL;
-	public boolean isLightRailRoute;
+	public boolean hasRouteNumber;
+	public String routeNumber = "";
 	public boolean isHidden;
 	public boolean disableNextStationAnnouncements;
 	public CircularState circularState = CircularState.NONE;
-	public String routeNumber = "";
-	public final List<RoutePlatform> platformIds = new ArrayList<>();
+	public final ObjectArrayList<RoutePlatform> routePlatforms = new ObjectArrayList<>();
 
-	private static final String KEY_PLATFORM_IDS = "platform_ids";
-	private static final String KEY_CUSTOM_DESTINATIONS = "custom_destinations";
 	private static final String KEY_ROUTE_TYPE = "route_type";
-	private static final String KEY_IS_LIGHT_RAIL_ROUTE = "is_light_rail_route";
+	private static final String KEY_HAS_ROUTE_NUMBER = "is_light_rail_route";
 	private static final String KEY_ROUTE_NUMBER = "light_rail_route_number";
 	private static final String KEY_IS_ROUTE_HIDDEN = "is_route_hidden";
 	private static final String KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS = "disable_next_station_announcements";
 	private static final String KEY_CIRCULAR_STATE = "circular_state";
+	private static final String KEY_PLATFORM_IDS = "platform_ids";
+	private static final String KEY_CUSTOM_DESTINATIONS = "custom_destinations";
 
 	public Route(TransportMode transportMode, Simulator simulator) {
 		super(transportMode, simulator);
@@ -41,40 +39,31 @@ public class Route extends NameColorDataBase {
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
-
-		readerBase.iterateLongArray(KEY_PLATFORM_IDS, platformId -> platformIds.add(new RoutePlatform(platformId)));
-
-		final List<String> customDestinations = new ArrayList<>();
-		readerBase.iterateStringArray(KEY_CUSTOM_DESTINATIONS, customDestinations::add);
-
-		for (int i = 0; i < Math.min(platformIds.size(), customDestinations.size()); i++) {
-			platformIds.get(i).customDestination = customDestinations.get(i);
-		}
-
 		readerBase.unpackString(KEY_ROUTE_TYPE, value -> routeType = EnumHelper.valueOf(RouteType.NORMAL, value));
-		readerBase.unpackBoolean(KEY_IS_LIGHT_RAIL_ROUTE, value -> isLightRailRoute = value);
+		readerBase.unpackBoolean(KEY_HAS_ROUTE_NUMBER, value -> hasRouteNumber = value);
+		readerBase.unpackString(KEY_ROUTE_NUMBER, value -> routeNumber = value);
 		readerBase.unpackBoolean(KEY_IS_ROUTE_HIDDEN, value -> isHidden = value);
 		readerBase.unpackBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, value -> disableNextStationAnnouncements = value);
-		readerBase.unpackString(KEY_ROUTE_NUMBER, value -> routeNumber = value);
 		readerBase.unpackString(KEY_CIRCULAR_STATE, value -> circularState = EnumHelper.valueOf(CircularState.NONE, value));
+		readerBase.iterateLongArray(KEY_PLATFORM_IDS, platformId -> routePlatforms.add(new RoutePlatform(platformId)));
+
+		final ObjectArrayList<String> customDestinations = new ObjectArrayList<>();
+		readerBase.iterateStringArray(KEY_CUSTOM_DESTINATIONS, customDestinations::add);
+		for (int i = 0; i < Math.min(routePlatforms.size(), customDestinations.size()); i++) {
+			routePlatforms.get(i).customDestination = customDestinations.get(i);
+		}
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
-		super.toMessagePack(writerBase);
-
-		final WriterBase.Array writerBaseArrayPlatformIds = writerBase.writeArray(KEY_PLATFORM_IDS);
-		platformIds.forEach(routePlatform -> writerBaseArrayPlatformIds.writeLong(routePlatform.platformId));
-
-		final WriterBase.Array writerBaseArrayCustomDestinations = writerBase.writeArray(KEY_CUSTOM_DESTINATIONS);
-		platformIds.forEach(routePlatform -> writerBaseArrayCustomDestinations.writeString(routePlatform.customDestination));
-
-		writerBase.writeString(KEY_ROUTE_TYPE, routeType.toString());
-		writerBase.writeBoolean(KEY_IS_LIGHT_RAIL_ROUTE, isLightRailRoute);
-		writerBase.writeBoolean(KEY_IS_ROUTE_HIDDEN, isHidden);
-		writerBase.writeBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, disableNextStationAnnouncements);
-		writerBase.writeString(KEY_ROUTE_NUMBER, routeNumber);
-		writerBase.writeString(KEY_CIRCULAR_STATE, circularState.toString());
+	public void serializeData(WriterBase writerBase) {
+		super.serializeData(writerBase);
+		serializeRouteType(writerBase);
+		serializeHasRouteNumber(writerBase);
+		serializeRouteNumber(writerBase);
+		serializeIsRouteHidden(writerBase);
+		serializeDisableNextStationAnnouncements(writerBase);
+		serializeCircularState(writerBase);
+		serializeRoutePlatforms(writerBase);
 	}
 
 	@Override
@@ -82,18 +71,40 @@ public class Route extends NameColorDataBase {
 		return true;
 	}
 
-	public int getPlatformIdIndex(long platformId) {
-		for (int i = 0; i < platformIds.size(); i++) {
-			if (platformIds.get(i).platformId == platformId) {
-				return i;
-			}
-		}
-		return -1;
+	public void serializeRouteType(WriterBase writerBase) {
+		writerBase.writeString(KEY_ROUTE_TYPE, routeType.toString());
+	}
+
+	public void serializeHasRouteNumber(WriterBase writerBase) {
+		writerBase.writeBoolean(KEY_HAS_ROUTE_NUMBER, hasRouteNumber);
+	}
+
+	public void serializeRouteNumber(WriterBase writerBase) {
+		writerBase.writeString(KEY_ROUTE_NUMBER, routeNumber);
+	}
+
+	public void serializeIsRouteHidden(WriterBase writerBase) {
+		writerBase.writeBoolean(KEY_IS_ROUTE_HIDDEN, isHidden);
+	}
+
+	public void serializeDisableNextStationAnnouncements(WriterBase writerBase) {
+		writerBase.writeBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, disableNextStationAnnouncements);
+	}
+
+	public void serializeCircularState(WriterBase writerBase) {
+		writerBase.writeString(KEY_CIRCULAR_STATE, circularState.toString());
+	}
+
+	public void serializeRoutePlatforms(WriterBase writerBase) {
+		final WriterBase.Array writerBaseArrayPlatformIds = writerBase.writeArray(KEY_PLATFORM_IDS);
+		routePlatforms.forEach(routePlatform -> writerBaseArrayPlatformIds.writeLong(routePlatform.platformId));
+		final WriterBase.Array writerBaseArrayCustomDestinations = writerBase.writeArray(KEY_CUSTOM_DESTINATIONS);
+		routePlatforms.forEach(routePlatform -> writerBaseArrayCustomDestinations.writeString(routePlatform.customDestination));
 	}
 
 	public String getDestination(DataCache dataCache, int index) {
-		for (int i = Math.min(platformIds.size() - 1, index); i >= 0; i--) {
-			final String customDestination = platformIds.get(i).customDestination;
+		for (int i = Math.min(routePlatforms.size() - 1, index); i >= 0; i--) {
+			final String customDestination = routePlatforms.get(i).customDestination;
 			if (destinationIsReset(customDestination)) {
 				break;
 			} else if (!customDestination.isEmpty()) {
@@ -101,14 +112,14 @@ public class Route extends NameColorDataBase {
 			}
 		}
 
-		if (platformIds.isEmpty()) {
+		if (routePlatforms.isEmpty()) {
 			return "";
 		} else {
 			Platform platform = null;
 
 			if (circularState != CircularState.NONE) {
-				for (int i = index + 1; i < platformIds.size(); i++) {
-					platform = dataCache.platformIdMap.get(platformIds.get(i).platformId);
+				for (int i = index + 1; i < routePlatforms.size(); i++) {
+					platform = dataCache.platformIdMap.get(routePlatforms.get(i).platformId);
 					if (platform != null && platform.area != null && platform.area.savedRails.stream().anyMatch(checkPlatform -> dataCache.platformIdToRouteColors.getOrDefault(checkPlatform.id, new IntArraySet()).intStream().anyMatch(checkColor -> checkColor != color))) {
 						break;
 					}
@@ -116,7 +127,7 @@ public class Route extends NameColorDataBase {
 			}
 
 			if (platform == null) {
-				platform = dataCache.platformIdMap.get(Utilities.getElement(platformIds, -1).platformId);
+				platform = dataCache.platformIdMap.get(Utilities.getElement(routePlatforms, -1).platformId);
 			}
 
 			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.name) : "";

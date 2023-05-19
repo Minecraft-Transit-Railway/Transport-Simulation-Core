@@ -304,7 +304,7 @@ public class Rail extends SerializedDataBase {
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
+	public void serializeData(WriterBase writerBase) {
 		writerBase.writeDouble(KEY_H_1, h1);
 		writerBase.writeDouble(KEY_K_1, k1);
 		writerBase.writeDouble(KEY_H_2, h2);

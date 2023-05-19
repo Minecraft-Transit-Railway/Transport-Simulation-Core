@@ -35,7 +35,7 @@ public class SystemMapResponse extends ResponseBase {
 		final JsonArray routesArray = new JsonArray();
 		simulator.routes.forEach(route -> {
 			final JsonArray routeStationsArray = new JsonArray();
-			route.platformIds.forEach(routePlatform -> {
+			route.routePlatforms.forEach(routePlatform -> {
 				final Platform platform = simulator.dataCache.platformIdMap.get(routePlatform.platformId);
 				if (platform != null && platform.area != null) {
 					final JsonObject jsonObject = new JsonObject();

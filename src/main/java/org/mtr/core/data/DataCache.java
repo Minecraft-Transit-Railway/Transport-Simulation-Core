@@ -55,8 +55,8 @@ public class DataCache {
 			platformIdToRouteColors.clear();
 			routeColorMap.clear();
 			simulator.routes.forEach(route -> {
-				route.platformIds.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId));
-				route.platformIds.forEach(platformId -> {
+				route.routePlatforms.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId));
+				route.routePlatforms.forEach(platformId -> {
 					if (!platformIdToRouteColors.containsKey(platformId.platformId)) {
 						platformIdToRouteColors.put(platformId.platformId, new IntArraySet());
 					}
@@ -79,7 +79,7 @@ public class DataCache {
 				});
 			});
 
-			simulator.depots.forEach(depot -> depot.iterateRoutes((route, routeIndex) -> route.platformIds.forEach(platformId -> {
+			simulator.depots.forEach(depot -> depot.iterateRoutes((route, routeIndex) -> route.routePlatforms.forEach(platformId -> {
 				if (!platformIdToSidings.containsKey(platformId.platformId)) {
 					platformIdToSidings.put(platformId.platformId, new ObjectArraySet<>());
 				}

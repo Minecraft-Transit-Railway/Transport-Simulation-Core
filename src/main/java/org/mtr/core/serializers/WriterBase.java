@@ -22,7 +22,7 @@ public abstract class WriterBase {
 
 	public final void writeDataset(Collection<? extends SerializedDataBase> dataSet, String key) {
 		final WriterBase.Array writerBaseArray = writeArray(key);
-		dataSet.forEach(data -> data.toMessagePack(writerBaseArray.writeChild()));
+		dataSet.forEach(data -> data.serializeData(writerBaseArray.writeChild()));
 	}
 
 	public abstract static class Array {

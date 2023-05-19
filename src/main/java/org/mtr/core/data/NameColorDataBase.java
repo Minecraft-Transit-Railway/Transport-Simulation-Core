@@ -40,16 +40,24 @@ public abstract class NameColorDataBase extends SerializedDataBase implements Co
 	}
 
 	@Override
-	public void toMessagePack(WriterBase writerBase) {
+	public void serializeData(WriterBase writerBase) {
 		writerBase.writeLong(KEY_ID, id);
 		writerBase.writeString(KEY_TRANSPORT_MODE, transportMode.toString());
-		writerBase.writeString(KEY_NAME, name);
-		writerBase.writeInt(KEY_COLOR, color);
+		serializeName(writerBase);
+		serializeColor(writerBase);
 	}
 
 	@Override
 	public String getHexId() {
 		return Utilities.numberToPaddedHexString(id);
+	}
+
+	public final void serializeName(WriterBase writerBase) {
+		writerBase.writeString(KEY_NAME, name);
+	}
+
+	public final void serializeColor(WriterBase writerBase) {
+		writerBase.writeInt(KEY_COLOR, color);
 	}
 
 	public final String getColorHex() {

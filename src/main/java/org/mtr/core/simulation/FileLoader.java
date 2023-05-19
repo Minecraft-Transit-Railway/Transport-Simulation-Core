@@ -192,9 +192,9 @@ public class FileLoader<T extends SerializedDataBase> {
 	private static void packMessage(MessagePacker messagePacker, SerializedDataBase data, boolean useReducedHash) throws IOException {
 		final MessagePackWriter messagePackWriter = new MessagePackWriter(messagePacker);
 		if (useReducedHash) {
-			data.toMessagePack(messagePackWriter);
+			data.serializeData(messagePackWriter);
 		} else {
-			data.toFullMessagePack(messagePackWriter);
+			data.serializeFullData(messagePackWriter);
 		}
 		messagePackWriter.serialize();
 	}
