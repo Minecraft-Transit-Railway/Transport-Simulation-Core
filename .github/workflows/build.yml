@@ -16,6 +16,8 @@ jobs:
           distribution: 'zulu'
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
+      - name: Generate schema classes
+        run: ./gradlew generateSchemaClasses
       - name: Build
         run: ./gradlew build
       - name: Run JUnits
