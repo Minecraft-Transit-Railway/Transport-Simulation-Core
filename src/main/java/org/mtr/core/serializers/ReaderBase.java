@@ -5,7 +5,6 @@ import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -43,7 +42,9 @@ public abstract class ReaderBase {
 
 	public abstract boolean iterateReaderArray(String key, Consumer<ReaderBase> ifExists);
 
-	public abstract void iterateKeys(String key, BiConsumer<String, ReaderBase> ifExists);
+	public abstract ReaderBase getChild(String key);
+
+	public abstract void unpackChild(String key, Consumer<ReaderBase> ifExists);
 
 	protected final <U> boolean unpackValue(U value, Consumer<U> consumer) {
 		if (value == null) {

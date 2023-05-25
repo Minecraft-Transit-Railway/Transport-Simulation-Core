@@ -65,7 +65,7 @@ public class Simulator implements Utilities {
 			tempVehiclePositions.add(vehiclePositionsForTransportMode);
 		}
 		vehiclePositions = new ObjectImmutableList<>(tempVehiclePositions);
-		sidings.forEach(siding -> siding.initVehiclePositions(vehiclePositions.get(siding.transportMode.ordinal()).get(1)));
+		sidings.forEach(siding -> siding.initVehiclePositions(vehiclePositions.get(siding.getTransportModeOrdinal()).get(1)));
 	}
 
 	public void tick() {
@@ -80,7 +80,7 @@ public class Simulator implements Utilities {
 
 			depots.forEach(Depot::tick);
 			sidings.forEach(Siding::tick);
-			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.transportMode.ordinal())));
+			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.getTransportModeOrdinal())));
 
 			if (autoSave) {
 				save(true);
@@ -88,7 +88,7 @@ public class Simulator implements Utilities {
 			}
 
 			if (generateKey != null) {
-				depots.stream().filter(depot -> depot.name.toLowerCase(Locale.ENGLISH).contains(generateKey)).forEach(Depot::generateMainRoute);
+				depots.stream().filter(depot -> depot.getName().toLowerCase(Locale.ENGLISH).contains(generateKey)).forEach(Depot::generateMainRoute);
 				generateKey = null;
 			}
 

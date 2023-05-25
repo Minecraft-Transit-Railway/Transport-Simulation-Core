@@ -1,0 +1,19 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "AreaBase<Station, Platform>",
+	"extends": {
+		"$ref": "areaBase.json"
+	},
+	"properties": {
+		"zone1": {
+			"type": "integer"
+		},
+		"zone2": {
+			"type": "integer"
+		},
+		"zone3": {
+			"type": "integer"
+		}
+	}
+}

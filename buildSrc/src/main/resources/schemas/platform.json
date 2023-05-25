@@ -1,0 +1,14 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "SavedRailBase<Platform, Station>",
+	"extends": {
+		"$ref": "savedRailBase.json"
+	},
+	"properties": {
+		"dwellTime": {
+			"type": "integer",
+			"default": 10000
+		}
+	}
+}

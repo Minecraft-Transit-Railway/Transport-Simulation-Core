@@ -1,6 +1,7 @@
 package org.mtr.core.serializers;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
@@ -106,11 +107,13 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateKeys(String key, BiConsumer<String, ReaderBase> ifExists) {
-		unpack(key, value -> {
-			final JsonReader jsonReader = new JsonReader(value);
-			iterateMap(value, (mapKey, mapValue) -> ifExists.accept(mapKey, jsonReader));
-		});
+	public ReaderBase getChild(String key) {
+		return getOrDefault(key, new JsonReader(new JsonObject()), JsonReader::new);
+	}
+
+	@Override
+	public void unpackChild(String key, Consumer<ReaderBase> ifExists) {
+		unpack(key, value -> ifExists.accept(new JsonReader(value)));
 	}
 
 	private boolean getBoolean(JsonElement value) {

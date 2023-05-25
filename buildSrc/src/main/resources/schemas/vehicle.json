@@ -1,0 +1,42 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "NameColorDataBase",
+	"extends": {
+		"$ref": "nameColorDataBase.json"
+	},
+	"properties": {
+		"speed": {
+			"type": "number",
+			"minimum": 0
+		},
+		"railProgress": {
+			"type": "number",
+			"minimum": 0
+		},
+		"elapsedDwellTime": {
+			"type": "number",
+			"minimum": 0
+		},
+		"nextStoppingIndex": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"reversed": {
+			"type": "boolean"
+		},
+		"isCurrentlyManual": {
+			"type": "boolean"
+		},
+		"departureIndex": {
+			"type": "integer",
+			"default": -1
+		},
+		"ridingEntities": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	}
+}

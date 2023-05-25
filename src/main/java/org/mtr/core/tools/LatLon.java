@@ -15,7 +15,7 @@ public class LatLon {
 	}
 
 	public LatLon(Position position) {
-		this(metersToLat(-position.z), metersToLon(position.x));
+		this(metersToLat(-position.getZ()), metersToLon(position.getX()));
 	}
 
 	public LatLon offset(double latOffset, double lonOffset) {

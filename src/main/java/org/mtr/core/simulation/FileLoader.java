@@ -15,7 +15,6 @@ import org.mtr.core.data.SerializedDataBase;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.MessagePackWriter;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
@@ -123,7 +122,7 @@ public class FileLoader<T extends SerializedDataBase> {
 		while (!dirtyData.isEmpty()) {
 			final T data = dirtyData.remove(0);
 
-			if (data != null && (skipVerifyNameIsNotEmpty || !(data instanceof NameColorDataBase) || !((NameColorDataBase) data).name.isEmpty())) {
+			if (data != null && (skipVerifyNameIsNotEmpty || !(data instanceof NameColorDataBase) || !((NameColorDataBase) data).getName().isEmpty())) {
 				final String fileName = getFileName.apply(data);
 				final String parentFolderName = getParent(fileName);
 				final String parentAndFileName = combineAsPath(parentFolderName, fileName);
@@ -189,7 +188,7 @@ public class FileLoader<T extends SerializedDataBase> {
 		return hash;
 	}
 
-	private static void packMessage(MessagePacker messagePacker, SerializedDataBase data, boolean useReducedHash) throws IOException {
+	private static void packMessage(MessagePacker messagePacker, SerializedDataBase data, boolean useReducedHash) {
 		final MessagePackWriter messagePackWriter = new MessagePackWriter(messagePacker);
 		if (useReducedHash) {
 			data.serializeData(messagePackWriter);

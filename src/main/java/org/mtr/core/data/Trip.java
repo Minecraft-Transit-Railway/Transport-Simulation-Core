@@ -83,11 +83,11 @@ public class Trip implements Utilities {
 		jsonObject.addProperty("directionId", 0);
 		jsonObject.addProperty("id", getTripId(departureIndex, departureOffset));
 		jsonObject.addProperty("routeId", route.getColorHex());
-		jsonObject.addProperty("routeShortName", Utilities.formatName(route.routeNumber));
+		jsonObject.addProperty("routeShortName", Utilities.formatName(route.getRouteNumber()));
 		jsonObject.addProperty("serviceId", "1");
 		jsonObject.addProperty("shapeId", "");
 		jsonObject.addProperty("timeZone", TimeZone.getDefault().getID());
-		jsonObject.addProperty("tripHeadsign", Utilities.formatName(route.name));
+		jsonObject.addProperty("tripHeadsign", Utilities.formatName(route.getName()));
 		jsonObject.addProperty("tripShortName", "");
 		return jsonObject;
 	}

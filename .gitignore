@@ -28,6 +28,7 @@ bin/
 
 *.DS_Store
 
+generated/
 three.module.min.js
 BufferGeometryUtils.js
 fabric.min.js

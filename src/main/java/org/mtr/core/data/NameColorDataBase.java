@@ -1,74 +1,57 @@
 package org.mtr.core.data;
 
+import org.mtr.core.generated.NameColorDataBaseSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
 import java.util.Locale;
 import java.util.Random;
 
-public abstract class NameColorDataBase extends SerializedDataBase implements Comparable<NameColorDataBase> {
-
-	public final long id;
-	public final TransportMode transportMode;
-	public final Simulator simulator;
-	public String name = "";
-	public int color;
-
-	private static final String KEY_ID = "id";
-	private static final String KEY_TRANSPORT_MODE = "transport_mode";
-	private static final String KEY_NAME = "name";
-	private static final String KEY_COLOR = "color";
+public abstract class NameColorDataBase extends NameColorDataBaseSchema implements SerializedDataBase, Comparable<NameColorDataBase> {
 
 	public NameColorDataBase(TransportMode transportMode, Simulator simulator) {
-		id = generateId();
-		this.transportMode = transportMode;
-		this.simulator = simulator;
+		super(transportMode, simulator);
 	}
 
 	public NameColorDataBase(ReaderBase readerBase, Simulator simulator) {
-		id = readerBase.getLong(KEY_ID, generateId());
-		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, readerBase.getString(KEY_TRANSPORT_MODE, ""));
-		this.simulator = simulator;
+		super(readerBase, simulator);
 	}
 
 	@Override
-	public void updateData(ReaderBase readerBase) {
-		readerBase.unpackString(KEY_NAME, value -> name = value);
-		readerBase.unpackInt(KEY_COLOR, value -> color = value);
-	}
-
-	@Override
-	public void serializeData(WriterBase writerBase) {
-		writerBase.writeLong(KEY_ID, id);
-		writerBase.writeString(KEY_TRANSPORT_MODE, transportMode.toString());
-		serializeName(writerBase);
-		serializeColor(writerBase);
-	}
-
-	@Override
-	public String getHexId() {
+	public final String getHexId() {
 		return Utilities.numberToPaddedHexString(id);
 	}
 
-	public final void serializeName(WriterBase writerBase) {
-		writerBase.writeString(KEY_NAME, name);
+	public final long getId() {
+		return id;
 	}
 
-	public final void serializeColor(WriterBase writerBase) {
-		writerBase.writeInt(KEY_COLOR, color);
+	public final String getName() {
+		return name;
+	}
+
+	public final int getColor() {
+		return (int) (color & 0xFFFFFF);
 	}
 
 	public final String getColorHex() {
 		return Utilities.numberToPaddedHexString(color, 6);
 	}
 
-	public final boolean isTransportMode(TransportMode transportMode) {
-		return !hasTransportMode() || this.transportMode == transportMode;
+	public final void setColor(int newColor) {
+		color = newColor & 0xFFFFFF;
 	}
 
-	protected abstract boolean hasTransportMode();
+	public final boolean isTransportMode(TransportMode transportMode) {
+		return noTransportMode() || this.transportMode == transportMode;
+	}
+
+	public final boolean isTransportMode(NameColorDataBase data) {
+		return noTransportMode() || data.noTransportMode() || data.transportMode == transportMode;
+	}
+
+	protected abstract boolean noTransportMode();
 
 	private String combineNameColorId() {
 		return (name + color + id).toLowerCase(Locale.ENGLISH);

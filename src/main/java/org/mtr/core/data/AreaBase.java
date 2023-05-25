@@ -1,24 +1,15 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import org.mtr.core.generated.AreaBaseSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
-public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends NameColorDataBase {
+public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends AreaBaseSchema {
 
-	private long cornerXMin;
-	private long cornerZMin;
-	private long cornerXMax;
-	private long cornerZMax;
 	public final ObjectAVLTreeSet<U> savedRails = new ObjectAVLTreeSet<>();
-
-	private static final String KEY_X_MIN = "x_min";
-	private static final String KEY_Z_MIN = "z_min";
-	private static final String KEY_X_MAX = "x_max";
-	private static final String KEY_Z_MAX = "z_max";
 
 	public AreaBase(TransportMode transportMode, Simulator simulator) {
 		super(transportMode, simulator);
@@ -29,38 +20,22 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	}
 
 	@Override
-	public void updateData(ReaderBase readerBase) {
-		super.updateData(readerBase);
-		final long[] corners = {0, 0, 0, 0};
-		readerBase.unpackLong(KEY_X_MIN, value -> corners[0] = value);
-		readerBase.unpackLong(KEY_Z_MIN, value -> corners[1] = value);
-		readerBase.unpackLong(KEY_X_MAX, value -> corners[2] = value);
-		readerBase.unpackLong(KEY_Z_MAX, value -> corners[3] = value);
-		setCorners(corners[0], corners[1], corners[2], corners[3]);
+	protected final Position getDefaultPosition1() {
+		return new Position(0, 0, 0);
 	}
 
 	@Override
-	public void serializeData(WriterBase writerBase) {
-		super.serializeData(writerBase);
-		serializeCorners(writerBase);
+	protected final Position getDefaultPosition2() {
+		return new Position(0, 0, 0);
 	}
 
-	public void serializeCorners(WriterBase writerBase) {
-		writerBase.writeLong(KEY_X_MIN, cornerXMin);
-		writerBase.writeLong(KEY_Z_MIN, cornerZMin);
-		writerBase.writeLong(KEY_X_MAX, cornerXMax);
-		writerBase.writeLong(KEY_Z_MAX, cornerZMax);
+	public void setCorners(Position position1, Position position2) {
+		this.position1 = position1;
+		this.position2 = position2;
 	}
 
-	public void setCorners(long cornerX1, long cornerZ1, long cornerX2, long cornerZ2) {
-		cornerXMin = Math.min(cornerX1, cornerX2);
-		cornerXMax = Math.max(cornerX1, cornerX2);
-		cornerZMin = Math.min(cornerZ1, cornerZ2);
-		cornerZMax = Math.max(cornerZ1, cornerZ2);
-	}
-
-	public boolean inArea(long x, long z) {
-		return validCorners(this) && Utilities.isBetween(x, cornerXMin, cornerXMax) && Utilities.isBetween(z, cornerZMin, cornerZMax);
+	public boolean inArea(Position position) {
+		return validCorners(this) && Utilities.isBetween(position.getX(), position1.getX(), position2.getX()) && Utilities.isBetween(position.getY(), position1.getY(), position2.getY()) && Utilities.isBetween(position.getZ(), position1.getZ(), position2.getZ());
 	}
 
 	public boolean intersecting(AreaBase<T, U> areaBase) {
@@ -68,14 +43,20 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	}
 
 	public Position getCenter() {
-		return validCorners(this) ? new Position((cornerXMin + cornerXMax) / 2, 0, (cornerZMin + cornerZMax) / 2) : null;
+		return validCorners(this) ? new Position((position1.getX() + position2.getX()) / 2, (position1.getY() + position2.getY()) / 2, (position1.getZ() + position2.getZ()) / 2) : null;
 	}
 
 	private boolean inThis(AreaBase<T, U> areaBase) {
-		return inArea(areaBase.cornerXMin, areaBase.cornerZMin) || inArea(areaBase.cornerXMin, areaBase.cornerZMax) || inArea(areaBase.cornerXMax, areaBase.cornerZMin) || inArea(areaBase.cornerXMax, areaBase.cornerZMax);
+		final long x1 = areaBase.position1.getX();
+		final long y1 = areaBase.position1.getY();
+		final long z1 = areaBase.position1.getZ();
+		final long x2 = areaBase.position2.getX();
+		final long y2 = areaBase.position2.getY();
+		final long z2 = areaBase.position2.getZ();
+		return inArea(areaBase.position1) || inArea(areaBase.position2) || inArea(new Position(x1, y1, z2)) || inArea(new Position(x1, y2, z1)) || inArea(new Position(x1, y2, z2)) || inArea(new Position(x2, y1, z1)) || inArea(new Position(x2, y1, z2)) || inArea(new Position(x2, y2, z1));
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> boolean validCorners(AreaBase<T, U> areaBase) {
-		return areaBase != null && areaBase.cornerXMax > areaBase.cornerXMin && areaBase.cornerZMax > areaBase.cornerZMin;
+	private static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> boolean validCorners(AreaBase<T, U> areaBase) {
+		return areaBase != null && areaBase.position1 != null && areaBase.position2 != null;
 	}
 }

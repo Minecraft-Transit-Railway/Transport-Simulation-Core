@@ -1,0 +1,45 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"vehicleId": {
+			"type": "string"
+		},
+		"length": {
+			"type": "number",
+			"minimum": 0
+		},
+		"width": {
+			"type": "number",
+			"minimum": 0
+		},
+		"bogie1Position": {
+			"type": "number"
+		},
+		"bogie2Position": {
+			"type": "number"
+		},
+		"doorLeftPositions": {
+			"type": "array",
+			"items": {
+				"type": "number"
+			}
+		},
+		"doorRightPositions": {
+			"type": "array",
+			"items": {
+				"type": "number"
+			}
+		}
+	},
+	"required": [
+		"vehicleId",
+		"length",
+		"width",
+		"bogie1Position",
+		"bogie2Position"
+	]
+}

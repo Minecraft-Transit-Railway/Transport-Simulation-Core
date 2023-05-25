@@ -8,8 +8,6 @@ import org.mtr.core.data.Route;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 
-import java.util.Locale;
-
 public class SystemMapResponse extends ResponseBase {
 
 	public SystemMapResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
@@ -24,9 +22,11 @@ public class SystemMapResponse extends ResponseBase {
 
 			final JsonObject jsonObject = new JsonObject();
 			jsonObject.addProperty("id", station.getHexId());
-			jsonObject.addProperty("name", station.name);
+			jsonObject.addProperty("name", station.getName());
 			jsonObject.addProperty("color", station.getColorHex());
-			jsonObject.addProperty("zone", station.zone);
+			jsonObject.addProperty("zone1", station.getZone1());
+			jsonObject.addProperty("zone2", station.getZone2());
+			jsonObject.addProperty("zone3", station.getZone3());
 			jsonObject.add("connections", connectionsArray);
 
 			stationsArray.add(jsonObject);
@@ -35,25 +35,25 @@ public class SystemMapResponse extends ResponseBase {
 		final JsonArray routesArray = new JsonArray();
 		simulator.routes.forEach(route -> {
 			final JsonArray routeStationsArray = new JsonArray();
-			route.routePlatforms.forEach(routePlatform -> {
-				final Platform platform = simulator.dataCache.platformIdMap.get(routePlatform.platformId);
+			route.getRoutePlatforms().forEach(routePlatform -> {
+				final Platform platform = simulator.dataCache.platformIdMap.get(routePlatform.getPlatformId());
 				if (platform != null && platform.area != null) {
 					final JsonObject jsonObject = new JsonObject();
 					jsonObject.addProperty("id", platform.area.getHexId());
 					final Position position = platform.getMidPosition();
-					jsonObject.addProperty("x", position.x);
-					jsonObject.addProperty("y", position.y);
-					jsonObject.addProperty("z", position.z);
+					jsonObject.addProperty("x", position.getX());
+					jsonObject.addProperty("y", position.getY());
+					jsonObject.addProperty("z", position.getZ());
 					routeStationsArray.add(jsonObject);
 				}
 			});
 
 			final JsonObject jsonObject = new JsonObject();
-			jsonObject.addProperty("name", route.name);
+			jsonObject.addProperty("name", route.getName());
 			jsonObject.addProperty("color", route.getColorHex());
-			jsonObject.addProperty("number", route.routeNumber);
-			jsonObject.addProperty("type", String.format("%s_%s", route.transportMode.toString(), route.routeType.toString()).toLowerCase(Locale.ENGLISH));
-			jsonObject.addProperty("circular", route.circularState == Route.CircularState.NONE ? "" : route.circularState.toString());
+			jsonObject.addProperty("number", route.getRouteNumber());
+			jsonObject.addProperty("type", route.getRouteTypeKey());
+			jsonObject.addProperty("circular", route.getCircularState() == Route.CircularState.NONE ? "" : route.getCircularState().toString());
 			jsonObject.add("stations", routeStationsArray);
 
 			routesArray.add(jsonObject);

@@ -71,9 +71,9 @@ public class OBAResponse extends ResponseBase {
 			final JsonArray nearbyPlatformsArray = new JsonArray();
 			if (platform.area != null) {
 				platform.area.savedRails.forEach(nearbyPlatform -> {
-					if (nearbyPlatform.id != platformId) {
+					if (nearbyPlatform.getId() != platformId) {
 						nearbyPlatformsArray.add(nearbyPlatform.getHexId());
-						platformIdsUsed.add(nearbyPlatform.id);
+						platformIdsUsed.add(nearbyPlatform.getId());
 					}
 				});
 			}
@@ -123,7 +123,7 @@ public class OBAResponse extends ResponseBase {
 			int count = 0;
 			for (final Platform platform : simulator.platforms) {
 				final LatLon platformLatLon = new LatLon(platform.getMidPosition());
-				if (Utilities.isBetween(platformLatLon.lat - latLon.lat, -latSpan, latSpan) && Utilities.isBetween(platformLatLon.lon - latLon.lon, -lonSpan, lonSpan) && !simulator.dataCache.platformIdToRouteColors.getOrDefault(platform.id, new IntArraySet()).isEmpty()) {
+				if (Utilities.isBetween(platformLatLon.lat - latLon.lat, -latSpan, latSpan) && Utilities.isBetween(platformLatLon.lon - latLon.lon, -lonSpan, lonSpan) && !simulator.dataCache.platformIdToRouteColors.getOrDefault(platform.getId(), new IntArraySet()).isEmpty()) {
 					jsonArray.add(platform.getOBAStopElement(simulator.dataCache, colorsUsed));
 					count++;
 					if (count == 100) {

@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "NameColorDataBase",
+	"extends": {
+		"$ref": "nameColorDataBase.json"
+	},
+	"properties": {
+		"position1": {
+			"$ref": "position.json"
+		},
+		"position2": {
+			"$ref": "position.json"
+		}
+	}
+}

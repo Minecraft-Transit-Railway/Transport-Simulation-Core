@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.mtr.core.generated.PlatformSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
@@ -11,17 +12,25 @@ import org.mtr.core.tools.LatLon;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
-public class Platform extends SavedRailBase<Platform, Station> {
+public final class Platform extends PlatformSchema {
 
 	private final Long2ObjectOpenHashMap<Angle> anglesFromDepot = new Long2ObjectOpenHashMap<>();
 
-	public Platform(TransportMode transportMode, Position pos1, Position pos2, Simulator simulator) {
-		super(transportMode, pos1, pos2, simulator);
+	public Platform(Position position1, Position position2, TransportMode transportMode, Simulator simulator) {
+		super(position1, position2, transportMode, simulator);
 	}
 
 	public Platform(ReaderBase readerBase, Simulator simulator) {
 		super(readerBase, simulator);
 		updateData(readerBase);
+	}
+
+	public void setDwellTime(long dwellTime) {
+		this.dwellTime = dwellTime;
+	}
+
+	public long getDwellTime() {
+		return transportMode.continuousMovement ? 1 : Math.max(1, dwellTime);
 	}
 
 	public void setAngles(long depotId, Angle angle) {
@@ -54,7 +63,7 @@ public class Platform extends SavedRailBase<Platform, Station> {
 		jsonObject.addProperty("lat", latLon.lat);
 		jsonObject.addProperty("locationType", 0);
 		jsonObject.addProperty("lon", latLon.lon);
-		final String stationName = area == null ? "" : Utilities.formatName(area.name);
+		final String stationName = area == null ? "" : Utilities.formatName(area.getName());
 		jsonObject.addProperty("name", String.format("%s%s%s%s", stationName, !stationName.isEmpty() && !name.isEmpty() ? " - " : "", name.isEmpty() ? "" : "Platform ", name));
 		jsonObject.add("routeIds", jsonArray);
 		jsonObject.addProperty("wheelchairBoarding", "UNKNOWN");

@@ -1,0 +1,50 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "SavedRailBase<Siding, Depot>",
+	"extends": {
+		"$ref": "savedRailBase.json"
+	},
+	"properties": {
+		"railLength": {
+			"type": "number",
+			"minimum": 0
+		},
+		"vehicleCars": {
+			"type": "array",
+			"items": {
+				"$ref": "vehicleCar.json"
+			}
+		},
+		"pathSidingToMainRoute": {
+			"type": "array",
+			"items": {
+				"$ref": "pathData.json"
+			}
+		},
+		"pathMainRouteToSiding": {
+			"type": "array",
+			"items": {
+				"$ref": "pathData.json"
+			}
+		},
+		"maxVehicles": {
+			"type": "integer"
+		},
+		"maxManualSpeed": {
+			"type": "integer"
+		},
+		"manualToAutomaticTime": {
+			"type": "integer",
+			"default": 10000
+		},
+		"acceleration": {
+			"type": "number",
+			"default": 0.000004,
+			"minimum": 0
+		}
+	},
+	"required": [
+		"railLength"
+	]
+}

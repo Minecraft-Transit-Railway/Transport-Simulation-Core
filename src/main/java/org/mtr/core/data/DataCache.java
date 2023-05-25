@@ -49,24 +49,24 @@ public class DataCache {
 			mapAreasAndSavedRails(simulator.sidings, simulator.depots);
 
 			positionToRailConnections.clear();
-			simulator.railNodes.forEach(railNode -> positionToRailConnections.put(railNode.position, railNode.connections));
+			simulator.railNodes.forEach(railNode -> positionToRailConnections.put(railNode.getPosition(), railNode.getConnectionsAsMap()));
 
 			routeIdToOneDepot.clear();
 			platformIdToRouteColors.clear();
 			routeColorMap.clear();
 			simulator.routes.forEach(route -> {
-				route.routePlatforms.removeIf(platformId -> !platformIdMap.containsKey(platformId.platformId));
-				route.routePlatforms.forEach(platformId -> {
-					if (!platformIdToRouteColors.containsKey(platformId.platformId)) {
-						platformIdToRouteColors.put(platformId.platformId, new IntArraySet());
+				route.getRoutePlatforms().removeIf(platformId -> !platformIdMap.containsKey(platformId.getPlatformId()));
+				route.getRoutePlatforms().forEach(platformId -> {
+					if (!platformIdToRouteColors.containsKey(platformId.getPlatformId())) {
+						platformIdToRouteColors.put(platformId.getPlatformId(), new IntArraySet());
 					}
-					platformIdToRouteColors.get(platformId.platformId).add(route.color);
+					platformIdToRouteColors.get(platformId.getPlatformId()).add(route.getColor());
 				});
-				routeColorMap.put(route.color, route);
+				routeColorMap.put(route.getColor(), route);
 			});
 			simulator.depots.forEach(depot -> {
-				depot.routeIds.removeIf(routeId -> routeIdMap.get(routeId) == null);
-				depot.routeIds.forEach(routeId -> routeIdToOneDepot.put(routeId, depot));
+				depot.getRouteIds().removeIf(routeId -> routeIdMap.get(routeId) == null);
+				depot.getRouteIds().forEach(routeId -> routeIdToOneDepot.put(routeId, depot));
 			});
 
 			stationIdToConnectingStations.clear();
@@ -79,11 +79,11 @@ public class DataCache {
 				});
 			});
 
-			simulator.depots.forEach(depot -> depot.iterateRoutes((route, routeIndex) -> route.routePlatforms.forEach(platformId -> {
-				if (!platformIdToSidings.containsKey(platformId.platformId)) {
-					platformIdToSidings.put(platformId.platformId, new ObjectArraySet<>());
+			simulator.depots.forEach(depot -> depot.iterateRoutes((route, routeIndex) -> route.getRoutePlatforms().forEach(platformId -> {
+				if (!platformIdToSidings.containsKey(platformId.getPlatformId())) {
+					platformIdToSidings.put(platformId.getPlatformId(), new ObjectArraySet<>());
 				}
-				platformIdToSidings.get(platformId.platformId).addAll(depot.savedRails);
+				platformIdToSidings.get(platformId.getPlatformId()).addAll(depot.savedRails);
 			})));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -124,7 +124,7 @@ public class DataCache {
 
 	protected static <U extends NameColorDataBase> void mapIds(Map<Long, U> map, Set<U> source) {
 		map.clear();
-		source.forEach(data -> map.put(data.id, data));
+		source.forEach(data -> map.put(data.getId(), data));
 	}
 
 	private static <U extends SavedRailBase<U, V>, V extends AreaBase<V, U>> void mapAreasAndSavedRails(ObjectAVLTreeSet<U> savedRails, ObjectAVLTreeSet<V> areas) {
@@ -133,7 +133,7 @@ public class DataCache {
 			savedRail.area = null;
 			final Position pos = savedRail.getMidPosition();
 			for (final V area : areas) {
-				if (area.isTransportMode(savedRail.transportMode) && area.inArea(pos.x, pos.z)) {
+				if (area.isTransportMode(savedRail) && area.inArea(pos)) {
 					savedRail.area = area;
 					area.savedRails.add(savedRail);
 					break;

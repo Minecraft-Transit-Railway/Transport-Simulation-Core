@@ -118,11 +118,13 @@ public final class MessagePackReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateKeys(String key, BiConsumer<String, ReaderBase> ifExists) {
-		unpack(key, value -> {
-			final MessagePackReader messagePackReader = new MessagePackReader(value);
-			iterateMap(value, (mapKey, mapValue) -> ifExists.accept(mapKey, messagePackReader));
-		});
+	public ReaderBase getChild(String key) {
+		return getOrDefault(key, new MessagePackReader(), MessagePackReader::new);
+	}
+
+	@Override
+	public void unpackChild(String key, Consumer<ReaderBase> ifExists) {
+		unpack(key, value -> ifExists.accept(new MessagePackReader(value)));
 	}
 
 	private boolean getBoolean(Value value) {

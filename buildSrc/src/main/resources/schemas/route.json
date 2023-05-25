@@ -1,0 +1,28 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "NameColorDataBase",
+	"extends": {
+		"$ref": "nameColorDataBase.json"
+	},
+	"properties": {
+		"routeType": {
+			"$ref": "RouteType"
+		},
+		"routeNumber": {
+			"type": "string"
+		},
+		"hidden": {
+			"type": "boolean"
+		},
+		"circularState": {
+			"$ref": "Route.CircularState"
+		},
+		"routePlatformData": {
+			"type": "array",
+			"items": {
+				"$ref": "routePlatformData.json"
+			}
+		}
+	}
+}

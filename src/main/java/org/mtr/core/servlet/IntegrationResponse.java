@@ -1,12 +1,12 @@
 package org.mtr.core.servlet;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
-import org.mtr.core.data.NameColorDataBase;
-import org.mtr.core.data.SerializedDataBase;
+import org.mtr.core.data.*;
 import org.mtr.core.serializers.JsonReader;
 import org.mtr.core.serializers.JsonWriter;
 import org.mtr.core.simulation.Simulator;
@@ -19,28 +19,70 @@ public class IntegrationResponse extends ResponseBase {
 		super(data, parameters, bodyObject, currentMillis, simulator);
 	}
 
-	public <T extends NameColorDataBase> JsonObject update(ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
-		final JsonReader jsonReader = new JsonReader(bodyObject);
-		final JsonElement idElement = bodyObject.get("id");
+	public JsonObject update() {
+		final JsonObject jsonObject = new JsonObject();
 
-		if (idElement != null) {
+		bodyObject.keySet().forEach(key -> {
 			try {
-				final T data = dataIdMap.get(idElement.getAsLong());
-				if (data != null) {
-					data.updateData(jsonReader);
-					simulator.dataCache.sync();
-					return getDataAsJson(data);
+				final JsonArray bodyArray = bodyObject.getAsJsonArray(key);
+				final JsonArray resultArray = new JsonArray();
+				switch (key) {
+					case "stations":
+						update(bodyArray, resultArray, simulator.stations, simulator.dataCache.stationIdMap, jsonReader -> new Station(jsonReader, simulator));
+						break;
+					case "platforms":
+						update(bodyArray, resultArray, simulator.platforms, simulator.dataCache.platformIdMap, jsonReader -> new Platform(jsonReader, simulator));
+						break;
+					case "sidings":
+						update(bodyArray, resultArray, simulator.sidings, simulator.dataCache.sidingIdMap, jsonReader -> new Siding(jsonReader, simulator));
+						break;
+					case "routes":
+						update(bodyArray, resultArray, simulator.routes, simulator.dataCache.routeIdMap, jsonReader -> new Route(jsonReader, simulator));
+						break;
+					case "depots":
+						update(bodyArray, resultArray, simulator.depots, simulator.dataCache.depotIdMap, jsonReader -> new Depot(jsonReader, simulator));
+						break;
+				}
+				jsonObject.add(key, resultArray);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+
+		simulator.dataCache.sync();
+		return jsonObject;
+	}
+
+	private static <T extends NameColorDataBase> void update(JsonArray bodyArray, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+		bodyArray.forEach(jsonElement -> {
+			try {
+				final JsonObject jsonObject = jsonElement.getAsJsonObject();
+				final JsonReader jsonReader = new JsonReader(jsonObject);
+				final JsonElement idElement = jsonObject.get("id");
+				final boolean isNew;
+
+				if (idElement == null) {
+					isNew = true;
+				} else {
+					final T data = dataIdMap.get(idElement.getAsLong());
+					if (data == null) {
+						isNew = true;
+					} else {
+						data.updateData(jsonReader);
+						resultArray.add(getDataAsJson(data));
+						isNew = false;
+					}
+				}
+
+				if (isNew) {
+					final T newData = createData.apply(jsonReader);
+					dataSet.add(newData);
+					resultArray.add(getDataAsJson(newData));
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				return null;
 			}
-		}
-
-		final T newData = createData.apply(jsonReader);
-		dataSet.add(newData);
-		simulator.dataCache.sync();
-		return getDataAsJson(newData);
+		});
 	}
 
 	private static <T extends SerializedDataBase> JsonObject getDataAsJson(T data) {

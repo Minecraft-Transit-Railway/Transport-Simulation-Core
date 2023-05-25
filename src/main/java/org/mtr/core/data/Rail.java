@@ -1,64 +1,29 @@
 package org.mtr.core.data;
 
+import org.mtr.core.generated.RailSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.serializers.WriterBase;
-import org.mtr.core.tools.*;
+import org.mtr.core.tools.Angle;
+import org.mtr.core.tools.Position;
+import org.mtr.core.tools.Utilities;
+import org.mtr.core.tools.Vec3;
 
-public class Rail extends SerializedDataBase {
+public final class Rail extends RailSchema {
 
 	public final Angle facingStart;
 	public final Angle facingEnd;
-	public final double speedLimitKilometersPerHour;
 	public final double speedLimitMetersPerMillisecond;
-	public final Shape shapeStart;
-	public final Shape shapeEnd;
-	public final boolean hasSavedRail;
-	public final boolean canAccelerate;
-	public final boolean canTurnBack;
-	public final boolean canHaveSignal;
-	public final TransportMode transportMode;
-	public final boolean validRail;
-	private final double h1, k1, r1, tStart1, tEnd1;
-	private final double h2, k2, r2, tStart2, tEnd2;
-	private final long yStart, yEnd;
-	private final boolean reverseT1, isStraight1, reverseT2, isStraight2;
 
 	private static final double ACCEPT_THRESHOLD = 1E-4;
 	private static final int MIN_RADIUS = 2;
 	private static final int CABLE_CURVATURE_SCALE = 1000;
 	private static final int MAX_CABLE_DIP = 8;
 
-	private static final String KEY_H_1 = "h_1";
-	private static final String KEY_K_1 = "k_1";
-	private static final String KEY_H_2 = "h_2";
-	private static final String KEY_K_2 = "k_2";
-	private static final String KEY_R_1 = "r_1";
-	private static final String KEY_R_2 = "r_2";
-	private static final String KEY_T_START_1 = "t_start_1";
-	private static final String KEY_T_END_1 = "t_end_1";
-	private static final String KEY_T_START_2 = "t_start_2";
-	private static final String KEY_T_END_2 = "t_end_2";
-	private static final String KEY_Y_START = "y_start";
-	private static final String KEY_Y_END = "y_end";
-	private static final String KEY_REVERSE_T_1 = "reverse_t_1";
-	private static final String KEY_IS_STRAIGHT_1 = "is_straight_1";
-	private static final String KEY_REVERSE_T_2 = "reverse_t_2";
-	private static final String KEY_IS_STRAIGHT_2 = "is_straight_2";
-	private static final String KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR = "speed_limit_kilometers_per_hour";
-	private static final String KEY_SHAPE_START = "shape_start";
-	private static final String KEY_SHAPE_END = "shape_end";
-	private static final String KEY_HAS_SAVED_RAIL = "has_saved_rail";
-	private static final String KEY_CAN_ACCELERATE = "can_accelerate";
-	private static final String KEY_CAN_TURN_BACK = "can_turn_back";
-	private static final String KEY_CAN_HAVE_SIGNAL = "can_have_signal";
-	private static final String KEY_TRANSPORT_MODE = "transport_mode";
-
-	public static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, double speedLimitKilometersPerHour, Shape shapeStart, Shape shapeEnd, boolean hasSavedRail, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
-		return new Rail(posStart, facingStart, posEnd, facingEnd, speedLimitKilometersPerHour, shapeStart, shapeEnd, hasSavedRail, canAccelerate, false, canHaveSignal, transportMode);
+	public static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, long speedLimit, Shape shapeStart, Shape shapeEnd, boolean isSavedRail, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
+		return newRail(posStart, facingStart, posEnd, facingEnd, speedLimit, shapeStart, shapeEnd, isSavedRail, canAccelerate, false, canHaveSignal, transportMode);
 	}
 
 	public static Rail newTurnBackRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
-		return new Rail(posStart, facingStart, posEnd, facingEnd, 80, shapeStart, shapeEnd, false, false, true, false, transportMode);
+		return newRail(posStart, facingStart, posEnd, facingEnd, 80, shapeStart, shapeEnd, false, false, true, false, transportMode);
 	}
 
 	public static Rail newPlatformRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
@@ -70,7 +35,7 @@ public class Rail extends SerializedDataBase {
 	}
 
 	private static Rail newPlatformOrSidingRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, boolean isPlatform, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
-		return new Rail(posStart, facingStart, posEnd, facingEnd, isPlatform ? 80 : 40, shapeStart, shapeEnd, true, false, false, true, transportMode);
+		return newRail(posStart, facingStart, posEnd, facingEnd, isPlatform ? 80 : 40, shapeStart, shapeEnd, true, false, false, true, transportMode);
 	}
 
 	// for curves:
@@ -83,30 +48,30 @@ public class Rail extends SerializedDataBase {
 	// x = h*T + k*r
 	// z = k*T + h*r
 
-	private Rail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, double speedLimitKilometersPerHour, Shape shapeStart, Shape shapeEnd, boolean hasSavedRail, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
-		this.facingStart = facingStart;
-		this.facingEnd = facingEnd;
-		this.speedLimitKilometersPerHour = speedLimitKilometersPerHour;
-		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimitKilometersPerHour);
-		this.shapeStart = shapeStart;
-		this.shapeEnd = shapeEnd;
-		this.hasSavedRail = hasSavedRail;
-		this.canAccelerate = canAccelerate;
-		this.canTurnBack = canTurnBack;
-		this.canHaveSignal = canHaveSignal;
-		this.transportMode = transportMode;
-		validRail = true;
-		yStart = posStart.y;
-		yEnd = posEnd.y;
-
-		final long xStart = posStart.x;
-		final long zStart = posStart.z;
-		final long xEnd = posEnd.x;
-		final long zEnd = posEnd.z;
+	private static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, long speedLimit, Shape shape1, Shape shape2, boolean isSavedRail, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
+		final long xStart = posStart.getX();
+		final long zStart = posStart.getZ();
+		final long xEnd = posEnd.getX();
+		final long zEnd = posEnd.getZ();
 
 		// Coordinate system translation and rotation
-		final Vec3 vecDifference = new Vec3(posEnd.x - posStart.x, 0, posEnd.z - posStart.z);
+		final Vec3 vecDifference = new Vec3(posEnd.getX() - posStart.getX(), 0, posEnd.getZ() - posStart.getZ());
 		final Vec3 vecDifferenceRotated = vecDifference.rotateY((float) facingStart.angleRadians);
+
+		final double h1;
+		final double k1;
+		final double h2;
+		final double k2;
+		final double r1;
+		final double r2;
+		final double tStart1;
+		final double tEnd1;
+		final double tStart2;
+		final double tEnd2;
+		final boolean reverseT1;
+		final boolean reverseT2;
+		final boolean isStraight1;
+		final boolean isStraight2;
 
 		// First we check the Delta Side > 0
 		// 1. If they are same angle
@@ -246,94 +211,40 @@ public class Rail extends SerializedDataBase {
 				isStraight1 = isStraight2 = true;
 			}
 		}
+
+		return new Rail(h1, k1, h2, k2, r1, r2, tStart1, tEnd1, tStart2, tEnd2, posStart.getY(), posEnd.getY(), reverseT1, reverseT2, isStraight1, isStraight2, speedLimit, shape1, shape2, isSavedRail, canAccelerate, canTurnBack, canHaveSignal, transportMode);
 	}
 
-	public Rail(ReaderBase readerBase) {
-		updateData(readerBase);
-
-		h1 = readerBase.getDouble(KEY_H_1, 0);
-		k1 = readerBase.getDouble(KEY_K_1, 0);
-		h2 = readerBase.getDouble(KEY_H_2, 0);
-		k2 = readerBase.getDouble(KEY_K_2, 0);
-		r1 = readerBase.getDouble(KEY_R_1, 0);
-		r2 = readerBase.getDouble(KEY_R_2, 0);
-		tStart1 = readerBase.getDouble(KEY_T_START_1, 0);
-		tEnd1 = readerBase.getDouble(KEY_T_END_1, 0);
-		tStart2 = readerBase.getDouble(KEY_T_START_2, 0);
-		tEnd2 = readerBase.getDouble(KEY_T_END_2, 0);
-		yStart = readerBase.getLong(KEY_Y_START, 0);
-		yEnd = readerBase.getLong(KEY_Y_END, 0);
-		reverseT1 = readerBase.getBoolean(KEY_REVERSE_T_1, false);
-		isStraight1 = readerBase.getBoolean(KEY_IS_STRAIGHT_1, false);
-		reverseT2 = readerBase.getBoolean(KEY_REVERSE_T_2, false);
-		isStraight2 = readerBase.getBoolean(KEY_IS_STRAIGHT_2, false);
-
-		final double[] tempSpeedLimitKilometersPerHour = {readerBase.getDouble(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR, 20)};
-		final Shape[] tempShapeStart = {EnumHelper.valueOf(Shape.CURVE, readerBase.getString(KEY_SHAPE_START, ""))};
-		final Shape[] tempShapeEnd = {EnumHelper.valueOf(Shape.CURVE, readerBase.getString(KEY_SHAPE_END, ""))};
-		final boolean[] tempHasSavedRail = {readerBase.getBoolean(KEY_HAS_SAVED_RAIL, false)};
-		final boolean[] tempCanAccelerate = {readerBase.getBoolean(KEY_CAN_ACCELERATE, true)};
-		final boolean[] tempCanTurnBack = {readerBase.getBoolean(KEY_CAN_TURN_BACK, false)};
-		final boolean[] tempCanHaveSignal = {readerBase.getBoolean(KEY_CAN_HAVE_SIGNAL, true)};
-		validRail = DataFixer.convertRailType(readerBase, (speedLimitKilometersPerHour, shape, hasSavedRail, canAccelerate, canTurnBack, canHaveSignal) -> {
-			tempSpeedLimitKilometersPerHour[0] = speedLimitKilometersPerHour;
-			tempShapeStart[0] = shape;
-			tempShapeEnd[0] = shape;
-			tempHasSavedRail[0] = hasSavedRail;
-			tempCanAccelerate[0] = canAccelerate;
-			tempCanTurnBack[0] = canTurnBack;
-			tempCanHaveSignal[0] = canHaveSignal;
-		});
-		speedLimitKilometersPerHour = tempSpeedLimitKilometersPerHour[0];
-		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimitKilometersPerHour);
-		shapeStart = tempShapeStart[0];
-		shapeEnd = tempShapeEnd[0];
-		hasSavedRail = tempHasSavedRail[0];
-		canAccelerate = tempCanAccelerate[0];
-		canTurnBack = tempCanTurnBack[0];
-		canHaveSignal = tempCanHaveSignal[0];
-
-		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, readerBase.getString(KEY_TRANSPORT_MODE, ""));
-
+	private Rail(double h1, double k1, double h2, double k2, double r1, double r2, double tStart1, double tEnd1, double tStart2, double tEnd2, long yStart, long yEnd, boolean reverseT1, boolean reverseT2, boolean isStraight1, boolean isStraight2, long speedLimit, Rail.Shape shapeStart, Rail.Shape shapeEnd, boolean isSavedRail, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
+		super(h1, k1, h2, k2, r1, r2, tStart1, tEnd1, tStart2, tEnd2, yStart, yEnd, reverseT1, reverseT2, isStraight1, isStraight2, speedLimit, shapeStart, shapeEnd, isSavedRail, canAccelerate, canTurnBack, canHaveSignal, transportMode);
+		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit);
 		facingStart = getRailAngle(false);
 		facingEnd = getRailAngle(true);
 	}
 
-	@Override
-	public void updateData(ReaderBase readerBase) {
-	}
-
-	@Override
-	public void serializeData(WriterBase writerBase) {
-		writerBase.writeDouble(KEY_H_1, h1);
-		writerBase.writeDouble(KEY_K_1, k1);
-		writerBase.writeDouble(KEY_H_2, h2);
-		writerBase.writeDouble(KEY_K_2, k2);
-		writerBase.writeDouble(KEY_R_1, r1);
-		writerBase.writeDouble(KEY_R_2, r2);
-		writerBase.writeDouble(KEY_T_START_1, tStart1);
-		writerBase.writeDouble(KEY_T_END_1, tEnd1);
-		writerBase.writeDouble(KEY_T_START_2, tStart2);
-		writerBase.writeDouble(KEY_T_END_2, tEnd2);
-		writerBase.writeDouble(KEY_Y_START, yStart);
-		writerBase.writeDouble(KEY_Y_END, yEnd);
-		writerBase.writeBoolean(KEY_REVERSE_T_1, reverseT1);
-		writerBase.writeBoolean(KEY_IS_STRAIGHT_1, isStraight1);
-		writerBase.writeBoolean(KEY_REVERSE_T_2, reverseT2);
-		writerBase.writeBoolean(KEY_IS_STRAIGHT_2, isStraight2);
-		writerBase.writeDouble(KEY_SPEED_LIMIT_KILOMETERS_PER_HOUR, speedLimitKilometersPerHour);
-		writerBase.writeString(KEY_SHAPE_START, shapeStart.toString());
-		writerBase.writeString(KEY_SHAPE_END, shapeEnd.toString());
-		writerBase.writeBoolean(KEY_HAS_SAVED_RAIL, hasSavedRail);
-		writerBase.writeBoolean(KEY_CAN_ACCELERATE, canAccelerate);
-		writerBase.writeBoolean(KEY_CAN_TURN_BACK, canTurnBack);
-		writerBase.writeBoolean(KEY_CAN_HAVE_SIGNAL, canHaveSignal);
-		writerBase.writeString(KEY_TRANSPORT_MODE, transportMode.toString());
+	public Rail(ReaderBase readerBase) {
+		super(readerBase);
+		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit);
+		facingStart = getRailAngle(false);
+		facingEnd = getRailAngle(true);
+		updateData(readerBase);
 	}
 
 	@Override
 	public String getHexId() {
 		return "";
+	}
+
+	public boolean canAccelerate() {
+		return canAccelerate;
+	}
+
+	public boolean isSavedRail() {
+		return isSavedRail;
+	}
+
+	public boolean canTurnBack() {
+		return canTurnBack;
 	}
 
 	public Vec3 getPosition(double rawValue) {

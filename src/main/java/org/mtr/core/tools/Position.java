@@ -1,23 +1,39 @@
 package org.mtr.core.tools;
 
+import org.mtr.core.generated.PositionSchema;
+import org.mtr.core.serializers.ReaderBase;
+
 import java.util.Objects;
 
-public class Position implements Comparable<Position> {
-
-	public final long x;
-	public final long y;
-	public final long z;
+public class Position extends PositionSchema implements Comparable<Position> {
 
 	public Position(long x, long y, long z) {
-		this.x = x;
-		this.y = y;
-		this.z = z;
+		super(x, y, z);
+	}
+
+	public Position(ReaderBase readerBase) {
+		super(readerBase);
 	}
 
 	public Position(Vec3 railPosition) {
-		x = (long) Math.floor(railPosition.x);
-		y = (long) Math.floor(railPosition.y);
-		z = (long) Math.floor(railPosition.z);
+		this((long) Math.floor(railPosition.x), (long) Math.floor(railPosition.y), (long) Math.floor(railPosition.z));
+	}
+
+	@Override
+	public String getHexId() {
+		return "";
+	}
+
+	public long getX() {
+		return x;
+	}
+
+	public long getY() {
+		return y;
+	}
+
+	public long getZ() {
+		return z;
 	}
 
 	public Position offset(long offsetX, long offsetY, long offsetZ) {

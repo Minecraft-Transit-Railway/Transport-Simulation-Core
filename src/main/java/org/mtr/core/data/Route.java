@@ -3,29 +3,14 @@ package org.mtr.core.data;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.generated.RouteSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
-public class Route extends NameColorDataBase {
+import java.util.Locale;
 
-	public RouteType routeType = RouteType.NORMAL;
-	public boolean hasRouteNumber;
-	public String routeNumber = "";
-	public boolean isHidden;
-	public boolean disableNextStationAnnouncements;
-	public CircularState circularState = CircularState.NONE;
-	public final ObjectArrayList<RoutePlatform> routePlatforms = new ObjectArrayList<>();
-
-	private static final String KEY_ROUTE_TYPE = "route_type";
-	private static final String KEY_HAS_ROUTE_NUMBER = "is_light_rail_route";
-	private static final String KEY_ROUTE_NUMBER = "light_rail_route_number";
-	private static final String KEY_IS_ROUTE_HIDDEN = "is_route_hidden";
-	private static final String KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS = "disable_next_station_announcements";
-	private static final String KEY_CIRCULAR_STATE = "circular_state";
-	private static final String KEY_PLATFORM_IDS = "platform_ids";
-	private static final String KEY_CUSTOM_DESTINATIONS = "custom_destinations";
+public final class Route extends RouteSchema {
 
 	public Route(TransportMode transportMode, Simulator simulator) {
 		super(transportMode, simulator);
@@ -37,74 +22,29 @@ public class Route extends NameColorDataBase {
 	}
 
 	@Override
-	public void updateData(ReaderBase readerBase) {
-		super.updateData(readerBase);
-		readerBase.unpackString(KEY_ROUTE_TYPE, value -> routeType = EnumHelper.valueOf(RouteType.NORMAL, value));
-		readerBase.unpackBoolean(KEY_HAS_ROUTE_NUMBER, value -> hasRouteNumber = value);
-		readerBase.unpackString(KEY_ROUTE_NUMBER, value -> routeNumber = value);
-		readerBase.unpackBoolean(KEY_IS_ROUTE_HIDDEN, value -> isHidden = value);
-		readerBase.unpackBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, value -> disableNextStationAnnouncements = value);
-		readerBase.unpackString(KEY_CIRCULAR_STATE, value -> circularState = EnumHelper.valueOf(CircularState.NONE, value));
-		readerBase.iterateLongArray(KEY_PLATFORM_IDS, platformId -> routePlatforms.add(new RoutePlatform(platformId)));
-
-		final ObjectArrayList<String> customDestinations = new ObjectArrayList<>();
-		readerBase.iterateStringArray(KEY_CUSTOM_DESTINATIONS, customDestinations::add);
-		for (int i = 0; i < Math.min(routePlatforms.size(), customDestinations.size()); i++) {
-			routePlatforms.get(i).customDestination = customDestinations.get(i);
-		}
+	protected boolean noTransportMode() {
+		return false;
 	}
 
-	@Override
-	public void serializeData(WriterBase writerBase) {
-		super.serializeData(writerBase);
-		serializeRouteType(writerBase);
-		serializeHasRouteNumber(writerBase);
-		serializeRouteNumber(writerBase);
-		serializeIsRouteHidden(writerBase);
-		serializeDisableNextStationAnnouncements(writerBase);
-		serializeCircularState(writerBase);
-		serializeRoutePlatforms(writerBase);
+	public ObjectArrayList<RoutePlatformData> getRoutePlatforms() {
+		return routePlatformData;
 	}
 
-	@Override
-	protected boolean hasTransportMode() {
-		return true;
+	public String getRouteNumber() {
+		return routeNumber;
 	}
 
-	public void serializeRouteType(WriterBase writerBase) {
-		writerBase.writeString(KEY_ROUTE_TYPE, routeType.toString());
+	public String getRouteTypeKey() {
+		return String.format("%s_%s", transportMode, routeType).toLowerCase(Locale.ENGLISH);
 	}
 
-	public void serializeHasRouteNumber(WriterBase writerBase) {
-		writerBase.writeBoolean(KEY_HAS_ROUTE_NUMBER, hasRouteNumber);
-	}
-
-	public void serializeRouteNumber(WriterBase writerBase) {
-		writerBase.writeString(KEY_ROUTE_NUMBER, routeNumber);
-	}
-
-	public void serializeIsRouteHidden(WriterBase writerBase) {
-		writerBase.writeBoolean(KEY_IS_ROUTE_HIDDEN, isHidden);
-	}
-
-	public void serializeDisableNextStationAnnouncements(WriterBase writerBase) {
-		writerBase.writeBoolean(KEY_DISABLE_NEXT_STATION_ANNOUNCEMENTS, disableNextStationAnnouncements);
-	}
-
-	public void serializeCircularState(WriterBase writerBase) {
-		writerBase.writeString(KEY_CIRCULAR_STATE, circularState.toString());
-	}
-
-	public void serializeRoutePlatforms(WriterBase writerBase) {
-		final WriterBase.Array writerBaseArrayPlatformIds = writerBase.writeArray(KEY_PLATFORM_IDS);
-		routePlatforms.forEach(routePlatform -> writerBaseArrayPlatformIds.writeLong(routePlatform.platformId));
-		final WriterBase.Array writerBaseArrayCustomDestinations = writerBase.writeArray(KEY_CUSTOM_DESTINATIONS);
-		routePlatforms.forEach(routePlatform -> writerBaseArrayCustomDestinations.writeString(routePlatform.customDestination));
+	public CircularState getCircularState() {
+		return circularState;
 	}
 
 	public String getDestination(DataCache dataCache, int index) {
-		for (int i = Math.min(routePlatforms.size() - 1, index); i >= 0; i--) {
-			final String customDestination = routePlatforms.get(i).customDestination;
+		for (int i = Math.min(routePlatformData.size() - 1, index); i >= 0; i--) {
+			final String customDestination = routePlatformData.get(i).getCustomDestination();
 			if (destinationIsReset(customDestination)) {
 				break;
 			} else if (!customDestination.isEmpty()) {
@@ -112,25 +52,25 @@ public class Route extends NameColorDataBase {
 			}
 		}
 
-		if (routePlatforms.isEmpty()) {
+		if (routePlatformData.isEmpty()) {
 			return "";
 		} else {
 			Platform platform = null;
 
 			if (circularState != CircularState.NONE) {
-				for (int i = index + 1; i < routePlatforms.size(); i++) {
-					platform = dataCache.platformIdMap.get(routePlatforms.get(i).platformId);
-					if (platform != null && platform.area != null && platform.area.savedRails.stream().anyMatch(checkPlatform -> dataCache.platformIdToRouteColors.getOrDefault(checkPlatform.id, new IntArraySet()).intStream().anyMatch(checkColor -> checkColor != color))) {
+				for (int i = index + 1; i < routePlatformData.size(); i++) {
+					platform = dataCache.platformIdMap.get(routePlatformData.get(i).getPlatformId());
+					if (platform != null && platform.area != null && platform.area.savedRails.stream().anyMatch(checkPlatform -> dataCache.platformIdToRouteColors.getOrDefault(checkPlatform.getId(), new IntArraySet()).intStream().anyMatch(checkColor -> checkColor != color))) {
 						break;
 					}
 				}
 			}
 
 			if (platform == null) {
-				platform = dataCache.platformIdMap.get(Utilities.getElement(routePlatforms, -1).platformId);
+				platform = dataCache.platformIdMap.get(Utilities.getElement(routePlatformData, -1).getPlatformId());
 			}
 
-			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.name) : "";
+			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.getName()) : "";
 		}
 	}
 

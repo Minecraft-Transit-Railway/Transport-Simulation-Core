@@ -114,7 +114,7 @@ public class DataFixer {
 				final int trainCars = Math.min(transportMode.maxLength, (int) Math.floor(railLength / trainLength));
 				final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
 				for (int i = 0; i < trainCars; i++) {
-					vehicleCars.add(new VehicleCar(trainId, trainLength, trainWidth, 0, 0, new double[0], new double[0]));
+					vehicleCars.add(new VehicleCar(trainId, trainLength, trainWidth, 0, 0));
 				}
 				consumer.accept(vehicleCars);
 			} catch (Exception ignored) {
