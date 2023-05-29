@@ -32,11 +32,6 @@ public final class Depot extends DepotSchema implements Utilities {
 		updateData(readerBase);
 	}
 
-	@Override
-	protected boolean noTransportMode() {
-		return false;
-	}
-
 	public void init() {
 		Siding.initPath(path, simulator.dataCache);
 		savedRails.forEach(Siding::init);

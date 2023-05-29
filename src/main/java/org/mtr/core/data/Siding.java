@@ -41,7 +41,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	private static final String KEY_VEHICLES = "vehicles";
 
-	public Siding(TransportMode transportMode, Position position1, Position position2, double railLength, Simulator simulator) {
+	public Siding(Position position1, Position position2, double railLength, TransportMode transportMode, Simulator simulator) {
 		super(getRailLength(railLength), position1, position2, transportMode, simulator);
 		vehicleReaders = ObjectImmutableList.of();
 	}

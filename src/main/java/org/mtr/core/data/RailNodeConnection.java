@@ -7,14 +7,13 @@ import org.mtr.core.tools.Position;
 
 public final class RailNodeConnection extends RailNodeConnectionSchema {
 
+	RailNodeConnection(Position position, Rail rail) {
+		super(position, rail);
+	}
+
 	public RailNodeConnection(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
-	}
-
-	@Override
-	public String getHexId() {
-		return "";
 	}
 
 	public void writeToMap(Object2ObjectOpenHashMap<Position, Rail> connectionsMap) {

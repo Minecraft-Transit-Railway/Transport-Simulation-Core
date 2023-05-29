@@ -30,11 +30,6 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	}
 
 	@Override
-	public String getHexId() {
-		return "";
-	}
-
-	@Override
 	public boolean matchesCondition(double value) {
 		return value >= startDistance;
 	}

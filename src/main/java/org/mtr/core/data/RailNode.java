@@ -6,7 +6,11 @@ import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
-public final class RailNode extends RailNodeSchema {
+public final class RailNode extends RailNodeSchema implements SerializedDataBaseWithId {
+
+	RailNode(Position position) {
+		super(position);
+	}
 
 	public RailNode(ReaderBase readerBase) {
 		super(readerBase);

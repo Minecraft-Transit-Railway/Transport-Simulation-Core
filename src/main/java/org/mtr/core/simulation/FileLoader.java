@@ -11,7 +11,7 @@ import org.msgpack.core.MessagePacker;
 import org.msgpack.core.MessageUnpacker;
 import org.mtr.core.Main;
 import org.mtr.core.data.NameColorDataBase;
-import org.mtr.core.data.SerializedDataBase;
+import org.mtr.core.data.SerializedDataBaseWithId;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.MessagePackWriter;
 
@@ -28,7 +28,7 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class FileLoader<T extends SerializedDataBase> {
+public class FileLoader<T extends SerializedDataBaseWithId> {
 
 	public final String key;
 	private final Set<T> dataSet;
@@ -50,7 +50,7 @@ public class FileLoader<T extends SerializedDataBase> {
 		final ObjectImmutableList<ObjectArrayList<String>> checkFilesToDelete = createEmptyList256();
 		fileHashes.keySet().forEach(fileName -> checkFilesToDelete.get(getParentInt(fileName)).add(fileName));
 
-		final int filesWritten = writeDirtyDataToFile(checkFilesToDelete, dirtyData, SerializedDataBase::getHexId, useReducedHash);
+		final int filesWritten = writeDirtyDataToFile(checkFilesToDelete, dirtyData, SerializedDataBaseWithId::getHexId, useReducedHash);
 		int filesDeleted = 0;
 
 		for (final ObjectArrayList<String> checkFilesToDeleteForParent : checkFilesToDelete) {
@@ -177,7 +177,7 @@ public class FileLoader<T extends SerializedDataBase> {
 		return String.format("%s/%s", parentFolderName, fileName);
 	}
 
-	private static int getHash(SerializedDataBase data, boolean useReducedHash) {
+	private static int getHash(SerializedDataBaseWithId data, boolean useReducedHash) {
 		int hash = 0;
 		try (final MessageBufferPacker messageBufferPacker = MessagePack.newDefaultBufferPacker()) {
 			packMessage(messageBufferPacker, data, useReducedHash);
@@ -188,7 +188,7 @@ public class FileLoader<T extends SerializedDataBase> {
 		return hash;
 	}
 
-	private static void packMessage(MessagePacker messagePacker, SerializedDataBase data, boolean useReducedHash) {
+	private static void packMessage(MessagePacker messagePacker, SerializedDataBaseWithId data, boolean useReducedHash) {
 		final MessagePackWriter messagePackWriter = new MessagePackWriter(messagePacker);
 		if (useReducedHash) {
 			data.serializeData(messagePackWriter);

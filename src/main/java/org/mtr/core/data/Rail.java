@@ -230,11 +230,6 @@ public final class Rail extends RailSchema {
 		updateData(readerBase);
 	}
 
-	@Override
-	public String getHexId() {
-		return "";
-	}
-
 	public boolean canAccelerate() {
 		return canAccelerate;
 	}

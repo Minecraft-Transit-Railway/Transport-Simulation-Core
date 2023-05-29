@@ -5,20 +5,23 @@ import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 public class Field implements GeneratedObject {
 
-	public final ObjectArraySet<Modifier> modifiers = new ObjectArraySet<>();
+	public final ObjectArraySet<OtherModifier> otherModifiers = new ObjectArraySet<>();
+	private final VisibilityModifier visibilityModifier;
 	private final Type type;
-	public final String name;
+	private final String name;
 	private final String defaultValue;
 	private final boolean useDefaultInitializer;
 
-	public Field(Type type, String name, boolean useDefaultInitializer) {
+	public Field(VisibilityModifier visibilityModifier, Type type, String name, boolean useDefaultInitializer) {
+		this.visibilityModifier = visibilityModifier;
 		this.type = type;
 		this.name = name;
 		defaultValue = null;
 		this.useDefaultInitializer = useDefaultInitializer;
 	}
 
-	public Field(Type type, String name, String defaultValue) {
+	public Field(VisibilityModifier visibilityModifier, Type type, String name, String defaultValue) {
+		this.visibilityModifier = visibilityModifier;
 		this.type = type;
 		this.name = name;
 		this.defaultValue = defaultValue;
@@ -29,8 +32,8 @@ public class Field implements GeneratedObject {
 	public ObjectArrayList<String> generate() {
 		final ObjectArrayList<String> result = new ObjectArrayList<>();
 
-		final StringBuilder stringBuilder = new StringBuilder();
-		modifiers.forEach(modifier -> stringBuilder.append(modifier.name).append(' '));
+		final StringBuilder stringBuilder = new StringBuilder(visibilityModifier.name).append(' ');
+		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
 		stringBuilder.append(type.name).append(' ').append(name).append(type.getInitializer(defaultValue, useDefaultInitializer));
 		result.add(stringBuilder.toString());
 

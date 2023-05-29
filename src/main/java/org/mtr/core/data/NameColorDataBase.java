@@ -1,14 +1,14 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.NameColorDataBaseSchema;
+import org.mtr.core.generated.StationSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
 import java.util.Locale;
-import java.util.Random;
 
-public abstract class NameColorDataBase extends NameColorDataBaseSchema implements SerializedDataBase, Comparable<NameColorDataBase> {
+public abstract class NameColorDataBase extends NameColorDataBaseSchema implements SerializedDataBaseWithId, Comparable<NameColorDataBase> {
 
 	public NameColorDataBase(TransportMode transportMode, Simulator simulator) {
 		super(transportMode, simulator);
@@ -43,22 +43,16 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 		color = newColor & 0xFFFFFF;
 	}
 
-	public final boolean isTransportMode(TransportMode transportMode) {
-		return noTransportMode() || this.transportMode == transportMode;
-	}
-
 	public final boolean isTransportMode(NameColorDataBase data) {
 		return noTransportMode() || data.noTransportMode() || data.transportMode == transportMode;
 	}
-
-	protected abstract boolean noTransportMode();
 
 	private String combineNameColorId() {
 		return (name + color + id).toLowerCase(Locale.ENGLISH);
 	}
 
-	private static long generateId() {
-		return new Random().nextLong();
+	private boolean noTransportMode() {
+		return this instanceof StationSchema;
 	}
 
 	@Override

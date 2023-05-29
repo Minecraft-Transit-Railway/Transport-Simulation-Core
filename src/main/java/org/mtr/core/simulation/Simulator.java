@@ -143,7 +143,7 @@ public class Simulator implements Utilities {
 		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}
 
-	private <T extends SerializedDataBase> void save(FileLoader<T> fileLoader, boolean useReducedHash) {
+	private <T extends SerializedDataBaseWithId> void save(FileLoader<T> fileLoader, boolean useReducedHash) {
 		final IntIntImmutablePair saveCounts = fileLoader.save(useReducedHash);
 		if (saveCounts.leftInt() > 0) {
 			Main.LOGGER.info(String.format("- Changed %s: %s", fileLoader.key, saveCounts.leftInt()));

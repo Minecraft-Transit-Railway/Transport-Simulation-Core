@@ -18,11 +18,6 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		super(readerBase, simulator);
 	}
 
-	@Override
-	protected final boolean noTransportMode() {
-		return false;
-	}
-
 	public boolean containsPos(Position position) {
 		return position1.equals(position) || position2.equals(position);
 	}

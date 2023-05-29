@@ -10,10 +10,6 @@ import java.util.function.Consumer;
 
 public interface Utilities {
 
-	static String formatClassName(String text) {
-		return String.format("%sSchema", formatRefName(text));
-	}
-
 	static String formatRefName(String text) {
 		return isObject(text) ? capitalizeFirstLetter(text.split("\\.json")[0]) : text;
 	}

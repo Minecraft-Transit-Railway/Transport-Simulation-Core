@@ -21,11 +21,6 @@ public final class Route extends RouteSchema {
 		updateData(readerBase);
 	}
 
-	@Override
-	protected boolean noTransportMode() {
-		return false;
-	}
-
 	public ObjectArrayList<RoutePlatformData> getRoutePlatforms() {
 		return routePlatformData;
 	}

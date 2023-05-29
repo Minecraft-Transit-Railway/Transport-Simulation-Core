@@ -1,15 +1,13 @@
 package org.mtr.core.generator.objects;
 
-public enum Modifier {
-	PUBLIC("public"),
-	PROTECTED("protected"),
-	PRIVATE("private"),
+public enum OtherModifier {
 	ABSTRACT("abstract"),
+	STATIC("static"),
 	FINAL("final");
 
 	public final String name;
 
-	Modifier(String name) {
+	OtherModifier(String name) {
 		this.name = name;
 	}
 }

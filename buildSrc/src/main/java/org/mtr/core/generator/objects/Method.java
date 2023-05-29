@@ -7,51 +7,42 @@ import java.util.stream.Collectors;
 
 public class Method implements GeneratedObject {
 
-	public final ObjectArraySet<Modifier> modifiers = new ObjectArraySet<>();
+	public final ObjectArraySet<String> annotations = new ObjectArraySet<>();
+	public final ObjectArraySet<OtherModifier> otherModifiers = new ObjectArraySet<>();
 	public final ObjectArrayList<Parameter> parameters = new ObjectArrayList<>();
 	public final ObjectArrayList<String> content = new ObjectArrayList<>();
+	private final VisibilityModifier visibilityModifier;
 	private final String name;
 	private final Type returnType;
-	private final boolean isNotConstructor;
 
-	private Method(String name, Type returnType, boolean isNotConstructor) {
+	public Method(VisibilityModifier visibilityModifier, Type returnType, String name) {
+		this.visibilityModifier = visibilityModifier;
 		this.name = name;
 		this.returnType = returnType;
-		this.isNotConstructor = isNotConstructor;
 	}
 
 	@Override
 	public ObjectArrayList<String> generate() {
 		final ObjectArrayList<String> result = new ObjectArrayList<>();
-		final boolean isAbstract = modifiers.contains(Modifier.ABSTRACT);
+		annotations.forEach(annotation -> result.add(String.format("@%s", annotation)));
+		final boolean isAbstract = otherModifiers.contains(OtherModifier.ABSTRACT);
 
-		final StringBuilder stringBuilder = new StringBuilder();
-		modifiers.forEach(modifier -> stringBuilder.append(modifier.name).append(' '));
-		if (isNotConstructor) {
-			stringBuilder.append(returnType == null ? "void" : returnType.name).append(' ');
-		}
+		final StringBuilder stringBuilder = new StringBuilder(visibilityModifier.name).append(' ');
+		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
+		stringBuilder.append(returnType == null ? "void" : returnType.name).append(' ');
 		stringBuilder.append(name).append('(');
 		stringBuilder.append(parameters.stream().map(parameter -> String.join(" ", parameter.generate())).collect(Collectors.joining(", "))).append(")");
+
 		if (isAbstract) {
 			stringBuilder.append(";");
+			result.add(stringBuilder.toString());
 		} else {
 			stringBuilder.append(" {");
-		}
-		result.add(stringBuilder.toString());
-
-		if (!isAbstract) {
+			result.add(stringBuilder.toString());
 			content.forEach(line -> result.add(String.format("\t%s", line)));
 			result.add("}");
 		}
 
 		return result;
-	}
-
-	public static Method createMethod(String name, Type returnType) {
-		return new Method(name, returnType, true);
-	}
-
-	public static Method createConstructor(String name) {
-		return new Method(name, null, false);
 	}
 }

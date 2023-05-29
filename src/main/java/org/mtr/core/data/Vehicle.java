@@ -96,11 +96,6 @@ public final class Vehicle extends VehicleSchema {
 		updateData(readerBase);
 	}
 
-	@Override
-	protected boolean noTransportMode() {
-		return false;
-	}
-
 	public boolean getIsOnRoute() {
 		return isOnRoute;
 	}

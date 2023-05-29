@@ -19,11 +19,6 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		this((long) Math.floor(railPosition.x), (long) Math.floor(railPosition.y), (long) Math.floor(railPosition.z));
 	}
 
-	@Override
-	public String getHexId() {
-		return "";
-	}
-
 	public long getX() {
 		return x;
 	}

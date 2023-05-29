@@ -7,17 +7,12 @@ import org.mtr.core.simulation.Simulator;
 public final class Station extends StationSchema {
 
 	public Station(Simulator simulator) {
-		super(TransportMode.TRAIN, simulator);
+		super(TransportMode.values()[0], simulator);
 	}
 
 	public Station(ReaderBase readerBase, Simulator simulator) {
 		super(readerBase, simulator);
 		updateData(readerBase);
-	}
-
-	@Override
-	protected boolean noTransportMode() {
-		return true;
 	}
 
 	public long getZone1() {

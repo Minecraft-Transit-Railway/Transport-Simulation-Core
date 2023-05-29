@@ -9,8 +9,6 @@ public interface SerializedDataBase {
 
 	void serializeData(WriterBase writerBase);
 
-	String getHexId();
-
 	default void serializeFullData(WriterBase writerBase) {
 		serializeData(writerBase);
 	}

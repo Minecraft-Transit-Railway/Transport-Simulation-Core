@@ -18,11 +18,6 @@ public final class VehicleCar extends VehicleCarSchema {
 		updateData(readerBase);
 	}
 
-	@Override
-	public String getHexId() {
-		return "";
-	}
-
 	public String getVehicleId() {
 		return vehicleId;
 	}

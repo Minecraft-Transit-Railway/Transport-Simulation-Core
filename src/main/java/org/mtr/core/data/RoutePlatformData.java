@@ -5,14 +5,13 @@ import org.mtr.core.serializers.ReaderBase;
 
 public final class RoutePlatformData extends RoutePlatformDataSchema {
 
+	RoutePlatformData(long platformId) {
+		super(platformId);
+	}
+
 	public RoutePlatformData(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
-	}
-
-	@Override
-	public String getHexId() {
-		return "";
 	}
 
 	public long getPlatformId() {
