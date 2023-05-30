@@ -39,6 +39,10 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 		return Utilities.numberToPaddedHexString(color, 6);
 	}
 
+	public final void setName(String newName) {
+		name = newName;
+	}
+
 	public final void setColor(int newColor) {
 		color = newColor & 0xFFFFFF;
 	}
