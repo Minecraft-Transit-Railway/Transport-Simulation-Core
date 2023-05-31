@@ -35,7 +35,7 @@ public class TypeWithData {
 		return new TypeWithData(
 				type,
 				null,
-				String.format("readerBase.iterate%2$sArray(\"%1$s\", %1$s::add);", "%1$s", arrayType),
+				String.format("%1$s.clear(); readerBase.iterate%2$sArray(\"%1$s\", %1$s::add);", "%1$s", arrayType),
 				String.format("final WriterBase.Array %1$sWriterBaseArray = writerBase.writeArray(\"%1$s\"); %1$s.forEach(%1$sWriterBaseArray::write%2$s);", "%1$s", arrayType),
 				String.format("%1$s.clear(); TestUtilities.randomLoop(() -> %1$s.add(%2$s));", "%1$s", getRandomPrimitive(arrayType)),
 				false
@@ -46,7 +46,7 @@ public class TypeWithData {
 		return new TypeWithData(
 				type,
 				null,
-				String.format("readerBase.iterateReaderArray(\"%1$s\", readerBaseChild -> %1$s.add(new %2$s(readerBaseChild)));", "%1$s", arrayType),
+				String.format("%1$s.clear(); readerBase.iterateReaderArray(\"%1$s\", readerBaseChild -> %1$s.add(new %2$s(readerBaseChild)));", "%1$s", arrayType),
 				"writerBase.writeDataset(%1$s, \"%1$s\");",
 				String.format("%1$s.clear(); TestUtilities.randomLoop(() -> %1$s.add(TestUtilities.random%2$s()));", "%1$s", arrayType),
 				false

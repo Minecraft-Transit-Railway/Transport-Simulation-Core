@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import org.mtr.core.generated.SavedRailBaseSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
+import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends SavedRailBaseSchema {
@@ -15,7 +16,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	}
 
 	public SavedRailBase(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+		super(DataFixer.convertSavedRailBase(readerBase), simulator);
 	}
 
 	public boolean containsPos(Position position) {

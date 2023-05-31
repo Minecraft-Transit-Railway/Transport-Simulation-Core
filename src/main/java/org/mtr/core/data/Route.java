@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.RouteSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
+import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Utilities;
 
 import java.util.Locale;
@@ -17,7 +18,7 @@ public final class Route extends RouteSchema {
 	}
 
 	public Route(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+		super(DataFixer.convertRoute(readerBase), simulator);
 		updateData(readerBase);
 	}
 

@@ -7,10 +7,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.mtr.core.generated.PlatformSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.LatLon;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.tools.*;
 
 public final class Platform extends PlatformSchema {
 
@@ -23,6 +20,7 @@ public final class Platform extends PlatformSchema {
 	public Platform(ReaderBase readerBase, Simulator simulator) {
 		super(readerBase, simulator);
 		updateData(readerBase);
+		DataFixer.unpackPlatformDwellTime(readerBase, value -> dwellTime = value);
 	}
 
 	public void setDwellTime(long dwellTime) {

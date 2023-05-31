@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.core.generated.RailNodeSchema;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
@@ -13,7 +14,7 @@ public final class RailNode extends RailNodeSchema implements SerializedDataBase
 	}
 
 	public RailNode(ReaderBase readerBase) {
-		super(readerBase);
+		super(DataFixer.convertRailNode(readerBase));
 		updateData(readerBase);
 	}
 

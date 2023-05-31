@@ -17,6 +17,7 @@ import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
+import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
@@ -47,9 +48,11 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public Siding(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+		super(DataFixer.convertSiding(readerBase), simulator);
 		vehicleReaders = savePathDataReaderBase(readerBase, KEY_VEHICLES);
 		updateData(readerBase);
+		DataFixer.unpackSidingVehicleCars(readerBase, transportMode, railLength, vehicleCars);
+		DataFixer.unpackSidingMaxVehicles(readerBase, value -> maxVehicles = value);
 	}
 
 	@Override

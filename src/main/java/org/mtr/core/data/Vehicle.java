@@ -58,7 +58,7 @@ public final class Vehicle extends VehicleSchema {
 		repeatIndex1 = pathSidingToMainRoute.size();
 		repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 
-		this.acceleration = acceleration;
+		this.acceleration = roundAcceleration(acceleration);
 		this.isManualAllowed = isManualAllowed;
 		this.maxManualSpeed = maxManualSpeed;
 		this.manualToAutomaticTime = manualToAutomaticTime;
@@ -85,7 +85,7 @@ public final class Vehicle extends VehicleSchema {
 		repeatIndex1 = pathSidingToMainRoute.size();
 		repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 
-		this.acceleration = acceleration;
+		this.acceleration = roundAcceleration(acceleration);
 		this.isManualAllowed = isManualAllowed;
 		this.maxManualSpeed = maxManualSpeed;
 		this.manualToAutomaticTime = manualToAutomaticTime;

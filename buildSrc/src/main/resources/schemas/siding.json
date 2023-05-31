@@ -32,7 +32,7 @@
 			"type": "integer"
 		},
 		"maxManualSpeed": {
-			"type": "integer"
+			"type": "number"
 		},
 		"manualToAutomaticTime": {
 			"type": "integer",

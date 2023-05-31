@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.AreaBaseSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
+import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
@@ -17,6 +18,10 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 
 	public AreaBase(ReaderBase readerBase, Simulator simulator) {
 		super(readerBase, simulator);
+		DataFixer.unpackAreaBasePositions(readerBase, (value1, value2) -> {
+			position1 = value1;
+			position2 = value2;
+		});
 	}
 
 	@Override

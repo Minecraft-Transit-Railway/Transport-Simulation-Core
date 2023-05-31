@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.Value;
+import org.mtr.core.tools.DataFixer;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -25,7 +26,7 @@ public final class MessagePackReader extends ReaderBase {
 		try {
 			final int size = messageUnpacker.unpackMapHeader();
 			for (int i = 0; i < size; i++) {
-				map.put(messageUnpacker.unpackString(), messageUnpacker.unpackValue());
+				DataFixer.readerBaseConvertKey(messageUnpacker.unpackString(), messageUnpacker.unpackValue(), map);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -34,7 +35,7 @@ public final class MessagePackReader extends ReaderBase {
 
 	private MessagePackReader(Value value) {
 		map = new Object2ObjectArrayMap<>();
-		iterateMap(value, map::put);
+		iterateMap(value, (mapKey, mapValue) -> DataFixer.readerBaseConvertKey(mapKey, mapValue, map));
 	}
 
 	@Override
@@ -113,8 +114,8 @@ public final class MessagePackReader extends ReaderBase {
 	}
 
 	@Override
-	public boolean iterateReaderArray(String key, Consumer<ReaderBase> ifExists) {
-		return unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(new MessagePackReader(arrayValue))));
+	public void iterateReaderArray(String key, Consumer<ReaderBase> ifExists) {
+		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(new MessagePackReader(arrayValue))));
 	}
 
 	@Override
@@ -125,6 +126,13 @@ public final class MessagePackReader extends ReaderBase {
 	@Override
 	public void unpackChild(String key, Consumer<ReaderBase> ifExists) {
 		unpack(key, value -> ifExists.accept(new MessagePackReader(value)));
+	}
+
+	@Override
+	public void merge(ReaderBase readerBase) {
+		if (readerBase instanceof MessagePackReader) {
+			map.putAll(((MessagePackReader) readerBase).map);
+		}
 	}
 
 	private boolean getBoolean(Value value) {
@@ -155,8 +163,8 @@ public final class MessagePackReader extends ReaderBase {
 		value.asMapValue().entrySet().forEach(entry -> consumer.accept(getString(entry.getKey()), entry.getValue()));
 	}
 
-	private boolean unpack(String key, Consumer<Value> consumer) {
-		return unpackValue(map.get(key), consumer);
+	private void unpack(String key, Consumer<Value> consumer) {
+		unpackValue(map.get(key), consumer);
 	}
 
 	private <T> T getOrDefault(String key, T defaultValue, Function<Value, T> function) {

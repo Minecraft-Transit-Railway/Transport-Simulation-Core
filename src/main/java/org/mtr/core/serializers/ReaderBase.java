@@ -40,18 +40,17 @@ public abstract class ReaderBase {
 
 	public abstract void iterateStringArray(String key, Consumer<String> ifExists);
 
-	public abstract boolean iterateReaderArray(String key, Consumer<ReaderBase> ifExists);
+	public abstract void iterateReaderArray(String key, Consumer<ReaderBase> ifExists);
 
 	public abstract ReaderBase getChild(String key);
 
 	public abstract void unpackChild(String key, Consumer<ReaderBase> ifExists);
 
-	protected final <U> boolean unpackValue(U value, Consumer<U> consumer) {
-		if (value == null) {
-			return false;
-		} else {
+	public abstract void merge(ReaderBase readerBase);
+
+	protected final <U> void unpackValue(U value, Consumer<U> consumer) {
+		if (value != null) {
 			consumer.accept(value);
-			return true;
 		}
 	}
 

@@ -102,8 +102,8 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	@Override
-	public boolean iterateReaderArray(String key, Consumer<ReaderBase> ifExists) {
-		return unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(new JsonReader(arrayValue))));
+	public void iterateReaderArray(String key, Consumer<ReaderBase> ifExists) {
+		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(new JsonReader(arrayValue))));
 	}
 
 	@Override
@@ -114,6 +114,13 @@ public final class JsonReader extends ReaderBase {
 	@Override
 	public void unpackChild(String key, Consumer<ReaderBase> ifExists) {
 		unpack(key, value -> ifExists.accept(new JsonReader(value)));
+	}
+
+	@Override
+	public void merge(ReaderBase readerBase) {
+		if (readerBase instanceof JsonReader) {
+			map.putAll(((JsonReader) readerBase).map);
+		}
 	}
 
 	private boolean getBoolean(JsonElement value) {
@@ -144,8 +151,8 @@ public final class JsonReader extends ReaderBase {
 		value.getAsJsonObject().asMap().forEach(consumer);
 	}
 
-	private boolean unpack(String key, Consumer<JsonElement> consumer) {
-		return unpackValue(map.get(key), consumer);
+	private void unpack(String key, Consumer<JsonElement> consumer) {
+		unpackValue(map.get(key), consumer);
 	}
 
 	private <T> T getOrDefault(String key, T defaultValue, Function<JsonElement, T> function) {

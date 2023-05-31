@@ -1,31 +1,24 @@
 package org.mtr.core.tools;
 
-import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.core.data.EnumHelper;
-import org.mtr.core.data.Rail;
-import org.mtr.core.data.TransportMode;
-import org.mtr.core.data.VehicleCar;
+import org.msgpack.core.MessageBufferPacker;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessageUnpacker;
+import org.msgpack.value.Value;
+import org.mtr.core.data.*;
+import org.mtr.core.serializers.MessagePackReader;
+import org.mtr.core.serializers.MessagePackWriter;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 
 import java.util.Locale;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class DataFixer {
-
-	private static final String KEY_POS_1 = "pos_1";
-	private static final String KEY_POS_2 = "pos_2";
-	private static final String KEY_NODE_POS = "node_pos";
-	private static final String KEY_RAIL_TYPE = "rail_type";
-	private static final String KEY_DWELL_TIME = "dwell_time";
-	private static final String KEY_UNLIMITED_VEHICLES = "unlimited_trains";
-	private static final String KEY_MAX_VEHICLES = "max_trains";
-	private static final String KEY_IS_MANUAL = "is_manual";
-	private static final String KEY_MAX_MANUAL_SPEED = "max_manual_speed";
-	private static final String KEY_ACCELERATION_CONSTANT = "acceleration_constant";
-	private static final String KEY_BASE_TRAIN_TYPE = "train_type";
-	private static final String KEY_TRAIN_ID = "train_custom_id";
 
 	private static final int PACKED_X_LENGTH = 26;
 	private static final int PACKED_Z_LENGTH = PACKED_X_LENGTH;
@@ -33,75 +26,102 @@ public class DataFixer {
 	private static final int Z_OFFSET = PACKED_Y_LENGTH;
 	private static final int X_OFFSET = PACKED_Y_LENGTH + PACKED_Z_LENGTH;
 
-	public static void unpackSavedRailBase(ReaderBase readerBase, Consumer<Position> consumer1, Consumer<Position> consumer2) {
-		readerBase.unpackLong(KEY_POS_1, value -> consumer1.accept(convertCoordinates(value)));
-		readerBase.unpackLong(KEY_POS_2, value -> consumer2.accept(convertCoordinates(value)));
+	public static void unpackAreaBasePositions(ReaderBase readerBase, BiConsumer<Position, Position> consumer) {
+		readerBase.unpackInt("x_min", xMin -> readerBase.unpackInt("z_min", zMin -> readerBase.unpackInt("x_max", xMax -> readerBase.unpackInt("z_max", zMax -> consumer.accept(new Position(xMin, Long.MIN_VALUE, zMin), new Position(xMax, Long.MAX_VALUE, zMax))))));
 	}
 
-	public static void unpackRailEntry(ReaderBase readerBase, Consumer<Position> consumer) {
-		readerBase.unpackLong(KEY_NODE_POS, value -> consumer.accept(convertCoordinates(value)));
+	public static void unpackPlatformDwellTime(ReaderBase readerBase, IntConsumer consumer) {
+		readerBase.unpackInt("dwell_time", value -> consumer.accept(value * 500));
 	}
 
-	public static Position convertCoordinates(long packedPosition) {
-		return new Position(
-				(int) (packedPosition << 64 - X_OFFSET - PACKED_X_LENGTH >> 64 - PACKED_X_LENGTH),
-				(int) (packedPosition << 64 - PACKED_Y_LENGTH >> 64 - PACKED_Y_LENGTH),
-				(int) (packedPosition << 64 - Z_OFFSET - PACKED_Z_LENGTH >> 64 - PACKED_Z_LENGTH)
-		);
-	}
-
-	public static boolean convertRailType(ReaderBase readerBase, HexConsumer<Integer, Rail.Shape, Boolean, Boolean, Boolean, Boolean> consumer) {
-		final boolean[] validRail = {true};
-		readerBase.unpackString(KEY_RAIL_TYPE, value -> {
+	public static ReaderBase convertRail(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackString("rail_type", value -> {
 			final RailType railType = EnumHelper.valueOf(RailType.IRON, value);
-			validRail[0] = railType != RailType.NONE;
-			consumer.accept(
-					railType.speedLimitKilometersPerHour,
-					railType.railSlopeStyle == RailSlopeStyle.CURVE ? Rail.Shape.CURVE : Rail.Shape.STRAIGHT,
-					railType.hasSavedRail,
-					railType.canAccelerate,
-					railType == RailType.TURN_BACK,
-					railType.canHaveSignal
-			);
+			if (railType != RailType.NONE) {
+				messagePackWriter.writeLong("speedLimit", railType.speedLimitKilometersPerHour);
+				final String shapeString = (railType.railSlopeStyle == RailSlopeStyle.CURVE ? Rail.Shape.CURVE : Rail.Shape.STRAIGHT).toString();
+				messagePackWriter.writeString("shapeStart", shapeString);
+				messagePackWriter.writeString("shapeEnd", shapeString);
+				messagePackWriter.writeBoolean("isSavedRail", railType.hasSavedRail);
+				messagePackWriter.writeBoolean("canAccelerate", railType.canAccelerate);
+				messagePackWriter.writeBoolean("canTurnBack", railType == RailType.TURN_BACK);
+				messagePackWriter.writeBoolean("canHaveSignal", railType.canHaveSignal);
+			}
+		}));
+		return readerBase;
+	}
+
+	public static ReaderBase convertRailNode(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> {
+			readerBase.unpackLong("node_pos", value -> convertPosition(value).serializeData(messagePackWriter.writeChild("position")));
+			final ObjectArrayList<RailNodeConnection> connections = new ObjectArrayList<>();
+			readerBase.iterateReaderArray("rail_connections", readerBaseChild -> connections.add(new RailNodeConnection(readerBaseChild)));
+			if (!connections.isEmpty()) {
+				messagePackWriter.writeDataset(connections, "connections");
+			}
 		});
-		return validRail[0];
+		return readerBase;
 	}
 
-	public static void unpackDwellTime(ReaderBase readerBase, IntConsumer consumer) {
-		readerBase.unpackInt(KEY_DWELL_TIME, value -> consumer.accept(value * 500));
+	public static ReaderBase convertRailNodeConnection(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackLong("node_pos", value -> {
+			new Rail(readerBase).serializeData(messagePackWriter.writeChild("rail"));
+			convertPosition(value).serializeData(messagePackWriter.writeChild("position"));
+		}));
+		return readerBase;
 	}
 
-	public static void unpackMaxVehicles(ReaderBase readerBase, IntConsumer consumer) {
-		readerBase.unpackBoolean(KEY_IS_MANUAL, value1 -> {
-			if (value1) {
-				consumer.accept(-1);
-			} else {
-				readerBase.unpackBoolean(KEY_UNLIMITED_VEHICLES, value2 -> {
-					if (value2) {
-						consumer.accept(0);
-					} else {
-						readerBase.unpackInt(KEY_MAX_VEHICLES, value3 -> consumer.accept(value3 + 1));
+	public static ReaderBase convertRoute(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> {
+			final LongArrayList platformIds = new LongArrayList();
+			readerBase.iterateLongArray("platform_ids", platformIds::add);
+
+			if (!platformIds.isEmpty()) {
+				final ObjectArrayList<String> customDestinations = new ObjectArrayList<>();
+				readerBase.iterateStringArray("custom_destinations", customDestinations::add);
+				final WriterBase.Array arrayWriter = messagePackWriter.writeArray("routePlatformData");
+
+				for (int i = 0; i < platformIds.size(); i++) {
+					final WriterBase childWriter = arrayWriter.writeChild();
+					childWriter.writeLong("platformId", platformIds.getLong(i));
+					if (i < customDestinations.size()) {
+						childWriter.writeString("customDestination", customDestinations.get(i));
 					}
-				});
+				}
 			}
+
+			final boolean[] isLightRailRoute = {false};
+			readerBase.unpackBoolean("is_light_rail_route", value -> isLightRailRoute[0] = value);
+			readerBase.unpackString("light_rail_route_number", value -> messagePackWriter.writeString("routeNumber", isLightRailRoute[0] ? value : ""));
+			readerBase.unpackBoolean("is_route_hidden", value -> messagePackWriter.writeBoolean("hidden", value));
 		});
+		return readerBase;
 	}
 
-	public static void unpackMaxManualSpeed(ReaderBase readerBase, DoubleConsumer consumer) {
-		readerBase.unpackInt(KEY_MAX_MANUAL_SPEED, value -> {
-			if (value >= 0 && value <= RailType.DIAMOND.ordinal()) {
-				consumer.accept(RailType.values()[value].speedLimitMetersPerMillisecond);
-			}
+	public static ReaderBase convertSavedRailBase(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> {
+			readerBase.unpackLong("pos_1", value -> convertPosition(value).serializeData(messagePackWriter.writeChild("position1")));
+			readerBase.unpackLong("pos_2", value -> convertPosition(value).serializeData(messagePackWriter.writeChild("position2")));
 		});
+		return readerBase;
 	}
 
-	public static void unpackAcceleration(ReaderBase readerBase, DoubleConsumer consumer) {
-		// meters/tick^2 to meters/millisecond^2
-		readerBase.unpackDouble(KEY_ACCELERATION_CONSTANT, value -> consumer.accept(value / 50D / 50D));
+	public static ReaderBase convertSiding(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> {
+			readerBase.unpackInt("dwell_time", value -> messagePackWriter.writeLong("manualToAutomaticTime", value * 500L));
+			// meters/tick^2 to meters/millisecond^2
+			readerBase.unpackDouble("acceleration_constant", value -> messagePackWriter.writeDouble("acceleration", value / 50D / 50D));
+			readerBase.unpackInt("max_manual_speed", value -> {
+				if (value >= 0 && value <= RailType.DIAMOND.ordinal()) {
+					messagePackWriter.writeDouble("maxManualSpeed", RailType.values()[value].speedLimitMetersPerMillisecond);
+				}
+			});
+		});
+		return readerBase;
 	}
 
-	public static void unpackVehicleCars(ReaderBase readerBase, TransportMode transportMode, double railLength, Consumer<ObjectArrayList<VehicleCar>> consumer) {
-		readerBase.unpackString(KEY_BASE_TRAIN_TYPE, baseTrainType -> readerBase.unpackString(KEY_TRAIN_ID, trainId -> {
+	public static void unpackSidingVehicleCars(ReaderBase readerBase, TransportMode transportMode, double railLength, ObjectArrayList<VehicleCar> vehicleCars) {
+		readerBase.unpackString("train_type", baseTrainType -> readerBase.unpackString("train_custom_id", trainId -> {
 			try {
 				String newBaseTrainType = baseTrainType;
 				try {
@@ -112,19 +132,74 @@ public class DataFixer {
 				final int trainLength = Integer.parseInt(trainTypeSplit[trainTypeSplit.length - 2]) + 1;
 				final int trainWidth = Integer.parseInt(trainTypeSplit[trainTypeSplit.length - 1]);
 				final int trainCars = Math.min(transportMode.maxLength, (int) Math.floor(railLength / trainLength));
-				final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
 				for (int i = 0; i < trainCars; i++) {
 					vehicleCars.add(new VehicleCar(trainId, trainLength, trainWidth, 0, 0));
 				}
-				consumer.accept(vehicleCars);
 			} catch (Exception ignored) {
 			}
 		}));
 	}
 
-	@FunctionalInterface
-	public interface HexConsumer<T, U, V, W, X, Y> {
-		void accept(T t, U u, V v, W w, X x, Y y);
+	public static void unpackSidingMaxVehicles(ReaderBase readerBase, IntConsumer consumer) {
+		readerBase.unpackBoolean("is_manual", value1 -> {
+			if (value1) {
+				consumer.accept(-1);
+			} else {
+				readerBase.unpackBoolean("unlimited_trains", value2 -> {
+					if (value2) {
+						consumer.accept(0);
+					} else {
+						readerBase.unpackInt("max_trains", value3 -> consumer.accept(value3 + 1));
+					}
+				});
+			}
+		});
+	}
+
+	public static ReaderBase convertStation(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("zone", value -> messagePackWriter.writeLong("zone1", value)));
+		return readerBase;
+	}
+
+	public static void readerBaseConvertKey(String key, Value value, Object2ObjectArrayMap<String, Value> map) {
+		map.put(key, value);
+		final String[] keySplit = key.split("_");
+
+		if (keySplit.length == 0) {
+			return;
+		}
+
+		final StringBuilder stringBuilder = new StringBuilder(keySplit[0]);
+		for (int i = 1; i < keySplit.length; i++) {
+			final String keyPart = keySplit[i];
+			if (keyPart.length() > 0) {
+				stringBuilder.append(keyPart.substring(0, 1).toUpperCase(Locale.ENGLISH));
+				stringBuilder.append(keyPart.substring(1));
+			}
+		}
+
+		map.put(stringBuilder.toString(), value);
+	}
+
+	private static Position convertPosition(long packedPosition) {
+		return new Position(
+				(int) (packedPosition << 64 - X_OFFSET - PACKED_X_LENGTH >> 64 - PACKED_X_LENGTH),
+				(int) (packedPosition << 64 - PACKED_Y_LENGTH >> 64 - PACKED_Y_LENGTH),
+				(int) (packedPosition << 64 - Z_OFFSET - PACKED_Z_LENGTH >> 64 - PACKED_Z_LENGTH)
+		);
+	}
+
+	private static void packExtra(ReaderBase readerBase, Consumer<MessagePackWriter> consumer) {
+		try (final MessageBufferPacker messageBufferPacker = MessagePack.newDefaultBufferPacker()) {
+			final MessagePackWriter messagePackWriter = new MessagePackWriter(messageBufferPacker);
+			consumer.accept(messagePackWriter);
+			messagePackWriter.serialize();
+			try (final MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(messageBufferPacker.toByteArray())) {
+				readerBase.merge(new MessagePackReader(messageUnpacker));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private enum RailType {

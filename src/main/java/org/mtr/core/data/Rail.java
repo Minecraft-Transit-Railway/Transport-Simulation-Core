@@ -2,10 +2,7 @@ package org.mtr.core.data;
 
 import org.mtr.core.generated.RailSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
-import org.mtr.core.tools.Vec3;
+import org.mtr.core.tools.*;
 
 public final class Rail extends RailSchema {
 
@@ -223,7 +220,7 @@ public final class Rail extends RailSchema {
 	}
 
 	public Rail(ReaderBase readerBase) {
-		super(readerBase);
+		super(DataFixer.convertRail(readerBase));
 		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit);
 		facingStart = getRailAngle(false);
 		facingEnd = getRailAngle(true);
