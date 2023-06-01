@@ -22,6 +22,11 @@ public final class Route extends RouteSchema {
 		updateData(readerBase);
 	}
 
+	@Override
+	public boolean isValid() {
+		return !name.isEmpty();
+	}
+
 	public ObjectArrayList<RoutePlatformData> getRoutePlatforms() {
 		return routePlatformData;
 	}

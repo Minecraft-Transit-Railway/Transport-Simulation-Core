@@ -14,7 +14,6 @@ public final class Vehicle extends VehicleSchema {
 
 	private boolean doorTarget;
 	private double doorValue;
-	private boolean isOnRoute = false;
 	private int manualNotch;
 
 	public final double railLength;
@@ -33,6 +32,7 @@ public final class Vehicle extends VehicleSchema {
 
 	private final Siding siding;
 	private final double totalDistance;
+	private final double defaultPosition;
 
 	public static final double ACCELERATION_DEFAULT = 1D / 250000;
 	public static final double MAX_ACCELERATION = 1D / 50000;
@@ -65,6 +65,7 @@ public final class Vehicle extends VehicleSchema {
 
 		isCurrentlyManual = isManualAllowed;
 		totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).getEndDistance();
+		defaultPosition = (this.railLength + totalVehicleLength) / 2;
 	}
 
 	public Vehicle(
@@ -92,20 +93,22 @@ public final class Vehicle extends VehicleSchema {
 
 		isCurrentlyManual = isManualAllowed;
 		totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).getEndDistance();
+		defaultPosition = (this.railLength + totalVehicleLength) / 2;
 
 		updateData(readerBase);
 	}
 
-	public boolean getIsOnRoute() {
-		return isOnRoute;
+	@Override
+	public boolean isValid() {
+		return true;
 	}
 
-	public double getRailProgress() {
-		return railProgress;
+	public boolean getIsOnRoute() {
+		return railProgress > defaultPosition;
 	}
 
 	public boolean closeToDepot() {
-		return !isOnRoute || railProgress < totalVehicleLength + railLength;
+		return !getIsOnRoute() || railProgress < totalVehicleLength + railLength;
 	}
 
 	public boolean isCurrentlyManual() {
@@ -147,28 +150,12 @@ public final class Vehicle extends VehicleSchema {
 		return railSpeed;
 	}
 
-	public double getSpeed() {
-		return speed;
-	}
-
-	public double getDoorValue() {
-		return doorValue;
-	}
-
-	public boolean isReversed() {
-		return reversed;
-	}
-
-	public boolean isOnRoute() {
-		return isOnRoute;
-	}
-
 	public void writeVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
 		writeVehiclePositions(Utilities.getIndexFromConditionalList(path, railProgress), vehiclePositions);
 	}
 
 	public void writeVehiclePositions(int currentIndex, Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
-		if (isOnRoute && currentIndex >= 0) {
+		if (getIsOnRoute() && currentIndex >= 0) {
 			int index = currentIndex;
 			while (true) {
 				final PathData pathData = path.get(index);
@@ -192,15 +179,15 @@ public final class Vehicle extends VehicleSchema {
 	public void simulateTrain(long millisElapsed, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, Long2LongAVLTreeMap vehicleTimesAlongRoute) {
 		try {
 			if (nextStoppingIndex >= path.size()) {
-				railProgress = (railLength + totalVehicleLength) / 2;
+				railProgress = defaultPosition;
 				return;
 			}
 
 			final boolean tempDoorTarget;
 			final double tempDoorValue;
 
-			if (!isOnRoute) {
-				railProgress = (railLength + totalVehicleLength) / 2;
+			if (!getIsOnRoute()) {
+				railProgress = defaultPosition;
 				reversed = false;
 				tempDoorTarget = false;
 				tempDoorValue = 0;
@@ -216,7 +203,7 @@ public final class Vehicle extends VehicleSchema {
 				final int currentIndex = Utilities.getIndexFromConditionalList(path, railProgress);
 
 				if (repeatIndex2 == 0 && railProgress >= totalDistance - (railLength - totalVehicleLength) / 2 || !isManualAllowed && departureIndex < 0) {
-					isOnRoute = false;
+					railProgress = defaultPosition;
 					manualNotch = -2;
 					ridingEntities.clear();
 					tempDoorTarget = false;
@@ -312,7 +299,7 @@ public final class Vehicle extends VehicleSchema {
 
 	public void startUp(long newDepartureIndex) {
 		departureIndex = newDepartureIndex;
-		isOnRoute = true;
+		railProgress += ACCELERATION_DEFAULT;
 		elapsedDwellTime = 0;
 		speed = ACCELERATION_DEFAULT;
 		doorTarget = false;

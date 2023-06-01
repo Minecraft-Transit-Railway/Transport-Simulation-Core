@@ -43,12 +43,12 @@ public class Simulator implements Utilities {
 		this.millisPerGameDay = millisPerGameDay;
 
 		final Path savePath = rootPath.resolve(dimension);
-		fileLoaderStations = new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations", false);
-		fileLoaderPlatforms = new FileLoader<>(platforms, messagePackHelper -> new Platform(messagePackHelper, this), savePath, "platforms", true);
-		fileLoaderSidings = new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings", true);
-		fileLoaderRoutes = new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes", false);
-		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", false);
-		fileLoaderRailNodes = new FileLoader<>(railNodes, RailNode::new, savePath, "rails", true);
+		fileLoaderStations = new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations");
+		fileLoaderPlatforms = new FileLoader<>(platforms, messagePackHelper -> new Platform(messagePackHelper, this), savePath, "platforms");
+		fileLoaderSidings = new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings");
+		fileLoaderRoutes = new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes");
+		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots");
+		fileLoaderRailNodes = new FileLoader<>(railNodes, RailNode::new, savePath, "rails");
 
 		currentMillis = System.currentTimeMillis();
 		this.startingGameDayPercentage = (startingGameDayPercentage + (float) (currentMillis - Main.START_MILLIS) / millisPerGameDay) % startingGameDayPercentage;

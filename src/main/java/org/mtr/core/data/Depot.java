@@ -10,6 +10,7 @@ import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
+import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Utilities;
 
 import java.util.Collections;
@@ -30,6 +31,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	public Depot(ReaderBase readerBase, Simulator simulator) {
 		super(readerBase, simulator);
 		updateData(readerBase);
+		DataFixer.unpackDepotDepartures(readerBase, realTimeDepartures);
 	}
 
 	public void init() {

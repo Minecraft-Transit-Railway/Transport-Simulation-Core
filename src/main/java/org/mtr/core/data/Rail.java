@@ -265,8 +265,8 @@ public final class Rail extends RailSchema {
 		return (isStraight1 || r1 > MIN_RADIUS - ACCEPT_THRESHOLD) && (isStraight2 || r2 > MIN_RADIUS - ACCEPT_THRESHOLD);
 	}
 
-	public boolean isValid() {
-		return (h1 != 0 || k1 != 0 || h2 != 0 || k2 != 0 || r1 != 0 || r2 != 0 || tStart1 != 0 || tStart2 != 0 || tEnd1 != 0 || tEnd2 != 0) && facingStart == getRailAngle(false) && facingEnd == getRailAngle(true);
+	public boolean isInvalid() {
+		return speedLimit == 0 || h1 == 0 && k1 == 0 && h2 == 0 && k2 == 0 && r1 == 0 && r2 == 0 && tStart1 == 0 && tStart2 == 0 && tEnd1 == 0 && tEnd2 == 0 || facingStart != getRailAngle(false) || facingEnd != getRailAngle(true);
 	}
 
 	private double getPositionY(double value) {

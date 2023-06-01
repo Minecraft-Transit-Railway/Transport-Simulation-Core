@@ -10,7 +10,6 @@ import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessagePacker;
 import org.msgpack.core.MessageUnpacker;
 import org.mtr.core.Main;
-import org.mtr.core.data.NameColorDataBase;
 import org.mtr.core.data.SerializedDataBaseWithId;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.MessagePackWriter;
@@ -33,13 +32,11 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 	public final String key;
 	private final Set<T> dataSet;
 	private final Path path;
-	private final boolean skipVerifyNameIsNotEmpty;
 	private final Object2IntAVLTreeMap<String> fileHashes = new Object2IntAVLTreeMap<>();
 
-	public FileLoader(Set<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key, boolean skipVerifyNameIsNotEmpty) {
+	public FileLoader(Set<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key) {
 		this.key = key;
 		this.dataSet = dataSet;
-		this.skipVerifyNameIsNotEmpty = skipVerifyNameIsNotEmpty;
 		path = rootPath.resolve(key);
 		createDirectory(path);
 		readMessagePackFromFile(getData);
@@ -108,7 +105,11 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 			try {
 				final T data = futureData.get();
 				if (data != null) {
-					dataSet.add(data);
+					if (data.isValid()) {
+						dataSet.add(data);
+					} else {
+						Main.LOGGER.info(String.format("Skipping invalid data: %s", data));
+					}
 					fileHashes.put(fileName, getHash(data, true));
 				}
 			} catch (Exception e) {
@@ -122,7 +123,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 		while (!dirtyData.isEmpty()) {
 			final T data = dirtyData.remove(0);
 
-			if (data != null && (skipVerifyNameIsNotEmpty || !(data instanceof NameColorDataBase) || !((NameColorDataBase) data).getName().isEmpty())) {
+			if (data != null && data.isValid()) {
 				final String fileName = getFileName.apply(data);
 				final String parentFolderName = getParent(fileName);
 				final String parentAndFileName = combineAsPath(parentFolderName, fileName);

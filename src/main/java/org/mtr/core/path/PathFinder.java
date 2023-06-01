@@ -13,13 +13,14 @@ public abstract class PathFinder<T, U> {
 	protected final T endNode;
 	private final Object2LongOpenHashMap<T> globalBlacklist = new Object2LongOpenHashMap<>();
 	private final Object2LongOpenHashMap<T> localBlacklist = new Object2LongOpenHashMap<>();
-	private final ObjectArrayList<ConnectionDetails<T>> tempData = new ObjectArrayList<>();
+	private final ObjectArrayList<ConnectionDetails<T>> tempData;
 	private final ObjectArrayList<ConnectionDetails<T>> data = new ObjectArrayList<>();
 
 	public PathFinder(T startNode, T endNode) {
 		this.startNode = startNode;
 		this.endNode = endNode;
 		completed = startNode.equals(endNode);
+		tempData = ObjectArrayList.of(new ConnectionDetails<>(startNode, 0, 0, 0));
 	}
 
 	public abstract ObjectArrayList<U> tick();

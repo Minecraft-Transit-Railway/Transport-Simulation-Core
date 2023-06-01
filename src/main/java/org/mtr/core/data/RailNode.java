@@ -23,6 +23,12 @@ public final class RailNode extends RailNodeSchema implements SerializedDataBase
 		return String.format("%s-%s-%s", Utilities.numberToPaddedHexString(position.getX()), Utilities.numberToPaddedHexString(position.getY()), Utilities.numberToPaddedHexString(position.getZ()));
 	}
 
+	@Override
+	public boolean isValid() {
+		connections.removeIf(railNodeConnection -> railNodeConnection.isInvalid(position));
+		return !connections.isEmpty();
+	}
+
 	public Position getPosition() {
 		return position;
 	}

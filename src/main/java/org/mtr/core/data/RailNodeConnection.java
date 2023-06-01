@@ -20,4 +20,8 @@ public final class RailNodeConnection extends RailNodeConnectionSchema {
 	public void writeToMap(Object2ObjectOpenHashMap<Position, Rail> connectionsMap) {
 		connectionsMap.put(position, rail);
 	}
+
+	public boolean isInvalid(Position checkPosition) {
+		return rail.isInvalid() || checkPosition.equals(position);
+	}
 }

@@ -33,11 +33,26 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	private final ObjectArraySet<Vehicle> vehicles = new ObjectArraySet<>();
 	private final ObjectImmutableList<ReaderBase> vehicleReaders;
+	/**
+	 * Trips this siding will serve
+	 */
 	private final ObjectArrayList<Trip> trips = new ObjectArrayList<>();
+	/**
+	 * Mapping of platform ID to stop times
+	 */
 	private final Long2ObjectAVLTreeMap<ObjectArraySet<Trip.StopTime>> platformTripStopTimes = new Long2ObjectAVLTreeMap<>();
+	/**
+	 * Absolute departures (millis after 12am UTC) for this siding only
+	 */
 	private final LongArrayList departures = new LongArrayList();
 	private final LongArrayList tempReturnTimes = new LongArrayList();
+	/**
+	 * Current path speed changes, used for calculating duration along path
+	 */
 	private final ObjectArrayList<TimeSegment> timeSegments = new ObjectArrayList<>();
+	/**
+	 * Mapping of departure indices to real time vehicle times
+	 */
 	private final Long2LongAVLTreeMap vehicleTimesAlongRoute = new Long2LongAVLTreeMap();
 
 	private static final String KEY_VEHICLES = "vehicles";
@@ -162,6 +177,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void simulateTrain(long millisElapsed, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+		vehicleTimesAlongRoute.clear();
+
 		if (area == null) {
 			return;
 		}
@@ -480,6 +497,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		vehicles.clear();
 		pathMainRoute.clear();
 		trips.clear();
+		platformTripStopTimes.clear();
 		timeSegments.clear();
 
 		if (pathSidingToMainRoute.isEmpty() || area == null || area.getPath().isEmpty() || !area.getRepeatInfinitely() && pathMainRouteToSiding.isEmpty()) {

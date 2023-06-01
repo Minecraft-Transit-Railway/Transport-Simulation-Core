@@ -30,6 +30,10 @@ public class DataFixer {
 		readerBase.unpackInt("x_min", xMin -> readerBase.unpackInt("z_min", zMin -> readerBase.unpackInt("x_max", xMax -> readerBase.unpackInt("z_max", zMax -> consumer.accept(new Position(xMin, Long.MIN_VALUE, zMin), new Position(xMax, Long.MAX_VALUE, zMax))))));
 	}
 
+	public static void unpackDepotDepartures(ReaderBase readerBase, LongArrayList realTimeDepartures) {
+		readerBase.iterateIntArray("departures", realTimeDepartures::add);
+	}
+
 	public static void unpackPlatformDwellTime(ReaderBase readerBase, IntConsumer consumer) {
 		readerBase.unpackInt("dwell_time", value -> consumer.accept(value * 500));
 	}

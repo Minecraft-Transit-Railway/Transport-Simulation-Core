@@ -19,6 +19,11 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		super(DataFixer.convertSavedRailBase(readerBase), simulator);
 	}
 
+	@Override
+	public boolean isValid() {
+		return true;
+	}
+
 	public boolean containsPos(Position position) {
 		return position1.equals(position) || position2.equals(position);
 	}

@@ -34,6 +34,11 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 		return new Position(0, 0, 0);
 	}
 
+	@Override
+	public boolean isValid() {
+		return !name.isEmpty();
+	}
+
 	public void setCorners(Position position1, Position position2) {
 		this.position1 = position1;
 		this.position2 = position2;
