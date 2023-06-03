@@ -536,11 +536,12 @@ public final class Siding extends SidingSchema implements Utilities {
 			}
 
 			final ObjectArrayList<RoutePlatformInfo> routePlatformInfoList = new ObjectArrayList<>();
-			area.iterateRoutes((route, routeIndex) -> {
-				for (int i = 0; i < route.getRoutePlatforms().size(); i++) {
-					routePlatformInfoList.add(new RoutePlatformInfo(route, routeIndex, route.getRoutePlatforms().get(i).getPlatformId(), route.getDestination(simulator.dataCache, i)));
+			for (int i = 0; i < area.routes.size(); i++) {
+				final Route route = area.routes.get(i);
+				for (int j = 0; j < route.getRoutePlatforms().size(); j++) {
+					routePlatformInfoList.add(new RoutePlatformInfo(route, i, route.getRoutePlatforms().get(j).getPlatform().getId(), route.getDestination(simulator.dataCache, j)));
 				}
-			});
+			}
 
 			double railProgress = (railLength + totalVehicleLength) / 2;
 			double nextStoppingDistance = 0;

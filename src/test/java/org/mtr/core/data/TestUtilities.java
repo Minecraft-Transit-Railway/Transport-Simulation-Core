@@ -17,7 +17,12 @@ import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
 import org.mtr.core.Main;
-import org.mtr.core.serializers.*;
+import org.mtr.core.client.Client;
+import org.mtr.core.client.ClientGroup;
+import org.mtr.core.serializers.JsonReader;
+import org.mtr.core.serializers.MessagePackReader;
+import org.mtr.core.serializers.MessagePackWriter;
+import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
@@ -26,6 +31,7 @@ import org.mtr.core.tools.Utilities;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -34,12 +40,6 @@ public interface TestUtilities {
 	Path TEST_DIRECTORY = Paths.get("build/test-data");
 	int PORT = 8888;
 	Random RANDOM = new Random();
-
-	static <T extends SerializedDataBase> JsonObject getJsonObjectFromData(T data) {
-		final JsonObject jsonObject = new JsonObject();
-		data.serializeData(new JsonWriter(jsonObject));
-		return jsonObject;
-	}
 
 	static <T extends SerializedDataBase> T getDataFromJsonObject(JsonObject jsonObject, Function<ReaderBase, T> newInstance) {
 		return newInstance.apply(new JsonReader(jsonObject));
@@ -50,7 +50,7 @@ public interface TestUtilities {
 	}
 
 	static <T extends SerializedDataBase> void compareObjects(T data1, T data2) {
-		Assertions.assertEquals(prettyPrint(getJsonObjectFromData(data1)), prettyPrint(getJsonObjectFromData(data2)));
+		Assertions.assertEquals(prettyPrint(Utilities.getJsonObjectFromData(data1)), prettyPrint(Utilities.getJsonObjectFromData(data2)));
 		Assertions.assertEquals(data1.toString(), data2.toString());
 	}
 
@@ -87,7 +87,7 @@ public interface TestUtilities {
 	}
 
 	static <T extends SerializedDataBase> void serializeAndDeserialize(T data, Function<ReaderBase, T> newInstance) {
-		final JsonObject jsonObject = getJsonObjectFromData(data);
+		final JsonObject jsonObject = Utilities.getJsonObjectFromData(data);
 		Main.LOGGER.info(prettyPrint(jsonObject));
 		compareObjects(data, getDataFromJsonObject(jsonObject, newInstance));
 
@@ -128,6 +128,14 @@ public interface TestUtilities {
 
 	static TransportMode randomTransportMode() {
 		return randomEnum(TransportMode.values());
+	}
+
+	static Client randomClient() {
+		return new Client(UUID.randomUUID());
+	}
+
+	static ClientGroup randomClientGroup() {
+		return new ClientGroup();
 	}
 
 	static Depot randomDepot() {
@@ -178,8 +186,20 @@ public interface TestUtilities {
 		return new VehicleCar(randomString(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble());
 	}
 
+	static VehicleExtraData randomVehicleExtraData() {
+		return new VehicleExtraData(RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextInt(), RANDOM.nextInt(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextInt(), RANDOM.nextDouble(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData));
+	}
+
 	static Vehicle randomVehicle() {
 		return new Vehicle(randomSiding(), getDefaultSimulator(), randomTransportMode(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong());
+	}
+
+	static Client newClient(ReaderBase readerBase) {
+		return new Client(readerBase);
+	}
+
+	static ClientGroup newClientGroup(ReaderBase readerBase) {
+		return new ClientGroup(readerBase);
 	}
 
 	static Depot newDepot(ReaderBase readerBase) {
@@ -228,6 +248,10 @@ public interface TestUtilities {
 
 	static VehicleCar newVehicleCar(ReaderBase readerBase) {
 		return new VehicleCar(readerBase);
+	}
+
+	static VehicleExtraData newVehicleExtraData(ReaderBase readerBase) {
+		return new VehicleExtraData(readerBase);
 	}
 
 	static Vehicle newVehicle(ReaderBase readerBase) {

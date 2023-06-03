@@ -1,0 +1,19 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"updateRadius": {
+			"type": "number",
+			"minimum": 0
+		},
+		"clients": {
+			"type": "array",
+			"items": {
+				"$ref": "client.json"
+			}
+		}
+	}
+}

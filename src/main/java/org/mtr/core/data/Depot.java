@@ -14,9 +14,10 @@ import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Utilities;
 
 import java.util.Collections;
-import java.util.function.BiConsumer;
 
 public final class Depot extends DepotSchema implements Utilities {
+
+	public final ObjectArrayList<Route> routes = new ObjectArrayList<>();
 
 	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
@@ -49,10 +50,6 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 	}
 
-	public LongArrayList getRouteIds() {
-		return routeIds;
-	}
-
 	public boolean getRepeatInfinitely() {
 		return repeatInfinitely;
 	}
@@ -63,6 +60,19 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public ObjectArrayList<PathData> getPath() {
 		return path;
+	}
+
+	public void writeRouteCache(Long2ObjectOpenHashMap<Route> routeIdMap) {
+		routes.clear();
+		routeIds.forEach(id -> routes.add(routeIdMap.get(id)));
+		for (int i = routes.size() - 1; i >= 0; i--) {
+			if (routes.get(i) == null) {
+				routeIds.removeLong(i);
+				routes.remove(i);
+			} else {
+				routes.get(i).depots.add(this);
+			}
+		}
 	}
 
 	public void generateMainRoute() {
@@ -76,12 +86,12 @@ public final class Depot extends DepotSchema implements Utilities {
 			generatingSidingIds.clear();
 
 			final long[] previousPlatformId = {0};
-			iterateRoutes((route, routeIndex) -> route.getRoutePlatforms().forEach(routePlatformData -> {
-				final Platform platform = simulator.dataCache.platformIdMap.get(routePlatformData.getPlatformId());
+			routes.forEach(route -> route.getRoutePlatforms().forEach(routePlatformData -> {
+				final Platform platform = routePlatformData.getPlatform();
 				if (platform != null && platform.getId() != previousPlatformId[0]) {
 					platformsInRoute.add(platform);
 				}
-				previousPlatformId[0] = routePlatformData.getPlatformId();
+				previousPlatformId[0] = platform == null ? 0 : platform.getId();
 			}));
 
 			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
@@ -106,16 +116,6 @@ public final class Depot extends DepotSchema implements Utilities {
 		if (generatingSidingIds.isEmpty()) {
 			Main.LOGGER.info(String.format("Path generation complete for %s", name));
 			generatePlatformDirectionsAndWriteDeparturesToSidings();
-		}
-	}
-
-	public void iterateRoutes(BiConsumer<Route, Integer> consumer) {
-		for (int i = 0; i < routeIds.size(); i++) {
-			final long routeId = routeIds.getLong(i);
-			final Route route = simulator.dataCache.routeIdMap.get(routeId);
-			if (route != null) {
-				consumer.accept(route, i);
-			}
 		}
 	}
 

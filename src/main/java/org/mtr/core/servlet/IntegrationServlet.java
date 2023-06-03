@@ -18,6 +18,10 @@ public class IntegrationServlet extends ServletBase {
 		switch (endpoint) {
 			case "update":
 				return integrationResponse.update();
+			case "get":
+				return integrationResponse.get();
+			case "delete":
+				return integrationResponse.delete();
 			default:
 				return null;
 		}

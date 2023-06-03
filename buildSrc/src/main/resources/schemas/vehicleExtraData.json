@@ -1,0 +1,72 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"railLength": {
+			"type": "number",
+			"minimum": 0
+		},
+		"totalVehicleLength": {
+			"type": "number",
+			"minimum": 0
+		},
+		"repeatIndex1": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"repeatIndex2": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"acceleration": {
+			"type": "number",
+			"minimum": 0
+		},
+		"isManualAllowed": {
+			"type": "boolean"
+		},
+		"maxManualSpeed": {
+			"type": "number",
+			"minimum": 0
+		},
+		"manualToAutomaticTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"totalDistance": {
+			"type": "number",
+			"minimum": 0
+		},
+		"defaultPosition": {
+			"type": "number",
+			"minimum": 0
+		},
+		"vehicleCars": {
+			"type": "array",
+			"items": {
+				"$ref": "vehicleCar.json"
+			}
+		},
+		"path": {
+			"type": "array",
+			"items": {
+				"$ref": "pathData.json"
+			}
+		}
+	},
+	"required": [
+		"railLength",
+		"totalVehicleLength",
+		"repeatIndex1",
+		"repeatIndex2",
+		"acceleration",
+		"isManualAllowed",
+		"maxManualSpeed",
+		"manualToAutomaticTime",
+		"totalDistance",
+		"defaultPosition"
+	]
+}

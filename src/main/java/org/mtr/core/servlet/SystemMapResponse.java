@@ -18,7 +18,7 @@ public class SystemMapResponse extends ResponseBase {
 		final JsonArray stationsArray = new JsonArray();
 		simulator.stations.forEach(station -> {
 			final JsonArray connectionsArray = new JsonArray();
-			simulator.dataCache.stationIdToConnectingStations.get(station).forEach(connectingStation -> connectionsArray.add(connectingStation.getHexId()));
+			station.connectedStations.forEach(connectingStation -> connectionsArray.add(connectingStation.getHexId()));
 
 			final JsonObject jsonObject = new JsonObject();
 			jsonObject.addProperty("id", station.getHexId());
@@ -36,7 +36,7 @@ public class SystemMapResponse extends ResponseBase {
 		simulator.routes.forEach(route -> {
 			final JsonArray routeStationsArray = new JsonArray();
 			route.getRoutePlatforms().forEach(routePlatform -> {
-				final Platform platform = simulator.dataCache.platformIdMap.get(routePlatform.getPlatformId());
+				final Platform platform = routePlatform.getPlatform();
 				if (platform != null && platform.area != null) {
 					final JsonObject jsonObject = new JsonObject();
 					jsonObject.addProperty("id", platform.area.getHexId());

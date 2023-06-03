@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.servlet.IntegrationServlet;
 import org.mtr.core.servlet.OBAServlet;
+import org.mtr.core.servlet.SocketHandler;
 import org.mtr.core.servlet.SystemMapServlet;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
@@ -60,6 +61,7 @@ public class Main {
 		new IntegrationServlet(webserver, "/mtr/api/data/*", simulators);
 		new SystemMapServlet(webserver, "/mtr/api/map/*", simulators);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
+		SocketHandler.register(webserver, simulators);
 		webserver.start();
 		scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
 		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));

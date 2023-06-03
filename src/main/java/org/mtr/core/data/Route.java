@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.RouteSchema;
 import org.mtr.core.serializers.ReaderBase;
@@ -12,6 +11,8 @@ import org.mtr.core.tools.Utilities;
 import java.util.Locale;
 
 public final class Route extends RouteSchema {
+
+	public ObjectArrayList<Depot> depots = new ObjectArrayList<>();
 
 	public Route(TransportMode transportMode, Simulator simulator) {
 		super(transportMode, simulator);
@@ -60,15 +61,15 @@ public final class Route extends RouteSchema {
 
 			if (circularState != CircularState.NONE) {
 				for (int i = index + 1; i < routePlatformData.size(); i++) {
-					platform = dataCache.platformIdMap.get(routePlatformData.get(i).getPlatformId());
-					if (platform != null && platform.area != null && platform.area.savedRails.stream().anyMatch(checkPlatform -> dataCache.platformIdToRouteColors.getOrDefault(checkPlatform.getId(), new IntArraySet()).intStream().anyMatch(checkColor -> checkColor != color))) {
+					platform = routePlatformData.get(i).getPlatform();
+					if (platform != null && platform.area != null && platform.area.savedRails.stream().anyMatch(checkPlatform -> checkPlatform.routeColors.size() > 1 || !checkPlatform.routeColors.isEmpty() && !checkPlatform.routeColors.contains(getColor()))) {
 						break;
 					}
 				}
 			}
 
 			if (platform == null) {
-				platform = dataCache.platformIdMap.get(Utilities.getElement(routePlatformData, -1).getPlatformId());
+				platform = Utilities.getElement(routePlatformData, -1).getPlatform();
 			}
 
 			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.getName()) : "";
@@ -103,17 +104,6 @@ public final class Route extends RouteSchema {
 				return 6;
 			default:
 				return 3;
-		}
-	}
-
-	public static class RoutePlatform {
-
-		public String customDestination;
-		public final long platformId;
-
-		public RoutePlatform(long platformId) {
-			this.platformId = platformId;
-			customDestination = "";
 		}
 	}
 

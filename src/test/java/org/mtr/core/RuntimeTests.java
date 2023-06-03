@@ -9,6 +9,7 @@ import org.mtr.core.data.Station;
 import org.mtr.core.data.TestUtilities;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.tools.Position;
+import org.mtr.core.tools.Utilities;
 
 import java.io.IOException;
 
@@ -33,13 +34,13 @@ public class RuntimeTests implements TestUtilities {
 		final JsonObject requestObject = new JsonObject();
 
 		final JsonArray requestStationArray = new JsonArray();
-		requestStationArray.add(TestUtilities.getJsonObjectFromData(station1));
-		requestStationArray.add(TestUtilities.getJsonObjectFromData(station2));
+		requestStationArray.add(Utilities.getJsonObjectFromData(station1));
+		requestStationArray.add(Utilities.getJsonObjectFromData(station2));
 		requestObject.add("stations", requestStationArray);
 
 		final JsonArray requestPlatformArray = new JsonArray();
-		requestPlatformArray.add(TestUtilities.getJsonObjectFromData(platform1));
-		requestPlatformArray.add(TestUtilities.getJsonObjectFromData(platform2));
+		requestPlatformArray.add(Utilities.getJsonObjectFromData(platform1));
+		requestPlatformArray.add(Utilities.getJsonObjectFromData(platform2));
 		requestObject.add("platforms", requestPlatformArray);
 
 		final JsonObject responseObject1 = TestUtilities.sendHttpDataRequest("update", requestObject);

@@ -256,6 +256,10 @@ public final class Rail extends RailSchema {
 		return Math.abs(tEnd2 - tStart2) + Math.abs(tEnd1 - tStart1);
 	}
 
+	public boolean closeTo(Position position, double radius) {
+		return Utilities.isBetween(position, getPosition(0), getPosition(getLength()), radius);
+	}
+
 	public void render(RenderRail callback, float offsetRadius1, float offsetRadius2) {
 		renderSegment(h1, k1, r1, tStart1, tEnd1, 0, offsetRadius1, offsetRadius2, reverseT1, isStraight1, callback);
 		renderSegment(h2, k2, r2, tStart2, tEnd2, Math.abs(tEnd1 - tStart1), offsetRadius1, offsetRadius2, reverseT2, isStraight2, callback);

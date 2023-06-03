@@ -1,7 +1,10 @@
 package org.mtr.core.tools;
 
+import com.google.gson.JsonObject;
 import org.mtr.core.Main;
 import org.mtr.core.data.ConditionalList;
+import org.mtr.core.data.SerializedDataBase;
+import org.mtr.core.serializers.JsonWriter;
 
 import java.util.List;
 import java.util.Locale;
@@ -21,6 +24,20 @@ public interface Utilities {
 
 	static boolean isBetween(double value, double value1, double value2, double padding) {
 		return value >= Math.min(value1, value2) - padding && value <= Math.max(value1, value2) + padding;
+	}
+
+	static boolean isBetween(Position position, Position position1, Position position2, double padding) {
+		return isBetween(position, position1.getX(), position1.getY(), position1.getZ(), position2.getX(), position2.getY(), position2.getZ(), padding);
+	}
+
+	static boolean isBetween(Position position, Vec3 position1, Vec3 position2, double padding) {
+		return isBetween(position, position1.x, position1.y, position1.z, position2.x, position2.y, position2.z, padding);
+	}
+
+	static boolean isBetween(Position position, double x1, double y1, double z1, double x2, double y2, double z2, double padding) {
+		return Utilities.isBetween(position.getX(), x1, x2, padding) &&
+				Utilities.isBetween(position.getY(), y1, y2, padding) &&
+				Utilities.isBetween(position.getZ(), z1, z2, padding);
 	}
 
 	static boolean isIntersecting(double value1, double value2, double value3, double value4) {
@@ -108,6 +125,12 @@ public interface Utilities {
 				index = Utilities.clamp((lowIndex + highIndex) / 2, 0, listSize - 1);
 			}
 		}
+	}
+
+	static <T extends SerializedDataBase> JsonObject getJsonObjectFromData(T data) {
+		final JsonObject jsonObject = new JsonObject();
+		data.serializeData(new JsonWriter(jsonObject));
+		return jsonObject;
 	}
 
 	static long circularDifference(long value1, long value2, long totalDegrees) {

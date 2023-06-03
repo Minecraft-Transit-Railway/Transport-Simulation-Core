@@ -2,8 +2,10 @@ package org.mtr.core.data;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.PlatformSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
@@ -11,6 +13,8 @@ import org.mtr.core.tools.*;
 
 public final class Platform extends PlatformSchema {
 
+	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();
+	public final IntAVLTreeSet routeColors = new IntAVLTreeSet();
 	private final Long2ObjectOpenHashMap<Angle> anglesFromDepot = new Long2ObjectOpenHashMap<>();
 
 	public Platform(Position position1, Position position2, TransportMode transportMode, Simulator simulator) {
@@ -35,9 +39,9 @@ public final class Platform extends PlatformSchema {
 		anglesFromDepot.put(depotId, angle);
 	}
 
-	public JsonObject getOBAStopElement(DataCache dataCache, IntArraySet routesUsed) {
+	public JsonObject getOBAStopElement(IntArraySet routesUsed) {
 		final JsonArray jsonArray = new JsonArray();
-		dataCache.platformIdToRouteColors.getOrDefault(id, new IntArraySet()).forEach(color -> {
+		routeColors.forEach(color -> {
 			jsonArray.add(Utilities.numberToPaddedHexString(color, 6));
 			routesUsed.add(color);
 		});

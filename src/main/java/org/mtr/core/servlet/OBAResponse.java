@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.data.Siding;
@@ -80,14 +79,14 @@ public class OBAResponse extends ResponseBase {
 
 			final JsonArray arrivalsAndDeparturesArray = new JsonArray();
 			final JsonArray tripsUsedArray = new JsonArray();
-			simulator.dataCache.platformIdToSidings.getOrDefault(platformId, new ObjectArraySet<>()).forEach(siding -> siding.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
+			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> siding.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
 					currentMillis,
 					platform,
 					Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
 					Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000,
 					arrivalsAndDeparturesArray,
 					tripsUsedArray
-			));
+			))));
 
 			final JsonObject jsonObject = new JsonObject();
 			jsonObject.add("arrivalsAndDepartures", arrivalsAndDeparturesArray);
@@ -123,8 +122,8 @@ public class OBAResponse extends ResponseBase {
 			int count = 0;
 			for (final Platform platform : simulator.platforms) {
 				final LatLon platformLatLon = new LatLon(platform.getMidPosition());
-				if (Utilities.isBetween(platformLatLon.lat - latLon.lat, -latSpan, latSpan) && Utilities.isBetween(platformLatLon.lon - latLon.lon, -lonSpan, lonSpan) && !simulator.dataCache.platformIdToRouteColors.getOrDefault(platform.getId(), new IntArraySet()).isEmpty()) {
-					jsonArray.add(platform.getOBAStopElement(simulator.dataCache, colorsUsed));
+				if (Utilities.isBetween(platformLatLon.lat - latLon.lat, -latSpan, latSpan) && Utilities.isBetween(platformLatLon.lon - latLon.lon, -lonSpan, lonSpan) && !platform.routeColors.isEmpty()) {
+					jsonArray.add(platform.getOBAStopElement(colorsUsed));
 					count++;
 					if (count == 100) {
 						break;
@@ -184,7 +183,7 @@ public class OBAResponse extends ResponseBase {
 			platformIdsUsed.forEach(platformId -> {
 				final Platform platform = simulator.dataCache.platformIdMap.get(platformId);
 				if (platform != null) {
-					stopsArray.add(platform.getOBAStopElement(simulator.dataCache, colorsUsed));
+					stopsArray.add(platform.getOBAStopElement(colorsUsed));
 				}
 			});
 		}
@@ -192,9 +191,11 @@ public class OBAResponse extends ResponseBase {
 		final JsonArray routesArray = new JsonArray();
 		if (includeReferences && colorsUsed != null) {
 			colorsUsed.forEach(color -> {
-				final Route route = simulator.dataCache.routeColorMap.get(color);
-				if (route != null) {
-					routesArray.add(route.getOBARouteElement());
+				for (final Route route : simulator.routes) {
+					if (route.getColor() == color) {
+						routesArray.add(route.getOBARouteElement());
+						break;
+					}
 				}
 			});
 		}

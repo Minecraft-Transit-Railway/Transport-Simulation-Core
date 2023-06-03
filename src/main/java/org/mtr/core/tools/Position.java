@@ -43,6 +43,26 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return Math.abs(position.x - x) + Math.abs(position.y - y) + Math.abs(position.z - z);
 	}
 
+	public static Position getMin(Position position1, Position position2) {
+		if (position1 == null) {
+			return position2;
+		}
+		if (position2 == null) {
+			return position1;
+		}
+		return new Position(Math.min(position1.x, position2.x), Math.min(position1.y, position2.y), Math.min(position1.z, position2.z));
+	}
+
+	public static Position getMax(Position position1, Position position2) {
+		if (position1 == null) {
+			return position2;
+		}
+		if (position2 == null) {
+			return position1;
+		}
+		return new Position(Math.max(position1.x, position2.x), Math.max(position1.y, position2.y), Math.max(position1.z, position2.z));
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Position) {

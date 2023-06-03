@@ -45,7 +45,11 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	}
 
 	public boolean inArea(Position position) {
-		return validCorners(this) && Utilities.isBetween(position.getX(), position1.getX(), position2.getX()) && Utilities.isBetween(position.getY(), position1.getY(), position2.getY()) && Utilities.isBetween(position.getZ(), position1.getZ(), position2.getZ());
+		return inArea(position, 0);
+	}
+
+	public boolean inArea(Position position, double padding) {
+		return validCorners(this) && Utilities.isBetween(position, position1, position2, padding);
 	}
 
 	public boolean intersecting(AreaBase<T, U> areaBase) {

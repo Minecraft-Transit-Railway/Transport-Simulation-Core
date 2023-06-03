@@ -5,6 +5,7 @@ import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
+import org.mtr.core.tools.Utilities;
 
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends SavedRailBaseSchema {
 
@@ -43,6 +44,10 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 
 	public Position getOtherPosition(Position position) {
 		return position.equals(position1) ? position2 : position1;
+	}
+
+	public boolean closeTo(Position position, double radius) {
+		return Utilities.isBetween(position, position1, position2, radius);
 	}
 
 	public static boolean isInvalidSavedRail(DataCache dataCache, Position position1, Position position2) {

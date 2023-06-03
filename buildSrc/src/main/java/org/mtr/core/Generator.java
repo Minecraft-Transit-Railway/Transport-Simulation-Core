@@ -81,6 +81,7 @@ public class Generator {
 	}
 
 	private static void setImports(Class newClass) {
+		newClass.imports.add("org.mtr.core.client.*");
 		newClass.imports.add("org.mtr.core.data.*");
 		newClass.imports.add("org.mtr.core.serializers.*");
 		newClass.imports.add("org.mtr.core.simulation.*");

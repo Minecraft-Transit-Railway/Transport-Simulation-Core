@@ -3,6 +3,7 @@ package org.mtr.core.simulation;
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
+import org.mtr.core.client.ClientGroup;
 import org.mtr.core.data.*;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -27,6 +28,7 @@ public class Simulator implements Utilities {
 	public final ObjectAVLTreeSet<Depot> depots = new ObjectAVLTreeSet<>();
 	public final ObjectOpenHashBigSet<RailNode> railNodes = new ObjectOpenHashBigSet<>();
 	public final DataCache dataCache = new DataCache(this);
+	public final ClientGroup clientGroup = new ClientGroup();
 
 	private final String dimension;
 	private final FileLoader<Station> fileLoaderStations;
