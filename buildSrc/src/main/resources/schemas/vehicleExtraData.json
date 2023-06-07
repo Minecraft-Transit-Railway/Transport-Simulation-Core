@@ -5,6 +5,63 @@
 		"SerializedDataBase"
 	],
 	"properties": {
+		"previousRouteId": {
+			"type": "integer"
+		},
+		"previousPlatformId": {
+			"type": "integer"
+		},
+		"previousStationId": {
+			"type": "integer"
+		},
+		"previousRouteColor": {
+			"type": "integer"
+		},
+		"previousRouteName": {
+			"type": "string"
+		},
+		"previousStationName": {
+			"type": "string"
+		},
+		"previousRouteDestination": {
+			"type": "string"
+		},
+		"thisRouteId": {
+			"type": "integer"
+		},
+		"thisPlatformId": {
+			"type": "integer"
+		},
+		"thisStationId": {
+			"type": "integer"
+		},
+		"thisRouteColor": {
+			"type": "integer"
+		},
+		"thisRouteName": {
+			"type": "string"
+		},
+		"thisStationName": {
+			"type": "string"
+		},
+		"thisRouteDestination": {
+			"type": "string"
+		},
+		"nextPlatformId": {
+			"type": "integer"
+		},
+		"nextStationId": {
+			"type": "integer"
+		},
+		"nextStationName": {
+			"type": "string"
+		},
+		"stoppingPoint": {
+			"type": "number"
+		},
+		"doorTarget": {
+			"type": "boolean"
+		},
 		"railLength": {
 			"type": "number",
 			"minimum": 0

@@ -187,11 +187,11 @@ public interface TestUtilities {
 	}
 
 	static VehicleExtraData randomVehicleExtraData() {
-		return new VehicleExtraData(RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextInt(), RANDOM.nextInt(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextInt(), RANDOM.nextDouble(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData));
+		return VehicleExtraData.create(RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong());
 	}
 
 	static Vehicle randomVehicle() {
-		return new Vehicle(randomSiding(), getDefaultSimulator(), randomTransportMode(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong());
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), randomTransportMode(), getDefaultSimulator());
 	}
 
 	static Client newClient(ReaderBase readerBase) {
@@ -255,6 +255,6 @@ public interface TestUtilities {
 	}
 
 	static Vehicle newVehicle(ReaderBase readerBase) {
-		return new Vehicle(randomSiding(), getDefaultSimulator(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong(), readerBase);
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), readerBase, getDefaultSimulator());
 	}
 }

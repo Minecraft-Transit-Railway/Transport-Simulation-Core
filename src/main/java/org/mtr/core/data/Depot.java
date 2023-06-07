@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.core.Main;
 import org.mtr.core.generated.DepotSchema;
 import org.mtr.core.path.SidingPathFinder;
@@ -19,7 +20,11 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public final ObjectArrayList<Route> routes = new ObjectArrayList<>();
 
-	private final ObjectArrayList<Platform> platformsInRoute = new ObjectArrayList<>();
+	/**
+	 * A temporary list to store all platforms of the vehicle instructions as well as the route used to get to each platform.
+	 * Repeated platforms are ignored.
+	 */
+	private final ObjectArrayList<ObjectObjectImmutablePair<Platform, Route>> platformsInRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
@@ -73,6 +78,18 @@ public final class Depot extends DepotSchema implements Utilities {
 				routes.get(i).depots.add(this);
 			}
 		}
+
+		platformsInRoute.clear();
+		long previousPlatformId = 0;
+		for (final Route route : routes) {
+			for (int i = 0; i < route.getRoutePlatforms().size(); i++) {
+				final Platform platform = route.getRoutePlatforms().get(i).platform;
+				if (platform != null && platform.getId() != previousPlatformId) {
+					platformsInRoute.add(new ObjectObjectImmutablePair<>(platform, i == 0 ? null : route));
+					previousPlatformId = platform.getId();
+				}
+			}
+		}
 	}
 
 	public void generateMainRoute() {
@@ -81,21 +98,10 @@ public final class Depot extends DepotSchema implements Utilities {
 		} else {
 			Main.LOGGER.info(String.format("Starting path generation for %s...", name));
 			path.clear();
-			platformsInRoute.clear();
 			sidingPathFinders.clear();
 			generatingSidingIds.clear();
-
-			final long[] previousPlatformId = {0};
-			routes.forEach(route -> route.getRoutePlatforms().forEach(routePlatformData -> {
-				final Platform platform = routePlatformData.getPlatform();
-				if (platform != null && platform.getId() != previousPlatformId[0]) {
-					platformsInRoute.add(platform);
-				}
-				previousPlatformId[0] = platform == null ? 0 : platform.getId();
-			}));
-
 			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
-				sidingPathFinders.add(new SidingPathFinder<>(simulator.dataCache, platformsInRoute.get(i), platformsInRoute.get(i + 1), i));
+				sidingPathFinders.add(new SidingPathFinder<>(simulator.dataCache, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
 			}
 		}
 	}
@@ -104,7 +110,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		SidingPathFinder.findPathTick(path, sidingPathFinders, () -> {
 			if (!platformsInRoute.isEmpty()) {
 				savedRails.forEach(siding -> {
-					siding.generateRoute(Utilities.getElement(platformsInRoute, 0), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1), platformsInRoute.size(), cruisingAltitude);
+					siding.generateRoute(Utilities.getElement(platformsInRoute, 0).left(), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1).left(), platformsInRoute.size(), cruisingAltitude);
 					generatingSidingIds.add(siding.getId());
 				});
 			}
@@ -117,6 +123,35 @@ public final class Depot extends DepotSchema implements Utilities {
 			Main.LOGGER.info(String.format("Path generation complete for %s", name));
 			generatePlatformDirectionsAndWriteDeparturesToSidings();
 		}
+	}
+
+	public VehicleExtraData.VehiclePlatformRouteInfo getVehiclePlatformRouteInfo(int stopIndex) {
+		final int platformCount = platformsInRoute.size();
+		final ObjectObjectImmutablePair<Platform, Route> previousData;
+		final ObjectObjectImmutablePair<Platform, Route> thisData;
+		final ObjectObjectImmutablePair<Platform, Route> nextData;
+
+		if (platformCount == 0) {
+			previousData = null;
+			thisData = null;
+			nextData = null;
+		} else if (repeatInfinitely) {
+			previousData = Utilities.getElement(platformsInRoute, (stopIndex - 1 + platformCount) % platformCount);
+			thisData = Utilities.getElement(platformsInRoute, stopIndex % platformCount);
+			nextData = Utilities.getElement(platformsInRoute, (stopIndex + 1) % platformCount);
+		} else {
+			previousData = Utilities.getElement(platformsInRoute, stopIndex - 1);
+			thisData = Utilities.getElement(platformsInRoute, stopIndex);
+			nextData = Utilities.getElement(platformsInRoute, stopIndex + 1);
+		}
+
+		return new VehicleExtraData.VehiclePlatformRouteInfo(
+				previousData == null ? null : previousData.left(),
+				thisData == null ? null : thisData.left(),
+				nextData == null ? null : nextData.left(),
+				thisData == null ? null : thisData.right(),
+				nextData == null ? null : nextData.right()
+		);
 	}
 
 	/**

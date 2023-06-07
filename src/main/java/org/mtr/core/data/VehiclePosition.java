@@ -10,7 +10,7 @@ public class VehiclePosition {
 		blockedSegments.add(new BlockedSegment(startDistance, endDistance, id));
 	}
 
-	public double isBlocked(long id, double startDistance, double endDistance) {
+	public double isBlocked(double startDistance, double endDistance, long id) {
 		for (final BlockedSegment blockedSegment : blockedSegments) {
 			if (id != blockedSegment.id && endDistance >= blockedSegment.startDistance) {
 				return blockedSegment.startDistance - startDistance;

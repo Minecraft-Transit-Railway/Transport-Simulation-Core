@@ -83,6 +83,7 @@ public class Simulator implements Utilities {
 			depots.forEach(Depot::tick);
 			sidings.forEach(Siding::tick);
 			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.getTransportModeOrdinal())));
+			clientGroup.tick();
 
 			if (autoSave) {
 				save(true);

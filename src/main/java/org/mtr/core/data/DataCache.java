@@ -38,22 +38,37 @@ public class DataCache {
 			mapAreasAndSavedRails(simulator.platforms, simulator.stations);
 			mapAreasAndSavedRails(simulator.sidings, simulator.depots);
 
+			// clear rail connections
+			// write rail connections
 			positionToRailConnections.clear();
 			simulator.railNodes.forEach(railNode -> positionToRailConnections.put(railNode.getPosition(), railNode.getConnectionsAsMap()));
 
-			simulator.routes.forEach(route -> route.depots.clear());
-			simulator.depots.forEach(depot -> depot.writeRouteCache(routeIdMap));
-
+			// clear platform routes
+			// clear platform route colors
 			simulator.platforms.forEach(platform -> {
 				platform.routes.clear();
 				platform.routeColors.clear();
 			});
 
+			// clear route depots
+			// write route platforms
+			// write route platform routes
+			// write route platform colors
 			simulator.routes.forEach(route -> {
+				route.depots.clear();
 				route.getRoutePlatforms().forEach(routePlatformData -> routePlatformData.writePlatformCache(route, platformIdMap));
 				route.getRoutePlatforms().removeIf(routePlatformData -> routePlatformData.platform == null);
 			});
 
+			// clear depot routes
+			// write route depots
+			// write depot routes
+			// clear all platforms in route
+			// write all platforms in route
+			simulator.depots.forEach(depot -> depot.writeRouteCache(routeIdMap));
+
+			// clear station connections
+			// write station connections
 			simulator.stations.forEach(station1 -> {
 				station1.connectedStations.clear();
 				simulator.stations.forEach(station2 -> {

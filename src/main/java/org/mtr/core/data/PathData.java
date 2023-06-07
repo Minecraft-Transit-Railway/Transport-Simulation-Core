@@ -10,7 +10,7 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	private Rail rail = new Rail(new MessagePackReader());
 	public final boolean reversePositions;
 
-	public PathData(Rail rail, long savedRailBaseId, long dwellTime, long stopIndex, Position startPosition, Position endPosition) {
+	public PathData(Rail rail, long savedRailBaseId, long dwellTime, int stopIndex, Position startPosition, Position endPosition) {
 		this(rail, savedRailBaseId, dwellTime, stopIndex, 0, 0, startPosition, endPosition);
 	}
 
@@ -52,6 +52,10 @@ public class PathData extends PathDataSchema implements ConditionalList {
 
 	public final long getDwellTime() {
 		return dwellTime;
+	}
+
+	public final int getStopIndex() {
+		return (int) stopIndex;
 	}
 
 	public boolean init(DataCache dataCache) {

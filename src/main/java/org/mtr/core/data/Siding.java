@@ -55,6 +55,9 @@ public final class Siding extends SidingSchema implements Utilities {
 	 */
 	private final Long2LongAVLTreeMap vehicleTimesAlongRoute = new Long2LongAVLTreeMap();
 
+	public static final double ACCELERATION_DEFAULT = 1D / 250000;
+	public static final double MAX_ACCELERATION = 1D / 50000;
+	public static final double MIN_ACCELERATION = 1D / 2500000;
 	private static final String KEY_VEHICLES = "vehicles";
 
 	public Siding(Position position1, Position position2, double railLength, TransportMode transportMode, Simulator simulator) {
@@ -87,11 +90,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		generatePathDistancesAndTimeSegments();
 
 		if (area != null && defaultPathData != null) {
-			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(
-					this, simulator, railLength, vehicleCars,
-					pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData,
-					area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime, readerBase
-			)));
+			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, simulator)));
 		}
 	}
 
@@ -139,7 +138,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void setAcceleration(double newAcceleration) {
-		acceleration = transportMode.continuousMovement ? Vehicle.MAX_ACCELERATION : Vehicle.roundAcceleration(newAcceleration);
+		acceleration = transportMode.continuousMovement ? MAX_ACCELERATION : roundAcceleration(newAcceleration);
 	}
 
 	public void generateRoute(Platform firstPlatform, Platform lastPlatform, int stopIndex, long cruisingAltitude) {
@@ -173,13 +172,17 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void initVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
-		vehicles.forEach(train -> train.writeVehiclePositions(vehiclePositions));
+		vehicles.forEach(vehicle -> vehicle.initVehiclePositions(vehiclePositions));
 	}
 
 	public void simulateTrain(long millisElapsed, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
 		vehicleTimesAlongRoute.clear();
 
 		if (area == null) {
+			vehicles.clear();
+			pathMainRoute.clear();
+			pathSidingToMainRoute.clear();
+			pathMainRouteToSiding.clear();
 			return;
 		}
 
@@ -189,7 +192,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		final ObjectArraySet<Vehicle> trainsToRemove = new ObjectArraySet<>();
 		final LongArrayList visitedDepartureIndices = new LongArrayList();
 		for (final Vehicle vehicle : vehicles) {
-			vehicle.simulateTrain(millisElapsed, vehiclePositions, vehicleTimesAlongRoute);
+			vehicle.simulate(millisElapsed, vehiclePositions, vehicleTimesAlongRoute);
 
 			if (vehicle.closeToDepot()) {
 				spawnTrain = false;
@@ -218,11 +221,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
-			vehicles.add(new Vehicle(
-					this, simulator, transportMode, railLength, vehicleCars,
-					pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData,
-					area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime
-			));
+			vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, simulator));
 		}
 
 		if (!trainsToRemove.isEmpty()) {
@@ -539,7 +538,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			for (int i = 0; i < area.routes.size(); i++) {
 				final Route route = area.routes.get(i);
 				for (int j = 0; j < route.getRoutePlatforms().size(); j++) {
-					routePlatformInfoList.add(new RoutePlatformInfo(route, i, route.getRoutePlatforms().get(j).getPlatform().getId(), route.getDestination(simulator.dataCache, j)));
+					routePlatformInfoList.add(new RoutePlatformInfo(route, i, route.getRoutePlatforms().get(j).platform.getId(), route.getDestination(j)));
 				}
 			}
 
@@ -655,6 +654,11 @@ public final class Siding extends SidingSchema implements Utilities {
 		return totalVehicleLength;
 	}
 
+	public static double roundAcceleration(double acceleration) {
+		final double tempAcceleration = Utilities.round(acceleration, 8);
+		return tempAcceleration <= 0 ? ACCELERATION_DEFAULT : Utilities.clamp(tempAcceleration, MIN_ACCELERATION, MAX_ACCELERATION);
+	}
+
 	private static class RoutePlatformInfo {
 
 		private final Route route;
@@ -683,7 +687,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			this.startSpeed = startSpeed;
 			this.startTime = startTime;
 			this.speedChange = Integer.compare(speedChange, 0);
-			this.acceleration = Vehicle.roundAcceleration(acceleration);
+			this.acceleration = roundAcceleration(acceleration);
 		}
 
 		@Override

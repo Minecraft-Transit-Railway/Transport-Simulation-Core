@@ -44,7 +44,7 @@ public final class Route extends RouteSchema {
 		return circularState;
 	}
 
-	public String getDestination(DataCache dataCache, int index) {
+	public String getDestination(int index) {
 		for (int i = Math.min(routePlatformData.size() - 1, index); i >= 0; i--) {
 			final String customDestination = routePlatformData.get(i).getCustomDestination();
 			if (destinationIsReset(customDestination)) {
@@ -61,7 +61,7 @@ public final class Route extends RouteSchema {
 
 			if (circularState != CircularState.NONE) {
 				for (int i = index + 1; i < routePlatformData.size(); i++) {
-					platform = routePlatformData.get(i).getPlatform();
+					platform = routePlatformData.get(i).platform;
 					if (platform != null && platform.area != null && platform.area.savedRails.stream().anyMatch(checkPlatform -> checkPlatform.routeColors.size() > 1 || !checkPlatform.routeColors.isEmpty() && !checkPlatform.routeColors.contains(getColor()))) {
 						break;
 					}
@@ -69,7 +69,7 @@ public final class Route extends RouteSchema {
 			}
 
 			if (platform == null) {
-				platform = Utilities.getElement(routePlatformData, -1).getPlatform();
+				platform = Utilities.getElement(routePlatformData, -1).platform;
 			}
 
 			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.getName()) : "";
