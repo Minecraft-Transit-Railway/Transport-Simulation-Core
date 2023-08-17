@@ -3,7 +3,6 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.AreaBaseSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -12,12 +11,12 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 
 	public final ObjectAVLTreeSet<U> savedRails = new ObjectAVLTreeSet<>();
 
-	public AreaBase(TransportMode transportMode, Simulator simulator) {
-		super(transportMode, simulator);
+	public AreaBase(TransportMode transportMode, Data data) {
+		super(transportMode, data);
 	}
 
-	public AreaBase(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+	public AreaBase(ReaderBase readerBase, Data data) {
+		super(readerBase, data);
 		DataFixer.unpackAreaBasePositions(readerBase, (value1, value2) -> {
 			position1 = value1;
 			position2 = value2;
@@ -37,6 +36,30 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 	@Override
 	public boolean isValid() {
 		return !name.isEmpty();
+	}
+
+	public long getMinX() {
+		return Math.min(position1.getX(), position2.getX());
+	}
+
+	public long getMaxX() {
+		return Math.max(position1.getX(), position2.getX());
+	}
+
+	public long getMinY() {
+		return Math.min(position1.getY(), position2.getY());
+	}
+
+	public long getMaxY() {
+		return Math.max(position1.getY(), position2.getY());
+	}
+
+	public long getMinZ() {
+		return Math.min(position1.getZ(), position2.getZ());
+	}
+
+	public long getMaxZ() {
+		return Math.max(position1.getZ(), position2.getZ());
 	}
 
 	public void setCorners(Position position1, Position position2) {
@@ -70,7 +93,7 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 		return inArea(areaBase.position1) || inArea(areaBase.position2) || inArea(new Position(x1, y1, z2)) || inArea(new Position(x1, y2, z1)) || inArea(new Position(x1, y2, z2)) || inArea(new Position(x2, y1, z1)) || inArea(new Position(x2, y1, z2)) || inArea(new Position(x2, y2, z1));
 	}
 
-	private static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> boolean validCorners(AreaBase<T, U> areaBase) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> boolean validCorners(AreaBase<T, U> areaBase) {
 		return areaBase != null && areaBase.position1 != null && areaBase.position2 != null;
 	}
 }

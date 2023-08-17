@@ -5,7 +5,7 @@
 		"SerializedDataBase"
 	],
 	"javaConstructorFields": [
-		"simulator"
+		"data"
 	],
 	"properties": {
 		"id": {

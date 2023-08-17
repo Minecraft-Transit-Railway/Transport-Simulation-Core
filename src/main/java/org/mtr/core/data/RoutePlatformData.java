@@ -8,7 +8,7 @@ public final class RoutePlatformData extends RoutePlatformDataSchema {
 
 	public Platform platform;
 
-	RoutePlatformData(long platformId) {
+	public RoutePlatformData(long platformId) {
 		super(platformId);
 	}
 
@@ -23,6 +23,10 @@ public final class RoutePlatformData extends RoutePlatformDataSchema {
 
 	public String getCustomDestination() {
 		return customDestination;
+	}
+
+	public void setCustomDestination(String customDestination) {
+		this.customDestination = customDestination;
 	}
 
 	public void writePlatformCache(Route route, Long2ObjectOpenHashMap<Platform> platformIdMap) {

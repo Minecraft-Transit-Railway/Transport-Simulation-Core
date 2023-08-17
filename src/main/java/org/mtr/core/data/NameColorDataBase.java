@@ -3,19 +3,18 @@ package org.mtr.core.data;
 import org.mtr.core.generated.NameColorDataBaseSchema;
 import org.mtr.core.generated.StationSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 
 import java.util.Locale;
 
 public abstract class NameColorDataBase extends NameColorDataBaseSchema implements SerializedDataBaseWithId, Comparable<NameColorDataBase> {
 
-	public NameColorDataBase(TransportMode transportMode, Simulator simulator) {
-		super(transportMode, simulator);
+	public NameColorDataBase(TransportMode transportMode, Data data) {
+		super(transportMode, data);
 	}
 
-	public NameColorDataBase(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+	public NameColorDataBase(ReaderBase readerBase, Data data) {
+		super(readerBase, data);
 	}
 
 	@Override
@@ -39,6 +38,10 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 		return Utilities.numberToPaddedHexString(color, 6);
 	}
 
+	public final TransportMode getTransportMode() {
+		return transportMode;
+	}
+
 	public final void setName(String newName) {
 		name = newName;
 	}
@@ -49,6 +52,10 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 
 	public final boolean isTransportMode(NameColorDataBase data) {
 		return noTransportMode() || data.noTransportMode() || data.transportMode == transportMode;
+	}
+
+	public final boolean isTransportMode(TransportMode transportMode) {
+		return noTransportMode() || this.transportMode == transportMode;
 	}
 
 	private String combineNameColorId() {

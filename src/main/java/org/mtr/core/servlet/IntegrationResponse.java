@@ -22,7 +22,7 @@ public class IntegrationResponse extends ResponseBase {
 
 	public JsonObject update() {
 		final JsonObject jsonObject = parseBody(IntegrationResponse::update);
-		simulator.dataCache.sync();
+		simulator.sync();
 		return jsonObject;
 	}
 
@@ -32,8 +32,16 @@ public class IntegrationResponse extends ResponseBase {
 
 	public JsonObject delete() {
 		parseBody(IntegrationResponse::delete);
-		simulator.dataCache.sync();
+		simulator.sync();
 		return new JsonObject();
+	}
+
+	public JsonObject generate() {
+		return parseBody(IntegrationResponse::generate);
+	}
+
+	public JsonObject clear() {
+		return parseBody(IntegrationResponse::clear);
 	}
 
 	private JsonObject parseBody(BodyCallback bodyCallback) {
@@ -45,19 +53,19 @@ public class IntegrationResponse extends ResponseBase {
 				final JsonArray resultArray = new JsonArray();
 				switch (key) {
 					case "stations":
-						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.stations, simulator.dataCache.stationIdMap, jsonReader -> new Station(jsonReader, simulator)));
+						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.stations, simulator.stationIdMap, jsonReader -> new Station(jsonReader, simulator)));
 						break;
 					case "platforms":
-						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.platforms, simulator.dataCache.platformIdMap, jsonReader -> new Platform(jsonReader, simulator)));
+						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.platforms, simulator.platformIdMap, jsonReader -> new Platform(jsonReader, simulator)));
 						break;
 					case "sidings":
-						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.sidings, simulator.dataCache.sidingIdMap, jsonReader -> new Siding(jsonReader, simulator)));
+						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.sidings, simulator.sidingIdMap, jsonReader -> new Siding(jsonReader, simulator)));
 						break;
 					case "routes":
-						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.routes, simulator.dataCache.routeIdMap, jsonReader -> new Route(jsonReader, simulator)));
+						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.routes, simulator.routeIdMap, jsonReader -> new Route(jsonReader, simulator)));
 						break;
 					case "depots":
-						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.depots, simulator.dataCache.depotIdMap, jsonReader -> new Depot(jsonReader, simulator)));
+						iterateBodyArray(bodyArray, jsonElement -> bodyCallback.accept(jsonElement, resultArray, simulator.depots, simulator.depotIdMap, jsonReader -> new Depot(jsonReader, simulator)));
 						break;
 				}
 				jsonObject.add(key, resultArray);
@@ -115,6 +123,22 @@ public class IntegrationResponse extends ResponseBase {
 	private static <T extends NameColorDataBase> void delete(JsonElement jsonElement, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
 		final long id = jsonElement.getAsLong();
 		dataSet.removeIf(data -> data.getId() == id);
+	}
+
+	private static <T extends NameColorDataBase> void generate(JsonElement jsonElement, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+		final T data = dataIdMap.get(jsonElement.getAsLong());
+		if (data instanceof Depot) {
+			resultArray.add(Utilities.getJsonObjectFromData(data));
+			((Depot) data).generateMainRoute();
+		}
+	}
+
+	private static <T extends NameColorDataBase> void clear(JsonElement jsonElement, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+		final T data = dataIdMap.get(jsonElement.getAsLong());
+		if (data instanceof Siding) {
+			resultArray.add(Utilities.getJsonObjectFromData(data));
+			((Siding) data).clearVehicles();
+		}
 	}
 
 	@FunctionalInterface

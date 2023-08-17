@@ -62,7 +62,7 @@ public class OBAResponse extends ResponseBase {
 	public JsonObject getArrivalsAndDeparturesForStop() {
 		try {
 			final long platformId = Long.parseUnsignedLong(data, 16);
-			final Platform platform = simulator.dataCache.platformIdMap.get(platformId);
+			final Platform platform = simulator.platformIdMap.get(platformId);
 
 			final LongArraySet platformIdsUsed = new LongArraySet();
 			platformIdsUsed.add(platformId);
@@ -139,7 +139,7 @@ public class OBAResponse extends ResponseBase {
 		final String[] tripIdSplit = data.split("_");
 		try {
 			if (tripIdSplit.length == 4) {
-				final Siding siding = simulator.dataCache.sidingIdMap.get(Long.parseUnsignedLong(tripIdSplit[0], 16));
+				final Siding siding = simulator.sidingIdMap.get(Long.parseUnsignedLong(tripIdSplit[0], 16));
 				if (siding != null) {
 					final LongArraySet platformIdsUsed = new LongArraySet();
 					final JsonArray tripsUsedArray = new JsonArray();
@@ -181,7 +181,7 @@ public class OBAResponse extends ResponseBase {
 		final JsonArray stopsArray = new JsonArray();
 		if (includeReferences && platformIdsUsed != null) {
 			platformIdsUsed.forEach(platformId -> {
-				final Platform platform = simulator.dataCache.platformIdMap.get(platformId);
+				final Platform platform = simulator.platformIdMap.get(platformId);
 				if (platform != null) {
 					stopsArray.add(platform.getOBAStopElement(colorsUsed));
 				}

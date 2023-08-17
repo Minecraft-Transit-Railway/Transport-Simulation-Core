@@ -44,7 +44,7 @@ public class SocketHandler {
 
 							platforms.forEach(platform -> routes.addAll(platform.routes));
 
-							simulator.dataCache.positionToRailConnections.forEach((position1, connections) -> connections.forEach((position2, rail) -> {
+							simulator.positionToRailConnections.forEach((position1, connections) -> connections.forEach((position2, rail) -> {
 								if (Utilities.isBetween(client.getPosition(), position1, position2, updateRadius)) {
 									rails.add(rail);
 								}

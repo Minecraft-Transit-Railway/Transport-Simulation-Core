@@ -60,13 +60,13 @@ public final class Siding extends SidingSchema implements Utilities {
 	public static final double MIN_ACCELERATION = 1D / 2500000;
 	private static final String KEY_VEHICLES = "vehicles";
 
-	public Siding(Position position1, Position position2, double railLength, TransportMode transportMode, Simulator simulator) {
-		super(getRailLength(railLength), position1, position2, transportMode, simulator);
+	public Siding(Position position1, Position position2, double railLength, TransportMode transportMode, Data data) {
+		super(getRailLength(railLength), position1, position2, transportMode, data);
 		vehicleReaders = ObjectImmutableList.of();
 	}
 
-	public Siding(ReaderBase readerBase, Simulator simulator) {
-		super(DataFixer.convertSiding(readerBase), simulator);
+	public Siding(ReaderBase readerBase, Data data) {
+		super(DataFixer.convertSiding(readerBase), data);
 		vehicleReaders = savePathDataReaderBase(readerBase, KEY_VEHICLES);
 		updateData(readerBase);
 		DataFixer.unpackSidingVehicleCars(readerBase, transportMode, railLength, vehicleCars);
@@ -80,18 +80,22 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void init() {
-		final Rail rail = DataCache.tryGet(simulator.dataCache.positionToRailConnections, position1, position2);
+		final Rail rail = Data.tryGet(data.positionToRailConnections, position1, position2);
 		if (rail != null) {
 			defaultPathData = new PathData(rail, id, 1, -1, 0, rail.getLength(), position1, position2);
 		}
 
-		initPath(pathSidingToMainRoute, simulator.dataCache);
-		initPath(pathMainRouteToSiding, simulator.dataCache);
+		initPath(pathSidingToMainRoute, data);
+		initPath(pathMainRouteToSiding, data);
 		generatePathDistancesAndTimeSegments();
 
 		if (area != null && defaultPathData != null) {
-			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, simulator)));
+			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
 		}
+	}
+
+	public double getRailLength() {
+		return railLength;
 	}
 
 	public boolean getIsManual() {
@@ -110,9 +114,13 @@ public final class Siding extends SidingSchema implements Utilities {
 		return transportMode.ordinal();
 	}
 
+	public double getAcceleration() {
+		return acceleration;
+	}
+
 	public void setVehicleCars(ObjectArrayList<VehicleCar> newVehicleCars) {
 		vehicleCars.clear();
-		int tempVehicleLength = 0;
+		double tempVehicleLength = 0;
 		for (final VehicleCar vehicleCar : newVehicleCars) {
 			if (tempVehicleLength + vehicleCar.getLength() > railLength) {
 				break;
@@ -141,15 +149,19 @@ public final class Siding extends SidingSchema implements Utilities {
 		acceleration = transportMode.continuousMovement ? MAX_ACCELERATION : roundAcceleration(newAcceleration);
 	}
 
+	public void clearVehicles() {
+		vehicles.clear();
+	}
+
 	public void generateRoute(Platform firstPlatform, Platform lastPlatform, int stopIndex, long cruisingAltitude) {
 		vehicles.clear();
 		pathSidingToMainRoute.clear();
 		pathMainRouteToSiding.clear();
 		sidingPathFinderSidingToMainRoute.clear();
-		sidingPathFinderSidingToMainRoute.add(new SidingPathFinder<>(simulator.dataCache, this, firstPlatform, -1));
+		sidingPathFinderSidingToMainRoute.add(new SidingPathFinder<>(data, this, firstPlatform, -1));
 		sidingPathFinderMainRouteToSiding.clear();
 		if (lastPlatform != null) {
-			sidingPathFinderMainRouteToSiding.add(new SidingPathFinder<>(simulator.dataCache, lastPlatform, this, stopIndex));
+			sidingPathFinderMainRouteToSiding.add(new SidingPathFinder<>(data, lastPlatform, this, stopIndex));
 		}
 	}
 
@@ -221,7 +233,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
-			vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, simulator));
+			vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data));
 		}
 
 		if (!trainsToRemove.isEmpty()) {
@@ -454,7 +466,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				departureSearchIndex = 0;
 			}
 
-			final int match = simulator.matchMillis(departures.getLong(departureSearchIndex) + offset);
+			final int match = data instanceof Simulator ? ((Simulator) data).matchMillis(departures.getLong(departureSearchIndex) + offset) : 0;
 
 			if (match == 0) {
 				return departureSearchIndex;
@@ -472,7 +484,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		if (area == null) {
 			return defaultAmount;
 		} else {
-			return transportMode.continuousMovement ? Depot.CONTINUOUS_MOVEMENT_FREQUENCY : area.getRepeatInfinitely() ? Math.round(timeOffsetForRepeating) : area.getUseRealTime() ? defaultAmount : simulator.millisPerGameDay;
+			return transportMode.continuousMovement ? Depot.CONTINUOUS_MOVEMENT_FREQUENCY : area.getRepeatInfinitely() ? Math.round(timeOffsetForRepeating) : data instanceof Simulator && !area.getUseRealTime() ? ((Simulator) data).millisPerGameDay : defaultAmount;
 		}
 	}
 
@@ -636,10 +648,10 @@ public final class Siding extends SidingSchema implements Utilities {
 		return new ObjectImmutableList<>(tempReaders);
 	}
 
-	public static void initPath(ObjectArrayList<PathData> path, DataCache dataCache) {
+	public static void initPath(ObjectArrayList<PathData> path, Data data) {
 		final ObjectArrayList<PathData> pathDataToRemove = new ObjectArrayList<>();
 		path.forEach(pathData -> {
-			if (pathData.init(dataCache)) {
+			if (pathData.init(data)) {
 				pathDataToRemove.add(pathData);
 			}
 		});

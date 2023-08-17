@@ -1,7 +1,9 @@
 package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.Main;
 import org.mtr.core.client.ClientGroup;
 import org.mtr.core.data.*;
@@ -11,7 +13,7 @@ import org.mtr.core.tools.Utilities;
 import java.nio.file.Path;
 import java.util.Locale;
 
-public class Simulator implements Utilities {
+public class Simulator extends Data implements Utilities {
 
 	private long lastMillis;
 	private long currentMillis;
@@ -21,13 +23,6 @@ public class Simulator implements Utilities {
 	public final int millisPerGameDay;
 	public final float startingGameDayPercentage;
 
-	public final ObjectAVLTreeSet<Station> stations = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Platform> platforms = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Siding> sidings = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Depot> depots = new ObjectAVLTreeSet<>();
-	public final ObjectOpenHashBigSet<RailNode> railNodes = new ObjectOpenHashBigSet<>();
-	public final DataCache dataCache = new DataCache(this);
 	public final ClientGroup clientGroup = new ClientGroup();
 
 	private final String dimension;
@@ -56,7 +51,7 @@ public class Simulator implements Utilities {
 		this.startingGameDayPercentage = (startingGameDayPercentage + (float) (currentMillis - Main.START_MILLIS) / millisPerGameDay) % startingGameDayPercentage;
 		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (currentMillis - Main.START_MILLIS) / 1000F));
 
-		dataCache.sync();
+		sync();
 		depots.forEach(Depot::init);
 
 		final ObjectArrayList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> tempVehiclePositions = new ObjectArrayList<>();

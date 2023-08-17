@@ -58,8 +58,8 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return (int) stopIndex;
 	}
 
-	public boolean init(DataCache dataCache) {
-		final Rail tempRail = DataCache.tryGet(dataCache.positionToRailConnections, startPosition, endPosition);
+	public boolean init(Data data) {
+		final Rail tempRail = Data.tryGet(data.positionToRailConnections, startPosition, endPosition);
 		if (tempRail == null) {
 			rail = new Rail(new MessagePackReader());
 			return true;

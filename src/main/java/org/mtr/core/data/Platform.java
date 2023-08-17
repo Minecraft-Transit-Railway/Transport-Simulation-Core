@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.PlatformSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.*;
 
 public final class Platform extends PlatformSchema {
@@ -17,12 +16,12 @@ public final class Platform extends PlatformSchema {
 	public final IntAVLTreeSet routeColors = new IntAVLTreeSet();
 	private final Long2ObjectOpenHashMap<Angle> anglesFromDepot = new Long2ObjectOpenHashMap<>();
 
-	public Platform(Position position1, Position position2, TransportMode transportMode, Simulator simulator) {
-		super(position1, position2, transportMode, simulator);
+	public Platform(Position position1, Position position2, TransportMode transportMode, Data data) {
+		super(position1, position2, transportMode, data);
 	}
 
-	public Platform(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+	public Platform(ReaderBase readerBase, Data data) {
+		super(readerBase, data);
 		updateData(readerBase);
 		DataFixer.unpackPlatformDwellTime(readerBase, value -> dwellTime = value);
 	}

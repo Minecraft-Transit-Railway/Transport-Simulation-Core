@@ -2,7 +2,6 @@ package org.mtr.core.data;
 
 import org.mtr.core.generated.SavedRailBaseSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
@@ -11,13 +10,13 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 
 	public U area;
 
-	public SavedRailBase(Position position1, Position position2, TransportMode transportMode, Simulator simulator) {
-		super(position1, position2, transportMode, simulator);
+	public SavedRailBase(Position position1, Position position2, TransportMode transportMode, Data data) {
+		super(position1, position2, transportMode, data);
 		name = "1";
 	}
 
-	public SavedRailBase(ReaderBase readerBase, Simulator simulator) {
-		super(DataFixer.convertSavedRailBase(readerBase), simulator);
+	public SavedRailBase(ReaderBase readerBase, Data data) {
+		super(DataFixer.convertSavedRailBase(readerBase), data);
 	}
 
 	@Override
@@ -34,8 +33,8 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		return new Position(offsetPosition.getX() / 2, offsetPosition.getY() / 2, offsetPosition.getZ() / 2);
 	}
 
-	public boolean isInvalidSavedRail(DataCache dataCache) {
-		return isInvalidSavedRail(dataCache, position1, position2) || isInvalidSavedRail(dataCache, position2, position1);
+	public boolean isInvalidSavedRail(Data data) {
+		return isInvalidSavedRail(data, position1, position2) || isInvalidSavedRail(data, position2, position1);
 	}
 
 	public Position getRandomPosition() {
@@ -50,8 +49,8 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		return Utilities.isBetween(position, position1, position2, radius);
 	}
 
-	public static boolean isInvalidSavedRail(DataCache dataCache, Position position1, Position position2) {
-		final Rail rail = DataCache.tryGet(dataCache.positionToRailConnections, position1, position2);
+	public static boolean isInvalidSavedRail(Data data, Position position1, Position position2) {
+		final Rail rail = Data.tryGet(data.positionToRailConnections, position1, position2);
 		return rail == null || !rail.isSavedRail();
 	}
 

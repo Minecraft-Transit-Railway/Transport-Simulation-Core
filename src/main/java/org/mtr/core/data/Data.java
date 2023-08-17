@@ -3,7 +3,7 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
-import org.mtr.core.simulation.Simulator;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
 import org.mtr.core.tools.Position;
 
 import java.util.Map;
@@ -11,7 +11,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class DataCache {
+public class Data {
+
+	public final ObjectAVLTreeSet<Station> stations = new ObjectAVLTreeSet<>();
+	public final ObjectAVLTreeSet<Platform> platforms = new ObjectAVLTreeSet<>();
+	public final ObjectAVLTreeSet<Siding> sidings = new ObjectAVLTreeSet<>();
+	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();
+	public final ObjectAVLTreeSet<Depot> depots = new ObjectAVLTreeSet<>();
+	public final ObjectOpenHashBigSet<RailNode> railNodes = new ObjectOpenHashBigSet<>();
 
 	public final Long2ObjectOpenHashMap<Station> stationIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Platform> platformIdMap = new Long2ObjectOpenHashMap<>();
@@ -21,31 +28,25 @@ public class DataCache {
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionToRailConnections = new Object2ObjectOpenHashMap<>();
 
-	private final Simulator simulator;
-
-	public DataCache(Simulator simulator) {
-		this.simulator = simulator;
-	}
-
 	public final void sync() {
 		try {
-			mapIds(stationIdMap, simulator.stations);
-			mapIds(platformIdMap, simulator.platforms);
-			mapIds(sidingIdMap, simulator.sidings);
-			mapIds(routeIdMap, simulator.routes);
-			mapIds(depotIdMap, simulator.depots);
+			mapIds(stationIdMap, stations);
+			mapIds(platformIdMap, platforms);
+			mapIds(sidingIdMap, sidings);
+			mapIds(routeIdMap, routes);
+			mapIds(depotIdMap, depots);
 
-			mapAreasAndSavedRails(simulator.platforms, simulator.stations);
-			mapAreasAndSavedRails(simulator.sidings, simulator.depots);
+			mapAreasAndSavedRails(platforms, stations);
+			mapAreasAndSavedRails(sidings, depots);
 
 			// clear rail connections
 			// write rail connections
 			positionToRailConnections.clear();
-			simulator.railNodes.forEach(railNode -> positionToRailConnections.put(railNode.getPosition(), railNode.getConnectionsAsMap()));
+			railNodes.forEach(railNode -> positionToRailConnections.put(railNode.getPosition(), railNode.getConnectionsAsMap()));
 
 			// clear platform routes
 			// clear platform route colors
-			simulator.platforms.forEach(platform -> {
+			platforms.forEach(platform -> {
 				platform.routes.clear();
 				platform.routeColors.clear();
 			});
@@ -54,7 +55,7 @@ public class DataCache {
 			// write route platforms
 			// write route platform routes
 			// write route platform colors
-			simulator.routes.forEach(route -> {
+			routes.forEach(route -> {
 				route.depots.clear();
 				route.getRoutePlatforms().forEach(routePlatformData -> routePlatformData.writePlatformCache(route, platformIdMap));
 				route.getRoutePlatforms().removeIf(routePlatformData -> routePlatformData.platform == null);
@@ -65,13 +66,13 @@ public class DataCache {
 			// write depot routes
 			// clear all platforms in route
 			// write all platforms in route
-			simulator.depots.forEach(depot -> depot.writeRouteCache(routeIdMap));
+			depots.forEach(depot -> depot.writeRouteCache(routeIdMap));
 
 			// clear station connections
 			// write station connections
-			simulator.stations.forEach(station1 -> {
+			stations.forEach(station1 -> {
 				station1.connectedStations.clear();
-				simulator.stations.forEach(station2 -> {
+				stations.forEach(station2 -> {
 					if (station1 != station2 && station1.intersecting(station2)) {
 						station1.connectedStations.add(station2);
 					}
@@ -108,7 +109,7 @@ public class DataCache {
 		newInnerMap.put(key2, putValue.apply(newInnerMap.get(key2)));
 	}
 
-	protected static <U extends NameColorDataBase> void mapIds(Map<Long, U> map, Set<U> source) {
+	private static <U extends NameColorDataBase> void mapIds(Map<Long, U> map, Set<U> source) {
 		map.clear();
 		source.forEach(data -> map.put(data.getId(), data));
 	}

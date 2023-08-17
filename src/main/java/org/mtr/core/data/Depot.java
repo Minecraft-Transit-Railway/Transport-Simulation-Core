@@ -30,20 +30,24 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
 
-	public Depot(TransportMode transportMode, Simulator simulator) {
-		super(transportMode, simulator);
+	public Depot(TransportMode transportMode, Data data) {
+		super(transportMode, data);
 	}
 
-	public Depot(ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+	public Depot(ReaderBase readerBase, Data data) {
+		super(readerBase, data);
 		updateData(readerBase);
 		DataFixer.unpackDepotDepartures(readerBase, realTimeDepartures);
 	}
 
 	public void init() {
-		Siding.initPath(path, simulator.dataCache);
+		Siding.initPath(path, data);
 		savedRails.forEach(Siding::init);
 		generatePlatformDirectionsAndWriteDeparturesToSidings();
+	}
+
+	public void setUseRealTime(boolean useRealTime) {
+		this.useRealTime = useRealTime;
 	}
 
 	public void setFrequency(int hour, int frequency) {
@@ -55,12 +59,32 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 	}
 
+	public void setRepeatInfinitely(boolean repeatInfinitely) {
+		this.repeatInfinitely = repeatInfinitely;
+	}
+
+	public void setCruisingAltitude(long cruisingAltitude) {
+		this.cruisingAltitude = cruisingAltitude;
+	}
+
 	public boolean getRepeatInfinitely() {
 		return repeatInfinitely;
 	}
 
+	public long getCruisingAltitude() {
+		return cruisingAltitude;
+	}
+
 	public boolean getUseRealTime() {
 		return useRealTime;
+	}
+
+	public long getFrequency(int hour) {
+		return hour >= 0 && hour < HOURS_PER_DAY ? frequencies.getLong(hour) : 0;
+	}
+
+	public LongArrayList getRealTimeDepartures() {
+		return realTimeDepartures;
 	}
 
 	public ObjectArrayList<PathData> getPath() {
@@ -101,7 +125,7 @@ public final class Depot extends DepotSchema implements Utilities {
 			sidingPathFinders.clear();
 			generatingSidingIds.clear();
 			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
-				sidingPathFinders.add(new SidingPathFinder<>(simulator.dataCache, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
+				sidingPathFinders.add(new SidingPathFinder<>(data, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
 			}
 		}
 	}
@@ -176,7 +200,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 
 		platformDirections.forEach((platformId, angle) -> {
-			final Platform platform = simulator.dataCache.platformIdMap.get(platformId.longValue());
+			final Platform platform = data.platformIdMap.get(platformId.longValue());
 			if (platform != null) {
 				platform.setAngles(id, angle);
 			}
@@ -192,9 +216,9 @@ public final class Depot extends DepotSchema implements Utilities {
 			if (useRealTime) {
 				departures.addAll(realTimeDepartures);
 			} else {
-				final long offsetMillis = Math.max(0, (long) (Main.START_MILLIS - Main.START_MILLIS / simulator.millisPerGameDay * simulator.millisPerGameDay - simulator.startingGameDayPercentage * simulator.millisPerGameDay));
+				final long offsetMillis = data instanceof Simulator ? Math.max(0, (long) (Main.START_MILLIS - Main.START_MILLIS / ((Simulator) data).millisPerGameDay * ((Simulator) data).millisPerGameDay - ((Simulator) data).startingGameDayPercentage * ((Simulator) data).millisPerGameDay)) : 0;
 				final LongArrayList gameDepartures = new LongArrayList();
-				final float timeRatio = (float) MILLIS_PER_DAY / simulator.millisPerGameDay;
+				final float timeRatio = data instanceof Simulator ? (float) MILLIS_PER_DAY / ((Simulator) data).millisPerGameDay : 1;
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
 					if (frequencies.size() <= i) {

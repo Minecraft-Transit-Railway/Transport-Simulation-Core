@@ -18,9 +18,9 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 	public final int stopIndex;
 	private final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionToRailConnections;
 
-	public SidingPathFinder(DataCache dataCache, U startSavedRail, W endSavedRail, int stopIndex) {
+	public SidingPathFinder(Data data, U startSavedRail, W endSavedRail, int stopIndex) {
 		super(new PositionAndAngle(startSavedRail.getRandomPosition(), null), new PositionAndAngle(endSavedRail.getRandomPosition(), null));
-		positionToRailConnections = dataCache.positionToRailConnections;
+		positionToRailConnections = data.positionToRailConnections;
 		this.startSavedRail = startSavedRail;
 		this.endSavedRail = endSavedRail;
 		this.stopIndex = stopIndex;
@@ -42,7 +42,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 			for (int i = 1; i < connectionDetailsList.size(); i++) {
 				final Position position1 = connectionDetailsList.get(i - 1).node.position;
 				final Position position2 = connectionDetailsList.get(i).node.position;
-				final Rail rail = DataCache.tryGet(positionToRailConnections, position1, position2);
+				final Rail rail = Data.tryGet(positionToRailConnections, position1, position2);
 				if (rail == null) {
 					return new ObjectArrayList<>();
 				}

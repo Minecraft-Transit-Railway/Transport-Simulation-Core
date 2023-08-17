@@ -20,15 +20,15 @@ public final class Vehicle extends VehicleSchema {
 	public static final int DOOR_MOVE_TIME = 64;
 	private static final int DOOR_DELAY = 20;
 
-	public Vehicle(VehicleExtraData vehicleExtraData, Siding siding, TransportMode transportMode, Simulator simulator) {
-		super(transportMode, simulator);
+	public Vehicle(VehicleExtraData vehicleExtraData, Siding siding, TransportMode transportMode, Data data) {
+		super(transportMode, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
 		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
 	}
 
-	public Vehicle(VehicleExtraData vehicleExtraData, Siding siding, ReaderBase readerBase, Simulator simulator) {
-		super(readerBase, simulator);
+	public Vehicle(VehicleExtraData vehicleExtraData, Siding siding, ReaderBase readerBase, Data data) {
+		super(readerBase, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
 		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
@@ -232,7 +232,7 @@ public final class Vehicle extends VehicleSchema {
 				if (end - start > 0.01) {
 					final Position position1 = pathData.getOrderedPosition1();
 					final Position position2 = pathData.getOrderedPosition2();
-					DataCache.put(vehiclePositions, position1, position2, vehiclePosition -> {
+					Data.put(vehiclePositions, position1, position2, vehiclePosition -> {
 						final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
 						newVehiclePosition.addSegment(pathData.reversePositions ? end : start, pathData.reversePositions ? start : end, id);
 						return newVehiclePosition;
@@ -249,10 +249,10 @@ public final class Vehicle extends VehicleSchema {
 			}
 		}
 
-		if (siding.area != null) {
-			final double updateRadius = simulator.clientGroup.getUpdateRadius();
+		if (siding.area != null && data instanceof Simulator) {
+			final double updateRadius = ((Simulator) data).clientGroup.getUpdateRadius();
 			final boolean needsUpdate = vehicleExtraData.checkForUpdate();
-			simulator.clientGroup.iterateClients(client -> {
+			((Simulator) data).clientGroup.iterateClients(client -> {
 				final Position position = client.getPosition();
 				if ((minMaxPositions[0] == null || minMaxPositions[1] == null) ? siding.area.inArea(position, updateRadius) : Utilities.isBetween(position, minMaxPositions[0], minMaxPositions[1], updateRadius)) {
 					client.update(this, needsUpdate);
@@ -269,7 +269,7 @@ public final class Vehicle extends VehicleSchema {
 			final PathData pathData = vehicleExtraData.newPath.get(index);
 			if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkDistance + checkDistance)) {
 				for (int i = 0; i < 2; i++) {
-					final VehiclePosition vehiclePosition = DataCache.tryGet(vehiclePositions.get(i), pathData.getOrderedPosition1(), pathData.getOrderedPosition2());
+					final VehiclePosition vehiclePosition = Data.tryGet(vehiclePositions.get(i), pathData.getOrderedPosition1(), pathData.getOrderedPosition2());
 					if (vehiclePosition != null) {
 						return vehiclePosition.isBlocked(
 								pathData.reversePositions ? pathData.getEndDistance() - checkRailProgress - checkDistance : checkRailProgress - pathData.getStartDistance(),

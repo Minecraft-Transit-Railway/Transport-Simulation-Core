@@ -3,19 +3,18 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.StationSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 
 public final class Station extends StationSchema {
 
 	public final ObjectAVLTreeSet<Station> connectedStations = new ObjectAVLTreeSet<>();
 
-	public Station(Simulator simulator) {
-		super(TransportMode.values()[0], simulator);
+	public Station(Data data) {
+		super(TransportMode.values()[0], data);
 	}
 
-	public Station(ReaderBase readerBase, Simulator simulator) {
-		super(DataFixer.convertStation(readerBase), simulator);
+	public Station(ReaderBase readerBase, Data data) {
+		super(DataFixer.convertStation(readerBase), data);
 		updateData(readerBase);
 	}
 

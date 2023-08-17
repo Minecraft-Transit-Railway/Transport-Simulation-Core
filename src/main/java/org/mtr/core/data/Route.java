@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.RouteSchema;
 import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Utilities;
 
@@ -14,12 +13,12 @@ public final class Route extends RouteSchema {
 
 	public ObjectArrayList<Depot> depots = new ObjectArrayList<>();
 
-	public Route(TransportMode transportMode, Simulator simulator) {
-		super(transportMode, simulator);
+	public Route(TransportMode transportMode, Data data) {
+		super(transportMode, data);
 	}
 
-	public Route(ReaderBase readerBase, Simulator simulator) {
-		super(DataFixer.convertRoute(readerBase), simulator);
+	public Route(ReaderBase readerBase, Data data) {
+		super(DataFixer.convertRoute(readerBase), data);
 		updateData(readerBase);
 	}
 
@@ -34,6 +33,14 @@ public final class Route extends RouteSchema {
 
 	public String getRouteNumber() {
 		return routeNumber;
+	}
+
+	public boolean getHidden() {
+		return hidden;
+	}
+
+	public RouteType getRouteType() {
+		return routeType;
 	}
 
 	public String getRouteTypeKey() {
@@ -74,6 +81,22 @@ public final class Route extends RouteSchema {
 
 			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.getName()) : "";
 		}
+	}
+
+	public void setRouteNumber(String routeNumber) {
+		this.routeNumber = routeNumber;
+	}
+
+	public void setHidden(boolean hidden) {
+		this.hidden = hidden;
+	}
+
+	public void setCircularState(CircularState circularState) {
+		this.circularState = circularState;
+	}
+
+	public void setRouteType(RouteType routeType) {
+		this.routeType = routeType;
 	}
 
 	public JsonObject getOBARouteElement() {
