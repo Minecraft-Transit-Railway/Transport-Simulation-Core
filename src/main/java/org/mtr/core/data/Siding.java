@@ -98,6 +98,10 @@ public final class Siding extends SidingSchema implements Utilities {
 		return railLength;
 	}
 
+	public ObjectArrayList<VehicleCar> getVehicleCars() {
+		return vehicleCars;
+	}
+
 	public boolean getIsManual() {
 		return maxVehicles < 0;
 	}

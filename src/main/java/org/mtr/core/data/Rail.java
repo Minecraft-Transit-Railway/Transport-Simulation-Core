@@ -52,8 +52,8 @@ public final class Rail extends RailSchema {
 		final long zEnd = posEnd.getZ();
 
 		// Coordinate system translation and rotation
-		final Vec3 vecDifference = new Vec3(posEnd.getX() - posStart.getX(), 0, posEnd.getZ() - posStart.getZ());
-		final Vec3 vecDifferenceRotated = vecDifference.rotateY((float) facingStart.angleRadians);
+		final Vector vecDifference = new Vector(posEnd.getX() - posStart.getX(), 0, posEnd.getZ() - posStart.getZ());
+		final Vector vecDifferenceRotated = vecDifference.rotateY((float) facingStart.angleRadians);
 
 		final double h1;
 		final double k1;
@@ -239,7 +239,7 @@ public final class Rail extends RailSchema {
 		return canTurnBack;
 	}
 
-	public Vec3 getPosition(double rawValue) {
+	public Vector getPosition(double rawValue) {
 		final double count1 = Math.abs(tEnd1 - tStart1);
 		final double count2 = Math.abs(tEnd2 - tStart2);
 		final double value = Utilities.clamp(rawValue, 0, count1 + count2);
@@ -308,11 +308,11 @@ public final class Rail extends RailSchema {
 		}
 	}
 
-	private static Vec3 getPositionXZ(double h, double k, double r, double t, double radiusOffset, boolean isStraight) {
+	private static Vector getPositionXZ(double h, double k, double r, double t, double radiusOffset, boolean isStraight) {
 		if (isStraight) {
-			return new Vec3(h * t + k * ((Math.abs(h) >= 0.5 && Math.abs(k) >= 0.5 ? 0 : r) + radiusOffset) + 0.5, 0, k * t + h * (r - radiusOffset) + 0.5);
+			return new Vector(h * t + k * ((Math.abs(h) >= 0.5 && Math.abs(k) >= 0.5 ? 0 : r) + radiusOffset) + 0.5, 0, k * t + h * (r - radiusOffset) + 0.5);
 		} else {
-			return new Vec3(h + (r + radiusOffset) * Math.cos(t / r) + 0.5, 0, k + (r + radiusOffset) * Math.sin(t / r) + 0.5);
+			return new Vector(h + (r + radiusOffset) * Math.cos(t / r) + 0.5, 0, k + (r + radiusOffset) * Math.sin(t / r) + 0.5);
 		}
 	}
 
@@ -323,10 +323,10 @@ public final class Rail extends RailSchema {
 		for (double i = 0; i < count - 0.1; i += increment) {
 			final double t1 = (reverseT ? -1 : 1) * i + tStart;
 			final double t2 = (reverseT ? -1 : 1) * (i + increment) + tStart;
-			final Vec3 corner1 = getPositionXZ(h, k, r, t1, offsetRadius1, isStraight);
-			final Vec3 corner2 = getPositionXZ(h, k, r, t1, offsetRadius2, isStraight);
-			final Vec3 corner3 = getPositionXZ(h, k, r, t2, offsetRadius2, isStraight);
-			final Vec3 corner4 = getPositionXZ(h, k, r, t2, offsetRadius1, isStraight);
+			final Vector corner1 = getPositionXZ(h, k, r, t1, offsetRadius1, isStraight);
+			final Vector corner2 = getPositionXZ(h, k, r, t1, offsetRadius2, isStraight);
+			final Vector corner3 = getPositionXZ(h, k, r, t2, offsetRadius2, isStraight);
+			final Vector corner4 = getPositionXZ(h, k, r, t2, offsetRadius1, isStraight);
 
 			final double y1 = getPositionY(i + rawValueOffset);
 			final double y2 = getPositionY(i + increment + rawValueOffset);
@@ -345,8 +345,8 @@ public final class Rail extends RailSchema {
 			start = 0;
 			end = ACCEPT_THRESHOLD;
 		}
-		final Vec3 pos1 = getPosition(start);
-		final Vec3 pos2 = getPosition(end);
+		final Vector pos1 = getPosition(start);
+		final Vector pos2 = getPosition(end);
 		return Angle.fromAngle((float) Math.toDegrees(Math.atan2(pos2.z - pos1.z, pos2.x - pos1.x)));
 	}
 

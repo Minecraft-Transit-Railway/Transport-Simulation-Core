@@ -30,7 +30,7 @@ public interface Utilities {
 		return isBetween(position, position1.getX(), position1.getY(), position1.getZ(), position2.getX(), position2.getY(), position2.getZ(), padding);
 	}
 
-	static boolean isBetween(Position position, Vec3 position1, Vec3 position2, double padding) {
+	static boolean isBetween(Position position, Vector position1, Vector position2, double padding) {
 		return isBetween(position, position1.x, position1.y, position1.z, position2.x, position2.y, position2.z, padding);
 	}
 

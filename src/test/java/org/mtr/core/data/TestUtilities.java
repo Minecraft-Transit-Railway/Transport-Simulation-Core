@@ -142,6 +142,10 @@ public interface TestUtilities {
 		return new Depot(randomTransportMode(), getDefaultSimulator());
 	}
 
+	static Lift randomLift() {
+		return new Lift(getDefaultSimulator());
+	}
+
 	static PathData randomPathData() {
 		return new PathData(randomRail(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), randomPosition(), randomPosition());
 	}
@@ -204,6 +208,10 @@ public interface TestUtilities {
 
 	static Depot newDepot(ReaderBase readerBase) {
 		return new Depot(readerBase, getDefaultSimulator());
+	}
+
+	static Lift newLift(ReaderBase readerBase) {
+		return new Lift(readerBase, getDefaultSimulator());
 	}
 
 	static PathData newPathData(ReaderBase readerBase) {

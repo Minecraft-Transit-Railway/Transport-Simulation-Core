@@ -29,4 +29,16 @@ public final class Station extends StationSchema {
 	public long getZone3() {
 		return zone3;
 	}
+
+	public void setZone1(long zone1) {
+		this.zone1 = zone1;
+	}
+
+	public void setZone2(long zone2) {
+		this.zone2 = zone2;
+	}
+
+	public void setZone3(long zone3) {
+		this.zone3 = zone3;
+	}
 }

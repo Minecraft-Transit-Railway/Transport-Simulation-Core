@@ -1,0 +1,56 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "NameColorDataBase",
+	"extends": {
+		"$ref": "nameColorDataBase.json"
+	},
+	"properties": {
+		"height": {
+			"type": "number",
+			"minimum": 0
+		},
+		"width": {
+			"type": "number",
+			"minimum": 0
+		},
+		"depth": {
+			"type": "number",
+			"minimum": 0
+		},
+		"offsetX": {
+			"type": "number",
+			"minimum": 0
+		},
+		"offsetY": {
+			"type": "number",
+			"minimum": 0
+		},
+		"offsetZ": {
+			"type": "number",
+			"minimum": 0
+		},
+		"isDoubleSided": {
+			"type": "boolean"
+		},
+		"style": {
+			"type": "string"
+		},
+		"angle": {
+			"$ref": "Angle"
+		},
+		"speed": {
+			"type": "number",
+			"minimum": 0
+		},
+		"reversed": {
+			"type": "boolean"
+		},
+		"ridingEntities": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	}
+}
