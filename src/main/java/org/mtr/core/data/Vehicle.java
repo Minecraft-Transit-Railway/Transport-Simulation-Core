@@ -9,7 +9,7 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
-public final class Vehicle extends VehicleSchema {
+public class Vehicle extends VehicleSchema {
 
 	private double doorValue;
 	private int manualNotch;

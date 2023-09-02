@@ -142,6 +142,14 @@ public interface TestUtilities {
 		return new Depot(randomTransportMode(), getDefaultSimulator());
 	}
 
+	static InterchangeRouteNamesForColor randomInterchangeRouteNamesForColor() {
+		return new InterchangeRouteNamesForColor(RANDOM.nextLong());
+	}
+
+	static InterchangeColorsForStationName randomInterchangeColorsForStationName() {
+		return new InterchangeColorsForStationName(randomString());
+	}
+
 	static Lift randomLift() {
 		return new Lift(getDefaultSimulator());
 	}
@@ -208,6 +216,14 @@ public interface TestUtilities {
 
 	static Depot newDepot(ReaderBase readerBase) {
 		return new Depot(readerBase, getDefaultSimulator());
+	}
+
+	static InterchangeRouteNamesForColor newInterchangeRouteNamesForColor(ReaderBase readerBase) {
+		return new InterchangeRouteNamesForColor(readerBase);
+	}
+
+	static InterchangeColorsForStationName newInterchangeColorsForStationName(ReaderBase readerBase) {
+		return new InterchangeColorsForStationName(readerBase);
 	}
 
 	static Lift newLift(ReaderBase readerBase) {

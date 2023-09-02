@@ -18,6 +18,7 @@ public class Data {
 	public final ObjectAVLTreeSet<Siding> sidings = new ObjectAVLTreeSet<>();
 	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();
 	public final ObjectAVLTreeSet<Depot> depots = new ObjectAVLTreeSet<>();
+	public final ObjectAVLTreeSet<Lift> lifts = new ObjectAVLTreeSet<>();
 	public final ObjectOpenHashBigSet<RailNode> railNodes = new ObjectOpenHashBigSet<>();
 
 	public final Long2ObjectOpenHashMap<Station> stationIdMap = new Long2ObjectOpenHashMap<>();

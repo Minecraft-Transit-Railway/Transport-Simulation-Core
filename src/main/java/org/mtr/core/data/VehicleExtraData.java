@@ -6,9 +6,11 @@ import org.mtr.core.generated.VehicleExtraDataSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Utilities;
 
+import java.util.function.BiConsumer;
+
 public class VehicleExtraData extends VehicleExtraDataSchema {
 
-	private int previousStopIndex = -1;
+	private int stopIndex = -1;
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
 
@@ -30,6 +32,86 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		updateData(readerBase);
 		newPath = new ObjectImmutableList<>(path);
 		newVehicleCars = new ObjectImmutableList<>(vehicleCars);
+	}
+
+	public long getPreviousRouteId() {
+		return previousRouteId;
+	}
+
+	public long getPreviousPlatformId() {
+		return previousPlatformId;
+	}
+
+	public long getPreviousStationId() {
+		return previousStationId;
+	}
+
+	public int getPreviousRouteColor() {
+		return (int) (previousRouteColor & 0xFFFFFF);
+	}
+
+	public String getPreviousRouteName() {
+		return previousRouteName;
+	}
+
+	public String getPreviousStationName() {
+		return previousStationName;
+	}
+
+	public String getPreviousRouteDestination() {
+		return previousRouteDestination;
+	}
+
+	public long getThisRouteId() {
+		return thisRouteId;
+	}
+
+	public long getThisPlatformId() {
+		return thisPlatformId;
+	}
+
+	public long getThisStationId() {
+		return thisStationId;
+	}
+
+	public int getThisRouteColor() {
+		return (int) (thisRouteColor & 0xFFFFFF);
+	}
+
+	public String getThisRouteName() {
+		return thisRouteName;
+	}
+
+	public String getThisStationName() {
+		return thisStationName;
+	}
+
+	public String getThisRouteDestination() {
+		return thisRouteDestination;
+	}
+
+	public long getNextPlatformId() {
+		return nextPlatformId;
+	}
+
+	public long getNextStationId() {
+		return nextStationId;
+	}
+
+	public String getNextStationName() {
+		return nextStationName;
+	}
+
+	public int getStopIndex() {
+		return stopIndex;
+	}
+
+	public boolean getIsTerminating() {
+		return isTerminating;
+	}
+
+	public void iterateInterchanges(BiConsumer<String, InterchangeColorsForStationName> consumer) {
+		interchangeColorsForStationNameList.forEach(interchangeColorsForStationName -> consumer.accept(interchangeColorsForStationName.getStationName(), interchangeColorsForStationName));
 	}
 
 	protected double getRailLength() {
@@ -121,14 +203,14 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			nextStationId = 0;
 			nextStationName = "";
 		} else {
-			final int stopIndex = newPath.get(currentIndex).getStopIndex();
-			if (stopIndex == previousStopIndex) {
+			final int newStopIndex = newPath.get(currentIndex).getStopIndex();
+			if (newStopIndex == stopIndex) {
 				return;
 			} else {
-				previousStopIndex = stopIndex;
+				stopIndex = newStopIndex;
 			}
 
-			final VehiclePlatformRouteInfo vehiclePlatformRouteInfo = depot.getVehiclePlatformRouteInfo(stopIndex);
+			final VehiclePlatformRouteInfo vehiclePlatformRouteInfo = depot.getVehiclePlatformRouteInfo(newStopIndex);
 
 			previousRouteId = getId(vehiclePlatformRouteInfo.previousRoute);
 			previousPlatformId = getId(vehiclePlatformRouteInfo.previousPlatform);
@@ -144,11 +226,27 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			thisRouteColor = getColor(vehiclePlatformRouteInfo.thisRoute);
 			thisRouteName = getName(vehiclePlatformRouteInfo.thisRoute);
 			thisStationName = getStationName(vehiclePlatformRouteInfo.thisPlatform);
-			thisRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.thisRoute, stopIndex);
+			thisRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.thisRoute, newStopIndex);
 
 			nextPlatformId = getId(vehiclePlatformRouteInfo.nextPlatform);
 			nextStationId = getStationId(vehiclePlatformRouteInfo.nextPlatform);
 			nextStationName = getStationName(vehiclePlatformRouteInfo.nextPlatform);
+
+			isTerminating = vehiclePlatformRouteInfo.thisRoute != null && stopIndex >= vehiclePlatformRouteInfo.thisRoute.getRoutePlatforms().size() - 1;
+
+			interchangeColorsForStationNameList.clear();
+			final Station station = vehiclePlatformRouteInfo.nextPlatform.area;
+			if (station != null) {
+				station.getInterchangeStationNameToColorToRouteNamesMap(true).forEach((stationName, colorToRouteNames) -> {
+					final InterchangeColorsForStationName interchangeColorsForStationName = new InterchangeColorsForStationName(stationName);
+					colorToRouteNames.forEach((color, routeNames) -> {
+						final InterchangeRouteNamesForColor interchangeRouteNamesForColor = new InterchangeRouteNamesForColor(color);
+						interchangeRouteNamesForColor.addRouteNames(routeNames);
+						interchangeColorsForStationName.addColor(interchangeRouteNamesForColor);
+					});
+					interchangeColorsForStationNameList.add(interchangeColorsForStationName);
+				});
+			}
 		}
 	}
 

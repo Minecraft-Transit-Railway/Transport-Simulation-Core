@@ -56,6 +56,15 @@
 		"nextStationName": {
 			"type": "string"
 		},
+		"isTerminating": {
+			"type": "boolean"
+		},
+		"interchangeColorsForStationNameList": {
+			"type": "array",
+			"items": {
+				"$ref": "interchangeColorsForStationName.json"
+			}
+		},
 		"stoppingPoint": {
 			"type": "number"
 		},

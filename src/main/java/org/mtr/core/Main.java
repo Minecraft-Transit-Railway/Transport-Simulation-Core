@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,7 +41,7 @@ public class Main {
 			final int webserverPort = Integer.parseInt(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(millisPerGameDay, startingGameDayPercentage, rootPath, webserverPort, dimensions);
+			final Main main = new Main(millisPerGameDay, startingGameDayPercentage, rootPath, "website", webserverPort, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -48,7 +49,7 @@ public class Main {
 		}
 	}
 
-	public Main(int millisPerGameDay, float startingGameDayPercentage, Path rootPath, int webserverPort, String... dimensions) {
+	public Main(int millisPerGameDay, float startingGameDayPercentage, Path rootPath, String resourcesRoot, int webserverPort, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
@@ -57,7 +58,7 @@ public class Main {
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);
-		webserver = new Webserver(Main.class, "website", Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
+		webserver = new Webserver(Main.class, resourcesRoot, Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
 		new IntegrationServlet(webserver, "/mtr/api/data/*", simulators);
 		new SystemMapServlet(webserver, "/mtr/api/map/*", simulators);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
@@ -65,7 +66,7 @@ public class Main {
 		webserver.start();
 		scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
 		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));
-		LOGGER.info("Server started");
+		LOGGER.info("Server started with dimensions " + Arrays.toString(dimensions));
 	}
 
 	public void save() {
