@@ -1,6 +1,9 @@
 package org.mtr.core.tools;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.mtr.core.Main;
 import org.mtr.core.data.ConditionalList;
 import org.mtr.core.data.SerializedDataBase;
@@ -82,6 +85,18 @@ public interface Utilities {
 
 	static String formatName(String text) {
 		return text.split("\\|\\|")[0].replace("|", " ");
+	}
+
+	static String prettyPrint(String string) {
+		try {
+			return prettyPrint(JsonParser.parseString(string));
+		} catch (Exception ignored) {
+			return "";
+		}
+	}
+
+	static String prettyPrint(JsonElement jsonElement) {
+		return new GsonBuilder().setPrettyPrinting().create().toJson(jsonElement);
 	}
 
 	static double kilometersPerHourToMetersPerMillisecond(double speedKilometersPerHour) {

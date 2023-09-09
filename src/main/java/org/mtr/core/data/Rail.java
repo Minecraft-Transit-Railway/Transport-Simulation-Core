@@ -15,6 +15,10 @@ public final class Rail extends RailSchema {
 	private static final int CABLE_CURVATURE_SCALE = 1000;
 	private static final int MAX_CABLE_DIP = 8;
 
+	public static Rail copy(Position posStart, Position posEnd, Rail rail) {
+		return newRail(posStart, rail.facingStart, posEnd, rail.facingEnd, rail.speedLimit, rail.shapeStart, rail.shapeEnd, rail.isSavedRail, rail.canAccelerate, rail.canTurnBack, rail.canHaveSignal, rail.transportMode);
+	}
+
 	public static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, long speedLimit, Shape shapeStart, Shape shapeEnd, boolean isSavedRail, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
 		return newRail(posStart, facingStart, posEnd, facingEnd, speedLimit, shapeStart, shapeEnd, isSavedRail, canAccelerate, false, canHaveSignal, transportMode);
 	}
@@ -269,8 +273,8 @@ public final class Rail extends RailSchema {
 		return (isStraight1 || r1 > MIN_RADIUS - ACCEPT_THRESHOLD) && (isStraight2 || r2 > MIN_RADIUS - ACCEPT_THRESHOLD);
 	}
 
-	public boolean isInvalid() {
-		return speedLimit == 0 || h1 == 0 && k1 == 0 && h2 == 0 && k2 == 0 && r1 == 0 && r2 == 0 && tStart1 == 0 && tStart2 == 0 && tEnd1 == 0 && tEnd2 == 0 || facingStart != getRailAngle(false) || facingEnd != getRailAngle(true);
+	public boolean isValid() {
+		return speedLimit > 0 && (h1 != 0 || k1 != 0 || h2 != 0 || k2 != 0 || r1 != 0 || r2 != 0 || tStart1 != 0 || tStart2 != 0 || tEnd1 != 0 || tEnd2 != 0) && facingStart == getRailAngle(false) && facingEnd == getRailAngle(true);
 	}
 
 	private double getPositionY(double value) {

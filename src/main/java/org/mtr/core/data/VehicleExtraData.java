@@ -235,7 +235,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			isTerminating = vehiclePlatformRouteInfo.thisRoute != null && stopIndex >= vehiclePlatformRouteInfo.thisRoute.getRoutePlatforms().size() - 1;
 
 			interchangeColorsForStationNameList.clear();
-			final Station station = vehiclePlatformRouteInfo.nextPlatform.area;
+			final Station station = vehiclePlatformRouteInfo.nextPlatform == null ? null : vehiclePlatformRouteInfo.nextPlatform.area;
 			if (station != null) {
 				station.getInterchangeStationNameToColorToRouteNamesMap(true).forEach((stationName, colorToRouteNames) -> {
 					final InterchangeColorsForStationName interchangeColorsForStationName = new InterchangeColorsForStationName(stationName);

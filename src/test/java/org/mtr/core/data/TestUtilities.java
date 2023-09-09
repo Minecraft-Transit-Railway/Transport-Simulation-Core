@@ -1,6 +1,5 @@
 package org.mtr.core.data;
 
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -46,7 +45,7 @@ public interface TestUtilities {
 	}
 
 	static String prettyPrint(JsonObject jsonObject) {
-		return new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject).replace("  ", "\t");
+		return Utilities.prettyPrint(jsonObject).replace("  ", "\t");
 	}
 
 	static <T extends SerializedDataBase> void compareObjects(T data1, T data2) {

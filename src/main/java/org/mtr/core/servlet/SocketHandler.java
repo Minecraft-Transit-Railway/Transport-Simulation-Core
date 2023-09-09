@@ -37,16 +37,16 @@ public class SocketHandler {
 							final ObjectArrayList<Siding> sidings = new ObjectArrayList<>();
 							final LongAVLTreeSet sidingIds = new LongAVLTreeSet();
 							final ObjectArrayList<Route> routes = new ObjectArrayList<>();
-							final ObjectArrayList<Rail> rails = new ObjectArrayList<>();
+							final ObjectArrayList<RailNode> railNodes = new ObjectArrayList<>();
 
 							findNearby(simulator.stations, simulator.platforms, client.getPosition(), updateRadius, stations, platforms, platformIds);
 							findNearby(simulator.depots, simulator.sidings, client.getPosition(), updateRadius, depots, sidings, sidingIds);
 
 							platforms.forEach(platform -> routes.addAll(platform.routes));
 
-							simulator.positionToRailConnections.forEach((position1, connections) -> connections.forEach((position2, rail) -> {
-								if (Utilities.isBetween(client.getPosition(), position1, position2, updateRadius)) {
-									rails.add(rail);
+							simulator.railNodes.forEach(railNode -> railNode.getConnectionsAsMap().forEach((position, rail) -> {
+								if (Utilities.isBetween(client.getPosition(), railNode.getPosition(), position, updateRadius)) {
+									railNodes.add(railNode);
 								}
 							}));
 
@@ -55,7 +55,7 @@ public class SocketHandler {
 							addDataSetToJsonObject(sidings, clientObject, "sidings");
 							addDataSetToJsonObject(routes, clientObject, "routes");
 							addDataSetToJsonObject(depots, clientObject, "depots");
-							addDataSetToJsonObject(rails, clientObject, "rails");
+							addDataSetToJsonObject(railNodes, clientObject, "rails");
 
 							responseObject.add(client.uuid.toString(), clientObject);
 						} catch (Exception e) {

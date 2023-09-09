@@ -21,7 +21,15 @@ public final class RailNodeConnection extends RailNodeConnectionSchema {
 		connectionsMap.put(position, rail);
 	}
 
-	public boolean isInvalid(Position checkPosition) {
-		return rail.isInvalid() || checkPosition.equals(position);
+	public boolean isValid(Position checkPosition) {
+		return rail.isValid() && !matchesPosition(checkPosition);
+	}
+
+	boolean matchesPosition(Position checkPosition) {
+		return checkPosition.equals(position);
+	}
+
+	Rail getRail() {
+		return rail;
 	}
 }

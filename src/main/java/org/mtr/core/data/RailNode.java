@@ -9,7 +9,7 @@ import org.mtr.core.tools.Utilities;
 
 public final class RailNode extends RailNodeSchema implements SerializedDataBaseWithId {
 
-	RailNode(Position position) {
+	public RailNode(Position position) {
 		super(position);
 	}
 
@@ -25,7 +25,7 @@ public final class RailNode extends RailNodeSchema implements SerializedDataBase
 
 	@Override
 	public boolean isValid() {
-		connections.removeIf(railNodeConnection -> railNodeConnection.isInvalid(position));
+		connections.removeIf(railNodeConnection -> !railNodeConnection.isValid(position));
 		return !connections.isEmpty();
 	}
 
@@ -37,5 +37,15 @@ public final class RailNode extends RailNodeSchema implements SerializedDataBase
 		final Object2ObjectOpenHashMap<Position, Rail> connectionsMap = new Object2ObjectOpenHashMap<>();
 		connections.forEach(railNodeConnection -> railNodeConnection.writeToMap(connectionsMap));
 		return connectionsMap;
+	}
+
+	public void addConnection(Position position, Rail rail) {
+		if (!this.position.equals(position)) {
+			connections.add(new RailNodeConnection(position, rail));
+		}
+	}
+
+	public boolean removeConnection(Position position) {
+		return connections.removeIf(railNodeConnection -> railNodeConnection.matchesPosition(position));
 	}
 }

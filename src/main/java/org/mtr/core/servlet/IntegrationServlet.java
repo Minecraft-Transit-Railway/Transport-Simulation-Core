@@ -18,7 +18,7 @@ public class IntegrationServlet extends ServletBase {
 	@Override
 	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
 		final IntegrationResponse integrationResponse = new IntegrationResponse(data, parameters, bodyObject, currentMillis, simulator);
-		switch (EnumHelper.valueOf(Operation.UPDATE, endpoint)) {
+		switch (EnumHelper.valueOf(Operation.UPDATE, endpoint.toUpperCase(Locale.ROOT))) {
 			case UPDATE:
 				return integrationResponse.update();
 			case GET:
@@ -29,13 +29,15 @@ public class IntegrationServlet extends ServletBase {
 				return integrationResponse.generate();
 			case CLEAR:
 				return integrationResponse.clear();
+			case LIST:
+				return integrationResponse.list();
 			default:
 				return null;
 		}
 	}
 
 	public enum Operation {
-		UPDATE, GET, DELETE, GENERATE, CLEAR;
+		UPDATE, GET, DELETE, GENERATE, CLEAR, LIST;
 
 		public String getEndpoint() {
 			return toString().toLowerCase(Locale.ENGLISH);

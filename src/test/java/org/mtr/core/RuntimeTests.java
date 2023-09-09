@@ -44,7 +44,7 @@ public class RuntimeTests implements TestUtilities {
 		requestObject.add("platforms", requestPlatformArray);
 
 		final JsonObject responseObject1 = TestUtilities.sendHttpDataRequest("update", requestObject);
-		System.out.println(TestUtilities.prettyPrint(responseObject1));
+		System.out.println(Utilities.prettyPrint(responseObject1));
 
 		main.stop();
 	}
