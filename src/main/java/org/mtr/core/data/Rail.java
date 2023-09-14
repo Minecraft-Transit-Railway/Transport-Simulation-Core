@@ -304,10 +304,12 @@ public final class Rail extends RailSchema {
 
 	/**
 	 * A rail is valid if all the following conditions are met:
-	 * <li>Speed must be greater than 0
-	 * <li>All values can't be zero
-	 * <li>Make sure the directions of the start and end of the rail makes sense
-	 * <li>The rail is either a platform, a siding, neither, but not both
+	 * <ul>
+	 * <li>Speed must be greater than 0</li>
+	 * <li>All values can't be zero</li>
+	 * <li>Make sure the directions of the start and end of the rail makes sense</li>
+	 * <li>The rail is either a platform, a siding, neither, but not both</li>
+	 * </ul>
 	 *
 	 * @return whether the above conditions are met
 	 */
