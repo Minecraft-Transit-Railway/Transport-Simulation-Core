@@ -2,6 +2,9 @@ package org.mtr.core.serializers;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.msgpack.core.MessagePacker;
+import org.mtr.core.Main;
+
+import javax.annotation.Nullable;
 
 public final class MessagePackWriter extends WriterBase {
 
@@ -38,7 +41,7 @@ public final class MessagePackWriter extends WriterBase {
 	}
 
 	@Override
-	public MessagePackArrayWriter writeArray(String key) {
+	public Array writeArray(String key) {
 		final MessagePackArrayWriter messagePackerArrayWriter = new MessagePackArrayWriter(messagePacker);
 		pack(key, () -> messagePacker.packArrayHeader(messagePackerArrayWriter.instructions.size()), messagePackerArrayWriter::serializePart);
 		return messagePackerArrayWriter;
@@ -56,7 +59,7 @@ public final class MessagePackWriter extends WriterBase {
 			messagePacker.packMapHeader(instructions.size());
 			serializePart();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 	}
 
@@ -64,7 +67,7 @@ public final class MessagePackWriter extends WriterBase {
 		pack(key, instruction, null);
 	}
 
-	private void pack(String key, Pack instruction, Pack additionalInstructions) {
+	private void pack(String key, Pack instruction, @Nullable Pack additionalInstructions) {
 		instructions.add(() -> {
 			messagePacker.packString(key);
 			instruction.pack();
@@ -125,7 +128,7 @@ public final class MessagePackWriter extends WriterBase {
 			pack(instruction, null);
 		}
 
-		private void pack(Pack instruction, Pack additionalInstructions) {
+		private void pack(Pack instruction, @Nullable Pack additionalInstructions) {
 			instructions.add(() -> {
 				instruction.pack();
 				if (additionalInstructions != null) {

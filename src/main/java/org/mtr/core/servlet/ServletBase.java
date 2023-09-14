@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.webserver.Webserver;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -52,9 +53,10 @@ public abstract class ServletBase {
 		});
 	}
 
+	@Nullable
 	protected abstract JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator);
 
-	private static void buildResponseObject(BiConsumer<JsonObject, HttpResponseStatus> sendResponse, long currentMillis, JsonObject dataObject, HttpResponseStatus httpResponseStatus, String... parameters) {
+	private static void buildResponseObject(BiConsumer<JsonObject, HttpResponseStatus> sendResponse, long currentMillis, @Nullable JsonObject dataObject, HttpResponseStatus httpResponseStatus, String... parameters) {
 		final JsonObject responseObject = new JsonObject();
 		responseObject.addProperty("code", httpResponseStatus.code());
 		responseObject.addProperty("currentTime", currentMillis);

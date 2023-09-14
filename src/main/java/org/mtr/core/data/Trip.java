@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
 import java.util.TimeZone;
 
 public class Trip implements Utilities {
@@ -34,7 +35,7 @@ public class Trip implements Utilities {
 		return String.format("%s_%s_%s_%s", siding.getHexId(), tripIndexInBlock, departureIndex, departureOffset);
 	}
 
-	public JsonObject getOBATripDetailsWithDataUsed(long currentMillis, long offsetMillis, int departureIndex, long departureOffset, Trip nextTrip, Trip previousTrip, LongArraySet platformIdsUsed, JsonArray tripsUsedArray) {
+	public JsonObject getOBATripDetailsWithDataUsed(long currentMillis, long offsetMillis, int departureIndex, long departureOffset, @Nullable Trip nextTrip, @Nullable Trip previousTrip, LongArraySet platformIdsUsed, JsonArray tripsUsedArray) {
 		if (stopTimes.isEmpty()) {
 			return null;
 		}

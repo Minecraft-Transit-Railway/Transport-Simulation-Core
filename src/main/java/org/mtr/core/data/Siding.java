@@ -21,6 +21,8 @@ import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
+
 public final class Siding extends SidingSchema implements Utilities {
 
 	private PathData defaultPathData;
@@ -157,7 +159,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		vehicles.clear();
 	}
 
-	public void generateRoute(Platform firstPlatform, Platform lastPlatform, int stopIndex, long cruisingAltitude) {
+	public void generateRoute(Platform firstPlatform, @Nullable Platform lastPlatform, int stopIndex, long cruisingAltitude) {
 		vehicles.clear();
 		pathSidingToMainRoute.clear();
 		pathMainRouteToSiding.clear();
@@ -682,7 +684,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		private final long platformId;
 		private final String customDestination;
 
-		private RoutePlatformInfo(Route route, int routeIndex, long platformId, String customDestination) {
+		private RoutePlatformInfo(Route route, int routeIndex, long platformId, @Nullable String customDestination) {
 			this.route = route;
 			this.routeIndex = routeIndex;
 			this.platformId = platformId;

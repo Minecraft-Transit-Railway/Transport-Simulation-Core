@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
+import org.mtr.core.Main;
 import org.mtr.core.tools.Position;
 
 import java.util.Collection;
@@ -90,7 +91,7 @@ public class Data {
 				});
 			});
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 	}
 

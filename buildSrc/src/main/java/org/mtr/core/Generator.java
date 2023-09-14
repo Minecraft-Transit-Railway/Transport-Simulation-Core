@@ -11,13 +11,19 @@ import org.mtr.core.generator.objects.VisibilityModifier;
 import org.mtr.core.generator.schema.SchemaParser;
 import org.mtr.core.generator.schema.Utilities;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
+@ParametersAreNonnullByDefault
 public class Generator {
+
+	private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
 	public static void generate(File projectPath) {
 		final Object2ObjectAVLTreeMap<String, SchemaParser> schemaParsers = new Object2ObjectAVLTreeMap<>();
@@ -47,32 +53,42 @@ public class Generator {
 
 					schemaParsers.put(schemaClassName, new SchemaParser(schemaClass, extendsClassName, testMethod, jsonObject));
 				} catch (Exception e) {
-					e.printStackTrace();
+					logException(e);
 				}
 			});
 		} catch (Exception e) {
-			e.printStackTrace();
+			logException(e);
 		}
 
 		try {
 			FileUtils.deleteDirectory(new File(String.format("%s/src/main/java/org/mtr/core/generated", projectPath)));
 			FileUtils.deleteDirectory(new File(String.format("%s/src/test/java/org/mtr/core/generated", projectPath)));
 		} catch (Exception e) {
-			e.printStackTrace();
+			logException(e);
 		}
 
 		schemaParsers.forEach((schemaClassName, schemaParser) -> {
 			try {
 				FileUtils.write(new File(String.format("%s/src/main/java/org/mtr/core/generated/%s.java", projectPath, schemaClassName)), schemaParser.generateSchemaClass(schemaParsers, testClass), StandardCharsets.UTF_8);
 			} catch (Exception e) {
-				e.printStackTrace();
+				logException(e);
 			}
 		});
 
 		try {
 			FileUtils.write(new File(String.format("%s/src/test/java/org/mtr/core/generated/SchemaTests.java", projectPath)), String.join("\n", testClass.generate()), StandardCharsets.UTF_8);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logException(e);
+		}
+
+		try {
+			FileUtils.write(
+					new File(String.format("%s/src/main/java/org/mtr/core/generated/package-info.java", projectPath)),
+					"@ParametersAreNonnullByDefault\npackage org.mtr.core.generated;\n\nimport javax.annotation.ParametersAreNonnullByDefault;",
+					StandardCharsets.UTF_8
+			);
+		} catch (Exception e) {
+			logException(e);
 		}
 	}
 
@@ -86,5 +102,10 @@ public class Generator {
 		newClass.imports.add("org.mtr.core.serializers.*");
 		newClass.imports.add("org.mtr.core.simulation.*");
 		newClass.imports.add("org.mtr.core.tools.*");
+		newClass.imports.add("javax.annotation.*");
+	}
+
+	private static void logException(Exception e) {
+		LOGGER.log(Level.INFO, e.getMessage(), e);
 	}
 }

@@ -27,6 +27,7 @@ import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
@@ -37,7 +38,7 @@ import java.util.function.Supplier;
 public interface TestUtilities {
 
 	Path TEST_DIRECTORY = Paths.get("build/test-data");
-	int PORT = 8888;
+	int PORT = 8889; // We don't want to conflict with Minecraft Transit Railway using port 8888 by default
 	Random RANDOM = new Random();
 
 	static <T extends SerializedDataBase> T getDataFromJsonObject(JsonObject jsonObject, Function<ReaderBase, T> newInstance) {
@@ -61,14 +62,14 @@ public interface TestUtilities {
 		return sendHttpRequest(String.format("http://localhost:%s/mtr/api/data/%s", PORT, endpoint), bodyObject);
 	}
 
-	static JsonObject sendHttpRequest(String uri, JsonObject bodyObject) {
+	static JsonObject sendHttpRequest(String uri, @Nullable JsonObject bodyObject) {
 		final HttpUriRequest httpUriRequest = bodyObject == null ? new HttpGet(uri) : new HttpPost(uri);
 
 		if (httpUriRequest instanceof HttpPost) {
 			try {
 				((HttpPost) httpUriRequest).setEntity(new StringEntity(bodyObject.toString()));
 			} catch (Exception e) {
-				e.printStackTrace();
+				Main.logException(e);
 			}
 		}
 
@@ -79,7 +80,7 @@ public interface TestUtilities {
 				responseObject = JsonParser.parseString(EntityUtils.toString(response.getEntity())).getAsJsonObject();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 
 		return responseObject;
@@ -98,7 +99,7 @@ public interface TestUtilities {
 				compareObjects(data, newInstance.apply(new MessagePackReader(messageUnpacker)));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 	}
 

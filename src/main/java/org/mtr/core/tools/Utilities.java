@@ -9,6 +9,7 @@ import org.mtr.core.data.ConditionalList;
 import org.mtr.core.data.SerializedDataBase;
 import org.mtr.core.serializers.JsonWriter;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -107,7 +108,7 @@ public interface Utilities {
 		return getElement(collection, index, null);
 	}
 
-	static <T, U extends List<T>> T getElement(U collection, int index, T defaultValue) {
+	static <T, U extends List<T>> T getElement(@Nullable U collection, int index, @Nullable T defaultValue) {
 		final T result;
 		if (collection == null || index >= collection.size() || index < -collection.size()) {
 			result = null;
@@ -173,7 +174,7 @@ public interface Utilities {
 				Main.LOGGER.warning("Termination failed, retrying...");
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 	}
 }

@@ -8,6 +8,7 @@ import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 
@@ -140,7 +141,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 		private final Position position;
 		private final Angle angle;
 
-		private PositionAndAngle(Position position, Angle angle) {
+		private PositionAndAngle(Position position, @Nullable Angle angle) {
 			this.position = position;
 			this.angle = angle;
 		}

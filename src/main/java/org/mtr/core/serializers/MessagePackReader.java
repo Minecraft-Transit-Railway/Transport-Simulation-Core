@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.Value;
+import org.mtr.core.Main;
 import org.mtr.core.tools.DataFixer;
 
 import java.util.function.BiConsumer;
@@ -29,7 +30,7 @@ public final class MessagePackReader extends ReaderBase {
 				DataFixer.readerBaseConvertKey(messageUnpacker.unpackString(), messageUnpacker.unpackValue(), map);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 	}
 

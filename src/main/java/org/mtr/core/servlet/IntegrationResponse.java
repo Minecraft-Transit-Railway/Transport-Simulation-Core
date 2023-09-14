@@ -4,12 +4,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.*;
+import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.serializers.JsonReader;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -97,7 +99,7 @@ public class IntegrationResponse extends ResponseBase {
 				}
 				jsonObject.add(key, resultArray);
 			} catch (Exception e) {
-				e.printStackTrace();
+				Main.logException(e);
 			}
 		});
 
@@ -133,7 +135,7 @@ public class IntegrationResponse extends ResponseBase {
 		return simulator.railNodes.stream().filter(checkRailNode -> checkRailNode.getPosition().equals(position)).findFirst().orElse(new RailNode(position));
 	}
 
-	private void removeRailNodeConnection(ObjectOpenHashSet<Position> positionsToUpdate, RailNode railNode, Position position) {
+	private void removeRailNodeConnection(ObjectOpenHashSet<Position> positionsToUpdate, @Nullable RailNode railNode, Position position) {
 		if (railNode != null) {
 			railNode.removeConnection(position);
 			positionsToUpdate.add(railNode.getPosition());
@@ -148,12 +150,12 @@ public class IntegrationResponse extends ResponseBase {
 			try {
 				consumer.accept(jsonElement.getAsJsonObject());
 			} catch (Exception e) {
-				e.printStackTrace();
+				Main.logException(e);
 			}
 		});
 	}
 
-	private static <T extends NameColorDataBase> void update(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+	private static <T extends NameColorDataBase> void update(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
 		final JsonReader jsonReader = new JsonReader(jsonObject);
 		final T data = dataIdMap.get(getId(jsonObject));
 		if (data == null) {
@@ -171,14 +173,14 @@ public class IntegrationResponse extends ResponseBase {
 		}
 	}
 
-	private static <T extends NameColorDataBase> void get(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+	private static <T extends NameColorDataBase> void get(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
 		final T data = dataIdMap.get(getId(jsonObject));
 		if (data != null) {
 			resultArray.add(Utilities.getJsonObjectFromData(data));
 		}
 	}
 
-	private static <T extends NameColorDataBase> void delete(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+	private static <T extends NameColorDataBase> void delete(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
 		final long id = getId(jsonObject);
 		final ObjectAVLTreeSet<T> objectsToRemove = new ObjectAVLTreeSet<>();
 		dataSet.forEach(data -> {
@@ -190,7 +192,7 @@ public class IntegrationResponse extends ResponseBase {
 		objectsToRemove.forEach(dataSet::remove);
 	}
 
-	private static <T extends NameColorDataBase> void generate(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+	private static <T extends NameColorDataBase> void generate(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
 		final T data = dataIdMap.get(getId(jsonObject));
 		if (data instanceof Depot) {
 			resultArray.add(Utilities.getJsonObjectFromData(data));
@@ -198,7 +200,7 @@ public class IntegrationResponse extends ResponseBase {
 		}
 	}
 
-	private static <T extends NameColorDataBase> void clear(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData) {
+	private static <T extends NameColorDataBase> void clear(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
 		final T data = dataIdMap.get(getId(jsonObject));
 		if (data instanceof Siding) {
 			resultArray.add(Utilities.getJsonObjectFromData(data));
@@ -222,7 +224,7 @@ public class IntegrationResponse extends ResponseBase {
 
 	@FunctionalInterface
 	private interface BodyCallback {
-		<T extends NameColorDataBase> void accept(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, Function<JsonReader, T> createData);
+		<T extends NameColorDataBase> void accept(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData);
 	}
 
 	@FunctionalInterface

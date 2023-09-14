@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
 	implementation "com.google.code.gson:gson:+"
+	implementation "com.google.code.findbugs:jsr305:+"
 	implementation "it.unimi.dsi:fastutil:+"
 	implementation "com.corundumstudio.socketio:netty-socketio:+"
 	implementation "org.msgpack:msgpack-core:+"

@@ -37,7 +37,7 @@ public final class JsonWriter extends WriterBase {
 	}
 
 	@Override
-	public JsonArrayWriter writeArray(String key) {
+	public Array writeArray(String key) {
 		final JsonArray jsonArray = new JsonArray();
 		jsonObject.add(key, jsonArray);
 		return new JsonArrayWriter(jsonArray);

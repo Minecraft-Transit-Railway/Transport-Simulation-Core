@@ -8,6 +8,7 @@ import org.mtr.core.generated.StationSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.DataFixer;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.function.Function;
 
@@ -66,7 +67,7 @@ public final class Station extends StationSchema {
 		return oneRouteFromEachColor;
 	}
 
-	private <T, U extends Comparable<? super U>> void getInterchangeRoutes(boolean includeConnectingStations, Object2ObjectAVLTreeMap<T, Int2ObjectAVLTreeMap<ObjectArrayList<U>>> stationToColorToRoutesMap, ObjectAVLTreeSet<U> oneRouteFromEachColor, Function<Station, T> stationMapper, Function<Route, U> routeMapper) {
+	private <T, U extends Comparable<? super U>> void getInterchangeRoutes(boolean includeConnectingStations, Object2ObjectAVLTreeMap<T, Int2ObjectAVLTreeMap<ObjectArrayList<U>>> stationToColorToRoutesMap, @Nullable ObjectAVLTreeSet<U> oneRouteFromEachColor, Function<Station, T> stationMapper, Function<Route, U> routeMapper) {
 		final ObjectArrayList<Station> stations = new ObjectArrayList<>();
 		if (includeConnectingStations) {
 			stations.addAll(connectedStations);

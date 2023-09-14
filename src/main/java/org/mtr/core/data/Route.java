@@ -11,7 +11,7 @@ import java.util.Locale;
 
 public final class Route extends RouteSchema {
 
-	public ObjectArrayList<Depot> depots = new ObjectArrayList<>();
+	public final ObjectArrayList<Depot> depots = new ObjectArrayList<>();
 
 	public Route(TransportMode transportMode, Data data) {
 		super(transportMode, data);

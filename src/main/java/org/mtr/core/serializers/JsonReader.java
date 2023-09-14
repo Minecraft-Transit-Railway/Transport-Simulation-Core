@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import org.mtr.core.Main;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -163,7 +164,7 @@ public final class JsonReader extends ReaderBase {
 		try {
 			return new JsonReader(JsonParser.parseString(string));
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 			return new JsonReader(new Object2ObjectArrayMap<>());
 		}
 	}

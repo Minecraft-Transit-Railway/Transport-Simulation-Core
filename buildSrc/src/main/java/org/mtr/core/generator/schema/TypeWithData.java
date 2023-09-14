@@ -2,6 +2,8 @@ package org.mtr.core.generator.schema;
 
 import org.mtr.core.generator.objects.Type;
 
+import javax.annotation.Nullable;
+
 public class TypeWithData {
 
 	public final Type type;
@@ -11,7 +13,7 @@ public class TypeWithData {
 	public final String randomData;
 	public final boolean requireAbstractInitializationMethod;
 
-	private TypeWithData(Type type, String readData, String unpackData, String writeData, String randomData, boolean requireAbstractInitializationMethod) {
+	private TypeWithData(Type type, @Nullable String readData, String unpackData, String writeData, String randomData, boolean requireAbstractInitializationMethod) {
 		this.type = type;
 		this.readData = readData;
 		this.unpackData = unpackData;

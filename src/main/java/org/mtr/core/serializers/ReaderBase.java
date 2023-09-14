@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 
+import javax.annotation.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -48,13 +49,13 @@ public abstract class ReaderBase {
 
 	public abstract void merge(ReaderBase readerBase);
 
-	protected final <U> void unpackValue(U value, Consumer<U> consumer) {
+	protected final <U> void unpackValue(@Nullable U value, Consumer<U> consumer) {
 		if (value != null) {
 			consumer.accept(value);
 		}
 	}
 
-	protected final <T, U> T getValueOrDefault(U value, T defaultValue, Function<U, T> function) {
+	protected final <T, U> T getValueOrDefault(@Nullable U value, T defaultValue, Function<U, T> function) {
 		if (value == null) {
 			return defaultValue;
 		} else {

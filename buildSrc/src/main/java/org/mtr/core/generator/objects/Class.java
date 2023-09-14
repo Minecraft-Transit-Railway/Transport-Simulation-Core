@@ -3,6 +3,8 @@ package org.mtr.core.generator.objects;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
+import javax.annotation.Nullable;
+
 public class Class implements GeneratedObject {
 
 	public final ObjectArrayList<String> imports = new ObjectArrayList<>();
@@ -15,7 +17,7 @@ public class Class implements GeneratedObject {
 	private final String extendsClass;
 	private final String packageName;
 
-	public Class(String name, String extendsClass, String packageName) {
+	public Class(String name, @Nullable String extendsClass, String packageName) {
 		this.name = name;
 		this.extendsClass = extendsClass;
 		this.packageName = packageName;

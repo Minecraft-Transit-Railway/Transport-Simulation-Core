@@ -6,6 +6,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generator.objects.Class;
 import org.mtr.core.generator.objects.*;
 
+import javax.annotation.Nullable;
+
 public class SchemaParser {
 
 	private final Class schemaClass;
@@ -18,7 +20,7 @@ public class SchemaParser {
 	final ObjectArrayList<String> testMethodContent1 = new ObjectArrayList<>();
 	final ObjectArrayList<String> testMethodContent2 = new ObjectArrayList<>();
 
-	public SchemaParser(Class schemaClass, String extendsClassName, Method testMethod, JsonObject jsonObject) {
+	public SchemaParser(Class schemaClass, @Nullable String extendsClassName, Method testMethod, JsonObject jsonObject) {
 		this.schemaClass = schemaClass;
 		constructor1 = schemaClass.createConstructor(VisibilityModifier.PROTECTED);
 		constructor2 = schemaClass.createConstructor(VisibilityModifier.PROTECTED);
@@ -32,6 +34,7 @@ public class SchemaParser {
 		schemaClass.methods.add(updateMethod);
 		schemaClass.methods.add(serializeMethod);
 		final Method toStringMethod = new Method(VisibilityModifier.PUBLIC, Type.STRING, "toString");
+		toStringMethod.annotations.add("Nonnull");
 		toStringMethod.content.add(extendsClassName == null ? "return \"\"" : "return super.toString()");
 		schemaClass.methods.add(toStringMethod);
 

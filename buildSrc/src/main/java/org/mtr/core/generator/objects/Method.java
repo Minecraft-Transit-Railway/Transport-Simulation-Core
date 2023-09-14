@@ -3,6 +3,7 @@ package org.mtr.core.generator.objects;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
+import javax.annotation.Nullable;
 import java.util.stream.Collectors;
 
 public class Method implements GeneratedObject {
@@ -15,7 +16,7 @@ public class Method implements GeneratedObject {
 	private final String name;
 	private final Type returnType;
 
-	public Method(VisibilityModifier visibilityModifier, Type returnType, String name) {
+	public Method(VisibilityModifier visibilityModifier, @Nullable Type returnType, String name) {
 		this.visibilityModifier = visibilityModifier;
 		this.name = name;
 		this.returnType = returnType;

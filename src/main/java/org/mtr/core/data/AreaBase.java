@@ -7,6 +7,8 @@ import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
+
 public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends AreaBaseSchema {
 
 	public final ObjectAVLTreeSet<U> savedRails = new ObjectAVLTreeSet<>();
@@ -93,7 +95,7 @@ public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase
 		return inArea(areaBase.position1) || inArea(areaBase.position2) || inArea(new Position(x1, y1, z2)) || inArea(new Position(x1, y2, z1)) || inArea(new Position(x1, y2, z2)) || inArea(new Position(x2, y1, z1)) || inArea(new Position(x2, y1, z2)) || inArea(new Position(x2, y2, z1));
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> boolean validCorners(AreaBase<T, U> areaBase) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> boolean validCorners(@Nullable AreaBase<T, U> areaBase) {
 		return areaBase != null && areaBase.position1 != null && areaBase.position2 != null;
 	}
 }

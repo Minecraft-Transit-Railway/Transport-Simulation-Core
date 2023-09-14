@@ -3,6 +3,7 @@ package org.mtr.core.tools;
 import org.mtr.core.generated.PositionSchema;
 import org.mtr.core.serializers.ReaderBase;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 public class Position extends PositionSchema implements Comparable<Position> {
@@ -43,7 +44,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return Math.abs(position.x - x) + Math.abs(position.y - y) + Math.abs(position.z - z);
 	}
 
-	public static Position getMin(Position position1, Position position2) {
+	public static Position getMin(@Nullable Position position1, @Nullable Position position2) {
 		if (position1 == null) {
 			return position2;
 		}
@@ -53,7 +54,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return new Position(Math.min(position1.x, position2.x), Math.min(position1.y, position2.y), Math.min(position1.z, position2.z));
 	}
 
-	public static Position getMax(Position position1, Position position2) {
+	public static Position getMax(@Nullable Position position1, @Nullable Position position2) {
 		if (position1 == null) {
 			return position2;
 		}

@@ -260,12 +260,12 @@ public final class Rail extends RailSchema {
 		return canAccelerate;
 	}
 
-	public boolean isSavedRail() {
-		return isPlatform || isSiding;
+	public boolean isPlatform() {
+		return isPlatform;
 	}
 
-	public boolean isValid(SavedRailBase<?, ?> savedRailBase) {
-		return (savedRailBase == null && !isPlatform && !isSiding || savedRailBase instanceof Platform && isPlatform && !isSiding || savedRailBase instanceof Siding && !isPlatform && isSiding) && isValid();
+	public boolean isSiding() {
+		return isSiding;
 	}
 
 	public boolean canTurnBack() {

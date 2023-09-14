@@ -57,7 +57,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 						filesDeleted++;
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					Main.logException(e);
 				}
 				fileHashes.removeInt(fileName);
 			}
@@ -78,15 +78,15 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 							try (final MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(inputStream)) {
 								return getData.apply(new MessagePackReader(messageUnpacker));
 							} catch (Exception e) {
-								e.printStackTrace();
+								Main.logException(e);
 							}
 						} catch (Exception e) {
-							e.printStackTrace();
+							Main.logException(e);
 						}
 						return null;
 					})));
 				} catch (Exception e) {
-					e.printStackTrace();
+					Main.logException(e);
 				}
 
 				try {
@@ -94,11 +94,11 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 					Main.LOGGER.info(String.format("Deleted empty folder: %s", idFolder));
 				} catch (DirectoryNotEmptyException ignored) {
 				} catch (Exception e) {
-					e.printStackTrace();
+					Main.logException(e);
 				}
 			});
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 
 		futureDataMap.forEach((fileName, futureData) -> {
@@ -113,7 +113,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 					fileHashes.put(fileName, getHash(data, true));
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				Main.logException(e);
 			}
 		});
 	}
@@ -135,7 +135,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 					try (final MessagePacker messagePacker = MessagePack.newDefaultPacker(Files.newOutputStream(path.resolve(parentAndFileName), StandardOpenOption.CREATE))) {
 						packMessage(messagePacker, data, useReducedHash);
 					} catch (Exception e) {
-						e.printStackTrace();
+						Main.logException(e);
 					}
 
 					fileHashes.put(fileName, hash);
@@ -157,7 +157,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 		try {
 			return Integer.parseInt(getParent(fileName), 16);
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 			return 0;
 		}
 	}
@@ -184,7 +184,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 			packMessage(messageBufferPacker, data, useReducedHash);
 			hash = Arrays.hashCode(messageBufferPacker.toByteArray());
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 		return hash;
 	}
@@ -204,7 +204,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 			try {
 				Files.createDirectories(path);
 			} catch (Exception e) {
-				e.printStackTrace();
+				Main.logException(e);
 			}
 		}
 	}

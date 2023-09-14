@@ -8,6 +8,7 @@ import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.Value;
+import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.MessagePackWriter;
@@ -176,7 +177,7 @@ public class DataFixer {
 		final StringBuilder stringBuilder = new StringBuilder(keySplit[0]);
 		for (int i = 1; i < keySplit.length; i++) {
 			final String keyPart = keySplit[i];
-			if (keyPart.length() > 0) {
+			if (!keyPart.isEmpty()) {
 				stringBuilder.append(keyPart.substring(0, 1).toUpperCase(Locale.ENGLISH));
 				stringBuilder.append(keyPart.substring(1));
 			}
@@ -202,7 +203,7 @@ public class DataFixer {
 				readerBase.merge(new MessagePackReader(messageUnpacker));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Main.logException(e);
 		}
 	}
 

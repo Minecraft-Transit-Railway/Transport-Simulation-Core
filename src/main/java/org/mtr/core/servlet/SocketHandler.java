@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.serializers.JsonReader;
 import org.mtr.core.simulation.Simulator;
@@ -59,13 +60,13 @@ public class SocketHandler {
 
 							responseObject.add(client.uuid.toString(), clientObject);
 						} catch (Exception e) {
-							e.printStackTrace();
+							Main.logException(e);
 						}
 					});
 
 					simulator.clientGroup.sendToClient(responseObject);
 				} catch (Exception e) {
-					e.printStackTrace();
+					Main.logException(e);
 				}
 			});
 		});

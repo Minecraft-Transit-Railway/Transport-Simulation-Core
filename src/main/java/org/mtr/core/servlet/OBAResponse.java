@@ -12,6 +12,7 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.LatLon;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
 import java.util.TimeZone;
 
 public class OBAResponse extends ResponseBase {
@@ -172,14 +173,14 @@ public class OBAResponse extends ResponseBase {
 		return parameters.get(name) != null;
 	}
 
-	private JsonObject getReferences(IntArraySet colorsUsed, LongArraySet platformIdsUsed, JsonArray tripsUsed) {
+	private JsonObject getReferences(@Nullable IntArraySet colorsUsed, @Nullable LongArraySet platformIdsUsed, @Nullable JsonArray tripsUsed) {
 		final JsonArray agenciesArray = new JsonArray();
 		if (includeReferences) {
 			agenciesArray.add(AGENCY);
 		}
 
 		final JsonArray stopsArray = new JsonArray();
-		if (includeReferences && platformIdsUsed != null) {
+		if (includeReferences && platformIdsUsed != null && colorsUsed != null) {
 			platformIdsUsed.forEach(platformId -> {
 				final Platform platform = simulator.platformIdMap.get(platformId);
 				if (platform != null) {
@@ -210,14 +211,14 @@ public class OBAResponse extends ResponseBase {
 		return jsonObject;
 	}
 
-	private JsonObject getSingleElement(JsonObject entryObject, IntArraySet colorsUsed, LongArraySet platformIdsUsed, JsonArray tripsUsed) {
+	private JsonObject getSingleElement(JsonObject entryObject, @Nullable IntArraySet colorsUsed, @Nullable LongArraySet platformIdsUsed, @Nullable JsonArray tripsUsed) {
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.add("entry", entryObject);
 		jsonObject.add("references", getReferences(colorsUsed, platformIdsUsed, tripsUsed));
 		return jsonObject;
 	}
 
-	private JsonObject getListElement(JsonArray listArray, boolean limitExceeded, IntArraySet colorsUsed, LongArraySet platformIdsUsed, JsonArray tripsUsed) {
+	private JsonObject getListElement(JsonArray listArray, boolean limitExceeded, @Nullable IntArraySet colorsUsed, @Nullable LongArraySet platformIdsUsed, @Nullable JsonArray tripsUsed) {
 		final JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("limitExceeded", limitExceeded);
 		jsonObject.add("list", listArray);

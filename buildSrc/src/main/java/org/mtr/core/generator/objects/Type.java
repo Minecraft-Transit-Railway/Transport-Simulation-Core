@@ -1,5 +1,6 @@
 package org.mtr.core.generator.objects;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 public class Type {
@@ -9,27 +10,27 @@ public class Type {
 	private final String initializer;
 	private final String formatter;
 
-	public static Type BOOLEAN = createObject("boolean");
-	public static Type INTEGER = createObject("long");
-	public static Type NUMBER = createObject("double");
-	public static Type STRING = new Type("String", false, "", "\"%s\"");
-	public static Type BOOLEAN_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.booleans.BooleanArrayList");
-	public static Type INTEGER_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.longs.LongArrayList");
-	public static Type NUMBER_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.doubles.DoubleArrayList");
-	public static Type STRING_ARRAY = createArray(STRING.name);
+	public static final Type BOOLEAN = createObject("boolean");
+	public static final Type INTEGER = createObject("long");
+	public static final Type NUMBER = createObject("double");
+	public static final Type STRING = new Type("String", false, "", "\"%s\"");
+	public static final Type BOOLEAN_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.booleans.BooleanArrayList");
+	public static final Type INTEGER_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.longs.LongArrayList");
+	public static final Type NUMBER_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.doubles.DoubleArrayList");
+	public static final Type STRING_ARRAY = createArray(STRING.name);
 
 	private Type(String name, boolean isArray) {
 		this(name, isArray, null, null);
 	}
 
-	private Type(String name, boolean isArray, String initializer, String formatter) {
+	private Type(String name, boolean isArray, @Nullable String initializer, @Nullable String formatter) {
 		this.name = name;
 		this.isArray = isArray;
 		this.initializer = isArray ? String.format("new %s()", name) : initializer;
 		this.formatter = formatter;
 	}
 
-	public String getInitializer(String defaultValue, boolean useDefaultInitializer) {
+	public String getInitializer(@Nullable String defaultValue, boolean useDefaultInitializer) {
 		if (defaultValue == null) {
 			return useDefaultInitializer && initializer != null ? formatInitializer(initializer) : "";
 		} else {

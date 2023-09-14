@@ -6,6 +6,7 @@ import org.mtr.core.generated.VehicleExtraDataSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Utilities;
 
+import javax.annotation.Nullable;
 import java.util.function.BiConsumer;
 
 public class VehicleExtraData extends VehicleExtraDataSchema {
@@ -181,7 +182,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return needsUpdate;
 	}
 
-	protected void setRoutePlatformInfo(Depot depot, int currentIndex) {
+	protected void setRoutePlatformInfo(@Nullable Depot depot, int currentIndex) {
 		if (depot == null) {
 			previousRouteId = 0;
 			previousPlatformId = 0;
@@ -284,27 +285,27 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return tempPath;
 	}
 
-	private static long getId(NameColorDataBase data) {
+	private static long getId(@Nullable NameColorDataBase data) {
 		return data == null ? 0 : data.getId();
 	}
 
-	private static String getName(NameColorDataBase data) {
+	private static String getName(@Nullable NameColorDataBase data) {
 		return data == null ? "" : data.getName();
 	}
 
-	private static int getColor(NameColorDataBase data) {
+	private static int getColor(@Nullable NameColorDataBase data) {
 		return data == null ? 0 : data.getColor();
 	}
 
-	private static long getStationId(Platform platform) {
+	private static long getStationId(@Nullable Platform platform) {
 		return platform == null ? 0 : getId(platform.area);
 	}
 
-	private static String getStationName(Platform platform) {
+	private static String getStationName(@Nullable Platform platform) {
 		return platform == null ? "" : getName(platform.area);
 	}
 
-	private static String getRouteDestination(Route route, int stopIndex) {
+	private static String getRouteDestination(@Nullable Route route, int stopIndex) {
 		return route == null ? "" : route.getDestination(stopIndex);
 	}
 
@@ -316,7 +317,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		private final Route previousRoute;
 		private final Route thisRoute;
 
-		public VehiclePlatformRouteInfo(Platform previousPlatform, Platform thisPlatform, Platform nextPlatform, Route previousRoute, Route thisRoute) {
+		public VehiclePlatformRouteInfo(@Nullable Platform previousPlatform, @Nullable Platform thisPlatform, @Nullable Platform nextPlatform, @Nullable Route previousRoute, @Nullable Route thisRoute) {
 			this.previousPlatform = previousPlatform;
 			this.thisPlatform = thisPlatform;
 			this.nextPlatform = nextPlatform;

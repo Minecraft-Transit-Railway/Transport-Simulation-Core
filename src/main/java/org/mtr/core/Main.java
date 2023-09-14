@@ -10,6 +10,7 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 import org.mtr.webserver.Webserver;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -20,8 +21,10 @@ import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@ParametersAreNonnullByDefault
 public class Main {
 
 	private final ObjectImmutableList<Simulator> simulators;
@@ -45,7 +48,7 @@ public class Main {
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
-			e.printStackTrace();
+			logException(e);
 		}
 	}
 
@@ -111,11 +114,15 @@ public class Main {
 						break;
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				logException(e);
 				stop();
 				return;
 			}
 		}
+	}
+
+	public static void logException(Exception e) {
+		LOGGER.log(Level.INFO, e.getMessage(), e);
 	}
 
 	private static void printHelp() {

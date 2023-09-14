@@ -51,7 +51,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 
 	private static boolean isInvalidSavedRail(SavedRailBase<?, ?> savedRailBase, Data data, Position position1, Position position2) {
 		final Rail rail = Data.tryGet(data.positionToRailConnections, position1, position2);
-		return rail == null || !rail.isValid(savedRailBase);
+		return rail == null || savedRailBase instanceof Platform && !rail.isPlatform() || savedRailBase instanceof Siding && !rail.isSiding();
 	}
 
 	private static boolean isNumber(String text) {
