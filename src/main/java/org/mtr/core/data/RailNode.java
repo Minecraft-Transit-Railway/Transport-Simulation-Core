@@ -41,11 +41,12 @@ public final class RailNode extends RailNodeSchema implements SerializedDataBase
 
 	public void addConnection(Position position, Rail rail) {
 		if (!this.position.equals(position)) {
+			removeConnection(position);
 			connections.add(new RailNodeConnection(position, rail));
 		}
 	}
 
-	public boolean removeConnection(Position position) {
-		return connections.removeIf(railNodeConnection -> railNodeConnection.matchesPosition(position));
+	public void removeConnection(Position position) {
+		connections.removeIf(railNodeConnection -> railNodeConnection.matchesPosition(position));
 	}
 }

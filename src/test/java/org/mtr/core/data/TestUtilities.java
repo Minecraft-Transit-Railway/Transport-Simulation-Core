@@ -174,7 +174,7 @@ public interface TestUtilities {
 	}
 
 	static Rail randomRail() {
-		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomPosition(), randomEnum(Angle.values()), RANDOM.nextLong(), randomEnum(Rail.Shape.values()), randomEnum(Rail.Shape.values()), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
+		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomPosition(), randomEnum(Angle.values()), RANDOM.nextLong(), randomEnum(Rail.Shape.values()), randomEnum(Rail.Shape.values()), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
 	}
 
 	static Route randomRoute() {

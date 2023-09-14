@@ -62,7 +62,10 @@
 		"shapeEnd": {
 			"$ref": "Rail.Shape"
 		},
-		"isSavedRail": {
+		"isPlatform": {
+			"type": "boolean"
+		},
+		"isSiding": {
 			"type": "boolean"
 		},
 		"canAccelerate": {
@@ -98,7 +101,8 @@
 		"speedLimit",
 		"shapeStart",
 		"shapeEnd",
-		"isSavedRail",
+		"isPlatform",
+		"isSiding",
 		"canAccelerate",
 		"canTurnBack",
 		"canHaveSignal",

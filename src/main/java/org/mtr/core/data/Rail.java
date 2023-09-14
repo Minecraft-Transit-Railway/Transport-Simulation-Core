@@ -1,7 +1,9 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.RailSchema;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.*;
 
 public final class Rail extends RailSchema {
@@ -15,16 +17,31 @@ public final class Rail extends RailSchema {
 	private static final int CABLE_CURVATURE_SCALE = 1000;
 	private static final int MAX_CABLE_DIP = 8;
 
-	public static Rail copy(Position posStart, Position posEnd, Rail rail) {
-		return newRail(posStart, rail.facingStart, posEnd, rail.facingEnd, rail.speedLimit, rail.shapeStart, rail.shapeEnd, rail.isSavedRail, rail.canAccelerate, rail.canTurnBack, rail.canHaveSignal, rail.transportMode);
+	public static Rail copy(Position posStart, Position posEnd, Rail rail, Simulator simulator, ObjectAVLTreeSet<Platform> platformsToAdd, ObjectAVLTreeSet<Siding> sidingsToAdd) {
+		final Rail newRail = newRail(posStart, rail.facingStart, posEnd, rail.facingEnd, rail.speedLimit, rail.shapeStart, rail.shapeEnd, rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canHaveSignal, rail.transportMode);
+		if (newRail.isValid()) {
+			if (newRail.isPlatform && simulator.platforms.stream().noneMatch(platform -> platform.containsPos(posStart) && platform.containsPos(posEnd))) {
+				final Platform platform = new Platform(posStart, posEnd, newRail.transportMode, simulator);
+				simulator.platforms.add(platform);
+				platformsToAdd.add(platform);
+			}
+			if (newRail.isSiding && simulator.sidings.stream().noneMatch(siding -> siding.containsPos(posStart) && siding.containsPos(posEnd))) {
+				final Siding siding = new Siding(posStart, posEnd, newRail.getLength(), newRail.transportMode, simulator);
+				simulator.sidings.add(siding);
+				sidingsToAdd.add(siding);
+			}
+			return newRail;
+		} else {
+			return null;
+		}
 	}
 
-	public static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, long speedLimit, Shape shapeStart, Shape shapeEnd, boolean isSavedRail, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
-		return newRail(posStart, facingStart, posEnd, facingEnd, speedLimit, shapeStart, shapeEnd, isSavedRail, canAccelerate, false, canHaveSignal, transportMode);
+	public static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, long speedLimit, Shape shapeStart, Shape shapeEnd, boolean isPlatform, boolean isSavedRail, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
+		return newRail(posStart, facingStart, posEnd, facingEnd, speedLimit, shapeStart, shapeEnd, isPlatform, isSavedRail, canAccelerate, false, canHaveSignal, transportMode);
 	}
 
 	public static Rail newTurnBackRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
-		return newRail(posStart, facingStart, posEnd, facingEnd, 80, shapeStart, shapeEnd, false, false, true, false, transportMode);
+		return newRail(posStart, facingStart, posEnd, facingEnd, 80, shapeStart, shapeEnd, false, false, false, true, false, transportMode);
 	}
 
 	public static Rail newPlatformRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
@@ -36,7 +53,7 @@ public final class Rail extends RailSchema {
 	}
 
 	private static Rail newPlatformOrSidingRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, boolean isPlatform, Shape shapeStart, Shape shapeEnd, TransportMode transportMode) {
-		return newRail(posStart, facingStart, posEnd, facingEnd, isPlatform ? 80 : 40, shapeStart, shapeEnd, true, false, false, true, transportMode);
+		return newRail(posStart, facingStart, posEnd, facingEnd, isPlatform ? 80 : 40, shapeStart, shapeEnd, isPlatform, !isPlatform, false, false, true, transportMode);
 	}
 
 	// for curves:
@@ -49,7 +66,7 @@ public final class Rail extends RailSchema {
 	// x = h*T + k*r
 	// z = k*T + h*r
 
-	private static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, long speedLimit, Shape shape1, Shape shape2, boolean isSavedRail, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
+	private static Rail newRail(Position posStart, Angle facingStart, Position posEnd, Angle facingEnd, long speedLimit, Shape shape1, Shape shape2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
 		final long xStart = posStart.getX();
 		final long zStart = posStart.getZ();
 		final long xEnd = posEnd.getX();
@@ -213,11 +230,11 @@ public final class Rail extends RailSchema {
 			}
 		}
 
-		return new Rail(h1, k1, h2, k2, r1, r2, tStart1, tEnd1, tStart2, tEnd2, posStart.getY(), posEnd.getY(), reverseT1, reverseT2, isStraight1, isStraight2, speedLimit, shape1, shape2, isSavedRail, canAccelerate, canTurnBack, canHaveSignal, transportMode);
+		return new Rail(h1, k1, h2, k2, r1, r2, tStart1, tEnd1, tStart2, tEnd2, posStart.getY(), posEnd.getY(), reverseT1, reverseT2, isStraight1, isStraight2, speedLimit, shape1, shape2, isPlatform, isSiding, canAccelerate, canTurnBack, canHaveSignal, transportMode);
 	}
 
-	private Rail(double h1, double k1, double h2, double k2, double r1, double r2, double tStart1, double tEnd1, double tStart2, double tEnd2, long yStart, long yEnd, boolean reverseT1, boolean reverseT2, boolean isStraight1, boolean isStraight2, long speedLimit, Rail.Shape shapeStart, Rail.Shape shapeEnd, boolean isSavedRail, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
-		super(h1, k1, h2, k2, r1, r2, tStart1, tEnd1, tStart2, tEnd2, yStart, yEnd, reverseT1, reverseT2, isStraight1, isStraight2, speedLimit, shapeStart, shapeEnd, isSavedRail, canAccelerate, canTurnBack, canHaveSignal, transportMode);
+	private Rail(double h1, double k1, double h2, double k2, double r1, double r2, double tStart1, double tEnd1, double tStart2, double tEnd2, long yStart, long yEnd, boolean reverseT1, boolean reverseT2, boolean isStraight1, boolean isStraight2, long speedLimit, Rail.Shape shapeStart, Rail.Shape shapeEnd, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode) {
+		super(h1, k1, h2, k2, r1, r2, tStart1, tEnd1, tStart2, tEnd2, yStart, yEnd, reverseT1, reverseT2, isStraight1, isStraight2, speedLimit, shapeStart, shapeEnd, isPlatform, isSiding, canAccelerate, canTurnBack, canHaveSignal, transportMode);
 		speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit);
 		facingStart = getRailAngle(false);
 		facingEnd = getRailAngle(true);
@@ -231,12 +248,24 @@ public final class Rail extends RailSchema {
 		updateData(readerBase);
 	}
 
+	public TransportMode getTransportMode() {
+		return transportMode;
+	}
+
+	public long getSpeedLimitKilometersPerHour() {
+		return speedLimit;
+	}
+
 	public boolean canAccelerate() {
 		return canAccelerate;
 	}
 
 	public boolean isSavedRail() {
-		return isSavedRail;
+		return isPlatform || isSiding;
+	}
+
+	public boolean isValid(SavedRailBase<?, ?> savedRailBase) {
+		return (savedRailBase == null && !isPlatform && !isSiding || savedRailBase instanceof Platform && isPlatform && !isSiding || savedRailBase instanceof Siding && !isPlatform && isSiding) && isValid();
 	}
 
 	public boolean canTurnBack() {
@@ -273,8 +302,21 @@ public final class Rail extends RailSchema {
 		return (isStraight1 || r1 > MIN_RADIUS - ACCEPT_THRESHOLD) && (isStraight2 || r2 > MIN_RADIUS - ACCEPT_THRESHOLD);
 	}
 
+	/**
+	 * A rail is valid if all the following conditions are met:
+	 * <li>Speed must be greater than 0
+	 * <li>All values can't be zero
+	 * <li>Make sure the directions of the start and end of the rail makes sense
+	 * <li>The rail is either a platform, a siding, neither, but not both
+	 *
+	 * @return whether the above conditions are met
+	 */
 	public boolean isValid() {
-		return speedLimit > 0 && (h1 != 0 || k1 != 0 || h2 != 0 || k2 != 0 || r1 != 0 || r2 != 0 || tStart1 != 0 || tStart2 != 0 || tEnd1 != 0 || tEnd2 != 0) && facingStart == getRailAngle(false) && facingEnd == getRailAngle(true);
+		return speedLimit > 0
+				&& (h1 != 0 || k1 != 0 || h2 != 0 || k2 != 0 || r1 != 0 || r2 != 0 || tStart1 != 0 || tStart2 != 0 || tEnd1 != 0 || tEnd2 != 0)
+				&& facingStart == getRailAngle(false)
+				&& facingEnd == getRailAngle(true)
+				&& (!isPlatform || !isSiding);
 	}
 
 	private double getPositionY(double value) {

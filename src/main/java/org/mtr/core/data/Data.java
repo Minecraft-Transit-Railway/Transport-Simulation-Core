@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
 import org.mtr.core.tools.Position;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,9 +29,23 @@ public class Data {
 	public final Long2ObjectOpenHashMap<Depot> depotIdMap = new Long2ObjectOpenHashMap<>();
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionToRailConnections = new Object2ObjectOpenHashMap<>();
+	public final Object2ObjectOpenHashMap<Position, ObjectOpenHashBigSet<RailNode>> nodesConnectedToPosition = new Object2ObjectOpenHashMap<>();
 
-	public final void sync() {
+	public void sync() {
 		try {
+			// clear rail connections
+			// write rail connections
+			positionToRailConnections.clear();
+			nodesConnectedToPosition.clear();
+			railNodes.forEach(railNode -> {
+				final Object2ObjectOpenHashMap<Position, Rail> connections = railNode.getConnectionsAsMap();
+				positionToRailConnections.put(railNode.getPosition(), connections);
+				connections.forEach((position, rail) -> put(nodesConnectedToPosition, position, railNode, ObjectOpenHashBigSet::new));
+			});
+
+			platforms.removeIf(platform -> platform.isInvalidSavedRail(this));
+			sidings.removeIf(siding -> siding.isInvalidSavedRail(this));
+
 			mapIds(stationIdMap, stations);
 			mapIds(platformIdMap, platforms);
 			mapIds(sidingIdMap, sidings);
@@ -39,11 +54,6 @@ public class Data {
 
 			mapAreasAndSavedRails(platforms, stations);
 			mapAreasAndSavedRails(sidings, depots);
-
-			// clear rail connections
-			// write rail connections
-			positionToRailConnections.clear();
-			railNodes.forEach(railNode -> positionToRailConnections.put(railNode.getPosition(), railNode.getConnectionsAsMap()));
 
 			// clear platform routes
 			// clear platform route colors
@@ -96,6 +106,18 @@ public class Data {
 		} else {
 			return innerMap.get(key2);
 		}
+	}
+
+	public static <T, U, V extends Map<T, W>, W extends Collection<U>> void put(V map, T key, U newValue, Supplier<W> innerSetSupplier) {
+		final W innerSet = map.get(key);
+		final W newInnerSet;
+		if (innerSet == null) {
+			newInnerSet = innerSetSupplier.get();
+			map.put(key, newInnerSet);
+		} else {
+			newInnerSet = innerSet;
+		}
+		newInnerSet.add(newValue);
 	}
 
 	public static <T, U, V extends Map<T, W>, W extends Map<T, U>> void put(V map, T key1, T key2, Function<U, U> putValue, Supplier<W> innerMapSupplier) {

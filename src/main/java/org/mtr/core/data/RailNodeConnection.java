@@ -17,19 +17,15 @@ public final class RailNodeConnection extends RailNodeConnectionSchema {
 		updateData(readerBase);
 	}
 
-	public void writeToMap(Object2ObjectOpenHashMap<Position, Rail> connectionsMap) {
+	void writeToMap(Object2ObjectOpenHashMap<Position, Rail> connectionsMap) {
 		connectionsMap.put(position, rail);
 	}
 
-	public boolean isValid(Position checkPosition) {
+	boolean isValid(Position checkPosition) {
 		return rail.isValid() && !matchesPosition(checkPosition);
 	}
 
 	boolean matchesPosition(Position checkPosition) {
 		return checkPosition.equals(position);
-	}
-
-	Rail getRail() {
-		return rail;
 	}
 }
