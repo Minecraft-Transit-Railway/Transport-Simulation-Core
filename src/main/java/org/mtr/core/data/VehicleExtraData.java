@@ -28,7 +28,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		newVehicleCars = new ObjectImmutableList<>(vehicleCars);
 	}
 
-	protected VehicleExtraData(ReaderBase readerBase) {
+	public VehicleExtraData(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 		newPath = new ObjectImmutableList<>(path);

@@ -80,7 +80,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	public long getFrequency(int hour) {
-		return hour >= 0 && hour < HOURS_PER_DAY ? frequencies.getLong(hour) : 0;
+		return hour >= 0 && hour < Math.min(HOURS_PER_DAY, frequencies.size()) ? frequencies.getLong(hour) : 0;
 	}
 
 	public LongArrayList getRealTimeDepartures() {
