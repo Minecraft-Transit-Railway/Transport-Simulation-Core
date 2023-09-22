@@ -16,18 +16,6 @@
 				"$ref": "vehicleCar.json"
 			}
 		},
-		"pathSidingToMainRoute": {
-			"type": "array",
-			"items": {
-				"$ref": "pathData.json"
-			}
-		},
-		"pathMainRouteToSiding": {
-			"type": "array",
-			"items": {
-				"$ref": "pathData.json"
-			}
-		},
 		"maxVehicles": {
 			"type": "integer"
 		},

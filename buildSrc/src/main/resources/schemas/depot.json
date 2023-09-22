@@ -12,12 +12,6 @@
 				"type": "integer"
 			}
 		},
-		"path": {
-			"type": "array",
-			"items": {
-				"$ref": "pathData.json"
-			}
-		},
 		"useRealTime": {
 			"type": "boolean"
 		},

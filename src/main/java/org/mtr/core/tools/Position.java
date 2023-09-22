@@ -82,10 +82,8 @@ public class Position extends PositionSchema implements Comparable<Position> {
 	public int compareTo(Position position) {
 		if (equals(position)) {
 			return 0;
-		} else if (x > position.x || y > position.y || z > position.z) {
-			return 1;
 		} else {
-			return -1;
+			return x > position.x ? 1 : x < position.x ? -1 : y > position.y ? 1 : y < position.y ? -1 : z > position.z ? 1 : -1;
 		}
 	}
 }

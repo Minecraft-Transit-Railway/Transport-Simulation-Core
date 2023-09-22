@@ -50,8 +50,8 @@ public final class MessagePackReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateBooleanArray(String key, BooleanConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getBoolean(arrayValue))));
+	public void iterateBooleanArray(String key, Runnable clearList, BooleanConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getBoolean(arrayValue))));
 	}
 
 	@Override
@@ -65,8 +65,8 @@ public final class MessagePackReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateIntArray(String key, IntConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getInt(arrayValue))));
+	public void iterateIntArray(String key, Runnable clearList, IntConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getInt(arrayValue))));
 	}
 
 	@Override
@@ -80,8 +80,8 @@ public final class MessagePackReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateLongArray(String key, LongConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getLong(arrayValue))));
+	public void iterateLongArray(String key, Runnable clearList, LongConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getLong(arrayValue))));
 	}
 
 	@Override
@@ -95,8 +95,8 @@ public final class MessagePackReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateDoubleArray(String key, DoubleConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getDouble(arrayValue))));
+	public void iterateDoubleArray(String key, Runnable clearList, DoubleConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getDouble(arrayValue))));
 	}
 
 	@Override
@@ -110,13 +110,13 @@ public final class MessagePackReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateStringArray(String key, Consumer<String> ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getString(arrayValue))));
+	public void iterateStringArray(String key, Runnable clearList, Consumer<String> ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getString(arrayValue))));
 	}
 
 	@Override
-	public void iterateReaderArray(String key, Consumer<ReaderBase> ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(new MessagePackReader(arrayValue))));
+	public void iterateReaderArray(String key, Runnable clearList, Consumer<ReaderBase> ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(new MessagePackReader(arrayValue))));
 	}
 
 	@Override
@@ -156,7 +156,8 @@ public final class MessagePackReader extends ReaderBase {
 		return value.asStringValue().asString();
 	}
 
-	private void iterateArray(Value value, Consumer<Value> consumer) {
+	private void iterateArray(Value value, Runnable clearList, Consumer<Value> consumer) {
+		clearList.run();
 		value.asArrayValue().forEach(consumer);
 	}
 

@@ -32,7 +32,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	private final ObjectArrayList<SidingPathFinder<Depot, Siding, Station, Platform>> sidingPathFinderSidingToMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Depot, Siding>> sidingPathFinderMainRouteToSiding = new ObjectArrayList<>();
 	private final ObjectArrayList<PathData> pathMainRoute = new ObjectArrayList<>();
-
+	private final ObjectArrayList<PathData> pathSidingToMainRoute = new ObjectArrayList<>();
+	private final ObjectArrayList<PathData> pathMainRouteToSiding = new ObjectArrayList<>();
 	private final ObjectArraySet<Vehicle> vehicles = new ObjectArraySet<>();
 	private final ObjectImmutableList<ReaderBase> vehicleReaders;
 	/**
@@ -60,6 +61,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	public static final double ACCELERATION_DEFAULT = 1D / 250000;
 	public static final double MAX_ACCELERATION = 1D / 50000;
 	public static final double MIN_ACCELERATION = 1D / 2500000;
+	private static final String KEY_PATH_SIDING_TO_MAIN_ROUTE = "pathSidingToMainRoute";
+	private static final String KEY_PATH_MAIN_ROUTE_TO_SIDING = "pathMainRouteToSiding";
 	private static final String KEY_VEHICLES = "vehicles";
 
 	public Siding(Position position1, Position position2, double railLength, TransportMode transportMode, Data data) {
@@ -69,6 +72,8 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public Siding(ReaderBase readerBase, Data data) {
 		super(DataFixer.convertSiding(readerBase), data);
+		readerBase.iterateReaderArray(KEY_PATH_SIDING_TO_MAIN_ROUTE, pathSidingToMainRoute::clear, readerBaseChild -> pathSidingToMainRoute.add(new PathData(readerBaseChild)));
+		readerBase.iterateReaderArray(KEY_PATH_MAIN_ROUTE_TO_SIDING, pathMainRouteToSiding::clear, readerBaseChild -> pathMainRouteToSiding.add(new PathData(readerBaseChild)));
 		vehicleReaders = savePathDataReaderBase(readerBase, KEY_VEHICLES);
 		updateData(readerBase);
 		DataFixer.unpackSidingVehicleCars(readerBase, transportMode, railLength, vehicleCars);
@@ -78,6 +83,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	@Override
 	public void serializeFullData(WriterBase writerBase) {
 		super.serializeFullData(writerBase);
+		writerBase.writeDataset(pathSidingToMainRoute, KEY_PATH_SIDING_TO_MAIN_ROUTE);
+		writerBase.writeDataset(pathMainRouteToSiding, KEY_PATH_MAIN_ROUTE_TO_SIDING);
 		writerBase.writeDataset(vehicles, KEY_VEHICLES);
 	}
 
@@ -92,7 +99,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		generatePathDistancesAndTimeSegments();
 
 		if (area != null && defaultPathData != null) {
-			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
+			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, false, readerBase, data)));
 		}
 	}
 
@@ -239,7 +246,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
-			vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data));
+			vehicles.add(new Vehicle(VehicleExtraData.create(railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, false, transportMode, data));
 		}
 
 		if (!trainsToRemove.isEmpty()) {
@@ -650,7 +657,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public static ObjectImmutableList<ReaderBase> savePathDataReaderBase(ReaderBase readerBase, String key) {
 		final ObjectArrayList<ReaderBase> tempReaders = new ObjectArrayList<>();
-		readerBase.iterateReaderArray(key, tempReaders::add);
+		readerBase.iterateReaderArray(key, tempReaders::clear, tempReaders::add);
 		return new ObjectImmutableList<>(tempReaders);
 	}
 

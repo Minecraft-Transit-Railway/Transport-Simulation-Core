@@ -9,6 +9,7 @@ import org.mtr.core.Main;
 import org.mtr.core.generated.DepotSchema;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.serializers.WriterBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.DataFixer;
@@ -20,6 +21,7 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public final ObjectArrayList<Route> routes = new ObjectArrayList<>();
 
+	private final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 	/**
 	 * A temporary list to store all platforms of the vehicle instructions as well as the route used to get to each platform.
 	 * Repeated platforms are ignored.
@@ -29,6 +31,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
 	public static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
+	private static final String KEY_PATH = "path";
 
 	public Depot(TransportMode transportMode, Data data) {
 		super(transportMode, data);
@@ -36,8 +39,15 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public Depot(ReaderBase readerBase, Data data) {
 		super(readerBase, data);
+		readerBase.iterateReaderArray(KEY_PATH, path::clear, readerBaseChild -> path.add(new PathData(readerBaseChild)));
 		updateData(readerBase);
 		DataFixer.unpackDepotDepartures(readerBase, realTimeDepartures);
+	}
+
+	@Override
+	public void serializeFullData(WriterBase writerBase) {
+		super.serializeFullData(writerBase);
+		writerBase.writeDataset(path, KEY_PATH);
 	}
 
 	public void init() {
@@ -65,6 +75,10 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public void setCruisingAltitude(long cruisingAltitude) {
 		this.cruisingAltitude = cruisingAltitude;
+	}
+
+	public LongArrayList getRouteIds() {
+		return routeIds;
 	}
 
 	public boolean getRepeatInfinitely() {
@@ -126,6 +140,9 @@ public final class Depot extends DepotSchema implements Utilities {
 			generatingSidingIds.clear();
 			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
 				sidingPathFinders.add(new SidingPathFinder<>(data, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
+			}
+			if (sidingPathFinders.isEmpty()) {
+				Main.LOGGER.info("At least two platforms are required for path generation");
 			}
 		}
 	}
@@ -221,15 +238,11 @@ public final class Depot extends DepotSchema implements Utilities {
 				final float timeRatio = data instanceof Simulator ? (float) MILLIS_PER_DAY / ((Simulator) data).millisPerGameDay : 1;
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
-					if (frequencies.size() <= i) {
-						break;
-					}
-
-					if (frequencies.getLong(i) == 0) {
+					if (getFrequency(i) == 0) {
 						continue;
 					}
 
-					final long intervalMillis = 14400000 / frequencies.getLong(i);
+					final long intervalMillis = 14400000 / getFrequency(i);
 					final long hourMinMillis = MILLIS_PER_HOUR * i;
 					final long hourMaxMillis = MILLIS_PER_HOUR * (i + 1);
 

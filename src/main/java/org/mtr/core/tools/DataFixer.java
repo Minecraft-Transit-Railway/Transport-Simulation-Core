@@ -32,7 +32,7 @@ public class DataFixer {
 	}
 
 	public static void unpackDepotDepartures(ReaderBase readerBase, LongArrayList realTimeDepartures) {
-		readerBase.iterateIntArray("departures", realTimeDepartures::add);
+		readerBase.iterateIntArray("departures", realTimeDepartures::clear, realTimeDepartures::add);
 	}
 
 	public static void unpackPlatformDwellTime(ReaderBase readerBase, IntConsumer consumer) {
@@ -60,7 +60,7 @@ public class DataFixer {
 		packExtra(readerBase, messagePackWriter -> {
 			readerBase.unpackLong("node_pos", value -> convertPosition(value).serializeData(messagePackWriter.writeChild("position")));
 			final ObjectArrayList<RailNodeConnection> connections = new ObjectArrayList<>();
-			readerBase.iterateReaderArray("rail_connections", readerBaseChild -> connections.add(new RailNodeConnection(readerBaseChild)));
+			readerBase.iterateReaderArray("rail_connections", connections::clear, readerBaseChild -> connections.add(new RailNodeConnection(readerBaseChild)));
 			if (!connections.isEmpty()) {
 				messagePackWriter.writeDataset(connections, "connections");
 			}
@@ -79,11 +79,11 @@ public class DataFixer {
 	public static ReaderBase convertRoute(ReaderBase readerBase) {
 		packExtra(readerBase, messagePackWriter -> {
 			final LongArrayList platformIds = new LongArrayList();
-			readerBase.iterateLongArray("platform_ids", platformIds::add);
+			readerBase.iterateLongArray("platform_ids", platformIds::clear, platformIds::add);
 
 			if (!platformIds.isEmpty()) {
 				final ObjectArrayList<String> customDestinations = new ObjectArrayList<>();
-				readerBase.iterateStringArray("custom_destinations", customDestinations::add);
+				readerBase.iterateStringArray("custom_destinations", customDestinations::clear, customDestinations::add);
 				final WriterBase.Array arrayWriter = messagePackWriter.writeArray("routePlatformData");
 
 				for (int i = 0; i < platformIds.size(); i++) {

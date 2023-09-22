@@ -25,4 +25,16 @@ public final class VehicleCar extends VehicleCarSchema {
 	public double getLength() {
 		return length;
 	}
+
+	public double getWidth() {
+		return width;
+	}
+
+	public double getBogie1Position() {
+		return bogie1Position;
+	}
+
+	public double getBogie2Position() {
+		return bogie2Position;
+	}
 }

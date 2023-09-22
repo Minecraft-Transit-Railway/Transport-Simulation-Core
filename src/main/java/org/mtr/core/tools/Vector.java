@@ -28,10 +28,22 @@ public class Vector {
 		return multiply(vector.x, vector.y, vector.z);
 	}
 
-	public Vector rotateY(float yaw) {
-		final double cos = Math.cos(yaw);
-		final double sin = Math.sin(yaw);
+	public Vector rotateX(double angle) {
+		final double cos = Math.cos(angle);
+		final double sin = Math.sin(angle);
+		return new Vector(x, y * cos + z * sin, z * cos - y * sin);
+	}
+
+	public Vector rotateY(double angle) {
+		final double cos = Math.cos(angle);
+		final double sin = Math.sin(angle);
 		return new Vector(x * cos + z * sin, y, z * cos - x * sin);
+	}
+
+	public Vector rotateZ(double angle) {
+		final double cos = Math.cos(angle);
+		final double sin = Math.sin(angle);
+		return new Vector(x * cos + y * sin, y * cos - x * sin, z);
 	}
 
 	public double distanceTo(Vector vec) {
@@ -44,5 +56,9 @@ public class Vector {
 	public Vector normalize() {
 		final double length = Math.sqrt(x * x + y * y + z * z);
 		return length < 1E-4 ? new Vector(0, 0, 0) : new Vector(x / length, y / length, z / length);
+	}
+
+	public static Vector getAverage(Vector position1, Vector position2) {
+		return new Vector(Utilities.getAverage(position1.x, position2.x), Utilities.getAverage(position1.y, position2.y), Utilities.getAverage(position1.z, position2.z));
 	}
 }

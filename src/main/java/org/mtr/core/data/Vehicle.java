@@ -1,8 +1,10 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.core.generated.VehicleSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.simulation.Simulator;
@@ -19,22 +21,28 @@ public class Vehicle extends VehicleSchema {
 
 	public final VehicleExtraData vehicleExtraData;
 	private final Siding siding;
+	/**
+	 * If a vehicle is clientside, don't open the doors or start up automatically. Always wait for a socket update instead.
+	 */
+	private final boolean isClientside;
 
 	public static final int DOOR_MOVE_TIME = 64;
 	private static final int DOOR_DELAY = 20;
 
-	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, TransportMode transportMode, Data data) {
+	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, boolean isClientside, TransportMode transportMode, Data data) {
 		super(transportMode, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
 		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
+		this.isClientside = isClientside;
 	}
 
-	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, ReaderBase readerBase, Data data) {
+	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, boolean isClientside, ReaderBase readerBase, Data data) {
 		super(readerBase, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
 		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
+		this.isClientside = isClientside;
 		updateData(readerBase);
 	}
 
@@ -74,7 +82,7 @@ public class Vehicle extends VehicleSchema {
 	}
 
 	public void initVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
-		writeVehiclePositions(Utilities.getIndexFromConditionalList(vehicleExtraData.newPath, railProgress), vehiclePositions);
+		writeVehiclePositions(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress), vehiclePositions);
 	}
 
 	public void simulate(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, @Nullable Long2LongAVLTreeMap vehicleTimesAlongRoute) {
@@ -90,7 +98,7 @@ public class Vehicle extends VehicleSchema {
 				vehicleExtraData.closeDoors();
 			} else {
 				// if vehicle is on route normally
-				currentIndex = Utilities.getIndexFromConditionalList(vehicleExtraData.newPath, railProgress);
+				currentIndex = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress);
 				if (speed <= 0) {
 					// if vehicle is stopped (at a platform or waiting for a signal)
 					speed = 0;
@@ -122,9 +130,9 @@ public class Vehicle extends VehicleSchema {
 		elapsedDwellTime = 0;
 		speed = Siding.ACCELERATION_DEFAULT;
 		vehicleExtraData.closeDoors();
-		nextStoppingIndex = vehicleExtraData.newPath.size() - 1;
-		for (int i = Utilities.getIndexFromConditionalList(vehicleExtraData.newPath, railProgress); i < vehicleExtraData.newPath.size(); i++) {
-			if (vehicleExtraData.newPath.get(i).getDwellTime() > 0) {
+		nextStoppingIndex = vehicleExtraData.immutablePath.size() - 1;
+		for (int i = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress); i < vehicleExtraData.immutablePath.size(); i++) {
+			if (vehicleExtraData.immutablePath.get(i).getDwellTime() > 0) {
 				nextStoppingIndex = i;
 				break;
 			}
@@ -135,15 +143,22 @@ public class Vehicle extends VehicleSchema {
 		return departureIndex;
 	}
 
-	public ObjectArrayList<Vector> getPositions() {
-		final ObjectArrayList<Vector> positions = new ObjectArrayList<>();
+	public ObjectArrayList<ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>>> getPositions() {
+		final ObjectArrayList<ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>>> positions = new ObjectArrayList<>();
 		double railProgressOffset = 0;
-		for (int i = 0; i <= vehicleExtraData.newVehicleCars.size(); i++) {
-			final int currentIndex = Utilities.getIndexFromConditionalList(vehicleExtraData.newPath, railProgress - railProgressOffset);
-			final PathData pathData = vehicleExtraData.newPath.get(currentIndex);
-			positions.add(pathData.getRail().getPosition(railProgress - railProgressOffset - pathData.getStartDistance()));
-			railProgressOffset += i < vehicleExtraData.newVehicleCars.size() ? vehicleExtraData.newVehicleCars.get(i).getLength() : 0;
+
+		for (final VehicleCar vehicleCar : vehicleExtraData.getVehicleCars(reversed)) {
+			final double length = vehicleCar.getLength();
+			final double halfLength = length / 2;
+			final ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>> bogiePositions = new ObjectArrayList<>();
+			bogiePositions.add(getBogiePositions(railProgress - railProgressOffset - halfLength - vehicleCar.getBogie1Position()));
+			if (!vehicleCar.hasOneBogie) {
+				bogiePositions.add(getBogiePositions(railProgress - railProgressOffset - halfLength - vehicleCar.getBogie2Position()));
+			}
+			positions.add(bogiePositions);
+			railProgressOffset += length;
 		}
+
 		return positions;
 	}
 
@@ -161,8 +176,12 @@ public class Vehicle extends VehicleSchema {
 	}
 
 	private void simulateAutomaticStopped(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, int currentIndex) {
-		final PathData currentPathData = Utilities.getElement(vehicleExtraData.newPath, currentIndex - 1);
-		final PathData nextPathData = Utilities.getElement(vehicleExtraData.newPath, vehicleExtraData.getRepeatIndex2() > 0 && currentIndex >= vehicleExtraData.getRepeatIndex2() ? vehicleExtraData.getRepeatIndex1() : currentIndex);
+		if (isClientside) {
+			return;
+		}
+
+		final PathData currentPathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex - 1);
+		final PathData nextPathData = Utilities.getElement(vehicleExtraData.immutablePath, vehicleExtraData.getRepeatIndex2() > 0 && currentIndex >= vehicleExtraData.getRepeatIndex2() ? vehicleExtraData.getRepeatIndex1() : currentIndex);
 		final boolean isOpposite = currentPathData != null && nextPathData != null && currentPathData.isOppositeRail(nextPathData);
 		final double nextStartDistance = nextPathData == null ? 0 : nextPathData.getStartDistance();
 		final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions) < 0;
@@ -185,10 +204,12 @@ public class Vehicle extends VehicleSchema {
 		}
 
 		if (elapsedDwellTime >= totalDwellMillis && railClear) {
-			railProgress = nextStartDistance;
-			if (isOpposite) {
-				railProgress += vehicleExtraData.getTotalVehicleLength();
-				reversed = !reversed;
+			if (currentPathData != null && Math.abs(currentPathData.getEndDistance() - railProgress) < 0.01) {
+				railProgress = nextStartDistance;
+				if (isOpposite) {
+					railProgress += vehicleExtraData.getTotalVehicleLength();
+					reversed = !reversed;
+				}
 			}
 			startUp(departureIndex);
 		}
@@ -200,8 +221,10 @@ public class Vehicle extends VehicleSchema {
 		final double railBlockedDistance = railBlockedDistance(currentIndex, railProgress, safeStoppingDistance, vehiclePositions);
 		final double stoppingPoint;
 
-		if (railBlockedDistance < 0) {
-			stoppingPoint = vehicleExtraData.newPath.get(Math.min((int) nextStoppingIndex, vehicleExtraData.newPath.size() - 1)).getEndDistance();
+		if (isClientside) {
+			stoppingPoint = vehicleExtraData.getStoppingPoint();
+		} else if (railBlockedDistance < 0) {
+			stoppingPoint = vehicleExtraData.immutablePath.get(Math.min((int) nextStoppingIndex, vehicleExtraData.immutablePath.size() - 1)).getEndDistance();
 		} else {
 			stoppingPoint = railBlockedDistance + railProgress;
 		}
@@ -212,13 +235,13 @@ public class Vehicle extends VehicleSchema {
 		if (stoppingDistance < safeStoppingDistance) {
 			speed = stoppingDistance <= 0 ? Siding.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Siding.ACCELERATION_DEFAULT);
 		} else {
-			final Rail thisRail = vehicleExtraData.newPath.get(currentIndex).getRail();
+			final Rail thisRail = vehicleExtraData.immutablePath.get(currentIndex).getRail();
 			final double railSpeed;
 
 			if (thisRail.canAccelerate()) {
 				railSpeed = thisRail.speedLimitMetersPerMillisecond;
 			} else {
-				final Rail lastRail = currentIndex > 0 ? vehicleExtraData.newPath.get(currentIndex - 1).getRail() : thisRail;
+				final Rail lastRail = currentIndex > 0 ? vehicleExtraData.immutablePath.get(currentIndex - 1).getRail() : thisRail;
 				railSpeed = Math.max(lastRail.canAccelerate() ? lastRail.speedLimitMetersPerMillisecond : transportMode.defaultSpeedMetersPerMillisecond, speed);
 			}
 
@@ -239,10 +262,12 @@ public class Vehicle extends VehicleSchema {
 	/**
 	 * Indicate which portions of each path segment are occupied by this vehicle.
 	 * Also checks if the vehicle needs to send a socket update:
-	 * - Entered a client's view radius
-	 * - Left a client's view radius
-	 * - Started moving
-	 * - New stopping index or blocked rail
+	 * <ul>
+	 * <li>Entered a client's view radius</li>
+	 * <li>Left a client's view radius</li>
+	 * <li>Started moving</li>
+	 * <li>New stopping index or blocked rail</li>
+	 * </ul>
 	 */
 	private void writeVehiclePositions(int currentIndex, Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
 		final Position[] minMaxPositions = {null, null};
@@ -250,16 +275,15 @@ public class Vehicle extends VehicleSchema {
 		if (getIsOnRoute() && currentIndex >= 0) {
 			int index = currentIndex;
 			while (true) {
-				final PathData pathData = vehicleExtraData.newPath.get(index);
-				final double start = Math.max(pathData.getStartDistance(), railProgress - vehicleExtraData.getTotalVehicleLength());
-				final double end = Math.min(pathData.getEndDistance(), railProgress);
+				final PathData pathData = vehicleExtraData.immutablePath.get(index);
+				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress);
 
-				if (end - start > 0.01) {
+				if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
 					final Position position1 = pathData.getOrderedPosition1();
 					final Position position2 = pathData.getOrderedPosition2();
 					Data.put(vehiclePositions, position1, position2, vehiclePosition -> {
 						final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
-						newVehiclePosition.addSegment(pathData.reversePositions ? end : start, pathData.reversePositions ? start : end, id);
+						newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
 						return newVehiclePosition;
 					}, Object2ObjectAVLTreeMap::new);
 					minMaxPositions[0] = Position.getMin(minMaxPositions[0], Position.getMin(position1, position2));
@@ -268,7 +292,7 @@ public class Vehicle extends VehicleSchema {
 
 				index--;
 
-				if (index < 0 || railProgress - vehicleExtraData.getTotalVehicleLength() >= pathData.getStartDistance()) {
+				if (index < 1 || railProgress - vehicleExtraData.getTotalVehicleLength() > pathData.getEndDistance()) {
 					break;
 				}
 			}
@@ -300,23 +324,42 @@ public class Vehicle extends VehicleSchema {
 
 		int index = currentIndex;
 		while (true) {
-			final PathData pathData = vehicleExtraData.newPath.get(index);
-			if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkDistance + checkDistance)) {
+			final PathData pathData = vehicleExtraData.immutablePath.get(index);
+
+			if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkRailProgress + checkDistance + transportMode.stoppingSpace)) {
+				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, checkRailProgress, checkRailProgress + checkDistance + transportMode.stoppingSpace);
 				for (int i = 0; i < 2; i++) {
 					final VehiclePosition vehiclePosition = Data.tryGet(vehiclePositions.get(i), pathData.getOrderedPosition1(), pathData.getOrderedPosition2());
 					if (vehiclePosition != null) {
-						return vehiclePosition.isBlocked(
-								pathData.reversePositions ? pathData.getEndDistance() - checkRailProgress - checkDistance : checkRailProgress - pathData.getStartDistance(),
-								pathData.reversePositions ? pathData.getEndDistance() - checkRailProgress : checkRailProgress + checkDistance - pathData.getStartDistance(),
-								id
-						);
+						final double overlap = vehiclePosition.getOverlap(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
+						if (overlap >= 0) {
+							// If vehicle is stopped, require at least 2 more blocks of clear track before proceeding
+							return Math.max(0, checkDistance - overlap - (speed == 0 ? 2 : 0));
+						}
 					}
 				}
 			}
+
 			index++;
-			if (index >= vehicleExtraData.newPath.size()) {
+
+			if (index >= vehicleExtraData.immutablePath.size()) {
 				return -1;
 			}
 		}
+	}
+
+	private Vector getPosition(double value) {
+		final PathData pathData = vehicleExtraData.immutablePath.get(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, value));
+		return pathData.getRail().getPosition(value - pathData.getStartDistance());
+	}
+
+	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {
+		return new ObjectObjectImmutablePair<>(getPosition(value - 1), getPosition(value + 1));
+	}
+
+	private static DoubleDoubleImmutablePair getBlockedBounds(PathData pathData, double lowerRailProgress, double upperRailProgress) {
+		final double distanceFromStart = Utilities.clamp(lowerRailProgress, pathData.getStartDistance(), pathData.getEndDistance()) - pathData.getStartDistance();
+		final double distanceToEnd = pathData.getEndDistance() - Utilities.clamp(upperRailProgress, pathData.getStartDistance(), pathData.getEndDistance());
+		return new DoubleDoubleImmutablePair(pathData.reversePositions ? distanceToEnd : distanceFromStart, pathData.getEndDistance() - pathData.getStartDistance() - (pathData.reversePositions ? distanceFromStart : distanceToEnd));
 	}
 }

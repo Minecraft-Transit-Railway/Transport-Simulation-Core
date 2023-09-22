@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.tools.Utilities;
 
 public class VehiclePosition {
 
@@ -10,13 +11,20 @@ public class VehiclePosition {
 		blockedSegments.add(new BlockedSegment(startDistance, endDistance, id));
 	}
 
-	public double isBlocked(double startDistance, double endDistance, long id) {
+	public double getOverlap(double startDistance, double endDistance, long id) {
+		double maxOverlap = -1;
+
 		for (final BlockedSegment blockedSegment : blockedSegments) {
-			if (id != blockedSegment.id && endDistance >= blockedSegment.startDistance) {
-				return blockedSegment.startDistance - startDistance;
+			if (id != blockedSegment.id && Utilities.isIntersecting(startDistance, endDistance, blockedSegment.startDistance, blockedSegment.endDistance)) {
+				final boolean startInside = Utilities.isBetween(startDistance, blockedSegment.startDistance, blockedSegment.endDistance);
+				final boolean endInside = Utilities.isBetween(endDistance, blockedSegment.startDistance, blockedSegment.endDistance);
+				final boolean blockedStartInside = Utilities.isBetween(blockedSegment.startDistance, startDistance, endDistance);
+				final boolean blockedEndInside = Utilities.isBetween(blockedSegment.endDistance, startDistance, endDistance);
+				return Math.max(maxOverlap, startInside && endInside || blockedStartInside && blockedEndInside ? endDistance - startDistance : startInside ? blockedSegment.endDistance - startDistance : endInside ? endDistance - blockedSegment.startDistance : -1);
 			}
 		}
-		return -1;
+
+		return maxOverlap;
 	}
 
 	private static class BlockedSegment {

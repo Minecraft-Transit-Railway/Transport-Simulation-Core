@@ -203,7 +203,7 @@ public interface TestUtilities {
 	}
 
 	static Vehicle randomVehicle() {
-		return new Vehicle(randomVehicleExtraData(), randomSiding(), randomTransportMode(), getDefaultSimulator());
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), RANDOM.nextBoolean(), randomTransportMode(), getDefaultSimulator());
 	}
 
 	static Client newClient(ReaderBase readerBase) {
@@ -279,6 +279,6 @@ public interface TestUtilities {
 	}
 
 	static Vehicle newVehicle(ReaderBase readerBase) {
-		return new Vehicle(randomVehicleExtraData(), randomSiding(), readerBase, getDefaultSimulator());
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), RANDOM.nextBoolean(), readerBase, getDefaultSimulator());
 	}
 }

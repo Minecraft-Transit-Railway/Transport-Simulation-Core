@@ -15,24 +15,27 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
 
-	public final ObjectImmutableList<PathData> newPath;
-	public final ObjectImmutableList<VehicleCar> newVehicleCars;
+	public final ObjectImmutableList<PathData> immutablePath;
+	private final ObjectImmutableList<VehicleCar> vehicleCarsForwards;
+	private final ObjectImmutableList<VehicleCar> vehicleCarsReversed;
 
 	private VehicleExtraData(double railLength, double totalVehicleLength, long repeatIndex1, long repeatIndex2, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double totalDistance, double defaultPosition, ObjectArrayList<VehicleCar> vehicleCars, ObjectArrayList<PathData> path) {
 		super(railLength, totalVehicleLength, repeatIndex1, repeatIndex2, acceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition);
 		this.path.clear();
 		this.path.addAll(path);
-		newPath = new ObjectImmutableList<>(path);
+		immutablePath = new ObjectImmutableList<>(path);
 		this.vehicleCars.clear();
 		this.vehicleCars.addAll(vehicleCars);
-		newVehicleCars = new ObjectImmutableList<>(vehicleCars);
+		vehicleCarsForwards = new ObjectImmutableList<>(vehicleCars);
+		vehicleCarsReversed = getReversedVehicleCars(vehicleCars);
 	}
 
 	public VehicleExtraData(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
-		newPath = new ObjectImmutableList<>(path);
-		newVehicleCars = new ObjectImmutableList<>(vehicleCars);
+		immutablePath = new ObjectImmutableList<>(path);
+		vehicleCarsForwards = new ObjectImmutableList<>(vehicleCars);
+		vehicleCarsReversed = getReversedVehicleCars(vehicleCars);
 	}
 
 	public long getPreviousRouteId() {
@@ -113,6 +116,14 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	public void iterateInterchanges(BiConsumer<String, InterchangeColorsForStationName> consumer) {
 		interchangeColorsForStationNameList.forEach(interchangeColorsForStationName -> consumer.accept(interchangeColorsForStationName.getStationName(), interchangeColorsForStationName));
+	}
+
+	public ObjectImmutableList<VehicleCar> getVehicleCars(boolean reversed) {
+		return reversed ? vehicleCarsReversed : vehicleCarsForwards;
+	}
+
+	protected double getStoppingPoint() {
+		return stoppingPoint;
 	}
 
 	protected double getRailLength() {
@@ -204,7 +215,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			nextStationId = 0;
 			nextStationName = "";
 		} else {
-			final int newStopIndex = newPath.get(currentIndex).getStopIndex();
+			final int newStopIndex = immutablePath.get(currentIndex).getStopIndex();
 			if (newStopIndex == stopIndex) {
 				return;
 			} else {
@@ -307,6 +318,18 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	private static String getRouteDestination(@Nullable Route route, int stopIndex) {
 		return route == null ? "" : route.getDestination(stopIndex);
+	}
+
+	private static ObjectImmutableList<VehicleCar> getReversedVehicleCars(ObjectArrayList<VehicleCar> vehicleCars) {
+		final ObjectArrayList<VehicleCar> reversedVehicleCars = new ObjectArrayList<>();
+		vehicleCars.forEach(vehicleCar -> reversedVehicleCars.add(0, new VehicleCar(
+				vehicleCar.getVehicleId(),
+				vehicleCar.getLength(),
+				vehicleCar.getWidth(),
+				-vehicleCar.getBogie2Position(),
+				-vehicleCar.getBogie1Position()
+		)));
+		return new ObjectImmutableList<>(reversedVehicleCars);
 	}
 
 	public static class VehiclePlatformRouteInfo {

@@ -38,8 +38,8 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateBooleanArray(String key, BooleanConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getBoolean(arrayValue))));
+	public void iterateBooleanArray(String key, Runnable clearList, BooleanConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getBoolean(arrayValue))));
 	}
 
 	@Override
@@ -53,8 +53,8 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateIntArray(String key, IntConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getInt(arrayValue))));
+	public void iterateIntArray(String key, Runnable clearList, IntConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getInt(arrayValue))));
 	}
 
 	@Override
@@ -68,8 +68,8 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateLongArray(String key, LongConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getLong(arrayValue))));
+	public void iterateLongArray(String key, Runnable clearList, LongConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getLong(arrayValue))));
 	}
 
 	@Override
@@ -83,8 +83,8 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateDoubleArray(String key, DoubleConsumer ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getDouble(arrayValue))));
+	public void iterateDoubleArray(String key, Runnable clearList, DoubleConsumer ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getDouble(arrayValue))));
 	}
 
 	@Override
@@ -98,13 +98,13 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	@Override
-	public void iterateStringArray(String key, Consumer<String> ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(getString(arrayValue))));
+	public void iterateStringArray(String key, Runnable clearList, Consumer<String> ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(getString(arrayValue))));
 	}
 
 	@Override
-	public void iterateReaderArray(String key, Consumer<ReaderBase> ifExists) {
-		unpack(key, value -> iterateArray(value, arrayValue -> ifExists.accept(new JsonReader(arrayValue))));
+	public void iterateReaderArray(String key, Runnable clearList, Consumer<ReaderBase> ifExists) {
+		unpack(key, value -> iterateArray(value, clearList, arrayValue -> ifExists.accept(new JsonReader(arrayValue))));
 	}
 
 	@Override
@@ -144,7 +144,8 @@ public final class JsonReader extends ReaderBase {
 		return value.getAsString();
 	}
 
-	private void iterateArray(JsonElement value, Consumer<JsonElement> consumer) {
+	private void iterateArray(JsonElement value, Runnable clearList, Consumer<JsonElement> consumer) {
+		clearList.run();
 		value.getAsJsonArray().forEach(consumer);
 	}
 
