@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
 import org.mtr.core.Main;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
 
 import java.util.Collection;
@@ -44,8 +45,10 @@ public class Data {
 				connections.forEach((position, rail) -> put(nodesConnectedToPosition, position, railNode, ObjectOpenHashBigSet::new));
 			});
 
-			platforms.removeIf(platform -> platform.isInvalidSavedRail(this));
-			sidings.removeIf(siding -> siding.isInvalidSavedRail(this));
+			if (this instanceof Simulator) {
+				platforms.removeIf(platform -> platform.isInvalidSavedRail(this));
+				sidings.removeIf(siding -> siding.isInvalidSavedRail(this));
+			}
 
 			mapIds(stationIdMap, stations);
 			mapIds(platformIdMap, platforms);

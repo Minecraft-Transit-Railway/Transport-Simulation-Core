@@ -187,7 +187,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	}
 
 	protected boolean checkForUpdate() {
-		final boolean needsUpdate = stoppingPoint != oldStoppingPoint || doorTarget != oldDoorTarget;
+		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget;
 		oldStoppingPoint = stoppingPoint;
 		oldDoorTarget = doorTarget;
 		return needsUpdate;
