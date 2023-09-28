@@ -5,62 +5,29 @@
 		"SerializedDataBase"
 	],
 	"properties": {
-		"h1": {
-			"type": "number"
+		"position1": {
+			"$ref": "position.json"
 		},
-		"k1": {
-			"type": "number"
+		"angle1": {
+			"$ref": "Angle"
 		},
-		"h2": {
-			"type": "number"
-		},
-		"k2": {
-			"type": "number"
-		},
-		"r1": {
-			"type": "number"
-		},
-		"r2": {
-			"type": "number"
-		},
-		"tStart1": {
-			"type": "number"
-		},
-		"tEnd1": {
-			"type": "number"
-		},
-		"tStart2": {
-			"type": "number"
-		},
-		"tEnd2": {
-			"type": "number"
-		},
-		"yStart": {
-			"type": "integer"
-		},
-		"yEnd": {
-			"type": "integer"
-		},
-		"reverseT1": {
-			"type": "boolean"
-		},
-		"reverseT2": {
-			"type": "boolean"
-		},
-		"isStraight1": {
-			"type": "boolean"
-		},
-		"isStraight2": {
-			"type": "boolean"
-		},
-		"speedLimit": {
-			"type": "integer"
-		},
-		"shapeStart": {
+		"shape1": {
 			"$ref": "Rail.Shape"
 		},
-		"shapeEnd": {
+		"position2": {
+			"$ref": "position.json"
+		},
+		"angle2": {
+			"$ref": "Angle"
+		},
+		"shape2": {
 			"$ref": "Rail.Shape"
+		},
+		"speedLimit1": {
+			"type": "integer"
+		},
+		"speedLimit2": {
+			"type": "integer"
 		},
 		"isPlatform": {
 			"type": "boolean"
@@ -77,30 +44,25 @@
 		"canHaveSignal": {
 			"type": "boolean"
 		},
+		"signalColors": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
 		"transportMode": {
 			"$ref": "TransportMode"
 		}
 	},
 	"required": [
-		"h1",
-		"k1",
-		"h2",
-		"k2",
-		"r1",
-		"r2",
-		"tStart1",
-		"tEnd1",
-		"tStart2",
-		"tEnd2",
-		"yStart",
-		"yEnd",
-		"reverseT1",
-		"reverseT2",
-		"isStraight1",
-		"isStraight2",
-		"speedLimit",
-		"shapeStart",
-		"shapeEnd",
+		"position1",
+		"position2",
+		"angle1",
+		"angle2",
+		"shape1",
+		"shape2",
+		"speedLimit1",
+		"speedLimit2",
 		"isPlatform",
 		"isSiding",
 		"canAccelerate",

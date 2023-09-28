@@ -34,7 +34,8 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 	}
 
 	public boolean isInvalidSavedRail(Data data) {
-		return isInvalidSavedRail(this, data, position1, position2) || isInvalidSavedRail(this, data, position2, position1);
+		final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
+		return rail == null || this instanceof Platform && !rail.isPlatform() || this instanceof Siding && !rail.isSiding();
 	}
 
 	public Position getRandomPosition() {
@@ -47,11 +48,6 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 
 	public boolean closeTo(Position position, double radius) {
 		return Utilities.isBetween(position, position1, position2, radius);
-	}
-
-	private static boolean isInvalidSavedRail(SavedRailBase<?, ?> savedRailBase, Data data, Position position1, Position position2) {
-		final Rail rail = Data.tryGet(data.positionToRailConnections, position1, position2);
-		return rail == null || savedRailBase instanceof Platform && !rail.isPlatform() || savedRailBase instanceof Siding && !rail.isSiding();
 	}
 
 	private static boolean isNumber(String text) {

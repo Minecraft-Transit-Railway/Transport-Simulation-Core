@@ -51,9 +51,14 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	public void init() {
-		Siding.initPath(path, data);
+		writePathCache(true);
 		savedRails.forEach(Siding::init);
 		generatePlatformDirectionsAndWriteDeparturesToSidings();
+	}
+
+	public void writePathCache(boolean removePathIfInvalid) {
+		PathData.writePathCache(path, data, removePathIfInvalid);
+		savedRails.forEach(siding -> siding.writePathCache(removePathIfInvalid));
 	}
 
 	public void setUseRealTime(boolean useRealTime) {
@@ -207,7 +212,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		for (int i = 1; i < path.size(); i++) {
 			final long platformId = path.get(i - 1).getSavedRailBaseId();
 			if (platformId != 0) {
-				final Angle newAngle = path.get(i).getRail().facingStart;
+				final Angle newAngle = path.get(i).getFacingStart();
 				if (!platformDirections.containsKey(platformId)) {
 					platformDirections.put(platformId, newAngle);
 				} else if (newAngle != platformDirections.get(platformId)) {

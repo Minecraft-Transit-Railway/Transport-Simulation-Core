@@ -1,10 +1,7 @@
 package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import it.unimi.dsi.fastutil.objects.Object2IntAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.*;
 import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessagePacker;
@@ -20,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -30,11 +26,11 @@ import java.util.stream.Stream;
 public class FileLoader<T extends SerializedDataBaseWithId> {
 
 	public final String key;
-	private final Set<T> dataSet;
+	private final ObjectSet<T> dataSet;
 	private final Path path;
 	private final Object2IntAVLTreeMap<String> fileHashes = new Object2IntAVLTreeMap<>();
 
-	public FileLoader(Set<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key) {
+	public FileLoader(ObjectSet<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key) {
 		this.key = key;
 		this.dataSet = dataSet;
 		path = rootPath.resolve(key);

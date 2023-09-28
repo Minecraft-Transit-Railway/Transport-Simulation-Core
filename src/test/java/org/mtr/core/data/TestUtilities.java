@@ -166,16 +166,8 @@ public interface TestUtilities {
 		return new Position(RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong());
 	}
 
-	static RailNodeConnection randomRailNodeConnection() {
-		return new RailNodeConnection(randomPosition(), randomRail());
-	}
-
-	static RailNode randomRailNode() {
-		return new RailNode(randomPosition());
-	}
-
 	static Rail randomRail() {
-		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomPosition(), randomEnum(Angle.values()), RANDOM.nextLong(), randomEnum(Rail.Shape.values()), randomEnum(Rail.Shape.values()), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
+		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomEnum(Rail.Shape.values()), randomPosition(), randomEnum(Angle.values()), randomEnum(Rail.Shape.values()), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
 	}
 
 	static Route randomRoute() {
@@ -240,14 +232,6 @@ public interface TestUtilities {
 
 	static Position newPosition(ReaderBase readerBase) {
 		return new Position(readerBase);
-	}
-
-	static RailNodeConnection newRailNodeConnection(ReaderBase readerBase) {
-		return new RailNodeConnection(readerBase);
-	}
-
-	static RailNode newRailNode(ReaderBase readerBase) {
-		return new RailNode(readerBase);
 	}
 
 	static Rail newRail(ReaderBase readerBase) {

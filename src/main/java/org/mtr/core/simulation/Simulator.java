@@ -31,7 +31,7 @@ public class Simulator extends Data implements Utilities {
 	private final FileLoader<Siding> fileLoaderSidings;
 	private final FileLoader<Route> fileLoaderRoutes;
 	private final FileLoader<Depot> fileLoaderDepots;
-	private final FileLoader<RailNode> fileLoaderRailNodes;
+	private final FileLoader<Rail> fileLoaderRails;
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
 
@@ -45,7 +45,7 @@ public class Simulator extends Data implements Utilities {
 		fileLoaderSidings = new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings");
 		fileLoaderRoutes = new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes");
 		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots");
-		fileLoaderRailNodes = new FileLoader<>(railNodes, RailNode::new, savePath, "rails");
+		fileLoaderRails = new FileLoader<>(rails, Rail::new, savePath, "rails");
 
 		currentMillis = System.currentTimeMillis();
 		this.startingGameDayPercentage = (startingGameDayPercentage + (float) (currentMillis - Main.START_MILLIS) / millisPerGameDay) % startingGameDayPercentage;
@@ -75,6 +75,7 @@ public class Simulator extends Data implements Utilities {
 				vehiclePositionsForTransportMode.add(new Object2ObjectAVLTreeMap<>());
 			});
 
+			rails.forEach(Rail::tick);
 			depots.forEach(Depot::tick);
 			sidings.forEach(Siding::tick);
 			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.getTransportModeOrdinal())));
@@ -137,7 +138,7 @@ public class Simulator extends Data implements Utilities {
 		save(fileLoaderSidings, useReducedHash);
 		save(fileLoaderRoutes, useReducedHash);
 		save(fileLoaderDepots, useReducedHash);
-		save(fileLoaderRailNodes, useReducedHash);
+		save(fileLoaderRails, useReducedHash);
 		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}
 

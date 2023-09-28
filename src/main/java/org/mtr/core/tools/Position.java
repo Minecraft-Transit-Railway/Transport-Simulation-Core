@@ -44,6 +44,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return Math.abs(position.x - x) + Math.abs(position.y - y) + Math.abs(position.z - z);
 	}
 
+	@Nullable
 	public static Position getMin(@Nullable Position position1, @Nullable Position position2) {
 		if (position1 == null) {
 			return position2;
@@ -54,6 +55,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return new Position(Math.min(position1.x, position2.x), Math.min(position1.y, position2.y), Math.min(position1.z, position2.z));
 	}
 
+	@Nullable
 	public static Position getMax(@Nullable Position position1, @Nullable Position position2) {
 		if (position1 == null) {
 			return position2;

@@ -89,13 +89,11 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void init() {
-		final Rail rail = Data.tryGet(data.positionToRailConnections, position1, position2);
+		final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
 		if (rail != null) {
-			defaultPathData = new PathData(rail, id, 1, -1, 0, rail.getLength(), position1, position2);
+			defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, position2);
 		}
 
-		initPath(pathSidingToMainRoute, data);
-		initPath(pathMainRouteToSiding, data);
 		generatePathDistancesAndTimeSegments();
 
 		if (area != null && defaultPathData != null) {
@@ -466,6 +464,11 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 	}
 
+	void writePathCache(boolean removePathIfInvalid) {
+		PathData.writePathCache(pathSidingToMainRoute, data, removePathIfInvalid);
+		PathData.writePathCache(pathMainRouteToSiding, data, removePathIfInvalid);
+	}
+
 	private String getDepotName() {
 		return area == null ? "" : area.getName();
 	}
@@ -586,7 +589,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				}
 
 				final PathData pathData = path.get(i);
-				final double railSpeed = pathData.getRail().canAccelerate() ? pathData.getRail().speedLimitMetersPerMillisecond : Math.max(speed, transportMode.defaultSpeedMetersPerMillisecond);
+				final double railSpeed = pathData.getRail().canAccelerate() ? pathData.getSpeedLimitMetersPerMillisecond() : Math.max(speed, transportMode.defaultSpeedMetersPerMillisecond);
 				final double currentDistance = pathData.getEndDistance();
 
 				while (railProgress < currentDistance) {
@@ -659,16 +662,6 @@ public final class Siding extends SidingSchema implements Utilities {
 		final ObjectArrayList<ReaderBase> tempReaders = new ObjectArrayList<>();
 		readerBase.iterateReaderArray(key, tempReaders::clear, tempReaders::add);
 		return new ObjectImmutableList<>(tempReaders);
-	}
-
-	public static void initPath(ObjectArrayList<PathData> path, Data data) {
-		final ObjectArrayList<PathData> pathDataToRemove = new ObjectArrayList<>();
-		path.forEach(pathData -> {
-			if (pathData.init(data)) {
-				pathDataToRemove.add(pathData);
-			}
-		});
-		pathDataToRemove.forEach(path::remove);
 	}
 
 	public static double getTotalVehicleLength(ObjectArrayList<VehicleCar> vehicleCars) {

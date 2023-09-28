@@ -1,9 +1,12 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.PathDataSchema;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
+import org.mtr.core.tools.Vector;
 
 public class PathData extends PathDataSchema implements ConditionalList {
 
@@ -58,17 +61,6 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return (int) stopIndex;
 	}
 
-	public boolean init(Data data) {
-		final Rail tempRail = Data.tryGet(data.positionToRailConnections, startPosition, endPosition);
-		if (tempRail == null) {
-			rail = new Rail(new MessagePackReader());
-			return true;
-		} else {
-			rail = tempRail;
-			return false;
-		}
-	}
-
 	public boolean isSameRail(PathData pathData) {
 		return startPosition.equals(pathData.startPosition) && endPosition.equals(pathData.endPosition);
 	}
@@ -83,5 +75,54 @@ public class PathData extends PathDataSchema implements ConditionalList {
 
 	public Position getOrderedPosition2() {
 		return reversePositions ? startPosition : endPosition;
+	}
+
+	public Angle getFacingStart() {
+		return rail.getStartAngle(reversePositions);
+	}
+
+	public double getSpeedLimitMetersPerMillisecond() {
+		return rail.getSpeedLimitMetersPerMillisecond(reversePositions);
+	}
+
+	public long getSpeedLimitKilometersPerHour() {
+		return rail.getSpeedLimitKilometersPerHour(reversePositions);
+	}
+
+	public boolean canAccelerate() {
+		return rail.canAccelerate();
+	}
+
+	public double getRailLength() {
+		return rail.railMath.getLength();
+	}
+
+	public Vector getPosition(double rawValue) {
+		return rail.railMath.getPosition(rawValue, reversePositions);
+	}
+
+	public boolean isSignalBlocked(long vehicleId) {
+		return rail.isBlocked(vehicleId);
+	}
+
+	public boolean writePathCache(Data data) {
+		final Rail tempRail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
+		if (tempRail == null) {
+			rail = new Rail(new MessagePackReader());
+			return true;
+		} else {
+			rail = tempRail;
+			return false;
+		}
+	}
+
+	public static void writePathCache(ObjectArrayList<PathData> path, Data data, boolean removePathIfInvalid) {
+		final ObjectArrayList<PathData> pathDataToRemove = new ObjectArrayList<>();
+		path.forEach(pathData -> {
+			if (pathData.writePathCache(data) && removePathIfInvalid) {
+				pathDataToRemove.add(pathData);
+			}
+		});
+		pathDataToRemove.forEach(path::remove);
 	}
 }

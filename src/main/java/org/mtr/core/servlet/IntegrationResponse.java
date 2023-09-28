@@ -2,7 +2,6 @@ package org.mtr.core.servlet;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
@@ -13,7 +12,6 @@ import org.mtr.core.tools.Utilities;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class IntegrationResponse extends ResponseBase {
 
@@ -22,31 +20,27 @@ public class IntegrationResponse extends ResponseBase {
 	}
 
 	public JsonObject update() {
-		final JsonObject jsonObject = parseBody(IntegrationResponse::update, this::updateOrDeleteRailNode);
-		simulator.sync();
-		return jsonObject;
+		return parseBody(IntegrationResponse::update, PositionCallback.EMPTY, true);
 	}
 
 	public JsonObject get() {
-		return parseBody(IntegrationResponse::get, (positionsToUpdate, platformsToAdd, sidingsToAdd, railNode) -> {
-			// Any requested rail node positions are automatically added to the list of positions to update
-		});
+		return parseBody(IntegrationResponse::get, PositionCallback.EMPTY, false);
 	}
 
 	public JsonObject delete() {
-		final JsonObject response = parseBody(IntegrationResponse::delete, this::updateOrDeleteRailNode);
-		simulator.sync();
-		return response;
+		return parseBody(IntegrationResponse::delete, (position, railsToUpdate, positionsToUpdate) -> simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).forEach((connectedPosition, rail) -> {
+			simulator.rails.remove(rail);
+			railsToUpdate.add(rail);
+			positionsToUpdate.add(connectedPosition);
+		}), true);
 	}
 
 	public JsonObject generate() {
-		return parseBody(IntegrationResponse::generate, (positionsToUpdate, platformsToAdd, sidingsToAdd, railNode) -> {
-		});
+		return parseBody(IntegrationResponse::generate, PositionCallback.EMPTY, false);
 	}
 
 	public JsonObject clear() {
-		return parseBody(IntegrationResponse::clear, (positionsToUpdate, platformsToAdd, sidingsToAdd, railNode) -> {
-		});
+		return parseBody(IntegrationResponse::clear, PositionCallback.EMPTY, false);
 	}
 
 	public JsonObject list() {
@@ -57,92 +51,74 @@ public class IntegrationResponse extends ResponseBase {
 		jsonObject.add("routes", getDataAsArray(simulator.routes));
 		jsonObject.add("depots", getDataAsArray(simulator.depots));
 		jsonObject.add("rails", new JsonArray());
+		jsonObject.add("positions", new JsonArray());
 		return jsonObject;
 	}
 
-	private JsonObject parseBody(BodyCallback bodyCallback, RailCallback railCallback) {
-		final JsonObject jsonObject = new JsonObject();
+	private JsonObject parseBody(BodyCallback bodyCallback, PositionCallback positionCallback, boolean shouldSync) {
+		final ObjectAVLTreeSet<Station> stationsToUpdate = new ObjectAVLTreeSet<>();
+		final ObjectAVLTreeSet<Platform> platformsToUpdate = new ObjectAVLTreeSet<>();
+		final ObjectAVLTreeSet<Siding> sidingsToUpdate = new ObjectAVLTreeSet<>();
+		final ObjectAVLTreeSet<Route> routesToUpdate = new ObjectAVLTreeSet<>();
+		final ObjectAVLTreeSet<Depot> depotsToUpdate = new ObjectAVLTreeSet<>();
+		final ObjectOpenHashSet<Rail> railsToUpdate = new ObjectOpenHashSet<>();
+		final ObjectOpenHashSet<Position> positionsToUpdate = new ObjectOpenHashSet<>();
 
-		bodyObject.keySet().forEach(key -> {
-			try {
-				final JsonArray bodyArray = bodyObject.getAsJsonArray(key);
-				final JsonArray resultArray = new JsonArray();
-				switch (key) {
-					case "stations":
-						iterateBodyArray(bodyArray, bodyObject -> bodyCallback.accept(bodyObject, resultArray, simulator.stations, simulator.stationIdMap, jsonReader -> new Station(jsonReader, simulator)));
-						break;
-					case "platforms":
-						iterateBodyArray(bodyArray, bodyObject -> bodyCallback.accept(bodyObject, resultArray, simulator.platforms, simulator.platformIdMap, null));
-						break;
-					case "sidings":
-						iterateBodyArray(bodyArray, bodyObject -> bodyCallback.accept(bodyObject, resultArray, simulator.sidings, simulator.sidingIdMap, null));
-						break;
-					case "routes":
-						iterateBodyArray(bodyArray, bodyObject -> bodyCallback.accept(bodyObject, resultArray, simulator.routes, simulator.routeIdMap, jsonReader -> new Route(jsonReader, simulator)));
-						break;
-					case "depots":
-						iterateBodyArray(bodyArray, bodyObject -> bodyCallback.accept(bodyObject, resultArray, simulator.depots, simulator.depotIdMap, jsonReader -> new Depot(jsonReader, simulator)));
-						break;
-					case "rails":
-						final ObjectOpenHashSet<Position> positionsToUpdate = new ObjectOpenHashSet<>();
-						final ObjectAVLTreeSet<Platform> platformsToAdd = new ObjectAVLTreeSet<>();
-						final ObjectAVLTreeSet<Siding> sidingsToAdd = new ObjectAVLTreeSet<>();
-						iterateBodyArray(bodyArray, bodyObject -> {
-							final RailNode railNode = new RailNode(new JsonReader(bodyObject));
-							positionsToUpdate.add(railNode.getPosition());
-							railCallback.accept(positionsToUpdate, platformsToAdd, sidingsToAdd, railNode);
-						});
-						positionsToUpdate.forEach(position -> resultArray.add(Utilities.getJsonObjectFromData(getOrCreateRailNode(position))));
-						platformsToAdd.forEach(platform -> jsonObject.getAsJsonArray("platforms").add(Utilities.getJsonObjectFromData(platform)));
-						sidingsToAdd.forEach(siding -> jsonObject.getAsJsonArray("sidings").add(Utilities.getJsonObjectFromData(siding)));
-						break;
-				}
-				jsonObject.add(key, resultArray);
-			} catch (Exception e) {
-				Main.logException(e);
-			}
-		});
-
-		return jsonObject;
-	}
-
-	private void updateOrDeleteRailNode(ObjectOpenHashSet<Position> positionsToUpdate, ObjectAVLTreeSet<Platform> platformsToAdd, ObjectAVLTreeSet<Siding> sidingsToAdd, RailNode railNode) {
-		final Position position1 = railNode.getPosition();
-		final Object2ObjectOpenHashMap<Position, Rail> connections = railNode.getConnectionsAsMap();
-		final RailNode newRailNode = getOrCreateRailNode(position1);
-
-		// If the message just has a rail node with no rail connections specified, just delete all connections to the node
-		if (connections.isEmpty()) {
-			simulator.nodesConnectedToPosition.getOrDefault(position1, new ObjectOpenHashBigSet<>()).forEach(connectedRailNode -> removeRailNodeConnection(positionsToUpdate, connectedRailNode, position1));
-			newRailNode.getConnectionsAsMap().forEach((position2, rail) -> positionsToUpdate.add(position2));
-			simulator.railNodes.remove(newRailNode);
-		} else {
-			connections.forEach((position2, rail) -> {
-				// Attempt to recreate the rail; if invalid, treat is as a delete operation
-				final Rail newRail = Rail.copy(position1, position2, rail, simulator, platformsToAdd, sidingsToAdd);
-				if (newRail == null) {
-					removeRailNodeConnection(positionsToUpdate, newRailNode, position2);
-				} else {
-					newRailNode.addConnection(position2, newRail);
-					positionsToUpdate.add(position2);
-					simulator.railNodes.add(newRailNode);
-				}
+		try {
+			iterateBodyArray(bodyObject.getAsJsonArray("stations"), bodyObject -> {
+				final JsonReader jsonReader = new JsonReader(bodyObject);
+				final Station newData = new Station(jsonReader, simulator);
+				bodyCallback.accept(jsonReader, newData, simulator.stationIdMap.get(newData.getId()), simulator.stations, stationsToUpdate);
 			});
+			iterateBodyArray(bodyObject.getAsJsonArray("platforms"), bodyObject -> {
+				final JsonReader jsonReader = new JsonReader(bodyObject);
+				final Platform newData = new Platform(jsonReader, simulator);
+				bodyCallback.accept(jsonReader, null, simulator.platformIdMap.get(newData.getId()), simulator.platforms, platformsToUpdate);
+			});
+			iterateBodyArray(bodyObject.getAsJsonArray("sidings"), bodyObject -> {
+				final JsonReader jsonReader = new JsonReader(bodyObject);
+				final Siding newData = new Siding(jsonReader, simulator);
+				bodyCallback.accept(jsonReader, null, simulator.sidingIdMap.get(newData.getId()), simulator.sidings, sidingsToUpdate);
+			});
+			iterateBodyArray(bodyObject.getAsJsonArray("routes"), bodyObject -> {
+				final JsonReader jsonReader = new JsonReader(bodyObject);
+				final Route newData = new Route(jsonReader, simulator);
+				bodyCallback.accept(jsonReader, newData, simulator.routeIdMap.get(newData.getId()), simulator.routes, routesToUpdate);
+			});
+			iterateBodyArray(bodyObject.getAsJsonArray("depots"), bodyObject -> {
+				final JsonReader jsonReader = new JsonReader(bodyObject);
+				final Depot newData = new Depot(jsonReader, simulator);
+				bodyCallback.accept(jsonReader, newData, simulator.depotIdMap.get(newData.getId()), simulator.depots, depotsToUpdate);
+			});
+			iterateBodyArray(bodyObject.getAsJsonArray("rails"), bodyObject -> {
+				final JsonReader jsonReader = new JsonReader(bodyObject);
+				final Rail newData = new Rail(jsonReader);
+				bodyCallback.accept(jsonReader, newData, newData.getRailFromData(simulator, positionsToUpdate), simulator.rails, railsToUpdate);
+			});
+			iterateBodyArray(bodyObject.getAsJsonArray("positions"), bodyObject -> {
+				final Position position = new Position(new JsonReader(bodyObject));
+				positionsToUpdate.add(position);
+				positionCallback.accept(position, railsToUpdate, positionsToUpdate);
+			});
+		} catch (Exception e) {
+			Main.logException(e);
 		}
-	}
 
-	private RailNode getOrCreateRailNode(Position position) {
-		return simulator.railNodes.stream().filter(checkRailNode -> checkRailNode.getPosition().equals(position)).findFirst().orElse(new RailNode(position));
-	}
-
-	private void removeRailNodeConnection(ObjectOpenHashSet<Position> positionsToUpdate, @Nullable RailNode railNode, Position position) {
-		if (railNode != null) {
-			railNode.removeConnection(position);
-			positionsToUpdate.add(railNode.getPosition());
-			if (railNode.getConnectionsAsMap().isEmpty()) {
-				simulator.railNodes.remove(railNode);
-			}
+		if (shouldSync) {
+			railsToUpdate.forEach(rail -> rail.checkOrCreatePlatform(simulator, platformsToUpdate, sidingsToUpdate));
+			simulator.sync();
 		}
+		positionsToUpdate.removeIf(position -> !simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).isEmpty());
+
+		final JsonObject jsonObject = new JsonObject();
+		jsonObject.add("stations", getDataAsArray(stationsToUpdate));
+		jsonObject.add("platforms", getDataAsArray(platformsToUpdate));
+		jsonObject.add("sidings", getDataAsArray(sidingsToUpdate));
+		jsonObject.add("routes", getDataAsArray(routesToUpdate));
+		jsonObject.add("depots", getDataAsArray(depotsToUpdate));
+		jsonObject.add("rails", getDataAsArray(railsToUpdate));
+		jsonObject.add("positions", getDataAsArray(positionsToUpdate)); // "positions" should always return a list of nodes that have no connections to it
+		return jsonObject;
 	}
 
 	private static void iterateBodyArray(JsonArray bodyArray, Consumer<JsonObject> consumer) {
@@ -155,80 +131,71 @@ public class IntegrationResponse extends ResponseBase {
 		});
 	}
 
-	private static <T extends NameColorDataBase> void update(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
-		final JsonReader jsonReader = new JsonReader(jsonObject);
-		final T data = dataIdMap.get(getId(jsonObject));
-		if (data == null) {
-			if (createData != null) {
-				final T newData = createData.apply(jsonReader);
+	private static <T extends SerializedDataBase> void update(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+		final boolean isRail = newData instanceof Rail;
+		final boolean isValid = !isRail || ((Rail) newData).isValid();
+
+		if (existingData == null) {
+			if (newData != null && isValid) {
 				dataSet.add(newData);
-				resultArray.add(Utilities.getJsonObjectFromData(newData));
+				dataToUpdate.add(newData);
 			}
-		} else {
+		} else if (isValid) {
 			// For AVL tree sets, data must be removed and re-added when modified
-			dataSet.remove(data);
-			data.updateData(jsonReader);
-			dataSet.add(data);
-			resultArray.add(Utilities.getJsonObjectFromData(data));
-		}
-	}
-
-	private static <T extends NameColorDataBase> void get(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
-		final T data = dataIdMap.get(getId(jsonObject));
-		if (data != null) {
-			resultArray.add(Utilities.getJsonObjectFromData(data));
-		}
-	}
-
-	private static <T extends NameColorDataBase> void delete(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
-		final long id = getId(jsonObject);
-		final ObjectAVLTreeSet<T> objectsToRemove = new ObjectAVLTreeSet<>();
-		dataSet.forEach(data -> {
-			if (data.getId() == id) {
-				resultArray.add(Utilities.getJsonObjectFromData(data));
-				objectsToRemove.add(data);
+			dataSet.remove(existingData);
+			if (isRail) {
+				dataSet.add(newData);
+				dataToUpdate.add(newData);
+			} else {
+				existingData.updateData(jsonReader);
+				dataSet.add(existingData);
+				dataToUpdate.add(existingData);
 			}
-		});
-		objectsToRemove.forEach(dataSet::remove);
-	}
-
-	private static <T extends NameColorDataBase> void generate(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
-		final T data = dataIdMap.get(getId(jsonObject));
-		if (data instanceof Depot) {
-			resultArray.add(Utilities.getJsonObjectFromData(data));
-			((Depot) data).generateMainRoute();
 		}
 	}
 
-	private static <T extends NameColorDataBase> void clear(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData) {
-		final T data = dataIdMap.get(getId(jsonObject));
-		if (data instanceof Siding) {
-			resultArray.add(Utilities.getJsonObjectFromData(data));
-			((Siding) data).clearVehicles();
+	private static <T extends SerializedDataBase> void get(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+		if (existingData != null) {
+			dataToUpdate.add(existingData);
 		}
 	}
 
-	private static <T extends NameColorDataBase> JsonArray getDataAsArray(ObjectAVLTreeSet<T> dataSet) {
+	private static <T extends SerializedDataBase> void delete(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+		if (existingData != null && dataSet.remove(existingData)) {
+			dataToUpdate.add(existingData);
+		}
+	}
+
+	private static <T extends SerializedDataBase> void generate(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+		if (existingData instanceof Depot) {
+			dataToUpdate.add(existingData);
+			((Depot) existingData).generateMainRoute();
+		}
+	}
+
+	private static <T extends SerializedDataBase> void clear(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+		if (existingData instanceof Siding) {
+			dataToUpdate.add(existingData);
+			((Siding) existingData).clearVehicles();
+		}
+	}
+
+	private static <T extends SerializedDataBase> JsonArray getDataAsArray(ObjectSet<T> dataSet) {
 		final JsonArray jsonArray = new JsonArray();
 		dataSet.forEach(data -> jsonArray.add(Utilities.getJsonObjectFromData(data)));
 		return jsonArray;
 	}
 
-	private static long getId(JsonObject jsonObject) {
-		try {
-			return jsonObject.get("id").getAsLong();
-		} catch (Exception ignored) {
-			return 0;
-		}
-	}
-
 	@FunctionalInterface
 	private interface BodyCallback {
-		<T extends NameColorDataBase> void accept(JsonObject jsonObject, JsonArray resultArray, ObjectAVLTreeSet<T> dataSet, Long2ObjectOpenHashMap<T> dataIdMap, @Nullable Function<JsonReader, T> createData);
+		<T extends SerializedDataBase> void accept(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate);
 	}
 
 	@FunctionalInterface
-	private interface RailCallback {
-		void accept(ObjectOpenHashSet<Position> positionsToUpdate, ObjectAVLTreeSet<Platform> platformsToAdd, ObjectAVLTreeSet<Siding> sidingsToAdd, RailNode railNode);
+	private interface PositionCallback {
+		PositionCallback EMPTY = (position, railsToUpdate, positionsToUpdate) -> {
+		};
+
+		void accept(Position position, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> positionsToUpdate);
 	}
 }

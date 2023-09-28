@@ -17,11 +17,11 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 	public final U startSavedRail;
 	public final W endSavedRail;
 	public final int stopIndex;
-	private final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionToRailConnections;
+	private final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail;
 
 	public SidingPathFinder(Data data, U startSavedRail, W endSavedRail, int stopIndex) {
 		super(new PositionAndAngle(startSavedRail.getRandomPosition(), null), new PositionAndAngle(endSavedRail.getRandomPosition(), null));
-		positionToRailConnections = data.positionToRailConnections;
+		positionsToRail = data.positionsToRail;
 		this.startSavedRail = startSavedRail;
 		this.endSavedRail = endSavedRail;
 		this.stopIndex = stopIndex;
@@ -43,7 +43,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 			for (int i = 1; i < connectionDetailsList.size(); i++) {
 				final Position position1 = connectionDetailsList.get(i - 1).node.position;
 				final Position position2 = connectionDetailsList.get(i).node.position;
-				final Rail rail = Data.tryGet(positionToRailConnections, position1, position2);
+				final Rail rail = Data.tryGet(positionsToRail, position1, position2);
 				if (rail == null) {
 					return new ObjectArrayList<>();
 				}
@@ -63,12 +63,13 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 	@Override
 	protected ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> getConnections(PositionAndAngle node) {
 		final ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> connections = new ObjectOpenHashSet<>();
-		final Object2ObjectOpenHashMap<Position, Rail> railConnections = positionToRailConnections.get(node.position);
+		final Object2ObjectOpenHashMap<Position, Rail> railConnections = positionsToRail.get(node.position);
 
 		if (railConnections != null) {
 			railConnections.forEach((position, rail) -> {
-				if (node.angle == null || node.angle == rail.facingStart || rail.canTurnBack()) {
-					connections.add(new ConnectionDetails<>(new PositionAndAngle(position, rail.facingEnd.getOpposite()), Math.round(rail.getLength() / rail.speedLimitMetersPerMillisecond), 0, 0));
+				final double speedLimit = rail.getSpeedLimitMetersPerMillisecond(node.position);
+				if (speedLimit > 0 && (node.angle == null || node.angle == rail.getStartAngle(node.position) || rail.canTurnBack())) {
+					connections.add(new ConnectionDetails<>(new PositionAndAngle(position, rail.getStartAngle(position).getOpposite()), Math.round(rail.railMath.getLength() / speedLimit), 0, 0));
 				}
 			});
 		}
@@ -117,7 +118,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 
 		for (final PathData oldPathData : tempPath) {
 			final double startDistance = endDistance;
-			endDistance += oldPathData.getRail().getLength();
+			endDistance += oldPathData.getRailLength();
 			path.add(new PathData(oldPathData, startDistance, endDistance));
 		}
 	}

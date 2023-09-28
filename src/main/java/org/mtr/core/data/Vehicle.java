@@ -235,16 +235,7 @@ public class Vehicle extends VehicleSchema {
 		if (stoppingDistance < safeStoppingDistance) {
 			speed = stoppingDistance <= 0 ? Siding.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Siding.ACCELERATION_DEFAULT);
 		} else {
-			final Rail thisRail = vehicleExtraData.immutablePath.get(currentIndex).getRail();
-			final double railSpeed;
-
-			if (thisRail.canAccelerate()) {
-				railSpeed = thisRail.speedLimitMetersPerMillisecond;
-			} else {
-				final Rail lastRail = currentIndex > 0 ? vehicleExtraData.immutablePath.get(currentIndex - 1).getRail() : thisRail;
-				railSpeed = Math.max(lastRail.canAccelerate() ? lastRail.speedLimitMetersPerMillisecond : transportMode.defaultSpeedMetersPerMillisecond, speed);
-			}
-
+			final double railSpeed = getRailSpeed(currentIndex);
 			if (speed < railSpeed) {
 				speed = Math.min(speed + newAcceleration, railSpeed);
 			} else if (speed > railSpeed) {
@@ -257,6 +248,20 @@ public class Vehicle extends VehicleSchema {
 			railProgress = stoppingPoint;
 			speed = 0;
 		}
+	}
+
+	private double getRailSpeed(int currentIndex) {
+		final PathData thisPathData = vehicleExtraData.immutablePath.get(currentIndex);
+		final double railSpeed;
+
+		if (thisPathData.canAccelerate()) {
+			railSpeed = thisPathData.getSpeedLimitMetersPerMillisecond();
+		} else {
+			final PathData lastPathData = currentIndex > 0 ? vehicleExtraData.immutablePath.get(currentIndex - 1) : thisPathData;
+			railSpeed = Math.max(lastPathData.canAccelerate() ? lastPathData.getSpeedLimitMetersPerMillisecond() : transportMode.defaultSpeedMetersPerMillisecond, speed);
+		}
+
+		return railSpeed;
 	}
 
 	/**
@@ -326,7 +331,9 @@ public class Vehicle extends VehicleSchema {
 		while (true) {
 			final PathData pathData = vehicleExtraData.immutablePath.get(index);
 
-			if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkRailProgress + checkDistance + transportMode.stoppingSpace)) {
+			if (pathData.isSignalBlocked(id)) {
+				return Math.max(0, pathData.getStartDistance() - railProgress);
+			} else if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkRailProgress + checkDistance + transportMode.stoppingSpace)) {
 				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, checkRailProgress, checkRailProgress + checkDistance + transportMode.stoppingSpace);
 				for (int i = 0; i < 2; i++) {
 					final VehiclePosition vehiclePosition = Data.tryGet(vehiclePositions.get(i), pathData.getOrderedPosition1(), pathData.getOrderedPosition2());
@@ -350,7 +357,7 @@ public class Vehicle extends VehicleSchema {
 
 	private Vector getPosition(double value) {
 		final PathData pathData = vehicleExtraData.immutablePath.get(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, value));
-		return pathData.getRail().getPosition(value - pathData.getStartDistance());
+		return pathData.getPosition(value - pathData.getStartDistance());
 	}
 
 	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {

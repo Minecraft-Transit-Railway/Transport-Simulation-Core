@@ -9,7 +9,10 @@ import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.Value;
 import org.mtr.core.Main;
-import org.mtr.core.data.*;
+import org.mtr.core.data.EnumHelper;
+import org.mtr.core.data.Rail;
+import org.mtr.core.data.TransportMode;
+import org.mtr.core.data.VehicleCar;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.MessagePackWriter;
 import org.mtr.core.serializers.ReaderBase;
@@ -56,14 +59,15 @@ public class DataFixer {
 		return readerBase;
 	}
 
+	// TODO
 	public static ReaderBase convertRailNode(ReaderBase readerBase) {
 		packExtra(readerBase, messagePackWriter -> {
-			readerBase.unpackLong("node_pos", value -> convertPosition(value).serializeData(messagePackWriter.writeChild("position")));
-			final ObjectArrayList<RailNodeConnection> connections = new ObjectArrayList<>();
-			readerBase.iterateReaderArray("rail_connections", connections::clear, readerBaseChild -> connections.add(new RailNodeConnection(readerBaseChild)));
-			if (!connections.isEmpty()) {
-				messagePackWriter.writeDataset(connections, "connections");
-			}
+//			readerBase.unpackLong("node_pos", value -> convertPosition(value).serializeData(messagePackWriter.writeChild("position")));
+//			final ObjectArrayList<RailNodeConnection> connections = new ObjectArrayList<>();
+//			readerBase.iterateReaderArray("rail_connections", connections::clear, readerBaseChild -> connections.add(new RailNodeConnection(readerBaseChild)));
+//			if (!connections.isEmpty()) {
+//				messagePackWriter.writeDataset(connections, "connections");
+//			}
 		});
 		return readerBase;
 	}
