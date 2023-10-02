@@ -10,6 +10,9 @@
 		},
 		"position": {
 			"$ref": "position.json"
+		},
+		"forceUpdate": {
+			"type": "boolean"
 		}
 	},
 	"required": [

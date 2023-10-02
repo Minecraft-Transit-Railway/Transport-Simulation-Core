@@ -150,12 +150,24 @@ public class Vehicle extends VehicleSchema {
 		for (final VehicleCar vehicleCar : vehicleExtraData.getVehicleCars(reversed)) {
 			final double length = vehicleCar.getLength();
 			final double halfLength = length / 2;
-			final ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>> bogiePositions = new ObjectArrayList<>();
-			bogiePositions.add(getBogiePositions(railProgress - railProgressOffset - halfLength - vehicleCar.getBogie1Position()));
-			if (!vehicleCar.hasOneBogie) {
-				bogiePositions.add(getBogiePositions(railProgress - railProgressOffset - halfLength - vehicleCar.getBogie2Position()));
+			final ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>> bogiePositionsList = new ObjectArrayList<>();
+			final ObjectObjectImmutablePair<Vector, Vector> bogiePositions1 = getBogiePositions(railProgress - railProgressOffset - halfLength - vehicleCar.getBogie1Position());
+			if (bogiePositions1 == null) {
+				return new ObjectArrayList<>();
+			} else {
+				bogiePositionsList.add(bogiePositions1);
 			}
-			positions.add(bogiePositions);
+
+			if (!vehicleCar.hasOneBogie) {
+				final ObjectObjectImmutablePair<Vector, Vector> bogiePositions2 = getBogiePositions(railProgress - railProgressOffset - halfLength - vehicleCar.getBogie2Position());
+				if (bogiePositions2 == null) {
+					return new ObjectArrayList<>();
+				} else {
+					bogiePositionsList.add(bogiePositions2);
+				}
+			}
+
+			positions.add(bogiePositionsList);
 			railProgressOffset += length;
 		}
 
@@ -186,6 +198,7 @@ public class Vehicle extends VehicleSchema {
 		final double nextStartDistance = nextPathData == null ? 0 : nextPathData.getStartDistance();
 		final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions) < 0;
 		final long totalDwellMillis = currentPathData == null ? 0 : currentPathData.getDwellTime();
+		vehicleExtraData.setStoppingPoint(railProgress);
 
 		if (totalDwellMillis == 0) {
 			vehicleExtraData.closeDoors();
@@ -276,41 +289,43 @@ public class Vehicle extends VehicleSchema {
 	 */
 	private void writeVehiclePositions(int currentIndex, Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
 		final Position[] minMaxPositions = {null, null};
+		int index = currentIndex;
 
-		if (getIsOnRoute() && currentIndex >= 0) {
-			int index = currentIndex;
-			while (true) {
-				final PathData pathData = vehicleExtraData.immutablePath.get(index);
-				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress);
+		while (index >= 0) {
+			final PathData pathData = vehicleExtraData.immutablePath.get(index);
 
-				if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
-					final Position position1 = pathData.getOrderedPosition1();
-					final Position position2 = pathData.getOrderedPosition2();
+			if (railProgress - vehicleExtraData.getTotalVehicleLength() > pathData.getEndDistance()) {
+				break;
+			}
+
+			final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress);
+
+			if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
+				final Position position1 = pathData.getOrderedPosition1();
+				final Position position2 = pathData.getOrderedPosition2();
+				if (getIsOnRoute()) {
 					Data.put(vehiclePositions, position1, position2, vehiclePosition -> {
 						final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
 						newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
 						return newVehiclePosition;
 					}, Object2ObjectAVLTreeMap::new);
-					minMaxPositions[0] = Position.getMin(minMaxPositions[0], Position.getMin(position1, position2));
-					minMaxPositions[1] = Position.getMax(minMaxPositions[1], Position.getMax(position1, position2));
 				}
-
-				index--;
-
-				if (index < 1 || railProgress - vehicleExtraData.getTotalVehicleLength() > pathData.getEndDistance()) {
-					break;
-				}
+				minMaxPositions[0] = Position.getMin(minMaxPositions[0], Position.getMin(position1, position2));
+				minMaxPositions[1] = Position.getMax(minMaxPositions[1], Position.getMax(position1, position2));
 			}
+
+			index--;
 		}
 
 		if (siding != null) {
 			if (siding.area != null && data instanceof Simulator) {
 				final double updateRadius = ((Simulator) data).clientGroup.getUpdateRadius();
 				final boolean needsUpdate = vehicleExtraData.checkForUpdate();
+				final int pathUpdateIndex = Math.max(0, index + 1);
 				((Simulator) data).clientGroup.iterateClients(client -> {
 					final Position position = client.getPosition();
 					if ((minMaxPositions[0] == null || minMaxPositions[1] == null) ? siding.area.inArea(position, updateRadius) : Utilities.isBetween(position, minMaxPositions[0], minMaxPositions[1], updateRadius)) {
-						client.update(this, needsUpdate);
+						client.update(this, needsUpdate, pathUpdateIndex);
 					}
 				});
 			}
@@ -355,13 +370,17 @@ public class Vehicle extends VehicleSchema {
 		}
 	}
 
+	@Nullable
 	private Vector getPosition(double value) {
-		final PathData pathData = vehicleExtraData.immutablePath.get(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, value));
-		return pathData.getPosition(value - pathData.getStartDistance());
+		final PathData pathData = Utilities.getElement(vehicleExtraData.immutablePath, Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, value));
+		return pathData == null ? null : pathData.getPosition(value - pathData.getStartDistance());
 	}
 
+	@Nullable
 	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {
-		return new ObjectObjectImmutablePair<>(getPosition(value - 1), getPosition(value + 1));
+		final Vector position1 = getPosition(value - 1);
+		final Vector position2 = getPosition(value + 1);
+		return position1 == null || position2 == null ? null : new ObjectObjectImmutablePair<>(position1, position2);
 	}
 
 	private static DoubleDoubleImmutablePair getBlockedBounds(PathData pathData, double lowerRailProgress, double upperRailProgress) {

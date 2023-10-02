@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.generated.VehicleExtraDataSchema;
+import org.mtr.core.serializers.JsonReader;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Utilities;
 
@@ -36,6 +37,20 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		immutablePath = new ObjectImmutableList<>(path);
 		vehicleCarsForwards = new ObjectImmutableList<>(vehicleCars);
 		vehicleCarsReversed = getReversedVehicleCars(vehicleCars);
+	}
+
+	public VehicleExtraData copy(int pathUpdateIndex) {
+		final VehicleExtraData newVehicleExtraData = new VehicleExtraData(new JsonReader(Utilities.getJsonObjectFromData(this)));
+		newVehicleExtraData.path.clear();
+		for (int i = pathUpdateIndex; i < path.size(); i++) {
+			final PathData pathData = path.get(i);
+			if (i == pathUpdateIndex || pathData.getStartDistance() <= stoppingPoint) {
+				newVehicleExtraData.path.add(pathData);
+			} else {
+				break;
+			}
+		}
+		return newVehicleExtraData;
 	}
 
 	public long getPreviousRouteId() {
