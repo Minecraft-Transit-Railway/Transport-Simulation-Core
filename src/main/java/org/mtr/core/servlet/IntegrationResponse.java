@@ -20,11 +20,11 @@ public class IntegrationResponse extends ResponseBase {
 	}
 
 	public JsonObject update() {
-		return parseBody(IntegrationResponse::update, PositionCallback.EMPTY, true);
+		return parseBody(IntegrationResponse::update, PositionCallback.EMPTY, (signalModification, railsToUpdate, positionsToUpdate) -> signalModification.applyModificationToRail(simulator, railsToUpdate, positionsToUpdate), true);
 	}
 
 	public JsonObject get() {
-		return parseBody(IntegrationResponse::get, PositionCallback.EMPTY, false);
+		return parseBody(IntegrationResponse::get, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
 	public JsonObject delete() {
@@ -32,15 +32,15 @@ public class IntegrationResponse extends ResponseBase {
 			simulator.rails.remove(rail);
 			railsToUpdate.add(rail);
 			positionsToUpdate.add(connectedPosition);
-		}), true);
+		}), SignalModificationCallback.EMPTY, true);
 	}
 
 	public JsonObject generate() {
-		return parseBody(IntegrationResponse::generate, PositionCallback.EMPTY, false);
+		return parseBody(IntegrationResponse::generate, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
 	public JsonObject clear() {
-		return parseBody(IntegrationResponse::clear, PositionCallback.EMPTY, false);
+		return parseBody(IntegrationResponse::clear, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
 	public JsonObject list() {
@@ -50,12 +50,10 @@ public class IntegrationResponse extends ResponseBase {
 		jsonObject.add("sidings", getDataAsArray(simulator.sidings));
 		jsonObject.add("routes", getDataAsArray(simulator.routes));
 		jsonObject.add("depots", getDataAsArray(simulator.depots));
-		jsonObject.add("rails", new JsonArray());
-		jsonObject.add("positions", new JsonArray());
 		return jsonObject;
 	}
 
-	private JsonObject parseBody(BodyCallback bodyCallback, PositionCallback positionCallback, boolean shouldSync) {
+	private JsonObject parseBody(BodyCallback bodyCallback, PositionCallback positionCallback, SignalModificationCallback signalModificationCallback, boolean shouldSync) {
 		final ObjectAVLTreeSet<Station> stationsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Platform> platformsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Siding> sidingsToUpdate = new ObjectAVLTreeSet<>();
@@ -100,6 +98,7 @@ public class IntegrationResponse extends ResponseBase {
 				positionsToUpdate.add(position);
 				positionCallback.accept(position, railsToUpdate, positionsToUpdate);
 			});
+			iterateBodyArray(bodyObject.getAsJsonArray("signals"), bodyObject -> signalModificationCallback.accept(new SignalModification(new JsonReader(bodyObject)), railsToUpdate, positionsToUpdate));
 		} catch (Exception e) {
 			Main.logException(e);
 		}
@@ -111,24 +110,40 @@ public class IntegrationResponse extends ResponseBase {
 		positionsToUpdate.removeIf(position -> !simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).isEmpty());
 
 		final JsonObject jsonObject = new JsonObject();
-		jsonObject.add("stations", getDataAsArray(stationsToUpdate));
-		jsonObject.add("platforms", getDataAsArray(platformsToUpdate));
-		jsonObject.add("sidings", getDataAsArray(sidingsToUpdate));
-		jsonObject.add("routes", getDataAsArray(routesToUpdate));
-		jsonObject.add("depots", getDataAsArray(depotsToUpdate));
-		jsonObject.add("rails", getDataAsArray(railsToUpdate));
-		jsonObject.add("positions", getDataAsArray(positionsToUpdate)); // "positions" should always return a list of nodes that have no connections to it
+		if (!stationsToUpdate.isEmpty()) {
+			jsonObject.add("stations", getDataAsArray(stationsToUpdate));
+		}
+		if (!platformsToUpdate.isEmpty()) {
+			jsonObject.add("platforms", getDataAsArray(platformsToUpdate));
+		}
+		if (!sidingsToUpdate.isEmpty()) {
+			jsonObject.add("sidings", getDataAsArray(sidingsToUpdate));
+		}
+		if (!routesToUpdate.isEmpty()) {
+			jsonObject.add("routes", getDataAsArray(routesToUpdate));
+		}
+		if (!depotsToUpdate.isEmpty()) {
+			jsonObject.add("depots", getDataAsArray(depotsToUpdate));
+		}
+		if (!railsToUpdate.isEmpty()) {
+			jsonObject.add("rails", getDataAsArray(railsToUpdate));
+		}
+		if (!positionsToUpdate.isEmpty()) {
+			jsonObject.add("positions", getDataAsArray(positionsToUpdate)); // "positions" should always return a list of nodes that have no connections to it
+		}
 		return jsonObject;
 	}
 
-	private static void iterateBodyArray(JsonArray bodyArray, Consumer<JsonObject> consumer) {
-		bodyArray.forEach(jsonElement -> {
-			try {
-				consumer.accept(jsonElement.getAsJsonObject());
-			} catch (Exception e) {
-				Main.logException(e);
-			}
-		});
+	private static void iterateBodyArray(@Nullable JsonArray bodyArray, Consumer<JsonObject> consumer) {
+		if (bodyArray != null) {
+			bodyArray.forEach(jsonElement -> {
+				try {
+					consumer.accept(jsonElement.getAsJsonObject());
+				} catch (Exception e) {
+					Main.logException(e);
+				}
+			});
+		}
 	}
 
 	private static <T extends SerializedDataBase> void update(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
@@ -178,6 +193,10 @@ public class IntegrationResponse extends ResponseBase {
 			dataToUpdate.add(existingData);
 			((Siding) existingData).clearVehicles();
 		}
+		if (existingData instanceof Depot) {
+			dataToUpdate.add(existingData);
+			((Depot) existingData).savedRails.forEach(Siding::clearVehicles);
+		}
 	}
 
 	private static <T extends SerializedDataBase> JsonArray getDataAsArray(ObjectSet<T> dataSet) {
@@ -197,5 +216,13 @@ public class IntegrationResponse extends ResponseBase {
 		};
 
 		void accept(Position position, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> positionsToUpdate);
+	}
+
+	@FunctionalInterface
+	private interface SignalModificationCallback {
+		SignalModificationCallback EMPTY = (signalModification, railsToUpdate, positionsToUpdate) -> {
+		};
+
+		void accept(SignalModification signalModification, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> positionsToUpdate);
 	}
 }

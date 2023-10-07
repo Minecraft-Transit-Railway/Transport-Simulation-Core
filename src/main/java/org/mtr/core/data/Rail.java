@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -11,8 +12,6 @@ import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
-
-import javax.annotation.Nullable;
 
 public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 
@@ -69,19 +68,6 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		updateData(readerBase);
 	}
 
-	@Override
-	public String getHexId() {
-		return String.format(
-				"%s-%s-%s-%s-%s-%s",
-				Utilities.numberToPaddedHexString((reversePositions ? position2 : position1).getX()),
-				Utilities.numberToPaddedHexString((reversePositions ? position2 : position1).getY()),
-				Utilities.numberToPaddedHexString((reversePositions ? position2 : position1).getZ()),
-				Utilities.numberToPaddedHexString((reversePositions ? position1 : position2).getX()),
-				Utilities.numberToPaddedHexString((reversePositions ? position1 : position2).getY()),
-				Utilities.numberToPaddedHexString((reversePositions ? position1 : position2).getZ())
-		);
-	}
-
 	/**
 	 * A rail is valid if all the following conditions are met:
 	 * <ul>
@@ -95,6 +81,16 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	@Override
 	public boolean isValid() {
 		return (speedLimit1 > 0 || speedLimit2 > 0) && railMath.isValid() && (!isPlatform || !isSiding);
+	}
+
+	@Override
+	protected Position getPosition1() {
+		return position1;
+	}
+
+	@Override
+	protected Position getPosition2() {
+		return position2;
 	}
 
 	public TransportMode getTransportMode() {
@@ -147,16 +143,6 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		blockedVehicleIds.clear();
 	}
 
-	@Nullable
-	public Rail getRailFromData(Data data, ObjectOpenHashSet<Position> positionsToUpdate) {
-		final Rail rail = data.railIdMap.get(getHexId());
-		if (rail != null) {
-			positionsToUpdate.add(position1);
-			positionsToUpdate.add(position2);
-		}
-		return rail;
-	}
-
 	public void checkOrCreatePlatform(Data data, ObjectAVLTreeSet<Platform> platformsToAdd, ObjectAVLTreeSet<Siding> sidingsToAdd) {
 		if (isPlatform && data.platforms.stream().noneMatch(platform -> platform.containsPos(position1) && platform.containsPos(position2))) {
 			final Platform platform = new Platform(position1, position2, transportMode, data);
@@ -167,6 +153,23 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 			final Siding siding = new Siding(position1, position2, railMath.getLength(), transportMode, data);
 			data.sidings.add(siding);
 			sidingsToAdd.add(siding);
+		}
+	}
+
+	public IntAVLTreeSet getSignalColors() {
+		final IntAVLTreeSet returnSet = new IntAVLTreeSet();
+		signalColors.forEach(color -> returnSet.add((int) color));
+		return returnSet;
+	}
+
+	void applyModification(SignalModification signalModification) {
+		if (matchesPositions(signalModification)) {
+			if (signalModification.getIsClearAll()) {
+				signalColors.clear();
+			} else {
+				signalColors.removeIf(signalModification.getSignalColorsRemove()::contains);
+			}
+			signalModification.getSignalColorsAdd().forEach(signalColors::add);
 		}
 	}
 
@@ -193,13 +196,13 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	}
 
 	private boolean isBlocked(long vehicleId, LongArrayList blockedColors, ObjectOpenHashSet<Rail> visitedRails) {
-		if (!blockedColors.isEmpty() && isNotBlocked(blockedVehicleIds, vehicleId) && isNotBlocked(blockedVehicleIdsOld, vehicleId)) {
+		if (blockedColors.isEmpty() || isNotBlocked(blockedVehicleIds, vehicleId) && isNotBlocked(blockedVehicleIdsOld, vehicleId)) {
 			blockedVehicleIds.add(vehicleId);
 			connectedRails1.forEach(rail -> tryBlock(vehicleId, blockedColors, visitedRails, rail));
 			connectedRails2.forEach(rail -> tryBlock(vehicleId, blockedColors, visitedRails, rail));
-			return true;
-		} else {
 			return false;
+		} else {
+			return true;
 		}
 	}
 

@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -17,6 +18,10 @@ import javax.annotation.Nullable;
 public class Vehicle extends VehicleSchema {
 
 	private double doorValue;
+	/**
+	 * The amount of time to start up a vehicle again if blocked by a signal or another vehicle in front.
+	 */
+	private long stoppingCoolDown;
 	private int manualNotch;
 
 	public final VehicleExtraData vehicleExtraData;
@@ -114,6 +119,7 @@ public class Vehicle extends VehicleSchema {
 		}
 
 		doorValue = Utilities.clamp(doorValue + (double) (millisElapsed * vehicleExtraData.getDoorMultiplier()) / DOOR_MOVE_TIME, 0, 1);
+		stoppingCoolDown = Math.max(0, stoppingCoolDown - millisElapsed);
 
 		if (vehiclePositions != null) {
 			writeVehiclePositions(currentIndex, vehiclePositions.get(1));
@@ -203,6 +209,7 @@ public class Vehicle extends VehicleSchema {
 		if (totalDwellMillis == 0) {
 			vehicleExtraData.closeDoors();
 		} else {
+			stoppingCoolDown = 0;
 			final long doorCloseTime = totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY;
 
 			if (Utilities.isBetween(elapsedDwellTime, DOOR_DELAY, doorCloseTime)) {
@@ -234,12 +241,13 @@ public class Vehicle extends VehicleSchema {
 		final double railBlockedDistance = railBlockedDistance(currentIndex, railProgress, safeStoppingDistance, vehiclePositions);
 		final double stoppingPoint;
 
-		if (isClientside) {
+		if (isClientside || stoppingCoolDown > 0) {
 			stoppingPoint = vehicleExtraData.getStoppingPoint();
 		} else if (railBlockedDistance < 0) {
 			stoppingPoint = vehicleExtraData.immutablePath.get(Math.min((int) nextStoppingIndex, vehicleExtraData.immutablePath.size() - 1)).getEndDistance();
 		} else {
 			stoppingPoint = railBlockedDistance + railProgress;
+			stoppingCoolDown = 1000;
 		}
 
 		vehicleExtraData.setStoppingPoint(stoppingPoint);
@@ -303,7 +311,7 @@ public class Vehicle extends VehicleSchema {
 			if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
 				final Position position1 = pathData.getOrderedPosition1();
 				final Position position2 = pathData.getOrderedPosition2();
-				if (getIsOnRoute()) {
+				if (getIsOnRoute() && index > 0) {
 					Data.put(vehiclePositions, position1, position2, vehiclePosition -> {
 						final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
 						newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
@@ -335,39 +343,64 @@ public class Vehicle extends VehicleSchema {
 	}
 
 	/**
+	 * Checks if the rails ahead are clear up to a certain point (in terms of other vehicles or signals).
+	 *
 	 * @return the distance until the rail is blocked or -1 if there is nothing in front
 	 */
 	private double railBlockedDistance(int currentIndex, double checkRailProgress, double checkDistance, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
-		if (vehiclePositions == null) {
-			return -1;
-		}
-
 		int index = currentIndex;
-		while (true) {
-			final PathData pathData = vehicleExtraData.immutablePath.get(index);
 
-			if (pathData.isSignalBlocked(id)) {
+		while (vehiclePositions != null && index < vehicleExtraData.immutablePath.size()) {
+			final PathData pathData = vehicleExtraData.immutablePath.get(index);
+			final double checkRailProgressEnd = checkRailProgress + checkDistance + transportMode.stoppingSpace;
+
+			if (pathData.getStartDistance() >= checkRailProgressEnd) {
+				return -1;
+			}
+
+			if (checkAndBlockSignal(index, vehiclePositions)) {
 				return Math.max(0, pathData.getStartDistance() - railProgress);
-			} else if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkRailProgress + checkDistance + transportMode.stoppingSpace)) {
-				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, checkRailProgress, checkRailProgress + checkDistance + transportMode.stoppingSpace);
+			} else if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkRailProgressEnd)) {
+				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, checkRailProgress, checkRailProgressEnd);
 				for (int i = 0; i < 2; i++) {
 					final VehiclePosition vehiclePosition = Data.tryGet(vehiclePositions.get(i), pathData.getOrderedPosition1(), pathData.getOrderedPosition2());
 					if (vehiclePosition != null) {
 						final double overlap = vehiclePosition.getOverlap(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
 						if (overlap >= 0) {
-							// If vehicle is stopped, require at least 2 more blocks of clear track before proceeding
-							return Math.max(0, checkDistance - overlap - (speed == 0 ? 2 : 0));
+							return Math.max(0, checkDistance - overlap);
 						}
 					}
 				}
 			}
 
 			index++;
-
-			if (index >= vehicleExtraData.immutablePath.size()) {
-				return -1;
-			}
 		}
+
+		return -1;
+	}
+
+	/**
+	 * If a signal block is encountered, first check if the path after the entire block is clear. If so, reserve the signal block.
+	 *
+	 * @return if the vehicle should stop
+	 */
+	private boolean checkAndBlockSignal(int currentIndex, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+		final PathData firstPathData = vehicleExtraData.immutablePath.get(currentIndex);
+		final IntAVLTreeSet signalColors = firstPathData.getSignalColors();
+		int index = currentIndex + 1;
+
+		while (!signalColors.isEmpty() && index < vehicleExtraData.immutablePath.size()) {
+			final PathData pathData = vehicleExtraData.immutablePath.get(index);
+
+			if (pathData.getSignalColors().intStream().noneMatch(signalColors::contains)) {
+				// Only reserve the signal block after checking if the path after the signal block is clear, not before!
+				return railBlockedDistance(index, pathData.getStartDistance(), vehicleExtraData.getTotalVehicleLength(), vehiclePositions) >= 0 || firstPathData.isSignalBlocked(id);
+			}
+
+			index++;
+		}
+
+		return false;
 	}
 
 	@Nullable

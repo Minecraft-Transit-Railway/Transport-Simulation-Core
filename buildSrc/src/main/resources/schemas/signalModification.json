@@ -1,0 +1,35 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": [
+		"TwoPositionsBase"
+	],
+	"properties": {
+		"position1": {
+			"$ref": "position.json"
+		},
+		"position2": {
+			"$ref": "position.json"
+		},
+		"signalColorsAdd": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"signalColorsRemove": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"clearAll": {
+			"type": "boolean"
+		}
+	},
+	"required": [
+		"position1",
+		"position2",
+		"clearAll"
+	]
+}

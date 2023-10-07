@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.PathDataSchema;
 import org.mtr.core.serializers.MessagePackReader;
@@ -103,6 +104,10 @@ public class PathData extends PathDataSchema implements ConditionalList {
 
 	public boolean isSignalBlocked(long vehicleId) {
 		return rail.isBlocked(vehicleId);
+	}
+
+	public IntAVLTreeSet getSignalColors() {
+		return rail.getSignalColors();
 	}
 
 	public boolean writePathCache(Data data) {

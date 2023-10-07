@@ -182,6 +182,10 @@ public interface TestUtilities {
 		return new Siding(randomPosition(), randomPosition(), RANDOM.nextDouble(), randomTransportMode(), getDefaultSimulator());
 	}
 
+	static SignalModification randomSignalModification() {
+		return new SignalModification(randomPosition(), randomPosition(), RANDOM.nextBoolean());
+	}
+
 	static Station randomStation() {
 		return new Station(getDefaultSimulator());
 	}
@@ -248,6 +252,10 @@ public interface TestUtilities {
 
 	static Siding newSiding(ReaderBase readerBase) {
 		return new Siding(readerBase, getDefaultSimulator());
+	}
+
+	static SignalModification newSignalModification(ReaderBase readerBase) {
+		return new SignalModification(readerBase);
 	}
 
 	static Station newStation(ReaderBase readerBase) {

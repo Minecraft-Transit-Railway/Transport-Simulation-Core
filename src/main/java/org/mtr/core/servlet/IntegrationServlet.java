@@ -17,6 +17,12 @@ public class IntegrationServlet extends ServletBase {
 
 	@Override
 	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
+		final JsonObject returnObject = getInnerContent(endpoint, data, parameters, bodyObject, currentMillis, simulator);
+		returnObject.add("metadata", bodyObject.get("metadata"));
+		return returnObject;
+	}
+
+	private JsonObject getInnerContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
 		final IntegrationResponse integrationResponse = new IntegrationResponse(data, parameters, bodyObject, currentMillis, simulator);
 		switch (EnumHelper.valueOf(Operation.UPDATE, endpoint.toUpperCase(Locale.ROOT))) {
 			case UPDATE:
@@ -32,7 +38,7 @@ public class IntegrationServlet extends ServletBase {
 			case LIST:
 				return integrationResponse.list();
 			default:
-				return null;
+				return new JsonObject();
 		}
 	}
 
