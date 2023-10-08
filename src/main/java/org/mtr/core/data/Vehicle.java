@@ -202,15 +202,15 @@ public class Vehicle extends VehicleSchema {
 		final PathData nextPathData = Utilities.getElement(vehicleExtraData.immutablePath, vehicleExtraData.getRepeatIndex2() > 0 && currentIndex >= vehicleExtraData.getRepeatIndex2() ? vehicleExtraData.getRepeatIndex1() : currentIndex);
 		final boolean isOpposite = currentPathData != null && nextPathData != null && currentPathData.isOppositeRail(nextPathData);
 		final double nextStartDistance = nextPathData == null ? 0 : nextPathData.getStartDistance();
-		final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions) < 0;
 		final long totalDwellMillis = currentPathData == null ? 0 : currentPathData.getDwellTime();
+		final long doorCloseTime = Math.max(0, totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY);
+		final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions, elapsedDwellTime >= doorCloseTime, false) < 0;
 		vehicleExtraData.setStoppingPoint(railProgress);
 
 		if (totalDwellMillis == 0) {
 			vehicleExtraData.closeDoors();
 		} else {
 			stoppingCoolDown = 0;
-			final long doorCloseTime = totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY;
 
 			if (Utilities.isBetween(elapsedDwellTime, DOOR_DELAY, doorCloseTime)) {
 				vehicleExtraData.openDoors();
@@ -238,7 +238,7 @@ public class Vehicle extends VehicleSchema {
 	private void simulateAutomaticMoving(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, int currentIndex) {
 		final double newAcceleration = vehicleExtraData.getAcceleration() * millisElapsed;
 		final double safeStoppingDistance = 0.5 * speed * speed / vehicleExtraData.getAcceleration();
-		final double railBlockedDistance = railBlockedDistance(currentIndex, railProgress, safeStoppingDistance, vehiclePositions);
+		final double railBlockedDistance = railBlockedDistance(currentIndex, railProgress, safeStoppingDistance, vehiclePositions, true, false);
 		final double stoppingPoint;
 
 		if (isClientside || stoppingCoolDown > 0) {
@@ -317,6 +317,7 @@ public class Vehicle extends VehicleSchema {
 						newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
 						return newVehiclePosition;
 					}, Object2ObjectAVLTreeMap::new);
+					pathData.isSignalBlocked(id, true);
 				}
 				minMaxPositions[0] = Position.getMin(minMaxPositions[0], Position.getMin(position1, position2));
 				minMaxPositions[1] = Position.getMax(minMaxPositions[1], Position.getMax(position1, position2));
@@ -347,7 +348,7 @@ public class Vehicle extends VehicleSchema {
 	 *
 	 * @return the distance until the rail is blocked or -1 if there is nothing in front
 	 */
-	private double railBlockedDistance(int currentIndex, double checkRailProgress, double checkDistance, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+	private double railBlockedDistance(int currentIndex, double checkRailProgress, double checkDistance, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, boolean reserveRail, boolean secondPass) {
 		int index = currentIndex;
 
 		while (vehiclePositions != null && index < vehicleExtraData.immutablePath.size()) {
@@ -358,8 +359,8 @@ public class Vehicle extends VehicleSchema {
 				return -1;
 			}
 
-			if (checkAndBlockSignal(index, vehiclePositions)) {
-				return Math.max(0, pathData.getStartDistance() - railProgress);
+			if (checkAndBlockSignal(index, vehiclePositions, reserveRail, secondPass)) {
+				return Math.max(0, pathData.getStartDistance() - checkRailProgress);
 			} else if (Utilities.isIntersecting(pathData.getStartDistance(), pathData.getEndDistance(), checkRailProgress, checkRailProgressEnd)) {
 				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, checkRailProgress, checkRailProgressEnd);
 				for (int i = 0; i < 2; i++) {
@@ -384,23 +385,29 @@ public class Vehicle extends VehicleSchema {
 	 *
 	 * @return if the vehicle should stop
 	 */
-	private boolean checkAndBlockSignal(int currentIndex, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+	private boolean checkAndBlockSignal(int currentIndex, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, boolean reserveRail, boolean secondPass) {
 		final PathData firstPathData = vehicleExtraData.immutablePath.get(currentIndex);
-		final IntAVLTreeSet signalColors = firstPathData.getSignalColors();
-		int index = currentIndex + 1;
 
-		while (!signalColors.isEmpty() && index < vehicleExtraData.immutablePath.size()) {
-			final PathData pathData = vehicleExtraData.immutablePath.get(index);
+		if (secondPass) {
+			return firstPathData.isSignalBlocked(id, false);
+		} else {
+			final IntAVLTreeSet signalColors = firstPathData.getSignalColors();
+			int index = currentIndex + 1;
 
-			if (pathData.getSignalColors().intStream().noneMatch(signalColors::contains)) {
-				// Only reserve the signal block after checking if the path after the signal block is clear, not before!
-				return railBlockedDistance(index, pathData.getStartDistance(), vehicleExtraData.getTotalVehicleLength(), vehiclePositions) >= 0 || firstPathData.isSignalBlocked(id);
+			while (!signalColors.isEmpty() && index < vehicleExtraData.immutablePath.size()) {
+				final PathData pathData = vehicleExtraData.immutablePath.get(index);
+
+				if (pathData.getSignalColors().intStream().noneMatch(signalColors::contains)) {
+					// Only reserve the signal block after checking if the path after the signal block is clear, not before!
+					final double railBlockedDistance = railBlockedDistance(index, pathData.getStartDistance(), vehicleExtraData.getTotalVehicleLength(), vehiclePositions, false, true);
+					return railBlockedDistance >= 0 && railBlockedDistance < vehicleExtraData.getTotalVehicleLength() || firstPathData.isSignalBlocked(id, reserveRail);
+				}
+
+				index++;
 			}
 
-			index++;
+			return false;
 		}
-
-		return false;
 	}
 
 	@Nullable

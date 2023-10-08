@@ -1,8 +1,7 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -21,8 +20,8 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 
 	private final ObjectOpenHashSet<Rail> connectedRails1 = new ObjectOpenHashSet<>();
 	private final ObjectOpenHashSet<Rail> connectedRails2 = new ObjectOpenHashSet<>();
-	private final LongAVLTreeSet blockedVehicleIds = new LongAVLTreeSet();
-	private final LongAVLTreeSet blockedVehicleIdsOld = new LongAVLTreeSet();
+	private final Long2LongAVLTreeMap blockedVehicleIds = new Long2LongAVLTreeMap();
+	private final Long2LongAVLTreeMap blockedVehicleIdsOld = new Long2LongAVLTreeMap();
 	private final boolean reversePositions;
 
 	public static Rail newRail(Position position1, Angle angle1, Shape shape1, Position position2, Angle angle2, Shape shape2, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
@@ -139,7 +138,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 
 	public void tick() {
 		blockedVehicleIdsOld.clear();
-		blockedVehicleIdsOld.addAll(blockedVehicleIds);
+		blockedVehicleIdsOld.putAll(blockedVehicleIds);
 		blockedVehicleIds.clear();
 	}
 
@@ -173,8 +172,15 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		}
 	}
 
-	boolean isBlocked(long vehicleId) {
-		return isBlocked(vehicleId, signalColors, ObjectOpenHashSet.of(this));
+	boolean isBlocked(long vehicleId, boolean reserveRail) {
+		if (signalColors.isEmpty() || isNotBlocked(blockedVehicleIds, vehicleId) && isNotBlocked(blockedVehicleIdsOld, vehicleId)) {
+			if (reserveRail) {
+				signalColors.forEach(color -> reserveRail(vehicleId, color, new ObjectOpenHashSet<>(), this));
+			}
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	void writePositionsToRailCache(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail) {
@@ -188,6 +194,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	}
 
 	private void writeConnectedRailsCacheFromMap(Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail, Position position, ObjectOpenHashSet<Rail> connectedRails) {
+		connectedRails.clear();
 		positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).forEach((connectedPosition, rail) -> {
 			if (!equals(rail)) {
 				connectedRails.add(rail);
@@ -195,32 +202,17 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		});
 	}
 
-	private boolean isBlocked(long vehicleId, LongArrayList blockedColors, ObjectOpenHashSet<Rail> visitedRails) {
-		if (blockedColors.isEmpty() || isNotBlocked(blockedVehicleIds, vehicleId) && isNotBlocked(blockedVehicleIdsOld, vehicleId)) {
-			blockedVehicleIds.add(vehicleId);
-			connectedRails1.forEach(rail -> tryBlock(vehicleId, blockedColors, visitedRails, rail));
-			connectedRails2.forEach(rail -> tryBlock(vehicleId, blockedColors, visitedRails, rail));
-			return false;
-		} else {
-			return true;
-		}
-	}
-
-	private static void tryBlock(long vehicleId, LongArrayList blockedColors, ObjectOpenHashSet<Rail> visitedRails, Rail rail) {
-		if (!visitedRails.contains(rail)) {
+	private static void reserveRail(long vehicleId, long color, ObjectOpenHashSet<Rail> visitedRails, Rail rail) {
+		if (!visitedRails.contains(rail) && rail.signalColors.contains(color)) {
+			rail.blockedVehicleIds.put(color, vehicleId);
 			visitedRails.add(rail);
-			final LongArrayList newBlockedColors = new LongArrayList();
-			rail.signalColors.forEach(color -> {
-				if (blockedColors.contains(color)) {
-					newBlockedColors.add(color);
-				}
-			});
-			rail.isBlocked(vehicleId, newBlockedColors, visitedRails);
+			rail.connectedRails1.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail));
+			rail.connectedRails2.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail));
 		}
 	}
 
-	private static boolean isNotBlocked(LongAVLTreeSet blockedVehicleIds, long vehicleId) {
-		return blockedVehicleIds.isEmpty() || blockedVehicleIds.size() == 1 && blockedVehicleIds.firstLong() == vehicleId;
+	private static boolean isNotBlocked(Long2LongAVLTreeMap blockedVehicleIds, long vehicleId) {
+		return blockedVehicleIds.values().longStream().allMatch(blockedVehicleId -> blockedVehicleId == vehicleId);
 	}
 
 	@FunctionalInterface

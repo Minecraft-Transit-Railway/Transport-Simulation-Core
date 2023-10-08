@@ -102,8 +102,8 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return rail.railMath.getPosition(rawValue, reversePositions);
 	}
 
-	public boolean isSignalBlocked(long vehicleId) {
-		return rail.isBlocked(vehicleId);
+	public boolean isSignalBlocked(long vehicleId, boolean reserveRail) {
+		return rail.isBlocked(vehicleId, reserveRail);
 	}
 
 	public IntAVLTreeSet getSignalColors() {
