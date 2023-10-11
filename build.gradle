@@ -1,5 +1,5 @@
-import org.apache.tools.ant.filters.ReplaceTokens
 import org.mtr.core.Generator
+import org.mtr.core.WebserverSetup
 
 plugins {
 	id "java"
@@ -55,36 +55,7 @@ test {
 	testLogging { showStandardStreams = true }
 }
 
-tasks.register("generateSchemaClasses") {
+tasks.register("setupFiles") {
 	Generator.generate(project.rootDir)
+	WebserverSetup.setup(project.rootDir)
 }
-
-tasks.register("downloadResources") {
-	download.run {
-		src "https://raw.githubusercontent.com/mrdoob/three.js/dev/build/three.module.min.js"
-		dest "src/main/resources/org/mtr/core/website/three.module.min.js"
-		overwrite true
-		retries - 1
-	}
-	download.run {
-		src "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/utils/BufferGeometryUtils.js"
-		dest "src/main/resources/org/mtr/core/website/temp/BufferGeometryUtils.js"
-		overwrite true
-		retries - 1
-	}
-	copy {
-		outputs.upToDateWhen { false }
-		from "src/main/resources/org/mtr/core/website/temp/BufferGeometryUtils.js"
-		into "src/main/resources/org/mtr/core/website"
-		filter { line -> line.replaceAll("from 'three'", "from './three.module.min.js'") }
-	}
-	copy {
-		outputs.upToDateWhen { false }
-		from "src/main/templates/version-template.js"
-		into "src/main/resources/org/mtr/core/website"
-		filter(ReplaceTokens, tokens: ["version": version])
-		rename "(.+)-template.js", "\$1.js"
-	}
-}
-
-tasks.build.dependsOn downloadResources

@@ -31,6 +31,3 @@ bin/
 generated/
 three.module.min.js
 BufferGeometryUtils.js
-fabric.min.js
-fontfaceobserver.standalone.js
-version.js

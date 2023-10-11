@@ -2,6 +2,7 @@ package org.mtr.core;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.core.generated.WebserverResources;
 import org.mtr.core.servlet.IntegrationServlet;
 import org.mtr.core.servlet.OBAServlet;
 import org.mtr.core.servlet.SocketHandler;
@@ -44,7 +45,7 @@ public class Main {
 			final int webserverPort = Integer.parseInt(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(millisPerGameDay, startingGameDayPercentage, rootPath, "website", webserverPort, dimensions);
+			final Main main = new Main(millisPerGameDay, startingGameDayPercentage, rootPath, webserverPort, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -52,7 +53,7 @@ public class Main {
 		}
 	}
 
-	public Main(int millisPerGameDay, float startingGameDayPercentage, Path rootPath, String resourcesRoot, int webserverPort, String... dimensions) {
+	public Main(int millisPerGameDay, float startingGameDayPercentage, Path rootPath, int webserverPort, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
@@ -61,7 +62,7 @@ public class Main {
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);
-		webserver = new Webserver(Main.class, resourcesRoot, Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
+		webserver = new Webserver(Main.class, WebserverResources::get, Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
 		new IntegrationServlet(webserver, "/mtr/api/data/*", simulators);
 		new SystemMapServlet(webserver, "/mtr/api/map/*", simulators);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
