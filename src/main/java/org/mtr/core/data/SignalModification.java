@@ -1,10 +1,10 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.mtr.core.generated.SignalModificationSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Position;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 public final class SignalModification extends SignalModificationSchema {
 

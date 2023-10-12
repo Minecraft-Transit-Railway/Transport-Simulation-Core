@@ -1,12 +1,12 @@
 package org.mtr.core.servlet;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Position;
+import org.mtr.libraries.com.google.gson.JsonArray;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 
 public class SystemMapResponse extends ResponseBase {
 

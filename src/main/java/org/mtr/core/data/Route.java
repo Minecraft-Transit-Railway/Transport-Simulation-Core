@@ -1,11 +1,11 @@
 package org.mtr.core.data;
 
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.RouteSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Locale;
 

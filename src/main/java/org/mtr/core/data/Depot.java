@@ -1,10 +1,5 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.core.Main;
 import org.mtr.core.generated.DepotSchema;
 import org.mtr.core.path.SidingPathFinder;
@@ -14,6 +9,11 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.DataFixer;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 
 import java.util.Collections;
 

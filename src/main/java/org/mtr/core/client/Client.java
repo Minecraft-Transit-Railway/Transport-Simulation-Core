@@ -1,14 +1,14 @@
 package org.mtr.core.client;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.core.data.Vehicle;
 import org.mtr.core.generated.ClientSchema;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.com.google.gson.JsonArray;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 
 import java.util.UUID;
 

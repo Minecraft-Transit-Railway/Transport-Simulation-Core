@@ -1,9 +1,9 @@
 package org.mtr.core.client;
 
-import com.corundumstudio.socketio.SocketIOClient;
-import com.google.gson.JsonObject;
 import org.mtr.core.generated.ClientGroupSchema;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.libraries.com.corundumstudio.socketio.SocketIOClient;
+import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.webserver.Webserver;
 
 import java.util.function.Consumer;

@@ -1,13 +1,13 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.PathDataSchema;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Vector;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class PathData extends PathDataSchema implements ConditionalList {
 

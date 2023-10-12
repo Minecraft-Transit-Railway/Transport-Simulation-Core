@@ -1,13 +1,5 @@
 package org.mtr.core.tools;
 
-import it.unimi.dsi.fastutil.ints.IntConsumer;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.msgpack.core.MessageBufferPacker;
-import org.msgpack.core.MessagePack;
-import org.msgpack.core.MessageUnpacker;
-import org.msgpack.value.Value;
 import org.mtr.core.Main;
 import org.mtr.core.data.EnumHelper;
 import org.mtr.core.data.Rail;
@@ -17,6 +9,14 @@ import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.MessagePackWriter;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.serializers.WriterBase;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntConsumer;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
+import org.mtr.libraries.org.msgpack.core.MessagePack;
+import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
+import org.mtr.libraries.org.msgpack.value.Value;
 
 import java.util.Locale;
 import java.util.function.BiConsumer;

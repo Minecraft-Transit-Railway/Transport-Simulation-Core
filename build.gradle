@@ -4,7 +4,6 @@ import org.mtr.core.WebserverSetup
 plugins {
 	id "java"
 	id "maven-publish"
-	id "de.undercouch.download" version "+"
 }
 
 group "org.mtr.core"
@@ -16,15 +15,13 @@ repositories {
 }
 
 dependencies {
-	implementation "com.google.code.gson:gson:+"
-	implementation "com.google.code.findbugs:jsr305:+"
-	implementation "it.unimi.dsi:fastutil:+"
-	implementation "com.corundumstudio.socketio:netty-socketio:+"
-	implementation "org.msgpack:msgpack-core:+"
 	implementation "com.github.jonafanho:Socket-IO-Webserver:master-SNAPSHOT"
+	implementation "com.github.jonafanho:Shadow-Libraries:master-SNAPSHOT"
+	compileOnly "com.google.code.findbugs:jsr305:+"
 	testImplementation "org.junit.jupiter:junit-jupiter-api:+"
 	testImplementation "commons-io:commons-io:+"
 	testImplementation "org.apache.httpcomponents:httpclient:+"
+	testCompileOnly "com.google.code.findbugs:jsr305:+"
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:+"
 }
 

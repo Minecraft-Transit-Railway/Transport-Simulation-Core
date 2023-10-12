@@ -1,8 +1,8 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.InterchangeRouteNamesForColorSchema;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.function.Consumer;
 

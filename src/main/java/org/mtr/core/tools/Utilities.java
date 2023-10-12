@@ -1,13 +1,13 @@
 package org.mtr.core.tools;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.mtr.core.Main;
 import org.mtr.core.data.ConditionalList;
 import org.mtr.core.data.SerializedDataBase;
 import org.mtr.core.serializers.JsonWriter;
+import org.mtr.libraries.com.google.gson.GsonBuilder;
+import org.mtr.libraries.com.google.gson.JsonElement;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.com.google.gson.JsonParser;
 
 import javax.annotation.Nullable;
 import java.util.List;

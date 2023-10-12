@@ -1,7 +1,5 @@
 package org.mtr.core;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.mtr.core.data.Platform;
@@ -10,9 +8,13 @@ import org.mtr.core.data.TestUtilities;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.com.google.gson.JsonArray;
+import org.mtr.libraries.com.google.gson.JsonObject;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
 
+@ParametersAreNonnullByDefault
 public class RuntimeTests implements TestUtilities {
 
 	@Test

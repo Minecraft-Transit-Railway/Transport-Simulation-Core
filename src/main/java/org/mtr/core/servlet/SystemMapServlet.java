@@ -1,9 +1,9 @@
 package org.mtr.core.servlet;
 
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.simulation.Simulator;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.webserver.Webserver;
 
 public class SystemMapServlet extends ServletBase {

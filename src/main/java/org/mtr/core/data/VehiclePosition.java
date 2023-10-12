@@ -1,7 +1,7 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class VehiclePosition {
 

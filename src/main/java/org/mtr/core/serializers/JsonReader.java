@@ -1,14 +1,14 @@
 package org.mtr.core.serializers;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
-import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
-import it.unimi.dsi.fastutil.ints.IntConsumer;
-import it.unimi.dsi.fastutil.longs.LongConsumer;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.mtr.core.Main;
+import org.mtr.libraries.com.google.gson.JsonElement;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.com.google.gson.JsonParser;
+import org.mtr.libraries.it.unimi.dsi.fastutil.booleans.BooleanConsumer;
+import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleConsumer;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntConsumer;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongConsumer;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

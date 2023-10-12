@@ -1,8 +1,8 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.mtr.core.generated.RoutePlatformDataSchema;
 import org.mtr.core.serializers.ReaderBase;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 public final class RoutePlatformData extends RoutePlatformDataSchema {
 

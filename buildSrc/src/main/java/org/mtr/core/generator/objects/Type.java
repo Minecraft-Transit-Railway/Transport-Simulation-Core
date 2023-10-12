@@ -14,9 +14,9 @@ public class Type {
 	public static final Type INTEGER = createObject("long");
 	public static final Type NUMBER = createObject("double");
 	public static final Type STRING = new Type("String", false, "", "\"%s\"");
-	public static final Type BOOLEAN_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.booleans.BooleanArrayList");
-	public static final Type INTEGER_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.longs.LongArrayList");
-	public static final Type NUMBER_ARRAY = createPrimitiveArray("it.unimi.dsi.fastutil.doubles.DoubleArrayList");
+	public static final Type BOOLEAN_ARRAY = createPrimitiveArray("org.mtr.libraries.it.unimi.dsi.fastutil.booleans.BooleanArrayList");
+	public static final Type INTEGER_ARRAY = createPrimitiveArray("org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList");
+	public static final Type NUMBER_ARRAY = createPrimitiveArray("org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleArrayList");
 	public static final Type STRING_ARRAY = createArray(STRING.name);
 
 	private Type(String name, boolean isArray) {
@@ -43,7 +43,7 @@ public class Type {
 	}
 
 	public static Type createArray(String name) {
-		return new Type(String.format("it.unimi.dsi.fastutil.objects.ObjectArrayList<%s>", name), true);
+		return new Type(String.format("org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList<%s>", name), true);
 	}
 
 	public static Type createObject(String name) {

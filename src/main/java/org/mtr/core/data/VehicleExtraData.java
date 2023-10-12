@@ -1,11 +1,11 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.generated.VehicleExtraDataSchema;
 import org.mtr.core.serializers.JsonReader;
 import org.mtr.core.serializers.ReaderBase;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
 import javax.annotation.Nullable;
 import java.util.function.BiConsumer;

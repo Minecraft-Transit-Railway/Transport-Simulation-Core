@@ -1,8 +1,5 @@
 package org.mtr.core.data;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -12,9 +9,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Assertions;
-import org.msgpack.core.MessageBufferPacker;
-import org.msgpack.core.MessagePack;
-import org.msgpack.core.MessageUnpacker;
 import org.mtr.core.Main;
 import org.mtr.core.client.Client;
 import org.mtr.core.client.ClientGroup;
@@ -26,8 +20,15 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Angle;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.com.google.gson.JsonParser;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
+import org.mtr.libraries.org.msgpack.core.MessagePack;
+import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
 
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@ParametersAreNonnullByDefault
 public interface TestUtilities {
 
 	Path TEST_DIRECTORY = Paths.get("build/test-data");

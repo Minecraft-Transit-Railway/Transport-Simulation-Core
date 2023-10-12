@@ -1,7 +1,5 @@
 package org.mtr.core;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.generated.WebserverResources;
 import org.mtr.core.servlet.IntegrationServlet;
 import org.mtr.core.servlet.OBAServlet;
@@ -9,6 +7,8 @@ import org.mtr.core.servlet.SocketHandler;
 import org.mtr.core.servlet.SystemMapServlet;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.webserver.Webserver;
 
 import javax.annotation.ParametersAreNonnullByDefault;

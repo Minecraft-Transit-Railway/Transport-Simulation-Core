@@ -1,8 +1,8 @@
 package org.mtr.core.data;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.mtr.core.tools.Position;
 import org.mtr.core.tools.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import javax.annotation.Nullable;
 

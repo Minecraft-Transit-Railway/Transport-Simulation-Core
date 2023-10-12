@@ -1,15 +1,15 @@
 package org.mtr.core.simulation;
 
-import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import it.unimi.dsi.fastutil.objects.*;
-import org.msgpack.core.MessageBufferPacker;
-import org.msgpack.core.MessagePack;
-import org.msgpack.core.MessagePacker;
-import org.msgpack.core.MessageUnpacker;
 import org.mtr.core.Main;
 import org.mtr.core.data.SerializedDataBaseWithId;
 import org.mtr.core.serializers.MessagePackReader;
 import org.mtr.core.serializers.MessagePackWriter;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
+import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
+import org.mtr.libraries.org.msgpack.core.MessagePack;
+import org.mtr.libraries.org.msgpack.core.MessagePacker;
+import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
 
 import java.io.InputStream;
 import java.nio.file.DirectoryNotEmptyException;
