@@ -19,11 +19,16 @@ jobs:
       - name: Setup files
         run: ./gradlew setupFiles
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew build buildSrc:build
       - name: Run JUnits
         run: ./gradlew test
-      - name: Capture build artifacts
+      - name: Capture main build artifact
         uses: actions/upload-artifact@main
         with:
-          name: Artifact
+          name: Main
           path: build/libs/
+      - name: Capture JSON schema generator build artifact
+        uses: actions/upload-artifact@main
+        with:
+          name: JSON Schema Generator
+          path: buildSrc/libs/

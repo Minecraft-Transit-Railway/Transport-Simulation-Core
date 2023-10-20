@@ -53,6 +53,6 @@ test {
 }
 
 tasks.register("setupFiles") {
-	Generator.generate(project.rootDir)
+	Generator.generate(project, true)
 	WebserverSetup.setup(project.rootDir)
 }
