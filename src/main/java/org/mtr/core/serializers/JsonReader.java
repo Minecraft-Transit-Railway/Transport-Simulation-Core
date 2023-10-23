@@ -34,7 +34,7 @@ public final class JsonReader extends ReaderBase {
 
 	@Override
 	public boolean getBoolean(String key, boolean defaultValue) {
-		return getOrDefault(key, defaultValue, this::getBoolean);
+		return getOrDefault(key, defaultValue, JsonReader::getBoolean);
 	}
 
 	@Override
@@ -49,7 +49,7 @@ public final class JsonReader extends ReaderBase {
 
 	@Override
 	public int getInt(String key, int defaultValue) {
-		return getOrDefault(key, defaultValue, this::getInt);
+		return getOrDefault(key, defaultValue, JsonReader::getInt);
 	}
 
 	@Override
@@ -64,7 +64,7 @@ public final class JsonReader extends ReaderBase {
 
 	@Override
 	public long getLong(String key, long defaultValue) {
-		return getOrDefault(key, defaultValue, this::getLong);
+		return getOrDefault(key, defaultValue, JsonReader::getLong);
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public final class JsonReader extends ReaderBase {
 
 	@Override
 	public double getDouble(String key, double defaultValue) {
-		return getOrDefault(key, defaultValue, this::getDouble);
+		return getOrDefault(key, defaultValue, JsonReader::getDouble);
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public final class JsonReader extends ReaderBase {
 
 	@Override
 	public String getString(String key, String defaultValue) {
-		return getOrDefault(key, defaultValue, this::getString);
+		return getOrDefault(key, defaultValue, JsonReader::getString);
 	}
 
 	@Override
@@ -124,35 +124,6 @@ public final class JsonReader extends ReaderBase {
 		}
 	}
 
-	private boolean getBoolean(JsonElement value) {
-		return value.getAsBoolean();
-	}
-
-	private int getInt(JsonElement value) {
-		return value.getAsInt();
-	}
-
-	private long getLong(JsonElement value) {
-		return value.getAsLong();
-	}
-
-	private double getDouble(JsonElement value) {
-		return value.getAsDouble();
-	}
-
-	private String getString(JsonElement value) {
-		return value.getAsString();
-	}
-
-	private void iterateArray(JsonElement value, Runnable clearList, Consumer<JsonElement> consumer) {
-		clearList.run();
-		value.getAsJsonArray().forEach(consumer);
-	}
-
-	private void iterateMap(JsonElement value, BiConsumer<String, JsonElement> consumer) {
-		value.getAsJsonObject().asMap().forEach(consumer);
-	}
-
 	private void unpack(String key, Consumer<JsonElement> consumer) {
 		unpackValue(map.get(key), consumer);
 	}
@@ -168,5 +139,44 @@ public final class JsonReader extends ReaderBase {
 			Main.logException(e);
 			return new JsonReader(new Object2ObjectArrayMap<>());
 		}
+	}
+
+	private static boolean getBoolean(JsonElement value) {
+		return value.getAsBoolean();
+	}
+
+	private static int getInt(JsonElement value) {
+		return value.getAsInt();
+	}
+
+	private static long getLong(JsonElement value) {
+		return value.getAsLong();
+	}
+
+	private static double getDouble(JsonElement value) {
+		return value.getAsDouble();
+	}
+
+	private static String getString(JsonElement value) {
+		return value.getAsString();
+	}
+
+	private static void iterateArray(JsonElement value, Runnable clearList, Consumer<JsonElement> consumer) {
+		clearList.run();
+		value.getAsJsonArray().forEach(arrayValue -> {
+			try {
+				consumer.accept(arrayValue);
+			} catch (Exception ignored) {
+			}
+		});
+	}
+
+	private static void iterateMap(JsonElement value, BiConsumer<String, JsonElement> consumer) {
+		value.getAsJsonObject().asMap().forEach((mapKey, mapValue) -> {
+			try {
+				consumer.accept(mapKey, mapValue);
+			} catch (Exception ignored) {
+			}
+		});
 	}
 }

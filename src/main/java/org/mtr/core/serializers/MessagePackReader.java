@@ -46,7 +46,7 @@ public final class MessagePackReader extends ReaderBase {
 
 	@Override
 	public boolean getBoolean(String key, boolean defaultValue) {
-		return getOrDefault(key, defaultValue, this::getBoolean);
+		return getOrDefault(key, defaultValue, MessagePackReader::getBoolean);
 	}
 
 	@Override
@@ -61,7 +61,7 @@ public final class MessagePackReader extends ReaderBase {
 
 	@Override
 	public int getInt(String key, int defaultValue) {
-		return getOrDefault(key, defaultValue, this::getInt);
+		return getOrDefault(key, defaultValue, MessagePackReader::getInt);
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public final class MessagePackReader extends ReaderBase {
 
 	@Override
 	public long getLong(String key, long defaultValue) {
-		return getOrDefault(key, defaultValue, this::getLong);
+		return getOrDefault(key, defaultValue, MessagePackReader::getLong);
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public final class MessagePackReader extends ReaderBase {
 
 	@Override
 	public double getDouble(String key, double defaultValue) {
-		return getOrDefault(key, defaultValue, this::getDouble);
+		return getOrDefault(key, defaultValue, MessagePackReader::getDouble);
 	}
 
 	@Override
@@ -106,7 +106,7 @@ public final class MessagePackReader extends ReaderBase {
 
 	@Override
 	public String getString(String key, String defaultValue) {
-		return getOrDefault(key, defaultValue, this::getString);
+		return getOrDefault(key, defaultValue, MessagePackReader::getString);
 	}
 
 	@Override
@@ -136,40 +136,50 @@ public final class MessagePackReader extends ReaderBase {
 		}
 	}
 
-	private boolean getBoolean(Value value) {
-		return value.asBooleanValue().getBoolean();
-	}
-
-	private int getInt(Value value) {
-		return value.asIntegerValue().asInt();
-	}
-
-	private long getLong(Value value) {
-		return value.asIntegerValue().asLong();
-	}
-
-	private double getDouble(Value value) {
-		return value.asFloatValue().toDouble();
-	}
-
-	private String getString(Value value) {
-		return value.asStringValue().asString();
-	}
-
-	private void iterateArray(Value value, Runnable clearList, Consumer<Value> consumer) {
-		clearList.run();
-		value.asArrayValue().forEach(consumer);
-	}
-
-	private void iterateMap(Value value, BiConsumer<String, Value> consumer) {
-		value.asMapValue().entrySet().forEach(entry -> consumer.accept(getString(entry.getKey()), entry.getValue()));
-	}
-
 	private void unpack(String key, Consumer<Value> consumer) {
 		unpackValue(map.get(key), consumer);
 	}
 
 	private <T> T getOrDefault(String key, T defaultValue, Function<Value, T> function) {
 		return getValueOrDefault(map.get(key), defaultValue, function);
+	}
+
+	private static boolean getBoolean(Value value) {
+		return value.asBooleanValue().getBoolean();
+	}
+
+	private static int getInt(Value value) {
+		return value.asIntegerValue().asInt();
+	}
+
+	private static long getLong(Value value) {
+		return value.asIntegerValue().asLong();
+	}
+
+	private static double getDouble(Value value) {
+		return value.asFloatValue().toDouble();
+	}
+
+	private static String getString(Value value) {
+		return value.asStringValue().asString();
+	}
+
+	private static void iterateArray(Value value, Runnable clearList, Consumer<Value> consumer) {
+		clearList.run();
+		value.asArrayValue().forEach(arrayValue -> {
+			try {
+				consumer.accept(arrayValue);
+			} catch (Exception ignored) {
+			}
+		});
+	}
+
+	private static void iterateMap(Value value, BiConsumer<String, Value> consumer) {
+		value.asMapValue().entrySet().forEach(entry -> {
+			try {
+				consumer.accept(getString(entry.getKey()), entry.getValue());
+			} catch (Exception ignored) {
+			}
+		});
 	}
 }
