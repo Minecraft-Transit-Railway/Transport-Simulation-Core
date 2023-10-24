@@ -198,18 +198,22 @@ public class Vehicle extends VehicleSchema {
 			return;
 		}
 
-		final PathData currentPathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex - 1);
-		final PathData nextPathData = Utilities.getElement(vehicleExtraData.immutablePath, vehicleExtraData.getRepeatIndex2() > 0 && currentIndex >= vehicleExtraData.getRepeatIndex2() ? vehicleExtraData.getRepeatIndex1() : currentIndex);
-		final boolean isOpposite = currentPathData != null && nextPathData != null && currentPathData.isOppositeRail(nextPathData);
-		final double nextStartDistance = nextPathData == null ? 0 : nextPathData.getStartDistance();
-		final long totalDwellMillis = currentPathData == null ? 0 : currentPathData.getDwellTime();
-		final long doorCloseTime = Math.max(0, totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY);
-		final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions, elapsedDwellTime >= doorCloseTime, false) < 0;
-		vehicleExtraData.setStoppingPoint(railProgress);
+		final PathData pathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex);
+		if (pathData == null) {
+			return;
+		}
 
-		if (totalDwellMillis == 0) {
-			vehicleExtraData.closeDoors();
-		} else {
+		if (railProgress == pathData.getStartDistance()) {
+			// Stopped behind a node
+			final PathData currentPathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex - 1);
+			final PathData nextPathData = Utilities.getElement(vehicleExtraData.immutablePath, vehicleExtraData.getRepeatIndex2() > 0 && currentIndex >= vehicleExtraData.getRepeatIndex2() ? vehicleExtraData.getRepeatIndex1() : currentIndex);
+			final boolean isOpposite = currentPathData != null && nextPathData != null && currentPathData.isOppositeRail(nextPathData);
+			final double nextStartDistance = nextPathData == null ? 0 : nextPathData.getStartDistance();
+			final long totalDwellMillis = currentPathData == null ? 0 : currentPathData.getDwellTime();
+			final long doorCloseTime = Math.max(0, totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY);
+			final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions, elapsedDwellTime >= doorCloseTime, false) < 0;
+
+			vehicleExtraData.setStoppingPoint(railProgress);
 			stoppingCoolDown = 0;
 
 			if (Utilities.isBetween(elapsedDwellTime, DOOR_DELAY, doorCloseTime)) {
@@ -221,17 +225,22 @@ public class Vehicle extends VehicleSchema {
 			if (elapsedDwellTime + millisElapsed < doorCloseTime || railClear) {
 				elapsedDwellTime += millisElapsed;
 			}
-		}
 
-		if (elapsedDwellTime >= totalDwellMillis && railClear) {
-			if (currentPathData != null && Math.abs(currentPathData.getEndDistance() - railProgress) < 0.01) {
-				railProgress = nextStartDistance;
-				if (isOpposite) {
-					railProgress += vehicleExtraData.getTotalVehicleLength();
-					reversed = !reversed;
+			if (elapsedDwellTime >= totalDwellMillis && railClear) {
+				if (currentPathData != null && Math.abs(currentPathData.getEndDistance() - railProgress) < 0.01) {
+					railProgress = nextStartDistance;
+					if (isOpposite) {
+						railProgress += vehicleExtraData.getTotalVehicleLength();
+						reversed = !reversed;
+					}
 				}
+				startUp(departureIndex);
 			}
-			startUp(departureIndex);
+		} else {
+			// Stopped anywhere else
+			if (railBlockedDistance(currentIndex, railProgress, 0, vehiclePositions, true, false) < 0) {
+				startUp(departureIndex);
+			}
 		}
 	}
 
@@ -244,7 +253,11 @@ public class Vehicle extends VehicleSchema {
 		if (isClientside || stoppingCoolDown > 0) {
 			stoppingPoint = vehicleExtraData.getStoppingPoint();
 		} else if (railBlockedDistance < 0) {
-			stoppingPoint = vehicleExtraData.immutablePath.get(Math.min((int) nextStoppingIndex, vehicleExtraData.immutablePath.size() - 1)).getEndDistance();
+			if (nextStoppingIndex >= vehicleExtraData.immutablePath.size() - 1) {
+				stoppingPoint = vehicleExtraData.getTotalDistance() - (vehicleExtraData.getRailLength() - vehicleExtraData.getTotalVehicleLength()) / 2;
+			} else {
+				stoppingPoint = vehicleExtraData.immutablePath.get((int) nextStoppingIndex).getEndDistance();
+			}
 		} else {
 			stoppingPoint = railBlockedDistance + railProgress;
 			stoppingCoolDown = 1000;

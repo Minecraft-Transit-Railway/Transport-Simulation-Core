@@ -42,14 +42,19 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	public VehicleExtraData copy(int pathUpdateIndex) {
 		final VehicleExtraData newVehicleExtraData = new VehicleExtraData(new JsonReader(Utilities.getJsonObjectFromData(this)));
 		newVehicleExtraData.path.clear();
-		for (int i = pathUpdateIndex; i < path.size(); i++) {
-			final PathData pathData = path.get(i);
-			if (i == pathUpdateIndex || pathData.getStartDistance() <= stoppingPoint) {
-				newVehicleExtraData.path.add(pathData);
-			} else {
-				break;
+
+		if (!path.isEmpty()) {
+			newVehicleExtraData.path.add(path.get(0));
+			for (int i = pathUpdateIndex; i < path.size(); i++) {
+				final PathData pathData = path.get(i);
+				if (i == pathUpdateIndex || pathData.getStartDistance() <= stoppingPoint) {
+					newVehicleExtraData.path.add(pathData);
+				} else {
+					break;
+				}
 			}
 		}
+
 		return newVehicleExtraData;
 	}
 
