@@ -17,7 +17,6 @@ import javax.annotation.Nullable;
 
 public class Vehicle extends VehicleSchema {
 
-	private double doorValue;
 	/**
 	 * The amount of time to start up a vehicle again if blocked by a signal or another vehicle in front.
 	 */
@@ -31,8 +30,8 @@ public class Vehicle extends VehicleSchema {
 	 */
 	private final boolean isClientside;
 
-	public static final int DOOR_MOVE_TIME = 64;
-	private static final int DOOR_DELAY = 20;
+	public static final int DOOR_MOVE_TIME = 3200;
+	private static final int DOOR_DELAY = 1000;
 
 	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, boolean isClientside, TransportMode transportMode, Data data) {
 		super(transportMode, data);
@@ -118,7 +117,6 @@ public class Vehicle extends VehicleSchema {
 			simulateInDepot();
 		}
 
-		doorValue = Utilities.clamp(doorValue + (double) (millisElapsed * vehicleExtraData.getDoorMultiplier()) / DOOR_MOVE_TIME, 0, 1);
 		stoppingCoolDown = Math.max(0, stoppingCoolDown - millisElapsed);
 
 		if (vehiclePositions != null) {
@@ -203,6 +201,9 @@ public class Vehicle extends VehicleSchema {
 			return;
 		}
 
+		vehicleExtraData.setStoppingPoint(railProgress);
+		stoppingCoolDown = 0;
+
 		if (railProgress == pathData.getStartDistance()) {
 			// Stopped behind a node
 			final PathData currentPathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex - 1);
@@ -212,9 +213,6 @@ public class Vehicle extends VehicleSchema {
 			final long totalDwellMillis = currentPathData == null ? 0 : currentPathData.getDwellTime();
 			final long doorCloseTime = Math.max(0, totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY);
 			final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions, elapsedDwellTime >= doorCloseTime, false) < 0;
-
-			vehicleExtraData.setStoppingPoint(railProgress);
-			stoppingCoolDown = 0;
 
 			if (Utilities.isBetween(elapsedDwellTime, DOOR_DELAY, doorCloseTime)) {
 				vehicleExtraData.openDoors();
@@ -291,8 +289,8 @@ public class Vehicle extends VehicleSchema {
 		if (thisPathData.canAccelerate()) {
 			railSpeed = thisPathData.getSpeedLimitMetersPerMillisecond();
 		} else {
-			final PathData lastPathData = currentIndex > 0 ? vehicleExtraData.immutablePath.get(currentIndex - 1) : thisPathData;
-			railSpeed = Math.max(lastPathData.canAccelerate() ? lastPathData.getSpeedLimitMetersPerMillisecond() : transportMode.defaultSpeedMetersPerMillisecond, speed);
+			// TODO maybe use previous rail speed as the speed limit
+			railSpeed = Math.max(transportMode.defaultSpeedMetersPerMillisecond, speed);
 		}
 
 		return railSpeed;

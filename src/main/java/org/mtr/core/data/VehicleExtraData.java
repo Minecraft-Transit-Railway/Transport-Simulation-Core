@@ -43,9 +43,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		final VehicleExtraData newVehicleExtraData = new VehicleExtraData(new JsonReader(Utilities.getJsonObjectFromData(this)));
 		newVehicleExtraData.path.clear();
 
-		if (!path.isEmpty()) {
-			newVehicleExtraData.path.add(path.get(0));
-			for (int i = pathUpdateIndex; i < path.size(); i++) {
+		for (int i = pathUpdateIndex; i <= path.size(); i++) {
+			if (i == path.size() && !path.isEmpty()) {
+				newVehicleExtraData.path.add(0, path.get(0));
+			} else {
 				final PathData pathData = path.get(i);
 				if (i == pathUpdateIndex || pathData.getStartDistance() <= stoppingPoint) {
 					newVehicleExtraData.path.add(pathData);
@@ -142,6 +143,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return reversed ? vehicleCarsReversed : vehicleCarsForwards;
 	}
 
+	public int getDoorMultiplier() {
+		return doorTarget ? 1 : -1;
+	}
+
 	protected double getStoppingPoint() {
 		return stoppingPoint;
 	}
@@ -200,10 +205,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	protected void closeDoors() {
 		doorTarget = false;
-	}
-
-	protected int getDoorMultiplier() {
-		return doorTarget ? 1 : -1;
 	}
 
 	protected boolean checkForUpdate() {
