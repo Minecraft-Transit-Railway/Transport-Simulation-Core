@@ -17,8 +17,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	private boolean oldDoorTarget;
 
 	public final ObjectImmutableList<PathData> immutablePath;
-	private final ObjectImmutableList<VehicleCar> vehicleCarsForwards;
-	private final ObjectImmutableList<VehicleCar> vehicleCarsReversed;
+	public final ObjectImmutableList<VehicleCar> immutableVehicleCars;
 
 	private VehicleExtraData(double railLength, double totalVehicleLength, long repeatIndex1, long repeatIndex2, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double totalDistance, double defaultPosition, ObjectArrayList<VehicleCar> vehicleCars, ObjectArrayList<PathData> path) {
 		super(railLength, totalVehicleLength, repeatIndex1, repeatIndex2, acceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition);
@@ -27,16 +26,14 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		immutablePath = new ObjectImmutableList<>(path);
 		this.vehicleCars.clear();
 		this.vehicleCars.addAll(vehicleCars);
-		vehicleCarsForwards = new ObjectImmutableList<>(vehicleCars);
-		vehicleCarsReversed = getReversedVehicleCars(vehicleCars);
+		immutableVehicleCars = new ObjectImmutableList<>(vehicleCars);
 	}
 
 	public VehicleExtraData(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 		immutablePath = new ObjectImmutableList<>(path);
-		vehicleCarsForwards = new ObjectImmutableList<>(vehicleCars);
-		vehicleCarsReversed = getReversedVehicleCars(vehicleCars);
+		immutableVehicleCars = new ObjectImmutableList<>(vehicleCars);
 	}
 
 	public VehicleExtraData copy(int pathUpdateIndex) {
@@ -137,10 +134,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	public void iterateInterchanges(BiConsumer<String, InterchangeColorsForStationName> consumer) {
 		interchangeColorsForStationNameList.forEach(interchangeColorsForStationName -> consumer.accept(interchangeColorsForStationName.getStationName(), interchangeColorsForStationName));
-	}
-
-	public ObjectImmutableList<VehicleCar> getVehicleCars(boolean reversed) {
-		return reversed ? vehicleCarsReversed : vehicleCarsForwards;
 	}
 
 	public int getDoorMultiplier() {
