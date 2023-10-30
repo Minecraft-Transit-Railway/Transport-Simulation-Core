@@ -193,7 +193,7 @@ public interface TestUtilities {
 	}
 
 	static VehicleCar randomVehicleCar() {
-		return new VehicleCar(randomString(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble());
+		return new VehicleCar(randomString(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble());
 	}
 
 	static VehicleExtraData randomVehicleExtraData() {

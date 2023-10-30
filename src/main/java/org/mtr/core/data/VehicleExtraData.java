@@ -334,18 +334,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return route == null ? "" : route.getDestination(stopIndex);
 	}
 
-	private static ObjectImmutableList<VehicleCar> getReversedVehicleCars(ObjectArrayList<VehicleCar> vehicleCars) {
-		final ObjectArrayList<VehicleCar> reversedVehicleCars = new ObjectArrayList<>();
-		vehicleCars.forEach(vehicleCar -> reversedVehicleCars.add(0, new VehicleCar(
-				vehicleCar.getVehicleId(),
-				vehicleCar.getLength(),
-				vehicleCar.getWidth(),
-				-vehicleCar.getBogie2Position(),
-				-vehicleCar.getBogie1Position()
-		)));
-		return new ObjectImmutableList<>(reversedVehicleCars);
-	}
-
 	public static class VehiclePlatformRouteInfo {
 
 		private final Platform previousPlatform;

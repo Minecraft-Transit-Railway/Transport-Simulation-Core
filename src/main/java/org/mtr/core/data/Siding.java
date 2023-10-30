@@ -132,12 +132,13 @@ public final class Siding extends SidingSchema implements Utilities {
 	public void setVehicleCars(ObjectArrayList<VehicleCar> newVehicleCars) {
 		vehicleCars.clear();
 		double tempVehicleLength = 0;
-		for (final VehicleCar vehicleCar : newVehicleCars) {
-			if (tempVehicleLength + vehicleCar.getLength() > railLength) {
+		for (int i = 0; i < newVehicleCars.size(); i++) {
+			final VehicleCar vehicleCar = newVehicleCars.get(i);
+			if (tempVehicleLength + vehicleCar.getTotalLength(i == 0, true) > railLength) {
 				break;
 			}
 			vehicleCars.add(vehicleCar);
-			tempVehicleLength += vehicleCar.getLength();
+			tempVehicleLength += vehicleCar.getTotalLength(i == 0, i == newVehicleCars.size() - 1);
 			if (vehicleCars.size() >= transportMode.maxLength) {
 				break;
 			}
@@ -666,8 +667,8 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public static double getTotalVehicleLength(ObjectArrayList<VehicleCar> vehicleCars) {
 		double totalVehicleLength = 0;
-		for (final VehicleCar vehicleCar : vehicleCars) {
-			totalVehicleLength += vehicleCar.getLength();
+		for (int i = 0; i < vehicleCars.size(); i++) {
+			totalVehicleLength += vehicleCars.get(i).getTotalLength(i == 0, i == vehicleCars.size() - 1);
 		}
 		return totalVehicleLength;
 	}

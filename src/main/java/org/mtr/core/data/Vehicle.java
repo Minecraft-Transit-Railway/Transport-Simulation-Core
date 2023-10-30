@@ -55,6 +55,10 @@ public class Vehicle extends VehicleSchema {
 		return true;
 	}
 
+	public boolean isMoving() {
+		return speed != 0;
+	}
+
 	public boolean getIsOnRoute() {
 		return railProgress > vehicleExtraData.getDefaultPosition();
 	}
@@ -147,17 +151,18 @@ public class Vehicle extends VehicleSchema {
 		return departureIndex;
 	}
 
-	public void iterateVehicles(VehicleConsumer vehicleConsumer) {
+	public ObjectArrayList<ObjectObjectImmutablePair<VehicleCar, ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>>>> getVehicleCarsAndPositions() {
+		final ObjectArrayList<ObjectObjectImmutablePair<VehicleCar, ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>>>> vehicleCarsAndPositions = new ObjectArrayList<>();
 		double checkRailProgress = railProgress - (reversed ? vehicleExtraData.getTotalVehicleLength() : 0);
 
 		for (int i = 0; i < vehicleExtraData.immutableVehicleCars.size(); i++) {
 			final VehicleCar vehicleCar = vehicleExtraData.immutableVehicleCars.get(i);
-			final double length = vehicleCar.getLength();
-			final double halfLength = length / 2;
+			checkRailProgress += (reversed ? 1 : -1) * vehicleCar.getCouplingPadding1(i == 0);
+			final double halfLength = vehicleCar.getLength() / 2;
 			final ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>> bogiePositionsList = new ObjectArrayList<>();
 			final ObjectObjectImmutablePair<Vector, Vector> bogiePositions1 = getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie1Position()));
 			if (bogiePositions1 == null) {
-				return;
+				return new ObjectArrayList<>();
 			} else {
 				bogiePositionsList.add(bogiePositions1);
 			}
@@ -165,15 +170,17 @@ public class Vehicle extends VehicleSchema {
 			if (!vehicleCar.hasOneBogie) {
 				final ObjectObjectImmutablePair<Vector, Vector> bogiePositions2 = getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie2Position()));
 				if (bogiePositions2 == null) {
-					return;
+					return new ObjectArrayList<>();
 				} else {
 					bogiePositionsList.add(bogiePositions2);
 				}
 			}
 
-			vehicleConsumer.accept(vehicleCar, i, bogiePositionsList);
-			checkRailProgress += (reversed ? 1 : -1) * length;
+			vehicleCarsAndPositions.add(new ObjectObjectImmutablePair<>(vehicleCar, bogiePositionsList));
+			checkRailProgress += (reversed ? 1 : -1) * vehicleCar.getTotalLength(true, false);
 		}
+
+		return vehicleCarsAndPositions;
 	}
 
 	private void simulateInDepot() {
@@ -436,10 +443,5 @@ public class Vehicle extends VehicleSchema {
 		final double distanceFromStart = Utilities.clamp(lowerRailProgress, pathData.getStartDistance(), pathData.getEndDistance()) - pathData.getStartDistance();
 		final double distanceToEnd = pathData.getEndDistance() - Utilities.clamp(upperRailProgress, pathData.getStartDistance(), pathData.getEndDistance());
 		return new DoubleDoubleImmutablePair(pathData.reversePositions ? distanceToEnd : distanceFromStart, pathData.getEndDistance() - pathData.getStartDistance() - (pathData.reversePositions ? distanceFromStart : distanceToEnd));
-	}
-
-	@FunctionalInterface
-	public interface VehicleConsumer {
-		void accept(VehicleCar vehicleCar, int carNumber, ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>> bogiePositionsList);
 	}
 }

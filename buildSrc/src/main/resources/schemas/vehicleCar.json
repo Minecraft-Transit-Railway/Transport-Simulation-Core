@@ -22,17 +22,13 @@
 		"bogie2Position": {
 			"type": "number"
 		},
-		"doorLeftPositions": {
-			"type": "array",
-			"items": {
-				"type": "number"
-			}
+		"couplingPadding1": {
+			"type": "number",
+			"minimum": 0
 		},
-		"doorRightPositions": {
-			"type": "array",
-			"items": {
-				"type": "number"
-			}
+		"couplingPadding2": {
+			"type": "number",
+			"minimum": 0
 		}
 	},
 	"required": [
@@ -40,6 +36,8 @@
 		"length",
 		"width",
 		"bogie1Position",
-		"bogie2Position"
+		"bogie2Position",
+		"couplingPadding1",
+		"couplingPadding2"
 	]
 }

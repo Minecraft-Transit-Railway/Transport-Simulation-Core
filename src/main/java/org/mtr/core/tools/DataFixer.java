@@ -142,7 +142,7 @@ public class DataFixer {
 				final int trainWidth = Integer.parseInt(trainTypeSplit[trainTypeSplit.length - 1]);
 				final int trainCars = Math.min(transportMode.maxLength, (int) Math.floor(railLength / trainLength));
 				for (int i = 0; i < trainCars; i++) {
-					vehicleCars.add(new VehicleCar(trainId, trainLength, trainWidth, 0, 0));
+					vehicleCars.add(new VehicleCar(trainId, trainLength, trainWidth, 0, 0, 0, 0));
 				}
 			} catch (Exception ignored) {
 			}
