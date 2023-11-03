@@ -1,10 +1,7 @@
 package org.mtr.core;
 
 import org.mtr.core.generated.WebserverResources;
-import org.mtr.core.servlet.IntegrationServlet;
-import org.mtr.core.servlet.OBAServlet;
-import org.mtr.core.servlet.SocketHandler;
-import org.mtr.core.servlet.SystemMapServlet;
+import org.mtr.core.servlet.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tools.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -33,19 +30,16 @@ public class Main {
 	private final ScheduledExecutorService scheduledExecutorService;
 
 	public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
-	public static final long START_MILLIS = System.currentTimeMillis();
 	public static final int MILLISECONDS_PER_TICK = 10;
 
 	public static void main(String[] args) {
 		try {
 			int i = 0;
-			final int millisPerGameDay = Integer.parseInt(args[i++]);
-			final float startingGameDayPercentage = Float.parseFloat(args[i++]);
 			final Path rootPath = Paths.get(args[i++]);
 			final int webserverPort = Integer.parseInt(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(millisPerGameDay, startingGameDayPercentage, rootPath, webserverPort, dimensions);
+			final Main main = new Main(rootPath, webserverPort, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -53,17 +47,18 @@ public class Main {
 		}
 	}
 
-	public Main(int millisPerGameDay, float startingGameDayPercentage, Path rootPath, int webserverPort, String... dimensions) {
+	public Main(Path rootPath, int webserverPort, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
 		for (final String dimension : dimensions) {
-			tempSimulators.add(new Simulator(dimension, rootPath, millisPerGameDay, startingGameDayPercentage));
+			tempSimulators.add(new Simulator(dimension, rootPath));
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);
 		webserver = new Webserver(Main.class, WebserverResources::get, Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
 		new IntegrationServlet(webserver, "/mtr/api/data/*", simulators);
+		new MiscServlet(webserver, "/mtr/api/misc/*", simulators);
 		new SystemMapServlet(webserver, "/mtr/api/map/*", simulators);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
 		SocketHandler.register(webserver, simulators);
@@ -128,6 +123,6 @@ public class Main {
 
 	private static void printHelp() {
 		LOGGER.info("Usage:");
-		LOGGER.info("java -jar Transport-Simulation-Core.jar <millisPerGameDay> <currentGameDayPercentage> <rootPath> <webserverPort> <dimensions...>");
+		LOGGER.info("java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <dimensions...>");
 	}
 }

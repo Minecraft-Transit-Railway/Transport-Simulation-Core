@@ -19,9 +19,9 @@ public class Simulator extends Data implements Utilities {
 	private long currentMillis;
 	private boolean autoSave = false;
 	private String generateKey = null;
-
-	public final int millisPerGameDay;
-	public final float startingGameDayPercentage;
+	private long gameMillis;
+	private long gameMillisPerDay;
+	private long lastSetGameMillis;
 
 	public final ClientGroup clientGroup = new ClientGroup();
 
@@ -35,9 +35,9 @@ public class Simulator extends Data implements Utilities {
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
 
-	public Simulator(String dimension, Path rootPath, int millisPerGameDay, float startingGameDayPercentage) {
+	public Simulator(String dimension, Path rootPath) {
 		this.dimension = dimension;
-		this.millisPerGameDay = millisPerGameDay;
+		final long startMillis = System.currentTimeMillis();
 
 		final Path savePath = rootPath.resolve(dimension);
 		fileLoaderStations = new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations");
@@ -48,8 +48,7 @@ public class Simulator extends Data implements Utilities {
 		fileLoaderRails = new FileLoader<>(rails, Rail::new, savePath, "rails");
 
 		currentMillis = System.currentTimeMillis();
-		this.startingGameDayPercentage = (startingGameDayPercentage + (float) (currentMillis - Main.START_MILLIS) / millisPerGameDay) % startingGameDayPercentage;
-		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (currentMillis - Main.START_MILLIS) / 1000F));
+		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (float) (currentMillis - startMillis) / MILLIS_PER_SECOND));
 
 		sync();
 		depots.forEach(Depot::init);
@@ -125,6 +124,28 @@ public class Simulator extends Data implements Utilities {
 		} else {
 			return Utilities.circularDifference(millis, lastMillis, MILLIS_PER_DAY) > 0 ? 0 : -1;
 		}
+	}
+
+	/**
+	 * @param gameMillis       the number of real-time milliseconds since midnight of the in-game time
+	 * @param gameMillisPerDay the total number of real-time milliseconds of one in-game day
+	 */
+	public void setGameTime(long gameMillis, long gameMillisPerDay) {
+		this.gameMillis = gameMillis % gameMillisPerDay;
+		this.gameMillisPerDay = gameMillisPerDay;
+		lastSetGameMillis = currentMillis;
+		depots.forEach(Depot::generatePlatformDirectionsAndWriteDeparturesToSidings);
+	}
+
+	public long getGameMillisPerDay() {
+		return gameMillisPerDay;
+	}
+
+	/**
+	 * @return milliseconds after epoch of the first midnight in-game
+	 */
+	public long getMillisOfGameMidnight() {
+		return Math.max(0, lastSetGameMillis - lastSetGameMillis / gameMillisPerDay * gameMillisPerDay - gameMillis);
 	}
 
 	public void run(Runnable runnable) {

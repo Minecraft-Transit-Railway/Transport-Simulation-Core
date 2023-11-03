@@ -204,9 +204,9 @@ public final class Depot extends DepotSchema implements Utilities {
 	 * The first part generates platform directions (N, NE, etc.) for OBA data.
 	 * The second part reads from real-time departures and in-game frequencies and converts them to departures.
 	 * Each departure is mapped to a siding and siding time segments must be generated beforehand.
-	 * Should only be called during initialization (but after siding initialization) and after path generation of all sidings.
+	 * Should only be called during initialization (but after siding initialization), when setting world time, and after path generation of all sidings.
 	 */
-	private void generatePlatformDirectionsAndWriteDeparturesToSidings() {
+	public void generatePlatformDirectionsAndWriteDeparturesToSidings() {
 		final Long2ObjectOpenHashMap<Angle> platformDirections = new Long2ObjectOpenHashMap<>();
 
 		for (int i = 1; i < path.size(); i++) {
@@ -237,10 +237,10 @@ public final class Depot extends DepotSchema implements Utilities {
 		} else {
 			if (useRealTime) {
 				departures.addAll(realTimeDepartures);
-			} else {
-				final long offsetMillis = data instanceof Simulator ? Math.max(0, (long) (Main.START_MILLIS - Main.START_MILLIS / ((Simulator) data).millisPerGameDay * ((Simulator) data).millisPerGameDay - ((Simulator) data).startingGameDayPercentage * ((Simulator) data).millisPerGameDay)) : 0;
+			} else if (data instanceof Simulator && ((Simulator) data).getGameMillisPerDay() > 0) {
+				final Simulator simulator = (Simulator) data;
+				final long offsetMillis = simulator.getMillisOfGameMidnight();
 				final LongArrayList gameDepartures = new LongArrayList();
-				final float timeRatio = data instanceof Simulator ? (float) MILLIS_PER_DAY / ((Simulator) data).millisPerGameDay : 1;
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
 					if (getFrequency(i) == 0) {
@@ -254,7 +254,7 @@ public final class Depot extends DepotSchema implements Utilities {
 					while (true) {
 						final long newDeparture = Math.max(hourMinMillis, Utilities.getElement(gameDepartures, -1, Long.MIN_VALUE) + intervalMillis);
 						if (newDeparture < hourMaxMillis) {
-							departures.add(offsetMillis + Math.round(newDeparture / timeRatio));
+							departures.add(offsetMillis + newDeparture * simulator.getGameMillisPerDay() / MILLIS_PER_DAY);
 							gameDepartures.add(newDeparture);
 						} else {
 							break;

@@ -374,7 +374,7 @@ public final class Siding extends SidingSchema implements Utilities {
 					arrivalAndDepartureObject.addProperty("tripHeadsign", stopTime.customDestination);
 					arrivalAndDepartureObject.addProperty("tripId", tripId);
 					arrivalAndDepartureObject.add("tripStatus", vehicleStatusWithDeviation.left());
-					arrivalAndDepartureObject.addProperty("vehicleId", vehicleCars.isEmpty() ? "" : vehicleCars.get(0).getVehicleId());
+					arrivalAndDepartureObject.addProperty("vehicleId", getOBAVehicleId(departureIndex));
 					arrivalsAndDeparturesArray.add(arrivalAndDepartureObject);
 
 					if (!addedTripIds.contains(tripId)) {
@@ -414,7 +414,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		} else {
 			final long timeAlongRoute = vehicleTimesAlongRoute.getOrDefault(departureIndex, -1);
 			predicted = timeAlongRoute >= 0;
-			deviation = predicted ? Utilities.circularDifference(currentMillis + stopTime.startTime - timeAlongRoute, stopTime.startTime, getRepeatInterval(MILLIS_PER_DAY)) : 0;
+			deviation = predicted ? Utilities.circularDifference(currentMillis - getRepeatInterval(MILLIS_PER_DAY) * departureOffset - departures.getLong(departureIndex), timeAlongRoute, getRepeatInterval(MILLIS_PER_DAY)) : 0;
 		}
 
 		final JsonObject positionObject = new JsonObject();
@@ -447,7 +447,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		tripStatusObject.add("situationIds", new JsonArray());
 		tripStatusObject.addProperty("status", "default");
 		tripStatusObject.addProperty("totalDistanceAlongTrip", 0);
-		tripStatusObject.addProperty("vehicleId", vehicleCars.isEmpty() ? "" : vehicleCars.get(0).getVehicleId());
+		tripStatusObject.addProperty("vehicleId", getOBAVehicleId(departureIndex));
 
 		return new ObjectObjectImmutablePair<>(tripStatusObject, new BooleanLongImmutablePair(predicted, deviation));
 	}
@@ -501,7 +501,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		if (area == null) {
 			return defaultAmount;
 		} else {
-			return transportMode.continuousMovement ? Depot.CONTINUOUS_MOVEMENT_FREQUENCY : area.getRepeatInfinitely() ? Math.round(timeOffsetForRepeating) : data instanceof Simulator && !area.getUseRealTime() ? ((Simulator) data).millisPerGameDay : defaultAmount;
+			return transportMode.continuousMovement ? Depot.CONTINUOUS_MOVEMENT_FREQUENCY : area.getRepeatInfinitely() ? Math.round(timeOffsetForRepeating) : data instanceof Simulator && !area.getUseRealTime() ? ((Simulator) data).getGameMillisPerDay() : defaultAmount;
 		}
 	}
 
@@ -515,6 +515,19 @@ public final class Siding extends SidingSchema implements Utilities {
 				area.finishGeneratingPath(id);
 			}
 		}
+	}
+
+	private String getOBAVehicleId(int departureIndex) {
+		final ObjectArrayList<String> vehicleIds = new ObjectArrayList<>();
+		vehicleCars.forEach(vehicleCar -> {
+			final String vehicleId = vehicleCar.getVehicleId();
+			final int index = vehicleId.lastIndexOf("_");
+			final String trimmedVehicleId = index < 0 ? vehicleId : vehicleId.substring(0, index);
+			if (!vehicleIds.contains(trimmedVehicleId)) {
+				vehicleIds.add(trimmedVehicleId);
+			}
+		});
+		return vehicleIds.isEmpty() ? "" : String.format("%s_%s", String.join("_", vehicleIds), departureIndex);
 	}
 
 	/**
