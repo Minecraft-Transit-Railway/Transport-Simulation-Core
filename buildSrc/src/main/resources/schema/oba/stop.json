@@ -1,0 +1,58 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"id": {
+			"type": "string"
+		},
+		"code": {
+			"type": "string"
+		},
+		"name": {
+			"type": "string"
+		},
+		"description": {
+			"type": "string"
+		},
+		"lat": {
+			"type": "number"
+		},
+		"lon": {
+			"type": "number"
+		},
+		"url": {
+			"type": "string"
+		},
+		"locationType": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"wheelchairBoarding": {
+			"$ref": "WheelchairBoarding"
+		},
+		"direction": {
+			"$ref": "StopDirection"
+		},
+		"routeIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"required": [
+		"id",
+		"code",
+		"name",
+		"description",
+		"lat",
+		"lon",
+		"url",
+		"locationType",
+		"wheelchairBoarding",
+		"direction"
+	]
+}

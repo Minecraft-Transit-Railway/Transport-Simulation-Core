@@ -1,6 +1,6 @@
 package org.mtr.core.data;
 
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.tool.Utilities;
 
 public enum TransportMode {
 	TRAIN(Integer.MAX_VALUE, false, true, true, true, 8, 0),

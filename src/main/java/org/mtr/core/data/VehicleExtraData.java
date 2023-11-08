@@ -1,9 +1,9 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.VehicleExtraDataSchema;
-import org.mtr.core.serializers.JsonReader;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.generated.data.VehicleExtraDataSchema;
+import org.mtr.core.serializer.JsonReader;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 

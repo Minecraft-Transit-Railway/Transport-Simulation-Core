@@ -1,11 +1,11 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.PathDataSchema;
-import org.mtr.core.serializers.MessagePackReader;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Vector;
+import org.mtr.core.generated.data.PathDataSchema;
+import org.mtr.core.serializer.MessagePackReader;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.tool.Angle;
+import org.mtr.core.tool.ConditionalList;
+import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 

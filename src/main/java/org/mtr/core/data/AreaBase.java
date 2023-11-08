@@ -1,10 +1,9 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.AreaBaseSchema;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.DataFixer;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.generated.data.AreaBaseSchema;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.tool.DataFixer;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 
 import javax.annotation.Nullable;

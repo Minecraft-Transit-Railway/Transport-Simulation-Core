@@ -1,14 +1,15 @@
 package org.mtr.core.data;
 
 import org.mtr.core.Main;
-import org.mtr.core.generated.DepotSchema;
+import org.mtr.core.generated.data.DepotSchema;
+import org.mtr.core.integration.Integration;
 import org.mtr.core.path.SidingPathFinder;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.serializers.WriterBase;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.serializer.WriterBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.DataFixer;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.tool.Angle;
+import org.mtr.core.tool.DataFixer;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -42,6 +43,14 @@ public final class Depot extends DepotSchema implements Utilities {
 		readerBase.iterateReaderArray(KEY_PATH, path::clear, readerBaseChild -> path.add(new PathData(readerBaseChild)));
 		updateData(readerBase);
 		DataFixer.unpackDepotDepartures(readerBase, realTimeDepartures);
+	}
+
+	/**
+	 * @deprecated for {@link Integration} use only
+	 */
+	@Deprecated
+	public Depot(ReaderBase readerBase) {
+		this(readerBase, new Data());
 	}
 
 	@Override

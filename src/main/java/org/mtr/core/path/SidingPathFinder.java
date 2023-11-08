@@ -1,9 +1,8 @@
 package org.mtr.core.path;
 
 import org.mtr.core.data.*;
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.tool.Angle;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;

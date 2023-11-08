@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"timeZone": {
+			"type": "string"
+		},
+		"stopTimes": {
+			"type": "array",
+			"items": {
+				"$ref": "stopTime.json"
+			}
+		},
+		"previousTripId": {
+			"type": "string"
+		},
+		"nextTripId": {
+			"type": "string"
+		},
+		"frequency": {
+			"$ref": "frequency.json"
+		}
+	},
+	"required": [
+		"timeZone",
+		"previousTripId",
+		"nextTripId"
+	]
+}

@@ -8,16 +8,16 @@ import org.mtr.webserver.Webserver;
 
 import javax.annotation.Nullable;
 
-public class OBAServlet extends ServletBase {
+public class OBAServlet extends ServletBase<Object> {
 
 	public OBAServlet(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
-		super(webserver, path, simulators);
+		super(webserver, path, jsonReader -> new Object(), simulators);
 	}
 
 	@Nullable
 	@Override
-	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
-		final OBAResponse obaResponse = new OBAResponse(data, parameters, bodyObject, currentMillis, simulator);
+	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, Object body, long currentMillis, Simulator simulator) {
+		final OBAResponse obaResponse = new OBAResponse(data, parameters, body, currentMillis, simulator);
 		switch (endpoint) {
 			case "agencies-with-coverage":
 				return obaResponse.getAgenciesWithCoverage();

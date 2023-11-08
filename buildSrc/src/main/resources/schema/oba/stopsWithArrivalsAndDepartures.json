@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"stopIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"arrivalsAndDepartures": {
+			"type": "array",
+			"items": {
+				"$ref": "arrivalAndDeparture.json"
+			}
+		},
+		"nearbyStopIds": {
+			"type": "array",
+			"items": {
+				"$ref": "stopWithDistance.json"
+			}
+		},
+		"limitedExceeded": {
+			"type": "boolean"
+		}
+	},
+	"required": [
+		"limitExceeded"
+	]
+}

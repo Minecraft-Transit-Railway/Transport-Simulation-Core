@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"gameMillis": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"millisPerDay": {
+			"type": "integer",
+			"minimum": 0
+		}
+	},
+	"required": [
+		"gameMillis",
+		"millisPerDay"
+	]
+}

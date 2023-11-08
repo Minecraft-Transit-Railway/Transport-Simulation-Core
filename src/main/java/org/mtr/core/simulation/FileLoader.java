@@ -1,9 +1,9 @@
 package org.mtr.core.simulation;
 
 import org.mtr.core.Main;
-import org.mtr.core.data.SerializedDataBaseWithId;
-import org.mtr.core.serializers.MessagePackReader;
-import org.mtr.core.serializers.MessagePackWriter;
+import org.mtr.core.serializer.MessagePackReader;
+import org.mtr.core.serializer.MessagePackWriter;
+import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;

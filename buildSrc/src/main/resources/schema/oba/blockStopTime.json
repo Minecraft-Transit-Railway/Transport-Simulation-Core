@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"blockSequence": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"distanceAlongBlock": {
+			"type": "number",
+			"minimum": 0
+		},
+		"accumulatedSlackTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"stopTime": {
+			"$ref": "stopTime.json"
+		}
+	},
+	"required": [
+		"blockSequence",
+		"distanceAlongBlock",
+		"accumulatedSlackTime",
+		"stopTime"
+	]
+}

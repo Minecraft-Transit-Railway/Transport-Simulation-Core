@@ -1,60 +1,37 @@
 package org.mtr.core.servlet;
 
 import org.mtr.core.data.Platform;
-import org.mtr.core.data.Route;
 import org.mtr.core.data.Siding;
+import org.mtr.core.oba.*;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tools.LatLon;
-import org.mtr.core.tools.Utilities;
-import org.mtr.libraries.com.google.gson.JsonArray;
+import org.mtr.core.tool.LatLon;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArraySet;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArraySet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 
-import javax.annotation.Nullable;
-import java.util.TimeZone;
-
-public class OBAResponse extends ResponseBase {
+public class OBAResponse extends ResponseBase<Object> {
 
 	private final boolean includeReferences;
 
-	private static final JsonObject AGENCY = new JsonObject();
+	private static final Agency AGENCY = new Agency();
 
-	static {
-		AGENCY.addProperty("disclaimer", "");
-		AGENCY.addProperty("email", "");
-		AGENCY.addProperty("fareUrl", "");
-		AGENCY.addProperty("id", "1");
-		AGENCY.addProperty("lang", "en");
-		AGENCY.addProperty("name", "My Agency");
-		AGENCY.addProperty("phone", "");
-		AGENCY.addProperty("privateService", false);
-		AGENCY.addProperty("timezone", TimeZone.getDefault().getID());
-		AGENCY.addProperty("url", "https://github.com/jonafanho/Transport-Simulation-Core");
-	}
-
-	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
-		super(data, parameters, bodyObject, currentMillis, simulator);
+	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, Object body, long currentMillis, Simulator simulator) {
+		super(data, parameters, body, currentMillis, simulator);
 		includeReferences = !("false".equals(parameters.get("includeReferences")));
 	}
 
 	public JsonObject getAgenciesWithCoverage() {
-		final JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("agencyId", "1");
-		jsonObject.addProperty("lat", 0);
-		jsonObject.addProperty("latSpan", LatLon.MAX_LAT * 2);
-		jsonObject.addProperty("lon", 0);
-		jsonObject.addProperty("lonSpan", LatLon.MAX_LON * 2);
-
-		final JsonArray jsonArray = new JsonArray();
-		jsonArray.add(jsonObject);
-		return getListElement(jsonArray, false, null, null, null);
+		final ListElement<AgencyWithCoverage> listElement = ListElement.create(includeReferences, AGENCY);
+		listElement.add(new AgencyWithCoverage());
+		return listElement.toJson(simulator);
 	}
 
 	public JsonObject getAgency() {
 		if (data.equals("1")) {
-			return getSingleElement(AGENCY, null, null, null);
+			final SingleElement<Agency> singleElement = SingleElement.create(includeReferences, AGENCY);
+			singleElement.set(AGENCY);
+			return singleElement.toJson(simulator);
 		} else {
 			return null;
 		}
@@ -64,39 +41,33 @@ public class OBAResponse extends ResponseBase {
 		try {
 			final long platformId = Long.parseUnsignedLong(data, 16);
 			final Platform platform = simulator.platformIdMap.get(platformId);
+			final SingleElement<StopWithArrivalsAndDepartures> singleElement = SingleElement.create(includeReferences, AGENCY);
+			final StopWithArrivalsAndDepartures stopWithArrivalsAndDepartures = new StopWithArrivalsAndDepartures(platform.getHexId());
+			singleElement.set(stopWithArrivalsAndDepartures);
+			singleElement.addStop(platformId);
 
-			final LongArraySet platformIdsUsed = new LongArraySet();
-			platformIdsUsed.add(platformId);
-
-			final JsonArray nearbyPlatformsArray = new JsonArray();
 			if (platform.area != null) {
 				platform.area.savedRails.forEach(nearbyPlatform -> {
 					if (nearbyPlatform.getId() != platformId) {
-						nearbyPlatformsArray.add(nearbyPlatform.getHexId());
-						platformIdsUsed.add(nearbyPlatform.getId());
+						singleElement.addStop(nearbyPlatform.getId());
+						stopWithArrivalsAndDepartures.add(nearbyPlatform.getHexId());
 					}
 				});
 			}
 
-			final JsonArray arrivalsAndDeparturesArray = new JsonArray();
-			final JsonArray tripsUsedArray = new JsonArray();
 			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> siding.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
+					singleElement,
+					stopWithArrivalsAndDepartures,
 					currentMillis,
 					platform,
 					Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
-					Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000,
-					arrivalsAndDeparturesArray,
-					tripsUsedArray
+					Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000
 			))));
 
-			final JsonObject jsonObject = new JsonObject();
-			jsonObject.add("arrivalsAndDepartures", arrivalsAndDeparturesArray);
-			jsonObject.add("nearbyStopIds", nearbyPlatformsArray);
-			jsonObject.add("situationIds", new JsonArray());
-			jsonObject.addProperty("stopId", data);
-			return getSingleElement(jsonObject, new IntArraySet(), platformIdsUsed, tripsUsedArray);
+			return singleElement.toJson(simulator);
 		} catch (Exception ignored) {
 		}
+
 		return null;
 	}
 
@@ -104,7 +75,7 @@ public class OBAResponse extends ResponseBase {
 		final LatLon latLon = getLatLonParameter();
 
 		if (latLon == null) {
-			return getListElement(new JsonArray(), false, null, null, null);
+			return ListElement.create(includeReferences, AGENCY).toJson(simulator);
 		} else {
 			final double latSpan;
 			final double lonSpan;
@@ -118,37 +89,35 @@ public class OBAResponse extends ResponseBase {
 				lonSpan = LatLon.metersToLon(radius) / 2;
 			}
 
-			final JsonArray jsonArray = new JsonArray();
-			final IntArraySet colorsUsed = new IntArraySet();
-			int count = 0;
+			final ListElement<Stop> listElement = ListElement.create(includeReferences, AGENCY);
 			for (final Platform platform : simulator.platforms) {
 				final LatLon platformLatLon = new LatLon(platform.getMidPosition());
 				if (Utilities.isBetween(platformLatLon.lat - latLon.lat, -latSpan, latSpan) && Utilities.isBetween(platformLatLon.lon - latLon.lon, -lonSpan, lonSpan) && !platform.routeColors.isEmpty()) {
-					jsonArray.add(platform.getOBAStopElement(colorsUsed));
-					count++;
-					if (count == 100) {
+					final IntAVLTreeSet colorsUsed = new IntAVLTreeSet();
+					if (listElement.add(platform.getOBAStopElement(colorsUsed))) {
+						colorsUsed.forEach(listElement::addRoute);
+					} else {
 						break;
 					}
 				}
 			}
 
-			return getListElement(jsonArray, count == 100, colorsUsed, null, null);
+			return listElement.toJson(simulator);
 		}
 	}
 
 	public JsonObject getTripDetails() {
 		final String[] tripIdSplit = data.split("_");
-		try {
-			if (tripIdSplit.length == 4) {
+		if (tripIdSplit.length == 4) {
+			try {
 				final Siding siding = simulator.sidingIdMap.get(Long.parseUnsignedLong(tripIdSplit[0], 16));
 				if (siding != null) {
-					final LongArraySet platformIdsUsed = new LongArraySet();
-					final JsonArray tripsUsedArray = new JsonArray();
-					final JsonObject tripDetailsObject = siding.getOBATripDetailsWithDataUsed(currentMillis, Integer.parseInt(tripIdSplit[1]), Integer.parseInt(tripIdSplit[2]), Long.parseLong(tripIdSplit[3]), platformIdsUsed, tripsUsedArray);
-					return tripDetailsObject == null ? null : getSingleElement(tripDetailsObject, new IntArraySet(), platformIdsUsed, tripsUsedArray);
+					final SingleElement<TripDetails> singleElement = SingleElement.create(includeReferences, AGENCY);
+					siding.getOBATripDetailsWithDataUsed(singleElement, currentMillis, Integer.parseInt(tripIdSplit[1]), Integer.parseInt(tripIdSplit[2]), Long.parseLong(tripIdSplit[3]));
+					return singleElement.toJson(simulator);
 				}
+			} catch (Exception ignored) {
 			}
-		} catch (Exception ignored) {
 		}
 		return null;
 	}
@@ -171,59 +140,5 @@ public class OBAResponse extends ResponseBase {
 
 	private boolean containsParameter(String name) {
 		return parameters.get(name) != null;
-	}
-
-	private JsonObject getReferences(@Nullable IntArraySet colorsUsed, @Nullable LongArraySet platformIdsUsed, @Nullable JsonArray tripsUsed) {
-		final JsonArray agenciesArray = new JsonArray();
-		if (includeReferences) {
-			agenciesArray.add(AGENCY);
-		}
-
-		final JsonArray stopsArray = new JsonArray();
-		if (includeReferences && platformIdsUsed != null && colorsUsed != null) {
-			platformIdsUsed.forEach(platformId -> {
-				final Platform platform = simulator.platformIdMap.get(platformId);
-				if (platform != null) {
-					stopsArray.add(platform.getOBAStopElement(colorsUsed));
-				}
-			});
-		}
-
-		final JsonArray routesArray = new JsonArray();
-		if (includeReferences && colorsUsed != null) {
-			colorsUsed.forEach(color -> {
-				for (final Route route : simulator.routes) {
-					if (route.getColor() == color) {
-						routesArray.add(route.getOBARouteElement());
-						break;
-					}
-				}
-			});
-		}
-
-		final JsonObject jsonObject = new JsonObject();
-		jsonObject.add("agencies", agenciesArray);
-		jsonObject.add("routes", routesArray);
-		jsonObject.add("situations", new JsonArray());
-		jsonObject.add("stopTimes", new JsonArray());
-		jsonObject.add("stops", stopsArray);
-		jsonObject.add("trips", tripsUsed == null ? new JsonArray() : tripsUsed);
-		return jsonObject;
-	}
-
-	private JsonObject getSingleElement(JsonObject entryObject, @Nullable IntArraySet colorsUsed, @Nullable LongArraySet platformIdsUsed, @Nullable JsonArray tripsUsed) {
-		final JsonObject jsonObject = new JsonObject();
-		jsonObject.add("entry", entryObject);
-		jsonObject.add("references", getReferences(colorsUsed, platformIdsUsed, tripsUsed));
-		return jsonObject;
-	}
-
-	private JsonObject getListElement(JsonArray listArray, boolean limitExceeded, @Nullable IntArraySet colorsUsed, @Nullable LongArraySet platformIdsUsed, @Nullable JsonArray tripsUsed) {
-		final JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("limitExceeded", limitExceeded);
-		jsonObject.add("list", listArray);
-		jsonObject.addProperty("outOfRange", false);
-		jsonObject.add("references", getReferences(colorsUsed, platformIdsUsed, tripsUsed));
-		return jsonObject;
 	}
 }

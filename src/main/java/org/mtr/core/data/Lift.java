@@ -1,8 +1,8 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.LiftSchema;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.Angle;
+import org.mtr.core.generated.data.LiftSchema;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.tool.Angle;
 
 public final class Lift extends LiftSchema {
 

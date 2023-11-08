@@ -1,8 +1,9 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.StationSchema;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.DataFixer;
+import org.mtr.core.generated.data.StationSchema;
+import org.mtr.core.integration.Integration;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.tool.DataFixer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
@@ -23,6 +24,14 @@ public final class Station extends StationSchema {
 	public Station(ReaderBase readerBase, Data data) {
 		super(DataFixer.convertStation(readerBase), data);
 		updateData(readerBase);
+	}
+
+	/**
+	 * @deprecated for {@link Integration} use only
+	 */
+	@Deprecated
+	public Station(ReaderBase readerBase) {
+		this(readerBase, new Data());
 	}
 
 	public long getZone1() {

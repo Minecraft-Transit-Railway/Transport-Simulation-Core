@@ -1,0 +1,19 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"references": {
+			"$ref": "references.json"
+		},
+		"time": {
+			"$ref": "time.json"
+		}
+	},
+	"required": [
+		"references",
+		"time"
+	]
+}

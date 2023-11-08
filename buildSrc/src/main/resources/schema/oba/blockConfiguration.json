@@ -1,0 +1,27 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"activeServiceIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"inactiveServiceIds": {
+			"type": "array",
+			"items": {
+				"$ref": "blockTrip.json"
+			}
+		},
+		"trips": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	}
+}

@@ -1,0 +1,123 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"routeId": {
+			"type": "string"
+		},
+		"tripId": {
+			"type": "string"
+		},
+		"serviceDate": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"stopId": {
+			"type": "string"
+		},
+		"stopSequence": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"totalStopsInTrip": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"blockTripSequence": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"routeShortName": {
+			"type": "string"
+		},
+		"routeLongName": {
+			"type": "string"
+		},
+		"tripHeadsign": {
+			"type": "string"
+		},
+		"arrivalEnabled": {
+			"type": "boolean"
+		},
+		"departureEnabled": {
+			"type": "boolean"
+		},
+		"scheduledArrivalTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"scheduledDepartureTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"frequency": {
+			"$ref": "frequency.json"
+		},
+		"predicted": {
+			"type": "boolean"
+		},
+		"predictedArrivalTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"predictedDepartureTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"distanceFromStop": {
+			"type": "number"
+		},
+		"historicalOccupancy": {
+			"$ref": "OccupancyStatus"
+		},
+		"numberOfStopsAway": {
+			"type": "integer"
+		},
+		"occupancyStatus": {
+			"$ref": "OccupancyStatus"
+		},
+		"situationIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"status": {
+			"type": "string"
+		},
+		"tripStatus": {
+			"$ref": "tripStatus.json"
+		},
+		"vehicleId": {
+			"type": "string"
+		}
+	},
+	"required": [
+		"routeId",
+		"tripId",
+		"serviceDate",
+		"stopId",
+		"stopSequence",
+		"totalStopsInTrip",
+		"blockTripSequence",
+		"routeShortName",
+		"routeLongName",
+		"tripHeadsign",
+		"arrivalEnabled",
+		"departureEnabled",
+		"scheduledArrivalTime",
+		"scheduledDepartureTime",
+		"predicted",
+		"predictedArrivalTime",
+		"predictedDepartureTime",
+		"distanceFromStop",
+		"historicalOccupancy",
+		"occupancyStatus",
+		"numberOfStopsAway",
+		"status",
+		"vehicleId"
+	]
+}

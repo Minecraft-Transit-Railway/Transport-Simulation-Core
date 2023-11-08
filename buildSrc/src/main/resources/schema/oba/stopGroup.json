@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"id": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"name": {
+			"$ref": "name.json"
+		},
+		"stopIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"polylines": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"required": [
+		"id",
+		"name"
+	]
+}

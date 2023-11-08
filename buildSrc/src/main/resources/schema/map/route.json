@@ -1,0 +1,37 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"name": {
+			"type": "string"
+		},
+		"color": {
+			"type": "string"
+		},
+		"number": {
+			"type": "string"
+		},
+		"type": {
+			"type": "string"
+		},
+		"circularState": {
+			"$ref": "org.mtr.core.data.Route.CircularState"
+		},
+		"stations": {
+			"type": "array",
+			"items": {
+				"$ref": "routeStation.json"
+			}
+		}
+	},
+	"required": [
+		"name",
+		"color",
+		"number",
+		"type",
+		"circularState"
+	]
+}

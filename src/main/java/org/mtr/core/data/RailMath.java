@@ -1,9 +1,8 @@
 package org.mtr.core.data;
 
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
-import org.mtr.core.tools.Vector;
+import org.mtr.core.tool.Angle;
+import org.mtr.core.tool.Utilities;
+import org.mtr.core.tool.Vector;
 
 public class RailMath {
 

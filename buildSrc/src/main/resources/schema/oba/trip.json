@@ -1,0 +1,52 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"routeId": {
+			"type": "string"
+		},
+		"serviceId": {
+			"type": "string"
+		},
+		"id": {
+			"type": "string"
+		},
+		"tripHeadsign": {
+			"type": "string"
+		},
+		"tripShortName": {
+			"type": "string"
+		},
+		"directionId": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"blockId": {
+			"type": "string"
+		},
+		"shapeId": {
+			"type": "string"
+		},
+		"routeShortName": {
+			"type": "string"
+		},
+		"timeZone": {
+			"type": "string"
+		}
+	},
+	"required": [
+		"routeId",
+		"serviceId",
+		"id",
+		"tripHeadsign",
+		"tripShortName",
+		"directionId",
+		"blockId",
+		"shapeId",
+		"routeShortName",
+		"timeZone"
+	]
+}

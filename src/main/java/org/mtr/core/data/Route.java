@@ -1,10 +1,10 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.RouteSchema;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.DataFixer;
-import org.mtr.core.tools.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.core.generated.data.RouteSchema;
+import org.mtr.core.integration.Integration;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.tool.DataFixer;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Locale;
@@ -20,6 +20,14 @@ public final class Route extends RouteSchema {
 	public Route(ReaderBase readerBase, Data data) {
 		super(DataFixer.convertRoute(readerBase), data);
 		updateData(readerBase);
+	}
+
+	/**
+	 * @deprecated for {@link Integration} use only
+	 */
+	@Deprecated
+	public Route(ReaderBase readerBase) {
+		this(readerBase, new Data());
 	}
 
 	@Override
@@ -99,18 +107,8 @@ public final class Route extends RouteSchema {
 		this.routeType = routeType;
 	}
 
-	public JsonObject getOBARouteElement() {
-		final JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("agencyId", "1");
-		jsonObject.addProperty("color", getColorHex());
-		jsonObject.addProperty("description", Utilities.formatName(name));
-		jsonObject.addProperty("id", getColorHex());
-		jsonObject.addProperty("longName", Utilities.formatName(name));
-		jsonObject.addProperty("shortName", Utilities.formatName(routeNumber));
-		jsonObject.addProperty("textColor", "");
-		jsonObject.addProperty("type", getGtfsType());
-		jsonObject.addProperty("url", "");
-		return jsonObject;
+	public org.mtr.core.oba.Route getOBARouteElement() {
+		return new org.mtr.core.oba.Route(getColorHex(), Utilities.formatName(routeNumber), Utilities.formatName(name), Utilities.formatName(name), getGtfsType(), getColorHex());
 	}
 
 	public static boolean destinationIsReset(String destination) {

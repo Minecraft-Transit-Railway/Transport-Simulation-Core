@@ -1,11 +1,10 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.VehicleSchema;
-import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.generated.data.VehicleSchema;
+import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
-import org.mtr.core.tools.Vector;
+import org.mtr.core.tool.Utilities;
+import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;

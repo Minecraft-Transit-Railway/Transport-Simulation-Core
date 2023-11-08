@@ -1,7 +1,7 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.VehicleCarSchema;
-import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.generated.data.VehicleCarSchema;
+import org.mtr.core.serializer.ReaderBase;
 
 public final class VehicleCar extends VehicleCarSchema {
 

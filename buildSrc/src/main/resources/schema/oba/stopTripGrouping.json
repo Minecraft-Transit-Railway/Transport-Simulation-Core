@@ -1,0 +1,38 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"directionId": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"tripHeadsign": {
+			"type": "string"
+		},
+		"stopIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"tripIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"tripsWithStopTimes": {
+			"type": "array",
+			"items": {
+				"$ref": "tripWithStopTimes.json"
+			}
+		}
+	},
+	"required": [
+		"directionId",
+		"tripHeadsign"
+	]
+}

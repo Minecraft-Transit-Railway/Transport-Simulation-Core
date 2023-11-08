@@ -1,11 +1,11 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.RailSchema;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.Angle;
-import org.mtr.core.tools.DataFixer;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.generated.data.RailSchema;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.serializer.SerializedDataBaseWithId;
+import org.mtr.core.tool.Angle;
+import org.mtr.core.tool.DataFixer;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

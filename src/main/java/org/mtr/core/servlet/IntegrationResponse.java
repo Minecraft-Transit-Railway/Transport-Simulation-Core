@@ -2,32 +2,31 @@ package org.mtr.core.servlet;
 
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
-import org.mtr.core.serializers.JsonReader;
+import org.mtr.core.integration.Integration;
+import org.mtr.core.serializer.JsonReader;
+import org.mtr.core.serializer.JsonWriter;
+import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
-import org.mtr.libraries.com.google.gson.JsonArray;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
-import java.util.function.Consumer;
 
-public class IntegrationResponse extends ResponseBase {
+public final class IntegrationResponse extends ResponseBase<Integration> {
 
-	public IntegrationResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator) {
-		super(data, parameters, bodyObject, currentMillis, simulator);
+	public IntegrationResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, Integration body, long currentMillis, Simulator simulator) {
+		super(data, parameters, body, currentMillis, simulator);
 	}
 
-	public JsonObject update() {
+	public Integration update() {
 		return parseBody(IntegrationResponse::update, PositionCallback.EMPTY, (signalModification, railsToUpdate, positionsToUpdate) -> signalModification.applyModificationToRail(simulator, railsToUpdate, positionsToUpdate), true);
 	}
 
-	public JsonObject get() {
+	public Integration get() {
 		return parseBody(IntegrationResponse::get, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
-	public JsonObject delete() {
+	public Integration delete() {
 		return parseBody(IntegrationResponse::delete, (position, railsToUpdate, positionsToUpdate) -> simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).forEach((connectedPosition, rail) -> {
 			simulator.rails.remove(rail);
 			railsToUpdate.add(rail);
@@ -35,25 +34,21 @@ public class IntegrationResponse extends ResponseBase {
 		}), SignalModificationCallback.EMPTY, true);
 	}
 
-	public JsonObject generate() {
+	public Integration generate() {
 		return parseBody(IntegrationResponse::generate, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
-	public JsonObject clear() {
+	public Integration clear() {
 		return parseBody(IntegrationResponse::clear, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
-	public JsonObject list() {
-		final JsonObject jsonObject = new JsonObject();
-		jsonObject.add("stations", getDataAsArray(simulator.stations));
-		jsonObject.add("platforms", getDataAsArray(simulator.platforms));
-		jsonObject.add("sidings", getDataAsArray(simulator.sidings));
-		jsonObject.add("routes", getDataAsArray(simulator.routes));
-		jsonObject.add("depots", getDataAsArray(simulator.depots));
-		return jsonObject;
+	public Integration list() {
+		final Integration integration = new Integration();
+		integration.add(simulator.stations, simulator.platforms, simulator.sidings, simulator.routes, simulator.depots);
+		return integration;
 	}
 
-	private JsonObject parseBody(BodyCallback bodyCallback, PositionCallback positionCallback, SignalModificationCallback signalModificationCallback, boolean shouldSync) {
+	private Integration parseBody(BodyCallback bodyCallback, PositionCallback positionCallback, SignalModificationCallback signalModificationCallback, boolean shouldSync) {
 		final ObjectAVLTreeSet<Station> stationsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Platform> platformsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Siding> sidingsToUpdate = new ObjectAVLTreeSet<>();
@@ -63,42 +58,17 @@ public class IntegrationResponse extends ResponseBase {
 		final ObjectOpenHashSet<Position> positionsToUpdate = new ObjectOpenHashSet<>();
 
 		try {
-			iterateBodyArray(bodyObject.getAsJsonArray("stations"), bodyObject -> {
-				final JsonReader jsonReader = new JsonReader(bodyObject);
-				final Station newData = new Station(jsonReader, simulator);
-				bodyCallback.accept(jsonReader, newData, simulator.stationIdMap.get(newData.getId()), simulator.stations, stationsToUpdate);
-			});
-			iterateBodyArray(bodyObject.getAsJsonArray("platforms"), bodyObject -> {
-				final JsonReader jsonReader = new JsonReader(bodyObject);
-				final Platform newData = new Platform(jsonReader, simulator);
-				bodyCallback.accept(jsonReader, null, simulator.platformIdMap.get(newData.getId()), simulator.platforms, platformsToUpdate);
-			});
-			iterateBodyArray(bodyObject.getAsJsonArray("sidings"), bodyObject -> {
-				final JsonReader jsonReader = new JsonReader(bodyObject);
-				final Siding newData = new Siding(jsonReader, simulator);
-				bodyCallback.accept(jsonReader, null, simulator.sidingIdMap.get(newData.getId()), simulator.sidings, sidingsToUpdate);
-			});
-			iterateBodyArray(bodyObject.getAsJsonArray("routes"), bodyObject -> {
-				final JsonReader jsonReader = new JsonReader(bodyObject);
-				final Route newData = new Route(jsonReader, simulator);
-				bodyCallback.accept(jsonReader, newData, simulator.routeIdMap.get(newData.getId()), simulator.routes, routesToUpdate);
-			});
-			iterateBodyArray(bodyObject.getAsJsonArray("depots"), bodyObject -> {
-				final JsonReader jsonReader = new JsonReader(bodyObject);
-				final Depot newData = new Depot(jsonReader, simulator);
-				bodyCallback.accept(jsonReader, newData, simulator.depotIdMap.get(newData.getId()), simulator.depots, depotsToUpdate);
-			});
-			iterateBodyArray(bodyObject.getAsJsonArray("rails"), bodyObject -> {
-				final JsonReader jsonReader = new JsonReader(bodyObject);
-				final Rail newData = new Rail(jsonReader);
-				bodyCallback.accept(jsonReader, newData, newData.getRailFromData(simulator, positionsToUpdate), simulator.rails, railsToUpdate);
-			});
-			iterateBodyArray(bodyObject.getAsJsonArray("positions"), bodyObject -> {
-				final Position position = new Position(new JsonReader(bodyObject));
+			body.iterateStations(station -> bodyCallback.accept(station, true, simulator.stationIdMap.get(station.getId()), simulator.stations, stationsToUpdate));
+			body.iteratePlatforms(platform -> bodyCallback.accept(platform, false, simulator.platformIdMap.get(platform.getId()), simulator.platforms, platformsToUpdate));
+			body.iterateSidings(siding -> bodyCallback.accept(siding, false, simulator.sidingIdMap.get(siding.getId()), simulator.sidings, sidingsToUpdate));
+			body.iterateRoutes(route -> bodyCallback.accept(route, true, simulator.routeIdMap.get(route.getId()), simulator.routes, routesToUpdate));
+			body.iterateDepots(depot -> bodyCallback.accept(depot, true, simulator.depotIdMap.get(depot.getId()), simulator.depots, depotsToUpdate));
+			body.iterateRails(rail -> bodyCallback.accept(rail, true, rail.getRailFromData(simulator, positionsToUpdate), simulator.rails, railsToUpdate));
+			body.iteratePositions(position -> {
 				positionsToUpdate.add(position);
 				positionCallback.accept(position, railsToUpdate, positionsToUpdate);
 			});
-			iterateBodyArray(bodyObject.getAsJsonArray("signals"), bodyObject -> signalModificationCallback.accept(new SignalModification(new JsonReader(bodyObject)), railsToUpdate, positionsToUpdate));
+			body.iterateSignals(signalModification -> signalModificationCallback.accept(signalModification, railsToUpdate, positionsToUpdate));
 		} catch (Exception e) {
 			Main.logException(e);
 		}
@@ -109,86 +79,57 @@ public class IntegrationResponse extends ResponseBase {
 		}
 		positionsToUpdate.removeIf(position -> !simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).isEmpty());
 
-		final JsonObject jsonObject = new JsonObject();
-		if (!stationsToUpdate.isEmpty()) {
-			jsonObject.add("stations", getDataAsArray(stationsToUpdate));
-		}
-		if (!platformsToUpdate.isEmpty()) {
-			jsonObject.add("platforms", getDataAsArray(platformsToUpdate));
-		}
-		if (!sidingsToUpdate.isEmpty()) {
-			jsonObject.add("sidings", getDataAsArray(sidingsToUpdate));
-		}
-		if (!routesToUpdate.isEmpty()) {
-			jsonObject.add("routes", getDataAsArray(routesToUpdate));
-		}
-		if (!depotsToUpdate.isEmpty()) {
-			jsonObject.add("depots", getDataAsArray(depotsToUpdate));
-		}
-		if (!railsToUpdate.isEmpty()) {
-			jsonObject.add("rails", getDataAsArray(railsToUpdate));
-		}
-		if (!positionsToUpdate.isEmpty()) {
-			jsonObject.add("positions", getDataAsArray(positionsToUpdate)); // "positions" should always return a list of nodes that have no connections to it
-		}
-		return jsonObject;
+		final Integration integration = new Integration();
+		integration.add(stationsToUpdate, platformsToUpdate, sidingsToUpdate, routesToUpdate, depotsToUpdate);
+		integration.add(railsToUpdate, positionsToUpdate);
+		return integration;
 	}
 
-	private static void iterateBodyArray(@Nullable JsonArray bodyArray, Consumer<JsonObject> consumer) {
-		if (bodyArray != null) {
-			bodyArray.forEach(jsonElement -> {
-				try {
-					consumer.accept(jsonElement.getAsJsonObject());
-				} catch (Exception e) {
-					Main.logException(e);
-				}
-			});
-		}
-	}
-
-	private static <T extends SerializedDataBase> void update(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
-		final boolean isRail = newData instanceof Rail;
-		final boolean isValid = !isRail || ((Rail) newData).isValid();
+	private static <T extends SerializedDataBase> void update(T bodyData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+		final boolean isRail = bodyData instanceof Rail;
+		final boolean isValid = !isRail || ((Rail) bodyData).isValid();
 
 		if (existingData == null) {
-			if (newData != null && isValid) {
-				dataSet.add(newData);
-				dataToUpdate.add(newData);
+			if (addNewData && isValid) {
+				dataSet.add(bodyData);
+				dataToUpdate.add(bodyData);
 			}
 		} else if (isValid) {
 			// For AVL tree sets, data must be removed and re-added when modified
 			dataSet.remove(existingData);
 			if (isRail) {
-				dataSet.add(newData);
-				dataToUpdate.add(newData);
+				dataSet.add(bodyData);
+				dataToUpdate.add(bodyData);
 			} else {
-				existingData.updateData(jsonReader);
+				final JsonObject jsonObject = new JsonObject();
+				bodyData.serializeData(new JsonWriter(jsonObject));
+				existingData.updateData(new JsonReader(jsonObject));
 				dataSet.add(existingData);
 				dataToUpdate.add(existingData);
 			}
 		}
 	}
 
-	private static <T extends SerializedDataBase> void get(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+	private static <T extends SerializedDataBase> void get(T bodyData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
 		if (existingData != null) {
 			dataToUpdate.add(existingData);
 		}
 	}
 
-	private static <T extends SerializedDataBase> void delete(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+	private static <T extends SerializedDataBase> void delete(T bodyData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
 		if (existingData != null && dataSet.remove(existingData)) {
 			dataToUpdate.add(existingData);
 		}
 	}
 
-	private static <T extends SerializedDataBase> void generate(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+	private static <T extends SerializedDataBase> void generate(T bodyData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
 		if (existingData instanceof Depot) {
 			dataToUpdate.add(existingData);
 			((Depot) existingData).generateMainRoute();
 		}
 	}
 
-	private static <T extends SerializedDataBase> void clear(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
+	private static <T extends SerializedDataBase> void clear(T bodyData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
 		if (existingData instanceof Siding) {
 			dataToUpdate.add(existingData);
 			((Siding) existingData).clearVehicles();
@@ -199,15 +140,9 @@ public class IntegrationResponse extends ResponseBase {
 		}
 	}
 
-	private static <T extends SerializedDataBase> JsonArray getDataAsArray(ObjectSet<T> dataSet) {
-		final JsonArray jsonArray = new JsonArray();
-		dataSet.forEach(data -> jsonArray.add(Utilities.getJsonObjectFromData(data)));
-		return jsonArray;
-	}
-
 	@FunctionalInterface
 	private interface BodyCallback {
-		<T extends SerializedDataBase> void accept(JsonReader jsonReader, @Nullable T newData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate);
+		<T extends SerializedDataBase> void accept(T bodyData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate);
 	}
 
 	@FunctionalInterface

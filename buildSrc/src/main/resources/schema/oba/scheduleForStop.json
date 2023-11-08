@@ -1,0 +1,36 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"date": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"stopId": {
+			"type": "string"
+		},
+		"stopRouteSchedules": {
+			"type": "array",
+			"items": {
+				"$ref": "stopRouteSchedule.json"
+			}
+		},
+		"timeZone": {
+			"type": "string"
+		},
+		"stopCalendarDays": {
+			"type": "array",
+			"items": {
+				"$ref": "stopCalendarDay.json"
+			}
+		}
+	},
+	"required": [
+		"date",
+		"stopId",
+		"timeZone"
+	]
+}

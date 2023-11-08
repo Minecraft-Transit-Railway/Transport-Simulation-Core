@@ -1,14 +1,12 @@
 package org.mtr.core.data;
 
-
-import org.mtr.core.tools.Utilities;
-import org.mtr.libraries.com.google.gson.JsonArray;
-import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArraySet;
+import org.mtr.core.oba.Schedule;
+import org.mtr.core.oba.SingleElement;
+import org.mtr.core.oba.TripDetails;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nullable;
-import java.util.TimeZone;
 
 public class Trip implements Utilities {
 
@@ -35,62 +33,40 @@ public class Trip implements Utilities {
 		return String.format("%s_%s_%s_%s", siding.getHexId(), tripIndexInBlock, departureIndex, departureOffset);
 	}
 
-	public JsonObject getOBATripDetailsWithDataUsed(long currentMillis, long offsetMillis, int departureIndex, long departureOffset, @Nullable Trip nextTrip, @Nullable Trip previousTrip, LongArraySet platformIdsUsed, JsonArray tripsUsedArray) {
+	public void getOBATripDetailsWithDataUsed(SingleElement<TripDetails> singleElement, long currentMillis, long offsetMillis, int departureIndex, long departureOffset, @Nullable Trip nextTrip, @Nullable Trip previousTrip) {
 		if (stopTimes.isEmpty()) {
-			return null;
+			return;
 		}
 
-		tripsUsedArray.add(getOBATripElement(departureIndex, departureOffset));
+		singleElement.addTrip(getOBATripElement(departureIndex, departureOffset));
 		if (nextTrip != null) {
-			tripsUsedArray.add(nextTrip.getOBATripElement(departureIndex, departureOffset));
+			singleElement.addTrip(nextTrip.getOBATripElement(departureIndex, departureOffset));
 		}
 		if (previousTrip != null) {
-			tripsUsedArray.add(previousTrip.getOBATripElement(departureIndex, departureOffset));
+			singleElement.addTrip(previousTrip.getOBATripElement(departureIndex, departureOffset));
 		}
 
-		final JsonArray stopTimesArray = new JsonArray();
+		final Schedule schedule = new Schedule(
+				previousTrip == null ? "" : previousTrip.getTripId(departureIndex, departureOffset),
+				nextTrip == null ? "" : nextTrip.getTripId(departureIndex, departureOffset),
+				siding.getOBAFrequencyElement(currentMillis)
+		);
+
 		stopTimes.forEach(tripStopTime -> {
-			final JsonObject jsonObject = new JsonObject();
-			jsonObject.addProperty("arrivalTime", (tripStopTime.startTime + offsetMillis) / MILLIS_PER_SECOND);
-			jsonObject.addProperty("departureTime", (tripStopTime.endTime + offsetMillis) / MILLIS_PER_SECOND);
-			jsonObject.addProperty("distanceAlongTrip", 0);
-			jsonObject.addProperty("historicalOccupancy", "");
-			jsonObject.addProperty("stopHeadsign", tripStopTime.customDestination);
-			jsonObject.addProperty("stopId", Utilities.numberToPaddedHexString(tripStopTime.platformId));
-			stopTimesArray.add(jsonObject);
-			platformIdsUsed.add(tripStopTime.platformId);
+			schedule.addStopTime(new org.mtr.core.oba.StopTime(tripStopTime, offsetMillis));
+			singleElement.addStop(tripStopTime.platformId);
 		});
 
-		final JsonObject scheduleObject = new JsonObject();
-		scheduleObject.add("frequency", siding.getOBAFrequencyElement(currentMillis));
-		scheduleObject.addProperty("nextTripId", nextTrip == null ? "" : nextTrip.getTripId(departureIndex, departureOffset));
-		scheduleObject.addProperty("previousTripId", previousTrip == null ? "" : previousTrip.getTripId(departureIndex, departureOffset));
-		scheduleObject.add("stopTimes", stopTimesArray);
-		scheduleObject.addProperty("timezone", TimeZone.getDefault().getID());
-
-		final JsonObject tripDetailsObject = new JsonObject();
-		tripDetailsObject.add("frequency", siding.getOBAFrequencyElement(currentMillis));
-		tripDetailsObject.add("schedule", scheduleObject);
-		tripDetailsObject.addProperty("serviceDate", 0);
-		tripDetailsObject.add("situationIds", new JsonArray());
-		tripDetailsObject.add("status", siding.getOBATripStatusWithDeviation(currentMillis, stopTimes.get(0), departureIndex, departureOffset, "", "").left());
-		tripDetailsObject.addProperty("tripId", getTripId(departureIndex, departureOffset));
-		return tripDetailsObject;
+		singleElement.set(new TripDetails(
+				getTripId(departureIndex, departureOffset),
+				siding.getOBATripStatusWithDeviation(currentMillis, stopTimes.get(0), departureIndex, departureOffset, "", "").left(),
+				schedule,
+				siding.getOBAFrequencyElement(currentMillis)
+		));
 	}
 
-	public JsonObject getOBATripElement(int departureIndex, long departureOffset) {
-		final JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("blockId", String.valueOf(departureIndex));
-		jsonObject.addProperty("directionId", 0);
-		jsonObject.addProperty("id", getTripId(departureIndex, departureOffset));
-		jsonObject.addProperty("routeId", route.getColorHex());
-		jsonObject.addProperty("routeShortName", Utilities.formatName(route.getRouteNumber()));
-		jsonObject.addProperty("serviceId", "1");
-		jsonObject.addProperty("shapeId", "");
-		jsonObject.addProperty("timeZone", TimeZone.getDefault().getID());
-		jsonObject.addProperty("tripHeadsign", Utilities.formatName(route.getName()));
-		jsonObject.addProperty("tripShortName", "");
-		return jsonObject;
+	public org.mtr.core.oba.Trip getOBATripElement(int departureIndex, long departureOffset) {
+		return new org.mtr.core.oba.Trip(route, getTripId(departureIndex, departureOffset), departureIndex);
 	}
 
 	public static class StopTime {

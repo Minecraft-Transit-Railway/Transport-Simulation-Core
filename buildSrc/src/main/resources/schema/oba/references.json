@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"agencies": {
+			"type": "array",
+			"items": {
+				"$ref": "agency.json"
+			}
+		},
+		"routes": {
+			"type": "array",
+			"items": {
+				"$ref": "route.json"
+			}
+		},
+		"stops": {
+			"type": "array",
+			"items": {
+				"$ref": "stop.json"
+			}
+		},
+		"trips": {
+			"type": "array",
+			"items": {
+				"$ref": "trip.json"
+			}
+		}
+	}
+}

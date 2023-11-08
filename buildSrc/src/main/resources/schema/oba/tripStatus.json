@@ -1,0 +1,120 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"activeTripId": {
+			"type": "string"
+		},
+		"blockTripSequence": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"serviceDate": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"frequency": {
+			"$ref": "frequency.json"
+		},
+		"scheduledDistanceAlongTrip": {
+			"type": "number",
+			"minimum": 0
+		},
+		"totalDistanceAlongTrip": {
+			"type": "number",
+			"minimum": 0
+		},
+		"position": {
+			"$ref": "position.json"
+		},
+		"orientation": {
+			"type": "number"
+		},
+		"closestStop": {
+			"type": "string"
+		},
+		"closestStopTimeOffset": {
+			"type": "integer"
+		},
+		"nextStop": {
+			"type": "string"
+		},
+		"nextStopTimeOffset": {
+			"type": "integer"
+		},
+		"occupancyStatus": {
+			"$ref": "OccupancyStatus"
+		},
+		"phase": {
+			"type": "string"
+		},
+		"status": {
+			"type": "string"
+		},
+		"predicted": {
+			"type": "boolean"
+		},
+		"lastUpdateTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"lastLocationUpdateTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"lastKnownLocation": {
+			"$ref": "position.json"
+		},
+		"lastKnownDistanceAlongTrip": {
+			"type": "number",
+			"minimum": 0
+		},
+		"lastKnownOrientation": {
+			"type": "number"
+		},
+		"distanceAlongTrip": {
+			"type": "number",
+			"minimum": 0
+		},
+		"scheduleDeviation": {
+			"type": "integer"
+		},
+		"vehicleId": {
+			"type": "string"
+		},
+		"situationIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"required": [
+		"activeTripId",
+		"blockTripSequence",
+		"serviceDate",
+		"scheduledDistanceAlongTrip",
+		"totalDistanceAlongTrip",
+		"position",
+		"orientation",
+		"closestStop",
+		"closestStopTimeOffset",
+		"nextStop",
+		"nextStopTimeOffset",
+		"occupancyStatus",
+		"phase",
+		"status",
+		"predicted",
+		"lastUpdateTime",
+		"lastLocationUpdateTime",
+		"lastKnownLocation",
+		"lastKnownDistanceAlongTrip",
+		"lastKnownOrientation",
+		"distanceAlongTrip",
+		"scheduleDeviation",
+		"vehicleId"
+	]
+}

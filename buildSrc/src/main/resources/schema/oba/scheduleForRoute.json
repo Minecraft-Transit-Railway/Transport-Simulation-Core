@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"routeId": {
+			"type": "string"
+		},
+		"serviceIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"scheduleDate": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"stopTripGroupings": {
+			"type": "array",
+			"items": {
+				"$ref": "stopTripGrouping.json"
+			}
+		}
+	},
+	"required": [
+		"routeId",
+		"scheduleDate"
+	]
+}

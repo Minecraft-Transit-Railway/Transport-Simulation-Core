@@ -60,7 +60,7 @@ public class TypeWithData {
 				Type.createObject(className),
 				"%1$s = new %2$s(readerBase.getChild(\"%1$s\"));",
 				"readerBase.unpackChild(\"%1$s\", readerBaseChild -> %1$s = new %2$s(readerBaseChild));",
-				"%1$s.serializeData(writerBase.writeChild(\"%1$s\"));",
+				"if (%1$s != null) %1$s.serializeData(writerBase.writeChild(\"%1$s\"));",
 				String.format("%1$s = TestUtilities.random%2$s();", "%1$s", className),
 				true
 		);

@@ -2,12 +2,8 @@ package org.mtr.core;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
-import org.mtr.core.data.Platform;
-import org.mtr.core.data.Station;
-import org.mtr.core.data.TestUtilities;
-import org.mtr.core.data.TransportMode;
-import org.mtr.core.tools.Position;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.data.*;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonArray;
 import org.mtr.libraries.com.google.gson.JsonObject;
 

@@ -1,0 +1,29 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"arrivalTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"departureTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"serviceId": {
+			"type": "string"
+		},
+		"tripId": {
+			"type": "string"
+		}
+	},
+	"required": [
+		"arrivalTime",
+		"departureTime",
+		"serviceId",
+		"tripId"
+	]
+}

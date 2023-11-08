@@ -1,7 +1,7 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.InterchangeColorsForStationNameSchema;
-import org.mtr.core.serializers.ReaderBase;
+import org.mtr.core.generated.data.InterchangeColorsForStationNameSchema;
+import org.mtr.core.serializer.ReaderBase;
 
 public final class InterchangeColorsForStationName extends InterchangeColorsForStationNameSchema {
 

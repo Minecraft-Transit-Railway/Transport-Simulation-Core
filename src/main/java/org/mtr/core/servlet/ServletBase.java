@@ -1,5 +1,8 @@
 package org.mtr.core.servlet;
 
+import org.mtr.core.integration.Response;
+import org.mtr.core.serializer.JsonReader;
+import org.mtr.core.serializer.JsonWriter;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.io.netty.handler.codec.http.HttpResponseStatus;
@@ -12,17 +15,19 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class ServletBase {
+public abstract class ServletBase<T> {
 
-	protected ServletBase(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
+	protected ServletBase(Webserver webserver, String path, Function<JsonReader, T> bodyInstance, ObjectImmutableList<Simulator> simulators) {
 		webserver.addHttpListener(path, (queryStringDecoder, bodyObject, sendResponse) -> {
 			final long currentMillis = System.currentTimeMillis();
+			final T body = bodyInstance.apply(new JsonReader(bodyObject));
 
 			if (tryGetParameter(queryStringDecoder, "dimensions").equals("all")) {
-				simulators.forEach(simulator -> run(path, queryStringDecoder, bodyObject, null, currentMillis, simulator));
-				buildResponseObject(sendResponse, currentMillis, new JsonObject(), HttpResponseStatus.OK);
+				simulators.forEach(simulator -> run(path, queryStringDecoder, body, null, currentMillis, simulator));
+				buildResponseObject(sendResponse, currentMillis, null, HttpResponseStatus.OK);
 			} else {
 				int dimension = 0;
 				try {
@@ -33,16 +38,16 @@ public abstract class ServletBase {
 				if (dimension < 0 || dimension >= simulators.size()) {
 					buildResponseObject(sendResponse, currentMillis, null, HttpResponseStatus.BAD_REQUEST, "Invalid Dimension");
 				} else {
-					run(path, queryStringDecoder, bodyObject, sendResponse, currentMillis, simulators.get(dimension));
+					run(path, queryStringDecoder, body, sendResponse, currentMillis, simulators.get(dimension));
 				}
 			}
 		});
 	}
 
 	@Nullable
-	protected abstract JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonObject bodyObject, long currentMillis, Simulator simulator);
+	protected abstract JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, T body, long currentMillis, Simulator simulator);
 
-	private void run(String path, QueryStringDecoder queryStringDecoder, JsonObject bodyObject, @Nullable BiConsumer<JsonObject, HttpResponseStatus> sendResponse, long currentMillis, Simulator simulator) {
+	private void run(String path, QueryStringDecoder queryStringDecoder, T body, @Nullable BiConsumer<JsonObject, HttpResponseStatus> sendResponse, long currentMillis, Simulator simulator) {
 		final String endpoint;
 		final String data;
 		final String extraPath = queryStringDecoder.path().replace(path, "");
@@ -61,28 +66,27 @@ public abstract class ServletBase {
 			}
 		});
 		simulator.run(() -> {
-			final JsonObject jsonObject = getContent(endpoint, data, parameters, bodyObject, currentMillis, simulator);
+			final JsonObject jsonObject = getContent(endpoint, data, parameters, body, currentMillis, simulator);
 			if (sendResponse != null) {
 				buildResponseObject(sendResponse, currentMillis, jsonObject, jsonObject == null ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, endpoint, data);
 			}
 		});
 	}
 
-	private static void buildResponseObject(BiConsumer<JsonObject, HttpResponseStatus> sendResponse, long currentMillis, @Nullable JsonObject dataObject, HttpResponseStatus httpResponseStatus, String... parameters) {
-		final JsonObject responseObject = new JsonObject();
-		responseObject.addProperty("code", httpResponseStatus.code());
-		responseObject.addProperty("currentTime", currentMillis);
-		if (dataObject != null) {
-			responseObject.add("data", dataObject);
-		}
+	private static <T> void buildResponseObject(BiConsumer<JsonObject, HttpResponseStatus> sendResponse, long currentMillis, @Nullable JsonObject data, HttpResponseStatus httpResponseStatus, String... parameters) {
 		final StringBuilder reasonPhrase = new StringBuilder(httpResponseStatus.reasonPhrase());
 		final String trimmedParameters = Arrays.stream(parameters).filter(parameter -> !parameter.isEmpty()).collect(Collectors.joining(", "));
 		if (!trimmedParameters.isEmpty()) {
 			reasonPhrase.append(" - ").append(trimmedParameters);
 		}
-		responseObject.addProperty("text", reasonPhrase.toString());
-		responseObject.addProperty("version", 2);
-		sendResponse.accept(responseObject, httpResponseStatus);
+
+		final Response response = new Response(httpResponseStatus.code(), currentMillis, reasonPhrase.toString());
+		final JsonObject jsonObject = new JsonObject();
+		response.serializeData(new JsonWriter(jsonObject));
+		if (data != null) {
+			jsonObject.add("data", data);
+		}
+		sendResponse.accept(jsonObject, httpResponseStatus);
 	}
 
 	private static String tryGetParameter(QueryStringDecoder queryStringDecoder, String parameter) {

@@ -53,6 +53,10 @@ test {
 }
 
 tasks.register("setupFiles") {
-	Generator.generate(project, true)
+	Generator.generate(project, "schema/data", "core/generated/data", true, "core.data", "core.simulation")
+	Generator.generate(project, "schema/integration", "core/generated/integration", false, "core.data", "core.integration")
+	Generator.generate(project, "schema/map", "core/generated/map", false, "core.map")
+	Generator.generate(project, "schema/oba", "core/generated/oba", false, "core.oba")
+	Generator.generate(project, "schema/operation", "core/generated/operation", false, "core.operation")
 	WebserverSetup.setup(project.rootDir)
 }

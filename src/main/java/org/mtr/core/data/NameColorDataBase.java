@@ -1,9 +1,10 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.NameColorDataBaseSchema;
-import org.mtr.core.generated.StationSchema;
-import org.mtr.core.serializers.ReaderBase;
-import org.mtr.core.tools.Utilities;
+import org.mtr.core.generated.data.NameColorDataBaseSchema;
+import org.mtr.core.generated.data.StationSchema;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.serializer.SerializedDataBaseWithId;
+import org.mtr.core.tool.Utilities;
 
 import java.util.Locale;
 

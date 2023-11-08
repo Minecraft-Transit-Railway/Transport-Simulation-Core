@@ -1,0 +1,25 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"type": {
+			"type": "string"
+		},
+		"ordered": {
+			"type": "boolean"
+		},
+		"stopGroups": {
+			"type": "array",
+			"items": {
+				"$ref": "stopGroup.json"
+			}
+		}
+	},
+	"required": [
+		"type",
+		"ordered"
+	]
+}

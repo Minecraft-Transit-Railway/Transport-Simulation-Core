@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"arrivalEnabled": {
+			"type": "boolean"
+		},
+		"arrivalTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"departureEnabled": {
+			"type": "boolean"
+		},
+		"departureTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"tripId": {
+			"type": "string"
+		}
+	},
+	"required": [
+		"arrivalEnabled",
+		"arrivalTime",
+		"departureEnabled",
+		"departureTime",
+		"tripId"
+	]
+}

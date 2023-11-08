@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"routeId": {
+			"type": "string"
+		},
+		"stopIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"stopGroupings": {
+			"type": "array",
+			"items": {
+				"$ref": "stopGrouping.json"
+			}
+		},
+		"polylines": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"required": [
+		"routeId"
+	]
+}
