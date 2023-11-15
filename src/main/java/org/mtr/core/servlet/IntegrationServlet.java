@@ -1,6 +1,7 @@
 package org.mtr.core.servlet;
 
 import org.mtr.core.integration.Integration;
+import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.EnumHelper;
 import org.mtr.core.tool.Utilities;
@@ -11,15 +12,15 @@ import org.mtr.webserver.Webserver;
 
 import java.util.Locale;
 
-public final class IntegrationServlet extends ServletBase<Integration> {
+public final class IntegrationServlet extends ServletBase {
 
 	public IntegrationServlet(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
-		super(webserver, path, Integration::new, simulators);
+		super(webserver, path, simulators);
 	}
 
 	@Override
-	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, Integration body, long currentMillis, Simulator simulator) {
-		final IntegrationResponse integrationResponse = new IntegrationResponse(data, parameters, body, currentMillis, simulator);
+	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator) {
+		final IntegrationResponse integrationResponse = new IntegrationResponse(data, parameters, new Integration(jsonReader), currentMillis, simulator);
 		switch (EnumHelper.valueOf(Operation.UPDATE, endpoint.toUpperCase(Locale.ROOT))) {
 			case UPDATE:
 				return Utilities.getJsonObjectFromData(integrationResponse.update());

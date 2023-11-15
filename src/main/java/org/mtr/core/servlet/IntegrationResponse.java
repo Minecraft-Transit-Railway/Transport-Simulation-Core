@@ -4,10 +4,9 @@ import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.JsonReader;
-import org.mtr.core.serializer.JsonWriter;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
@@ -101,9 +100,7 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 				dataSet.add(bodyData);
 				dataToUpdate.add(bodyData);
 			} else {
-				final JsonObject jsonObject = new JsonObject();
-				bodyData.serializeData(new JsonWriter(jsonObject));
-				existingData.updateData(new JsonReader(jsonObject));
+				existingData.updateData(new JsonReader(Utilities.getJsonObjectFromData(bodyData)));
 				dataSet.add(existingData);
 				dataToUpdate.add(existingData);
 			}

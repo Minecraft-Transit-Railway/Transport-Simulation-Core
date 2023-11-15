@@ -4,6 +4,7 @@ import org.mtr.core.Main;
 import org.mtr.core.generated.data.SidingSchema;
 import org.mtr.core.integration.Integration;
 import org.mtr.core.oba.*;
+import org.mtr.core.operation.ArrivalResponse;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.WriterBase;
@@ -294,85 +295,50 @@ public final class Siding extends SidingSchema implements Utilities {
 		return index < 0 ? -1 : timeSegments.get(index).getTimeAlongRoute(railProgress);
 	}
 
+	public void getArrivals(long currentMillis, Platform platform, boolean realtimeOnly, long count, ObjectArrayList<ArrivalResponse> arrivalResponseList) {
+		final long[] maxArrivalAndCount = {0, 0};
+		iterateArrivals(currentMillis, platform, 0, MILLIS_PER_DAY, (trip, tripId, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, occupancy, departureIndex) -> {
+			if ((!realtimeOnly || predicted) && (scheduledArrivalTime + deviation < maxArrivalAndCount[0] || maxArrivalAndCount[1] < count)) {
+				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, trip.route, platform);
+				arrivalResponse.setCarDetails(getVehicleCars());
+				arrivalResponseList.add(arrivalResponse);
+				maxArrivalAndCount[0] = Math.max(maxArrivalAndCount[0], scheduledArrivalTime + deviation);
+				maxArrivalAndCount[1]++;
+			}
+		});
+	}
+
 	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(SingleElement<StopWithArrivalsAndDepartures> singleElement, StopWithArrivalsAndDepartures stopWithArrivalsAndDepartures, long currentMillis, Platform platform, int millsBefore, int millisAfter) {
-		if (area == null || departures.isEmpty()) {
-			return;
-		}
-
-		final ObjectArraySet<Trip.StopTime> tripStopTimes = platformTripStopTimes.get(platform.getId());
-		if (tripStopTimes == null) {
-			return;
-		}
-
-		final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
 		final ObjectAVLTreeSet<String> addedTripIds = new ObjectAVLTreeSet<>();
-
-		tripStopTimes.forEach(stopTime -> {
-			for (int departureIndex = 0; departureIndex < departures.size(); departureIndex++) {
-				final long departure = departures.getLong(departureIndex);
-				long departureOffset = (currentMillis - (transportMode.continuousMovement ? 0 : millsBefore) - repeatInterval / 2 - stopTime.endTime - departure) / repeatInterval + 1;
-				final ObjectObjectImmutablePair<TripStatus, BooleanLongImmutablePair> tripStatusWithDeviation = getOBATripStatusWithDeviation(currentMillis, stopTime, departureIndex, departureOffset, platform.getHexId(), platform.getHexId());
-				final boolean predicted = tripStatusWithDeviation.right().leftBoolean();
-				final long deviation = tripStatusWithDeviation.right().rightLong();
-				final Trip trip = stopTime.trip;
-
-				while (true) {
-					final String tripId = trip.getTripId(departureIndex, departureOffset);
-					final long scheduledArrivalTime;
-					final long scheduledDepartureTime;
-
-					if (transportMode.continuousMovement) {
-						scheduledArrivalTime = currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY;
-						scheduledDepartureTime = currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY;
-					} else {
-						final long offsetMillis = repeatInterval * departureOffset;
-						scheduledArrivalTime = stopTime.startTime + offsetMillis + departure;
-						scheduledDepartureTime = stopTime.endTime + offsetMillis + departure;
-					}
-
-					departureOffset++;
-
-					if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
-						break;
-					} else if (scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter) {
-						continue;
-					}
-
-					final long predictedArrivalTime;
-					final long predictedDepartureTime;
-					if (predicted) {
-						predictedArrivalTime = scheduledArrivalTime + deviation;
-						predictedDepartureTime = scheduledDepartureTime + deviation;
-					} else {
-						predictedArrivalTime = 0;
-						predictedDepartureTime = 0;
-					}
-
-					stopWithArrivalsAndDepartures.add(new ArrivalAndDeparture(
-							trip,
+		iterateArrivals(currentMillis, platform, millsBefore, millisAfter, (trip, tripId, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, occupancy, departureIndex) -> {
+			stopWithArrivalsAndDepartures.add(new ArrivalAndDeparture(
+					trip,
+					tripId,
+					platform,
+					stopTime,
+					scheduledArrivalTime,
+					scheduledDepartureTime,
+					predicted,
+					deviation,
+					getOBAOccupancyStatus(),
+					getOBAVehicleId(departureIndex),
+					getOBAFrequencyElement(currentMillis),
+					new TripStatus(
 							tripId,
-							platform,
 							stopTime,
-							scheduledArrivalTime,
-							scheduledDepartureTime,
-							predicted,
-							predictedArrivalTime,
-							predictedDepartureTime,
+							"",
+							"",
 							getOBAOccupancyStatus(),
+							predicted,
+							currentMillis,
+							deviation,
 							getOBAVehicleId(departureIndex),
-							getOBAFrequencyElement(currentMillis),
-							tripStatusWithDeviation.left()
-					));
-
-					if (!addedTripIds.contains(tripId)) {
-						singleElement.addTrip(trip.getOBATripElement(departureIndex, departureOffset));
-						addedTripIds.add(tripId);
-					}
-
-					if (transportMode.continuousMovement) {
-						break;
-					}
-				}
+							getOBAFrequencyElement(currentMillis)
+					)
+			));
+			if (!addedTripIds.contains(tripId)) {
+				singleElement.addTrip(trip.getOBATripElement(tripId, departureIndex));
+				addedTripIds.add(tripId);
 			}
 		});
 	}
@@ -392,20 +358,11 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 	}
 
-	public ObjectObjectImmutablePair<TripStatus, BooleanLongImmutablePair> getOBATripStatusWithDeviation(long currentMillis, Trip.StopTime stopTime, int departureIndex, long departureOffset, String closestStop, String nextStop) {
-		final boolean predicted;
-		final long deviation;
-
-		if (transportMode.continuousMovement) {
-			predicted = true;
-			deviation = 0;
-		} else {
-			final long timeAlongRoute = vehicleTimesAlongRoute.getOrDefault(departureIndex, -1);
-			predicted = timeAlongRoute >= 0;
-			deviation = predicted ? Utilities.circularDifference(currentMillis - getRepeatInterval(MILLIS_PER_DAY) * departureOffset - departures.getLong(departureIndex), timeAlongRoute, getRepeatInterval(MILLIS_PER_DAY)) : 0;
-		}
-
-		return new ObjectObjectImmutablePair<>(new TripStatus(
+	public TripStatus getOBATripStatus(long currentMillis, Trip.StopTime stopTime, int departureIndex, long departureOffset, String closestStop, String nextStop) {
+		final BooleanLongImmutablePair predictedAndDeviation = getPredictedAndDeviation(currentMillis, departureIndex, departureOffset);
+		final boolean predicted = predictedAndDeviation.leftBoolean();
+		final long deviation = predictedAndDeviation.rightLong();
+		return new TripStatus(
 				stopTime.trip.getTripId(departureIndex, departureOffset),
 				stopTime,
 				closestStop,
@@ -416,7 +373,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				deviation,
 				getOBAVehicleId(departureIndex),
 				getOBAFrequencyElement(currentMillis)
-		), new BooleanLongImmutablePair(predicted, deviation));
+		);
 	}
 
 	@Nullable
@@ -474,6 +431,75 @@ public final class Siding extends SidingSchema implements Utilities {
 				area.finishGeneratingPath(id);
 			}
 		}
+	}
+
+	private BooleanLongImmutablePair getPredictedAndDeviation(long currentMillis, int departureIndex, long departureOffset) {
+		final boolean predicted;
+		final long deviation;
+
+		if (transportMode.continuousMovement) {
+			predicted = true;
+			deviation = 0;
+		} else {
+			final long timeAlongRoute = vehicleTimesAlongRoute.getOrDefault(departureIndex, -1);
+			predicted = timeAlongRoute >= 0;
+			deviation = predicted ? Utilities.circularDifference(currentMillis - getRepeatInterval(MILLIS_PER_DAY) * departureOffset - departures.getLong(departureIndex), timeAlongRoute, getRepeatInterval(MILLIS_PER_DAY)) : 0;
+		}
+
+		return new BooleanLongImmutablePair(predicted, deviation);
+	}
+
+	private void iterateArrivals(long currentMillis, Platform platform, int millsBefore, int millisAfter, ArrivalConsumer arrivalConsumer) {
+		if (area == null || departures.isEmpty()) {
+			return;
+		}
+
+		final ObjectArraySet<Trip.StopTime> tripStopTimes = platformTripStopTimes.get(platform.getId());
+		if (tripStopTimes == null) {
+			return;
+		}
+
+		final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
+
+		tripStopTimes.forEach(stopTime -> {
+			for (int departureIndex = 0; departureIndex < departures.size(); departureIndex++) {
+				final long departure = departures.getLong(departureIndex);
+				long departureOffset = (currentMillis - (transportMode.continuousMovement ? 0 : millsBefore) - repeatInterval / 2 - stopTime.endTime - departure) / repeatInterval + 1;
+				final BooleanLongImmutablePair predictedAndDeviation = getPredictedAndDeviation(currentMillis, departureIndex, departureOffset);
+				final boolean predicted = predictedAndDeviation.leftBoolean();
+				final long deviation = predictedAndDeviation.rightLong();
+				final Trip trip = stopTime.trip;
+
+				while (true) {
+					final String tripId = trip.getTripId(departureIndex, departureOffset);
+					final long scheduledArrivalTime;
+					final long scheduledDepartureTime;
+
+					if (transportMode.continuousMovement) {
+						scheduledArrivalTime = currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY;
+						scheduledDepartureTime = currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY;
+					} else {
+						final long offsetMillis = repeatInterval * departureOffset;
+						scheduledArrivalTime = stopTime.startTime + offsetMillis + departure;
+						scheduledDepartureTime = stopTime.endTime + offsetMillis + departure;
+					}
+
+					departureOffset++;
+
+					if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
+						break;
+					} else if (scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter) {
+						continue;
+					}
+
+					arrivalConsumer.accept(trip, tripId, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, 0, departureIndex);
+
+					if (transportMode.continuousMovement) {
+						break;
+					}
+				}
+			}
+		});
 	}
 
 	private OccupancyStatus getOBAOccupancyStatus() {
@@ -700,5 +726,10 @@ public final class Siding extends SidingSchema implements Utilities {
 				return startTime + (distance == 0 ? 0 : (Math.sqrt(2 * totalAcceleration * distance + startSpeed * startSpeed) - startSpeed) / totalAcceleration);
 			}
 		}
+	}
+
+	@FunctionalInterface
+	private interface ArrivalConsumer {
+		void accept(Trip trip, String tripId, Trip.StopTime stopTime, long scheduledArrivalTime, long scheduledDepartureTime, boolean predicted, long deviation, double occupancy, int departureIndex);
 	}
 }

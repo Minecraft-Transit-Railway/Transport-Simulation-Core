@@ -3,10 +3,11 @@ package org.mtr.core.integration;
 import org.mtr.core.data.*;
 import org.mtr.core.generated.integration.IntegrationSchema;
 import org.mtr.core.serializer.ReaderBase;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectSet;
 
+import javax.annotation.Nullable;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 
 public final class Integration extends IntegrationSchema {
 
@@ -51,16 +52,72 @@ public final class Integration extends IntegrationSchema {
 		signals.forEach(consumer);
 	}
 
-	public void add(ObjectAVLTreeSet<Station> stations, ObjectAVLTreeSet<Platform> platforms, ObjectAVLTreeSet<Siding> sidings, ObjectAVLTreeSet<Route> routes, ObjectAVLTreeSet<Depot> depots) {
-		this.stations.addAll(stations);
-		this.platforms.addAll(platforms);
-		this.sidings.addAll(sidings);
-		this.routes.addAll(routes);
-		this.depots.addAll(depots);
+	public void iterateVehiclesToUpdate(Consumer<VehicleUpdate> consumer) {
+		update.forEach(consumer);
 	}
 
-	public void add(ObjectOpenHashSet<Rail> rails, ObjectOpenHashSet<Position> positions) {
-		this.rails.addAll(rails);
-		this.positions.addAll(positions);
+	public void iterateVehiclesToKeep(LongConsumer consumer) {
+		keep.forEach(consumer);
+	}
+
+	public void iterateVehiclesToRemove(LongConsumer consumer) {
+		remove.forEach(consumer);
+	}
+
+	public void add(@Nullable ObjectSet<Station> stations, @Nullable ObjectSet<Platform> platforms, @Nullable ObjectSet<Siding> sidings, @Nullable ObjectSet<Route> routes, @Nullable ObjectSet<Depot> depots) {
+		if (stations != null) {
+			this.stations.addAll(stations);
+		}
+		if (platforms != null) {
+			this.platforms.addAll(platforms);
+		}
+		if (sidings != null) {
+			this.sidings.addAll(sidings);
+		}
+		if (routes != null) {
+			this.routes.addAll(routes);
+		}
+		if (depots != null) {
+			this.depots.addAll(depots);
+		}
+	}
+
+	public void add(@Nullable ObjectSet<Rail> rails, @Nullable ObjectSet<Position> positions) {
+		if (rails != null) {
+			this.rails.addAll(rails);
+		}
+		if (positions != null) {
+			this.positions.addAll(positions);
+		}
+	}
+
+	public void add(@Nullable ObjectSet<SignalModification> signals) {
+		if (signals != null) {
+			this.signals.addAll(signals);
+		}
+	}
+
+	public void addVehicleToUpdate(VehicleUpdate vehicleUpdate) {
+		update.add(vehicleUpdate);
+	}
+
+	public void addVehicleToKeep(long vehicleId) {
+		keep.add(vehicleId);
+	}
+
+	public void addVehicleToRemove(long vehicleId) {
+		remove.add(vehicleId);
+	}
+
+	public boolean noVehicleUpdates() {
+		return update.isEmpty() && remove.isEmpty();
+	}
+
+	public boolean hasData() {
+		return !stations.isEmpty() || !platforms.isEmpty() || !sidings.isEmpty() || !routes.isEmpty() || !depots.isEmpty() || !rails.isEmpty() || !positions.isEmpty() || !signals.isEmpty();
+	}
+
+	public boolean hasVehicle() {
+		return !update.isEmpty() || !keep.isEmpty() || !remove.isEmpty();
 	}
 }

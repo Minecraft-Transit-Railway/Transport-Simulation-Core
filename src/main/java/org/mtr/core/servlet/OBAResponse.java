@@ -10,14 +10,14 @@ import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 
-public class OBAResponse extends ResponseBase<Object> {
+public final class OBAResponse extends ResponseBase<Object> {
 
 	private final boolean includeReferences;
 
 	private static final Agency AGENCY = new Agency();
 
-	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, Object body, long currentMillis, Simulator simulator) {
-		super(data, parameters, body, currentMillis, simulator);
+	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
+		super(data, parameters, new Object(), currentMillis, simulator);
 		includeReferences = !("false".equals(parameters.get("includeReferences")));
 	}
 

@@ -52,6 +52,24 @@
 			"items": {
 				"$ref": "signalModification.json"
 			}
+		},
+		"update": {
+			"type": "array",
+			"items": {
+				"$ref": "vehicleUpdate.json"
+			}
+		},
+		"keep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"remove": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
 		}
 	}
 }

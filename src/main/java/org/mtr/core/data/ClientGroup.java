@@ -1,7 +1,9 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.ClientGroupSchema;
+import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.corundumstudio.socketio.SocketIOClient;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.webserver.Webserver;
@@ -40,18 +42,18 @@ public class ClientGroup extends ClientGroupSchema {
 
 	public void tick() {
 		boolean update = false;
-		final JsonObject jsonObject = new JsonObject();
+		final JsonObject updateObject = new JsonObject();
 
 		for (final Client client : clients) {
-			final JsonObject clientObject = client.getUpdates();
-			if (clientObject != null) {
-				jsonObject.add(client.uuid.toString(), clientObject);
+			final Integration integration = client.getUpdates();
+			if (integration != null) {
+				updateObject.add(client.uuid.toString(), Utilities.getJsonObjectFromData(integration));
 				update = true;
 			}
 		}
 
 		if (update) {
-			sendToClient.accept(jsonObject);
+			sendToClient.accept(updateObject);
 		}
 	}
 }

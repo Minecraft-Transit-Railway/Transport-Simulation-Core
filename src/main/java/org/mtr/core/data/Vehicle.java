@@ -49,6 +49,14 @@ public class Vehicle extends VehicleSchema {
 		updateData(readerBase);
 	}
 
+	/**
+	 * @deprecated for {@link org.mtr.core.integration.VehicleUpdate} use only
+	 */
+	@Deprecated
+	public Vehicle(ReaderBase readerBase) {
+		this(new VehicleExtraData(readerBase), null, false, readerBase, new Data());
+	}
+
 	@Override
 	public boolean isValid() {
 		return true;

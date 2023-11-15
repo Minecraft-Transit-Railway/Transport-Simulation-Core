@@ -58,7 +58,7 @@ public class Main {
 		simulators = new ObjectImmutableList<>(tempSimulators);
 		webserver = new Webserver(Main.class, WebserverResources::get, Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
 		new IntegrationServlet(webserver, "/mtr/api/data/*", simulators);
-		new SetTimeServlet(webserver, "/mtr/api/operation/set-time", simulators);
+		new OperationServlet(webserver, "/mtr/api/operation/*", simulators);
 		new SystemMapServlet(webserver, "/mtr/api/map/stations-and-routes", simulators);
 		new OBAServlet(webserver, "/oba/api/where/*", simulators);
 		SocketHandler.register(webserver, simulators);

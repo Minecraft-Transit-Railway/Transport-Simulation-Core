@@ -1,5 +1,6 @@
 package org.mtr.core.servlet;
 
+import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
@@ -8,16 +9,16 @@ import org.mtr.webserver.Webserver;
 
 import javax.annotation.Nullable;
 
-public class OBAServlet extends ServletBase<Object> {
+public final class OBAServlet extends ServletBase {
 
 	public OBAServlet(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
-		super(webserver, path, jsonReader -> new Object(), simulators);
+		super(webserver, path, simulators);
 	}
 
 	@Nullable
 	@Override
-	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, Object body, long currentMillis, Simulator simulator) {
-		final OBAResponse obaResponse = new OBAResponse(data, parameters, body, currentMillis, simulator);
+	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator) {
+		final OBAResponse obaResponse = new OBAResponse(data, parameters, currentMillis, simulator);
 		switch (endpoint) {
 			case "agencies-with-coverage":
 				return obaResponse.getAgenciesWithCoverage();

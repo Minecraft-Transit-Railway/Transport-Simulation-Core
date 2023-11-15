@@ -1,0 +1,71 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"destination": {
+			"type": "string"
+		},
+		"arrival": {
+			"type": "integer"
+		},
+		"departure": {
+			"type": "integer"
+		},
+		"deviation": {
+			"type": "integer"
+		},
+		"realtime": {
+			"type": "boolean"
+		},
+		"index": {
+			"type": "integer"
+		},
+		"routeId": {
+			"type": "integer"
+		},
+		"routeName": {
+			"type": "string"
+		},
+		"routeNumber": {
+			"type": "string"
+		},
+		"routeColor": {
+			"type": "integer",
+			"minimum": 0,
+			"maximum": 16777215
+		},
+		"circularState": {
+			"$ref": "Route.CircularState"
+		},
+		"platformId": {
+			"type": "integer"
+		},
+		"platformName": {
+			"type": "string"
+		},
+		"cars": {
+			"type": "array",
+			"items": {
+				"$ref": "carDetails.json"
+			}
+		}
+	},
+	"required": [
+		"destination",
+		"arrival",
+		"departure",
+		"deviation",
+		"realtime",
+		"index",
+		"routeId",
+		"routeName",
+		"routeNumber",
+		"routeColor",
+		"circularState",
+		"platformId",
+		"platformName"
+	]
+}

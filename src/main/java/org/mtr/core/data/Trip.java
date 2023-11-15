@@ -59,14 +59,18 @@ public class Trip implements Utilities {
 
 		singleElement.set(new TripDetails(
 				getTripId(departureIndex, departureOffset),
-				siding.getOBATripStatusWithDeviation(currentMillis, stopTimes.get(0), departureIndex, departureOffset, "", "").left(),
+				siding.getOBATripStatus(currentMillis, stopTimes.get(0), departureIndex, departureOffset, "", ""),
 				schedule,
 				siding.getOBAFrequencyElement(currentMillis)
 		));
 	}
 
-	public org.mtr.core.oba.Trip getOBATripElement(int departureIndex, long departureOffset) {
-		return new org.mtr.core.oba.Trip(route, getTripId(departureIndex, departureOffset), departureIndex);
+	public org.mtr.core.oba.Trip getOBATripElement(String tripId, int departureIndex) {
+		return new org.mtr.core.oba.Trip(route, tripId, departureIndex);
+	}
+
+	private org.mtr.core.oba.Trip getOBATripElement(int departureIndex, long departureOffset) {
+		return getOBATripElement(getTripId(departureIndex, departureOffset), departureIndex);
 	}
 
 	public static class StopTime {
