@@ -1,0 +1,35 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"clientId": {
+			"type": "string"
+		},
+		"ridingCar": {
+			"type": "integer"
+		},
+		"x": {
+			"type": "number"
+		},
+		"y": {
+			"type": "number"
+		},
+		"z": {
+			"type": "number"
+		},
+		"isOnGangway": {
+			"type": "boolean"
+		}
+	},
+	"required": [
+		"clientId",
+		"ridingCar",
+		"x",
+		"y",
+		"z",
+		"isOnGangway"
+	]
+}

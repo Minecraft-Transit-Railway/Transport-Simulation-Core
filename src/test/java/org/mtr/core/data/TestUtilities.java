@@ -191,7 +191,11 @@ public interface TestUtilities {
 	}
 
 	static VehicleExtraData randomVehicleExtraData() {
-		return VehicleExtraData.create(RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong());
+		return VehicleExtraData.create(RANDOM.nextLong(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong());
+	}
+
+	static VehicleRidingEntity randomVehicleRidingEntity() {
+		return new VehicleRidingEntity(UUID.randomUUID(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextBoolean());
 	}
 
 	static Vehicle randomVehicle() {
@@ -264,6 +268,10 @@ public interface TestUtilities {
 
 	static VehicleExtraData newVehicleExtraData(ReaderBase readerBase) {
 		return new VehicleExtraData(readerBase);
+	}
+
+	static VehicleRidingEntity newVehicleRidingEntity(ReaderBase readerBase) {
+		return new VehicleRidingEntity(readerBase);
 	}
 
 	static Vehicle newVehicle(ReaderBase readerBase) {

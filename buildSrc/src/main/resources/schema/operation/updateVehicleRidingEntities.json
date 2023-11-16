@@ -1,0 +1,25 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"sidingId": {
+			"type": "integer"
+		},
+		"vehicleId": {
+			"type": "integer"
+		},
+		"ridingEntities": {
+			"type": "array",
+			"items": {
+				"$ref": "vehicleRidingEntity.json"
+			}
+		}
+	},
+	"required": [
+		"sidingId",
+		"vehicleId"
+	]
+}

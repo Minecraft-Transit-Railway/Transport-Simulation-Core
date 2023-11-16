@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntSupplier;
 
 public interface Utilities {
 
@@ -166,6 +167,20 @@ public interface Utilities {
 		}
 
 		return tempValue1 - value2;
+	}
+
+	static int compare(long value1, long value2, IntSupplier ifZero) {
+		final int result = Long.compare(value1, value2);
+		return result == 0 ? ifZero.getAsInt() : result;
+	}
+
+	static int compare(String value1, String value2, IntSupplier ifZero) {
+		try {
+			return compare(Long.parseLong(value1), Long.parseLong(value2), ifZero);
+		} catch (Exception ignored) {
+			final int result = value1.compareTo(value2);
+			return result == 0 ? ifZero.getAsInt() : result;
+		}
 	}
 
 	static void awaitTermination(ExecutorService executorService) {

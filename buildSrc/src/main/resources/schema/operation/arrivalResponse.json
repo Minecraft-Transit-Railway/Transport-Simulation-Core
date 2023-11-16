@@ -20,8 +20,11 @@
 		"realtime": {
 			"type": "boolean"
 		},
-		"index": {
+		"departureIndex": {
 			"type": "integer"
+		},
+		"isTerminating": {
+			"type": "boolean"
 		},
 		"routeId": {
 			"type": "integer"
@@ -59,7 +62,8 @@
 		"departure",
 		"deviation",
 		"realtime",
-		"index",
+		"departureIndex",
+		"isTerminating",
 		"routeId",
 		"routeName",
 		"routeNumber",

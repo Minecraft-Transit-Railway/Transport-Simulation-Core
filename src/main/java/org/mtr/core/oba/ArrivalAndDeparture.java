@@ -8,13 +8,31 @@ import org.mtr.core.tool.Utilities;
 
 import javax.annotation.Nullable;
 
-public final class ArrivalAndDeparture extends ArrivalAndDepartureSchema {
+public final class ArrivalAndDeparture extends ArrivalAndDepartureSchema implements Comparable<ArrivalAndDeparture> {
 
-	public ArrivalAndDeparture(
+	public static ArrivalAndDeparture create(
 			Trip trip,
 			String tripId,
 			Platform platform,
 			Trip.StopTime stopTime,
+			long scheduledArrivalTime,
+			long scheduledDepartureTime,
+			boolean predicted,
+			long deviation,
+			OccupancyStatus occupancyStatus,
+			String vehicleId,
+			@Nullable Frequency frequency,
+			TripStatus tripStatus
+	) {
+		return new ArrivalAndDeparture(trip, tripId, platform, stopTime, stopTime.tripStopIndex == trip.route.getRoutePlatforms().size() - 1, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, occupancyStatus, vehicleId, frequency, tripStatus);
+	}
+
+	private ArrivalAndDeparture(
+			Trip trip,
+			String tripId,
+			Platform platform,
+			Trip.StopTime stopTime,
+			boolean isTerminating,
 			long scheduledArrivalTime,
 			long scheduledDepartureTime,
 			boolean predicted,
@@ -34,16 +52,16 @@ public final class ArrivalAndDeparture extends ArrivalAndDepartureSchema {
 				trip.tripIndexInBlock,
 				Utilities.formatName(trip.route.getRouteNumber()),
 				Utilities.formatName(trip.route.getName()),
-				stopTime.customDestination,
+				(isTerminating ? "(Terminating) " : "") + stopTime.customDestination,
 				stopTime.tripStopIndex > 0,
-				stopTime.tripStopIndex < trip.route.getRoutePlatforms().size() - 1,
+				!isTerminating,
 				scheduledArrivalTime,
 				scheduledDepartureTime,
 				predicted,
 				predicted ? scheduledArrivalTime + deviation : 0,
 				predicted ? scheduledDepartureTime + deviation : 0,
 				0,
-				occupancyStatus,
+				OccupancyStatus.MANY_SEATS_AVAILABLE,
 				0,
 				occupancyStatus,
 				"default",
@@ -66,5 +84,10 @@ public final class ArrivalAndDeparture extends ArrivalAndDepartureSchema {
 	@Override
 	protected TripStatus getDefaultTripStatus() {
 		return null;
+	}
+
+	@Override
+	public int compareTo(ArrivalAndDeparture arrivalAndDeparture) {
+		return Utilities.compare(predicted ? predictedArrivalTime : scheduledArrivalTime, arrivalAndDeparture.predicted ? arrivalAndDeparture.predictedArrivalTime : arrivalAndDeparture.scheduledArrivalTime, () -> Utilities.compare(tripHeadsign, arrivalAndDeparture.tripHeadsign, () -> 0));
 	}
 }

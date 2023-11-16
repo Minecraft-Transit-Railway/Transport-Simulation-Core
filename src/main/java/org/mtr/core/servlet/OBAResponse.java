@@ -8,6 +8,7 @@ import org.mtr.core.tool.LatLon;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 
 public final class OBAResponse extends ResponseBase<Object> {
@@ -55,14 +56,20 @@ public final class OBAResponse extends ResponseBase<Object> {
 				});
 			}
 
-			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> siding.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
-					singleElement,
-					stopWithArrivalsAndDepartures,
-					currentMillis,
-					platform,
-					Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
-					Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000
-			))));
+			final LongAVLTreeSet visitedSidingIds = new LongAVLTreeSet();
+			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> {
+				if (!visitedSidingIds.contains(siding.getId())) {
+					visitedSidingIds.add(siding.getId());
+					siding.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
+							singleElement,
+							stopWithArrivalsAndDepartures,
+							currentMillis,
+							platform,
+							Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
+							Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000
+					);
+				}
+			})));
 
 			return singleElement.toJson(simulator);
 		} catch (Exception ignored) {

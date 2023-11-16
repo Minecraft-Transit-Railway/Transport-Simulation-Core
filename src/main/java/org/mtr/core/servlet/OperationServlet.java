@@ -2,6 +2,7 @@ package org.mtr.core.servlet;
 
 import org.mtr.core.operation.ArrivalsRequest;
 import org.mtr.core.operation.SetTime;
+import org.mtr.core.operation.UpdateVehicleRidingEntities;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
@@ -22,6 +23,8 @@ public final class OperationServlet extends ServletBase {
 				return new ArrivalsRequest(jsonReader).getArrivals(simulator, currentMillis);
 			case "set-time":
 				return new SetTime(jsonReader).setGameTime(simulator);
+			case "update-riding-entities":
+				return new UpdateVehicleRidingEntities(jsonReader).update(simulator);
 			default:
 				return null;
 		}

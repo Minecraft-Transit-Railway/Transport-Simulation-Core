@@ -7,6 +7,7 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Collections;
@@ -25,11 +26,18 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 
 	public JsonObject getArrivals(Simulator simulator, long currentMillis) {
 		final ObjectArrayList<ArrivalResponse> arrivalResponseList = new ObjectArrayList<>();
+		final ObjectAVLTreeSet<String> visitedKeys = new ObjectAVLTreeSet<>();
 
 		platformIds.forEach(platformId -> {
 			final Platform platform = simulator.platformIdMap.get(platformId);
 			if (platform != null) {
-				platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> siding.getArrivals(currentMillis, platform, realtimeOnly, (page + 1) * count, arrivalResponseList))));
+				platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> {
+					final String key = String.format("%s_%s", platformId, siding.getId());
+					if (!visitedKeys.contains(key)) {
+						visitedKeys.add(key);
+						siding.getArrivals(currentMillis, platform, realtimeOnly, (page + 1) * count, arrivalResponseList);
+					}
+				})));
 			}
 		});
 

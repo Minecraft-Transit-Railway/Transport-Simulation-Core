@@ -13,6 +13,7 @@ public abstract class ReferencesBase extends ReferencesBaseSchema {
 
 	protected ReferencesBase(ReaderBase readerBase) {
 		super(readerBase);
+		updateData(readerBase);
 	}
 
 	public final void addRoute(int routeColor) {

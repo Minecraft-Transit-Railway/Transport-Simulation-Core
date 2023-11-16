@@ -31,12 +31,6 @@
 		"departureIndex": {
 			"type": "integer",
 			"default": -1
-		},
-		"ridingEntities": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			}
 		}
 	}
 }

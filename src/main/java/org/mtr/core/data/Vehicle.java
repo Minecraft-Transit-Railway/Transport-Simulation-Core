@@ -11,8 +11,10 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 public class Vehicle extends VehicleSchema {
 
@@ -109,7 +111,6 @@ public class Vehicle extends VehicleSchema {
 				currentIndex = 0;
 				railProgress = vehicleExtraData.getDefaultPosition();
 				manualNotch = 0;
-				ridingEntities.clear();
 				vehicleExtraData.closeDoors();
 			} else {
 				// if vehicle is on route normally
@@ -136,6 +137,10 @@ public class Vehicle extends VehicleSchema {
 
 		if (siding != null && vehicleTimesAlongRoute != null) {
 			vehicleTimesAlongRoute.put(departureIndex, Math.round(siding.getTimeAlongRoute(railProgress)) + (long) elapsedDwellTime);
+		}
+
+		if (!isClientside && data instanceof Simulator) {
+			vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> !((Simulator) data).isRiding(vehicleRidingEntity.uuid, id));
 		}
 	}
 
@@ -188,6 +193,24 @@ public class Vehicle extends VehicleSchema {
 		}
 
 		return vehicleCarsAndPositions;
+	}
+
+	void updateRidingEntities(ObjectArrayList<VehicleRidingEntity> vehicleRidingEntities) {
+		if (!isClientside && data instanceof Simulator) {
+			final ObjectOpenHashSet<UUID> uuidToRemove = new ObjectOpenHashSet<>();
+			final ObjectOpenHashSet<VehicleRidingEntity> vehicleRidingEntitiesToAdd = new ObjectOpenHashSet<>();
+			vehicleRidingEntities.forEach(vehicleRidingEntity -> {
+				uuidToRemove.add(vehicleRidingEntity.uuid);
+				if (vehicleRidingEntity.isOnVehicle()) {
+					vehicleRidingEntitiesToAdd.add(vehicleRidingEntity);
+					((Simulator) data).ride(vehicleRidingEntity.uuid, id);
+				} else {
+					((Simulator) data).stopRiding(vehicleRidingEntity.uuid);
+				}
+			});
+			vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> uuidToRemove.contains(vehicleRidingEntity.uuid));
+			vehicleExtraData.addRidingEntities(vehicleRidingEntitiesToAdd);
+		}
 	}
 
 	private void simulateInDepot() {

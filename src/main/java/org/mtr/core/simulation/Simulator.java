@@ -5,12 +5,14 @@ import org.mtr.core.data.*;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.UUID;
 
 public class Simulator extends Data implements Utilities {
 
@@ -33,6 +35,7 @@ public class Simulator extends Data implements Utilities {
 	private final FileLoader<Rail> fileLoaderRails;
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
+	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
 
 	public Simulator(String dimension, Path rootPath) {
 		this.dimension = dimension;
@@ -149,6 +152,18 @@ public class Simulator extends Data implements Utilities {
 
 	public void run(Runnable runnable) {
 		queuedRuns.add(runnable);
+	}
+
+	public boolean isRiding(UUID uuid, long vehicleId) {
+		return ridingVehicleIds.getLong(uuid) == vehicleId;
+	}
+
+	public void ride(UUID uuid, long vehicleId) {
+		ridingVehicleIds.put(uuid, vehicleId);
+	}
+
+	public void stopRiding(UUID uuid) {
+		ridingVehicleIds.removeLong(uuid);
 	}
 
 	private void save(boolean useReducedHash) {

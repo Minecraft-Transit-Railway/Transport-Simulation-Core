@@ -5,6 +5,9 @@
 		"SerializedDataBase"
 	],
 	"properties": {
+		"sidingId": {
+			"type": "integer"
+		},
 		"previousRouteId": {
 			"type": "integer"
 		},
@@ -121,9 +124,16 @@
 			"items": {
 				"$ref": "pathData.json"
 			}
+		},
+		"ridingEntities": {
+			"type": "array",
+			"items": {
+				"$ref": "vehicleRidingEntity.json"
+			}
 		}
 	},
 	"required": [
+		"sidingId",
 		"railLength",
 		"totalVehicleLength",
 		"repeatIndex1",

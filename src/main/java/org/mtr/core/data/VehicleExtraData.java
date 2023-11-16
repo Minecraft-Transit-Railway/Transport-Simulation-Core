@@ -6,21 +6,25 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import javax.annotation.Nullable;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	private int stopIndex = -1;
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
+	private boolean hasRidingEntityUpdate;
 
 	public final ObjectImmutableList<PathData> immutablePath;
 	public final ObjectImmutableList<VehicleCar> immutableVehicleCars;
 
-	private VehicleExtraData(double railLength, double totalVehicleLength, long repeatIndex1, long repeatIndex2, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double totalDistance, double defaultPosition, ObjectArrayList<VehicleCar> vehicleCars, ObjectArrayList<PathData> path) {
-		super(railLength, totalVehicleLength, repeatIndex1, repeatIndex2, acceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition);
+	private VehicleExtraData(long sidingId, double railLength, double totalVehicleLength, long repeatIndex1, long repeatIndex2, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double totalDistance, double defaultPosition, ObjectArrayList<VehicleCar> vehicleCars, ObjectArrayList<PathData> path) {
+		super(sidingId, railLength, totalVehicleLength, repeatIndex1, repeatIndex2, acceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition);
 		this.path.clear();
 		this.path.addAll(path);
 		immutablePath = new ObjectImmutableList<>(path);
@@ -54,6 +58,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		}
 
 		return newVehicleExtraData;
+	}
+
+	public long getSidingId() {
+		return sidingId;
 	}
 
 	public long getPreviousRouteId() {
@@ -136,6 +144,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		interchangeColorsForStationNameList.forEach(interchangeColorsForStationName -> consumer.accept(interchangeColorsForStationName.getStationName(), interchangeColorsForStationName));
 	}
 
+	public void iterateRidingEntities(Consumer<VehicleRidingEntity> consumer) {
+		ridingEntities.forEach(consumer);
+	}
+
 	public int getDoorMultiplier() {
 		return doorTarget ? 1 : -1;
 	}
@@ -201,9 +213,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	}
 
 	protected boolean checkForUpdate() {
-		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget;
+		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || hasRidingEntityUpdate;
 		oldStoppingPoint = stoppingPoint;
 		oldDoorTarget = doorTarget;
+		hasRidingEntityUpdate = false;
 		return needsUpdate;
 	}
 
@@ -276,8 +289,20 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		}
 	}
 
+	void removeRidingEntitiesIf(Predicate<VehicleRidingEntity> predicate) {
+		if (ridingEntities.removeIf(predicate)) {
+			hasRidingEntityUpdate = true;
+		}
+	}
+
+	void addRidingEntities(ObjectOpenHashSet<VehicleRidingEntity> vehicleRidingEntitiesToAdd) {
+		if (ridingEntities.addAll(vehicleRidingEntitiesToAdd)) {
+			hasRidingEntityUpdate = true;
+		}
+	}
+
 	public static VehicleExtraData create(
-			double railLength, ObjectArrayList<VehicleCar> vehicleCars,
+			long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
 			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime
 	) {
@@ -289,7 +314,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		final double newAcceleration = Siding.roundAcceleration(acceleration);
 		final double totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).getEndDistance();
 		final double defaultPosition = (newRailLength + newTotalVehicleLength) / 2;
-		return new VehicleExtraData(newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path);
+		return new VehicleExtraData(sidingId, newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path);
 	}
 
 	private static ObjectArrayList<PathData> createPathData(ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, boolean repeatInfinitely, PathData defaultPathData) {
