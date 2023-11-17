@@ -136,7 +136,8 @@ public class Vehicle extends VehicleSchema {
 		}
 
 		if (siding != null && vehicleTimesAlongRoute != null) {
-			vehicleTimesAlongRoute.put(departureIndex, Math.round(siding.getTimeAlongRoute(railProgress)) + (long) elapsedDwellTime);
+			// Subtract 1 from railProgress for rounding errors
+			vehicleTimesAlongRoute.put(departureIndex, (long) Math.floor(siding.getTimeAlongRoute(railProgress - 1) + elapsedDwellTime));
 		}
 
 		if (!isClientside && data instanceof Simulator) {
