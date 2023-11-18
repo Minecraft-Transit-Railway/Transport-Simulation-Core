@@ -97,13 +97,13 @@ public class Data {
 		}
 	}
 
-	public static <T, U, V extends Map<T, U>, W extends Map<T, V>> U tryGet(W map, T key1, T key2, U defaultValue) {
-		final U result = tryGet(map, key1, key2);
+	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> V tryGet(W map, T key1, U key2, V defaultValue) {
+		final V result = tryGet(map, key1, key2);
 		return result == null ? defaultValue : result;
 	}
 
-	public static <T, U, V extends Map<T, U>, W extends Map<T, V>> U tryGet(W map, T key1, T key2) {
-		final Map<T, U> innerMap = map.get(key1);
+	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> V tryGet(W map, T key1, U key2) {
+		final Map<U, V> innerMap = map.get(key1);
 		if (innerMap == null) {
 			return null;
 		} else {
@@ -123,9 +123,21 @@ public class Data {
 		newInnerSet.add(newValue);
 	}
 
-	public static <T, U, V extends Map<T, W>, W extends Map<T, U>> void put(V map, T key1, T key2, Function<U, U> putValue, Supplier<W> innerMapSupplier) {
-		final W innerMap = map.get(key1);
-		final W newInnerMap;
+	public static <T, U, V extends Map<T, W>, W extends Collection<U>, X extends Collection<U>> void put(V map, T key, X newValue, Supplier<W> innerSetSupplier) {
+		final W innerSet = map.get(key);
+		final W newInnerSet;
+		if (innerSet == null) {
+			newInnerSet = innerSetSupplier.get();
+			map.put(key, newInnerSet);
+		} else {
+			newInnerSet = innerSet;
+		}
+		newInnerSet.addAll(newValue);
+	}
+
+	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> void put(W map, T key1, U key2, Function<V, V> putValue, Supplier<X> innerMapSupplier) {
+		final X innerMap = map.get(key1);
+		final X newInnerMap;
 		if (innerMap == null) {
 			newInnerMap = innerMapSupplier.get();
 			map.put(key1, newInnerMap);

@@ -52,6 +52,10 @@ public final class Integration extends IntegrationSchema {
 		signals.forEach(consumer);
 	}
 
+	public void iterateSimplifiedRoutes(Consumer<SimplifiedRoute> consumer) {
+		simplifiedRoutes.forEach(consumer);
+	}
+
 	public void iterateVehiclesToUpdate(Consumer<VehicleUpdate> consumer) {
 		update.forEach(consumer);
 	}
@@ -64,7 +68,7 @@ public final class Integration extends IntegrationSchema {
 		remove.forEach(consumer);
 	}
 
-	public void add(@Nullable ObjectSet<Station> stations, @Nullable ObjectSet<Platform> platforms, @Nullable ObjectSet<Siding> sidings, @Nullable ObjectSet<Route> routes, @Nullable ObjectSet<Depot> depots) {
+	public void add(@Nullable ObjectSet<Station> stations, @Nullable ObjectSet<Platform> platforms, @Nullable ObjectSet<Siding> sidings, @Nullable ObjectSet<Route> routes, @Nullable ObjectSet<Depot> depots, @Nullable ObjectSet<SimplifiedRoute> simplifiedRoutes) {
 		if (stations != null) {
 			this.stations.addAll(stations);
 		}
@@ -79,6 +83,9 @@ public final class Integration extends IntegrationSchema {
 		}
 		if (depots != null) {
 			this.depots.addAll(depots);
+		}
+		if (simplifiedRoutes != null) {
+			this.simplifiedRoutes.addAll(simplifiedRoutes);
 		}
 	}
 

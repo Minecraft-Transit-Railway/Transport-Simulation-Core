@@ -35,6 +35,12 @@
 				"$ref": "depot.json"
 			}
 		},
+		"simplifiedRoutes": {
+			"type": "array",
+			"items": {
+				"$ref": "simplifiedRoute.json"
+			}
+		},
 		"rails": {
 			"type": "array",
 			"items": {

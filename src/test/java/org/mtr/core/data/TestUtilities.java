@@ -182,6 +182,14 @@ public interface TestUtilities {
 		return new SignalModification(randomPosition(), randomPosition(), RANDOM.nextBoolean());
 	}
 
+	static SimplifiedRoute randomSimplifiedRoute() {
+		return new SimplifiedRoute(new JsonReader(new JsonObject()));
+	}
+
+	static SimplifiedRoutePlatform randomSimplifiedRoutePlatform() {
+		return new SimplifiedRoutePlatform(RANDOM.nextLong(), randomString(), randomString());
+	}
+
 	static Station randomStation() {
 		return new Station(getDefaultSimulator());
 	}
@@ -260,6 +268,14 @@ public interface TestUtilities {
 
 	static Station newStation(ReaderBase readerBase) {
 		return new Station(readerBase, getDefaultSimulator());
+	}
+
+	static SimplifiedRoute newSimplifiedRoute(ReaderBase readerBase) {
+		return new SimplifiedRoute(readerBase);
+	}
+
+	static SimplifiedRoutePlatform newSimplifiedRoutePlatform(ReaderBase readerBase) {
+		return new SimplifiedRoutePlatform(readerBase);
 	}
 
 	static VehicleCar newVehicleCar(ReaderBase readerBase) {

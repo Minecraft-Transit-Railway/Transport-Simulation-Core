@@ -6,7 +6,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.function.Consumer;
 
-public final class InterchangeRouteNamesForColor extends InterchangeRouteNamesForColorSchema {
+public final class InterchangeRouteNamesForColor extends InterchangeRouteNamesForColorSchema implements Comparable<InterchangeRouteNamesForColor> {
 
 	public InterchangeRouteNamesForColor(long color) {
 		super(color);
@@ -25,7 +25,18 @@ public final class InterchangeRouteNamesForColor extends InterchangeRouteNamesFo
 		return (int) (color & 0xFFFFFF);
 	}
 
+	void addRouteName(String routeName) {
+		if (!routeNames.contains(routeName)) {
+			routeNames.add(routeName);
+		}
+	}
+
 	void addRouteNames(ObjectArrayList<String> routeNames) {
 		this.routeNames.addAll(routeNames);
+	}
+
+	@Override
+	public int compareTo(InterchangeRouteNamesForColor interchangeRouteNamesForColor) {
+		return Long.compare(color, interchangeRouteNamesForColor.color);
 	}
 }

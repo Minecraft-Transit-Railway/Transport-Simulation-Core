@@ -3,7 +3,7 @@ package org.mtr.core.data;
 import org.mtr.core.generated.data.InterchangeColorsForStationNameSchema;
 import org.mtr.core.serializer.ReaderBase;
 
-public final class InterchangeColorsForStationName extends InterchangeColorsForStationNameSchema {
+public class InterchangeColorsForStationName extends InterchangeColorsForStationNameSchema {
 
 	public InterchangeColorsForStationName(String stationName) {
 		super(stationName);
@@ -18,12 +18,12 @@ public final class InterchangeColorsForStationName extends InterchangeColorsForS
 		interchangeRouteNamesForColorList.forEach(interchangeRouteNamesForColor -> consumer.accept(interchangeRouteNamesForColor.getColor(), interchangeRouteNamesForColor));
 	}
 
-	String getStationName() {
-		return stationName;
+	public void addColor(InterchangeRouteNamesForColor interchangeRouteNamesForColor) {
+		interchangeRouteNamesForColorList.add(interchangeRouteNamesForColor);
 	}
 
-	void addColor(InterchangeRouteNamesForColor interchangeRouteNamesForColor) {
-		interchangeRouteNamesForColorList.add(interchangeRouteNamesForColor);
+	String getStationName() {
+		return stationName;
 	}
 
 	@FunctionalInterface

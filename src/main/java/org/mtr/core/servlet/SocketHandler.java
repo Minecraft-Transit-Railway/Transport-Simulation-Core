@@ -2,15 +2,14 @@ package org.mtr.core.servlet;
 
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
+import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.JsonReader;
-import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonArray;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.webserver.Webserver;
 
@@ -30,20 +29,19 @@ public final class SocketHandler {
 
 					simulator.clientGroup.iterateClients(client -> {
 						try {
-							final JsonObject clientObject = new JsonObject();
-							final ObjectArrayList<Station> stations = new ObjectArrayList<>();
-							final ObjectArrayList<Platform> platforms = new ObjectArrayList<>();
+							final ObjectArraySet<Station> stations = new ObjectArraySet<>();
+							final ObjectArraySet<Platform> platforms = new ObjectArraySet<>();
 							final LongAVLTreeSet platformIds = new LongAVLTreeSet();
-							final ObjectArrayList<Depot> depots = new ObjectArrayList<>();
-							final ObjectArrayList<Siding> sidings = new ObjectArrayList<>();
+							final ObjectArraySet<Depot> depots = new ObjectArraySet<>();
+							final ObjectArraySet<Siding> sidings = new ObjectArraySet<>();
 							final LongAVLTreeSet sidingIds = new LongAVLTreeSet();
-							final ObjectArrayList<Route> routes = new ObjectArrayList<>();
-							final ObjectArrayList<Rail> rails = new ObjectArrayList<>();
+							final ObjectArraySet<SimplifiedRoute> simplifiedRoutes = new ObjectArraySet<>();
+							final ObjectArraySet<Rail> rails = new ObjectArraySet<>();
 
 							findNearby(simulator.stations, simulator.platforms, client.getPosition(), updateRadius, stations, platforms, platformIds);
 							findNearby(simulator.depots, simulator.sidings, client.getPosition(), updateRadius, depots, sidings, sidingIds);
 
-							platforms.forEach(platform -> routes.addAll(platform.routes));
+							platforms.forEach(platform -> platform.routes.forEach(route -> SimplifiedRoute.addToSet(simplifiedRoutes, route)));
 
 							simulator.rails.forEach(rail -> {
 								if (rail.closeTo(client.getPosition(), updateRadius)) {
@@ -51,14 +49,11 @@ public final class SocketHandler {
 								}
 							});
 
-							addDataSetToJsonObject(stations, clientObject, "stations");
-							addDataSetToJsonObject(platforms, clientObject, "platforms");
-							addDataSetToJsonObject(sidings, clientObject, "sidings");
-							addDataSetToJsonObject(routes, clientObject, "routes");
-							addDataSetToJsonObject(depots, clientObject, "depots");
-							addDataSetToJsonObject(rails, clientObject, "rails");
-
-							responseObject.add(client.uuid.toString(), clientObject);
+							// Outbound update packets (not the list operation) should contain simplified routes rather than the actual routes
+							final Integration integration = new Integration();
+							integration.add(stations, platforms, sidings, null, depots, simplifiedRoutes);
+							integration.add(rails, null);
+							responseObject.add(client.uuid.toString(), Utilities.getJsonObjectFromData(integration));
 						} catch (Exception e) {
 							Main.logException(e);
 						}
@@ -72,7 +67,7 @@ public final class SocketHandler {
 		});
 	}
 
-	private static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void findNearby(ObjectAVLTreeSet<T> areaDataList, ObjectAVLTreeSet<U> savedRailDataList, Position position, double radius, ObjectArrayList<T> areas, ObjectArrayList<U> savedRails, LongAVLTreeSet savedRailIds) {
+	private static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void findNearby(ObjectAVLTreeSet<T> areaDataList, ObjectAVLTreeSet<U> savedRailDataList, Position position, double radius, ObjectArraySet<T> areas, ObjectArraySet<U> savedRails, LongAVLTreeSet savedRailIds) {
 		areaDataList.forEach(area -> {
 			if (area.inArea(position, radius)) {
 				areas.add(area);
@@ -89,11 +84,5 @@ public final class SocketHandler {
 				savedRailIds.add(savedRail.getId());
 			}
 		});
-	}
-
-	private static <T extends SerializedDataBase> void addDataSetToJsonObject(ObjectArrayList<T> dataSet, JsonObject jsonObject, String key) {
-		final JsonArray jsonArray = new JsonArray();
-		dataSet.forEach(data -> jsonArray.add(Utilities.getJsonObjectFromData(data)));
-		jsonObject.add(key, jsonArray);
 	}
 }

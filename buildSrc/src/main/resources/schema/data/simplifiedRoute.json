@@ -1,0 +1,32 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"name": {
+			"type": "string"
+		},
+		"color": {
+			"type": "integer",
+			"minimum": 0,
+			"maximum": 16777215
+		},
+		"circularState": {
+			"$ref": "Route.CircularState"
+		},
+		"platforms": {
+			"type": "array",
+			"items": {
+				"$ref": "simplifiedRoutePlatform.json"
+			}
+		}
+	},
+	"required": [
+		"name",
+		"color",
+		"destination",
+		"circularState"
+	]
+}
