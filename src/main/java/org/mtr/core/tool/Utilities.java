@@ -89,12 +89,16 @@ public interface Utilities {
 		return text.split("\\|\\|")[0].replace("|", " ");
 	}
 
-	static String prettyPrint(String string) {
+	static JsonObject parseJson(String data) {
 		try {
-			return prettyPrint(JsonParser.parseString(string));
+			return JsonParser.parseString(data).getAsJsonObject();
 		} catch (Exception ignored) {
-			return "";
+			return new JsonObject();
 		}
+	}
+
+	static String prettyPrint(String string) {
+		return prettyPrint(parseJson(string));
 	}
 
 	static String prettyPrint(JsonElement jsonElement) {

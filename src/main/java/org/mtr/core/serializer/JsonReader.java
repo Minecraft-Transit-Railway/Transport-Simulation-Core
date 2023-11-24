@@ -1,9 +1,8 @@
 package org.mtr.core.serializer;
 
-import org.mtr.core.Main;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonElement;
 import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.com.google.gson.JsonParser;
 import org.mtr.libraries.it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntConsumer;
@@ -133,12 +132,7 @@ public final class JsonReader extends ReaderBase {
 	}
 
 	public static JsonReader parse(String string) {
-		try {
-			return new JsonReader(JsonParser.parseString(string));
-		} catch (Exception e) {
-			Main.logException(e);
-			return new JsonReader(new Object2ObjectArrayMap<>());
-		}
+		return new JsonReader(Utilities.parseJson(string));
 	}
 
 	private static boolean getBoolean(JsonElement value) {

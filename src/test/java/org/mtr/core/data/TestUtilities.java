@@ -15,7 +15,6 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.com.google.gson.JsonParser;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
 import org.mtr.libraries.org.msgpack.core.MessagePack;
@@ -73,7 +72,7 @@ public interface TestUtilities {
 
 		try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
 			try (final CloseableHttpResponse response = httpClient.execute(httpUriRequest)) {
-				responseObject = JsonParser.parseString(EntityUtils.toString(response.getEntity())).getAsJsonObject();
+				responseObject = Utilities.parseJson(EntityUtils.toString(response.getEntity()));
 			}
 		} catch (Exception e) {
 			Main.logException(e);
