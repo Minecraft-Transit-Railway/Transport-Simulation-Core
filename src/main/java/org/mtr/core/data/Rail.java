@@ -215,10 +215,5 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		return blockedVehicleIds.values().longStream().allMatch(blockedVehicleId -> blockedVehicleId == vehicleId);
 	}
 
-	@FunctionalInterface
-	public interface RenderRail {
-		void renderRail(double x1, double z1, double x2, double z2, double x3, double z3, double x4, double z4, double y1, double y2);
-	}
-
 	public enum Shape {CURVE, STRAIGHT}
 }

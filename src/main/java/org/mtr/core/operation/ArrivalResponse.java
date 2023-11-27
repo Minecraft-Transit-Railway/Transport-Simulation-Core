@@ -61,8 +61,8 @@ public final class ArrivalResponse extends ArrivalResponseSchema implements Comp
 		return routeNumber;
 	}
 
-	public long getRouteColor() {
-		return routeColor;
+	public int getRouteColor() {
+		return (int) (routeColor & 0xFFFFFF);
 	}
 
 	public Route.CircularState getCircularState() {

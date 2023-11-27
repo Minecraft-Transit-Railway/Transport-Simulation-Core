@@ -211,7 +211,7 @@ public class RailMath {
 		return Math.abs(tEnd2 - tStart2) + Math.abs(tEnd1 - tStart1);
 	}
 
-	public void render(Rail.RenderRail callback, float offsetRadius1, float offsetRadius2) {
+	public void render(RenderRail callback, float offsetRadius1, float offsetRadius2) {
 		renderSegment(h1, k1, r1, tStart1, tEnd1, 0, offsetRadius1, offsetRadius2, reverseT1, isStraight1, callback);
 		renderSegment(h2, k2, r2, tStart2, tEnd2, Math.abs(tEnd1 - tStart1), offsetRadius1, offsetRadius2, reverseT2, isStraight2, callback);
 	}
@@ -220,22 +220,26 @@ public class RailMath {
 		return h1 != 0 || k1 != 0 || h2 != 0 || k2 != 0 || r1 != 0 || r2 != 0 || tStart1 != 0 || tStart2 != 0 || tEnd1 != 0 || tEnd2 != 0;
 	}
 
-	private void renderSegment(double h, double k, double r, double tStart, double tEnd, double rawValueOffset, float offsetRadius1, float offsetRadius2, boolean reverseT, boolean isStraight, Rail.RenderRail callback) {
+	private void renderSegment(double h, double k, double r, double tStart, double tEnd, double rawValueOffset, float offsetRadius1, float offsetRadius2, boolean reverseT, boolean isStraight, RenderRail callback) {
 		final double count = Math.abs(tEnd - tStart);
 		final double increment = count / Math.round(count);
+		Vector previousCorner1 = null;
+		Vector previousCorner2 = null;
+		double previousY = 0;
 
-		for (double i = 0; i < count - 0.1; i += increment) {
-			final double t1 = (reverseT ? -1 : 1) * i + tStart;
-			final double t2 = (reverseT ? -1 : 1) * (i + increment) + tStart;
-			final Vector corner1 = getPositionXZ(h, k, r, t1, offsetRadius1, isStraight);
-			final Vector corner2 = getPositionXZ(h, k, r, t1, offsetRadius2, isStraight);
-			final Vector corner3 = getPositionXZ(h, k, r, t2, offsetRadius2, isStraight);
-			final Vector corner4 = getPositionXZ(h, k, r, t2, offsetRadius1, isStraight);
+		for (double i = 0; i < count + increment - 0.1; i += increment) {
+			final double t = (reverseT ? -1 : 1) * i + tStart;
+			final Vector corner1 = getPositionXZ(h, k, r, t, offsetRadius2, isStraight);
+			final Vector corner2 = offsetRadius2 == offsetRadius1 ? corner1 : getPositionXZ(h, k, r, t, offsetRadius1, isStraight);
+			final double y = getPositionY(i + rawValueOffset);
 
-			final double y1 = getPositionY(i + rawValueOffset);
-			final double y2 = getPositionY(i + increment + rawValueOffset);
+			if (previousCorner1 != null) {
+				callback.renderRail(previousCorner1.x, previousCorner1.z, previousCorner2.x, previousCorner2.z, corner1.x, corner1.z, corner2.x, corner2.z, previousY, y);
+			}
 
-			callback.renderRail(corner1.x, corner1.z, corner2.x, corner2.z, corner3.x, corner3.z, corner4.x, corner4.z, y1, y2);
+			previousCorner1 = corner2;
+			previousCorner2 = corner1;
+			previousY = y;
 		}
 	}
 
@@ -295,5 +299,10 @@ public class RailMath {
 		} else {
 			return t;
 		}
+	}
+
+	@FunctionalInterface
+	public interface RenderRail {
+		void renderRail(double x1, double z1, double x2, double z2, double x3, double z3, double x4, double z4, double y1, double y2);
 	}
 }

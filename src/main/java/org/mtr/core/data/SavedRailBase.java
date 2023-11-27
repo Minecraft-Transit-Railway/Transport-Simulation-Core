@@ -49,6 +49,36 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		return Utilities.isBetween(position, position1, position2, radius);
 	}
 
+	public double getApproximateClosestDistance(Position position, Data data) {
+		final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
+		if (rail == null) {
+			return Double.MAX_VALUE;
+		} else {
+			final double[] previousPosition = {0, 0, 0};
+			final double[] closestDistance = {Double.MAX_VALUE};
+
+			rail.railMath.render((x1, z1, x2, z2, x3, z3, x4, z4, y1, y2) -> {
+				iterateAndCheckDistance(x1, y1, z1, previousPosition, position, closestDistance);
+				iterateAndCheckDistance(x3, y2, z3, previousPosition, position, closestDistance);
+			}, 0, 0);
+
+			return closestDistance[0];
+		}
+	}
+
+	private static void iterateAndCheckDistance(double x, double y, double z, double[] previousPosition, Position position, double[] closestDistance) {
+		if (x != previousPosition[0] || y != previousPosition[1] || z != previousPosition[2]) {
+			previousPosition[0] = x;
+			previousPosition[1] = y;
+			previousPosition[2] = z;
+			final Position newPosition = new Position((long) Math.floor(x), (long) Math.floor(y), (long) Math.floor(z));
+			final long newDistance = newPosition.distManhattan(position);
+			if (newDistance < closestDistance[0]) {
+				closestDistance[0] = newDistance;
+			}
+		}
+	}
+
 	private static boolean isNumber(String text) {
 		try {
 			Double.parseDouble(text);

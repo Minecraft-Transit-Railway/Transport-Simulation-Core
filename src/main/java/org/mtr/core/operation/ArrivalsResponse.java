@@ -2,6 +2,7 @@ package org.mtr.core.operation;
 
 import org.mtr.core.generated.operation.ArrivalsResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
 public final class ArrivalsResponse extends ArrivalsResponseSchema {
 
@@ -14,10 +15,8 @@ public final class ArrivalsResponse extends ArrivalsResponseSchema {
 		updateData(readerBase);
 	}
 
-	public void iterateArrivals(ArrivalConsumer arrivalConsumer) {
-		for (int i = 0; i < arrivals.size(); i++) {
-			arrivalConsumer.apply(i, arrivals.get(i));
-		}
+	public ObjectImmutableList<ArrivalResponse> getArrivals() {
+		return new ObjectImmutableList<>(arrivals);
 	}
 
 	public void add(ArrivalResponse arrivalResponse) {
