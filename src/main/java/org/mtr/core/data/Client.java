@@ -39,7 +39,7 @@ public class Client extends ClientSchema {
 
 	@Nullable
 	public Integration getUpdates() {
-		final Integration integration = new Integration();
+		final Integration integration = new Integration(new Data());
 		vehicleUpdates.forEach((vehicleId, vehicleUpdate) -> {
 			integration.addVehicleToUpdate(vehicleUpdate);
 			existingVehicleIds.remove(vehicleId.longValue());

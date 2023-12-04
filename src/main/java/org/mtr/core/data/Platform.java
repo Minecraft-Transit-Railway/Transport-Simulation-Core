@@ -31,7 +31,7 @@ public final class Platform extends PlatformSchema {
 	 */
 	@Deprecated
 	public Platform(ReaderBase readerBase) {
-		this(readerBase, new Data());
+		this(readerBase, Integration.getData());
 	}
 
 	public void setDwellTime(long dwellTime) {

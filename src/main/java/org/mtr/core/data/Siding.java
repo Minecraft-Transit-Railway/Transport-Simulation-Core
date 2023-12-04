@@ -84,7 +84,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	 */
 	@Deprecated
 	public Siding(ReaderBase readerBase) {
-		this(readerBase, new Data());
+		this(readerBase, Integration.getData());
 	}
 
 	@Override

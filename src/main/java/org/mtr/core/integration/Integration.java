@@ -11,12 +11,16 @@ import java.util.function.LongConsumer;
 
 public final class Integration extends IntegrationSchema {
 
-	public Integration() {
+	private static Data DATA;
+
+	public Integration(Data data) {
 		super();
+		DATA = data;
 	}
 
-	public Integration(ReaderBase readerBase) {
+	public Integration(ReaderBase readerBase, Data data) {
 		super(readerBase);
+		DATA = data;
 		updateData(readerBase);
 	}
 
@@ -126,5 +130,10 @@ public final class Integration extends IntegrationSchema {
 
 	public boolean hasVehicle() {
 		return !update.isEmpty() || !keep.isEmpty() || !remove.isEmpty();
+	}
+
+	@Deprecated
+	public static Data getData() {
+		return DATA;
 	}
 }

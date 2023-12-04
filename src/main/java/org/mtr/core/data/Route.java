@@ -27,7 +27,7 @@ public final class Route extends RouteSchema {
 	 */
 	@Deprecated
 	public Route(ReaderBase readerBase) {
-		this(readerBase, new Data());
+		this(readerBase, Integration.getData());
 	}
 
 	@Override

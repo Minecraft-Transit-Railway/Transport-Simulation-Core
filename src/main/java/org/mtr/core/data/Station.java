@@ -31,7 +31,7 @@ public final class Station extends StationSchema {
 	 */
 	@Deprecated
 	public Station(ReaderBase readerBase) {
-		this(readerBase, new Data());
+		this(readerBase, Integration.getData());
 	}
 
 	public long getZone1() {

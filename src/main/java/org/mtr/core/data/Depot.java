@@ -50,7 +50,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	 */
 	@Deprecated
 	public Depot(ReaderBase readerBase) {
-		this(readerBase, new Data());
+		this(readerBase, Integration.getData());
 	}
 
 	@Override

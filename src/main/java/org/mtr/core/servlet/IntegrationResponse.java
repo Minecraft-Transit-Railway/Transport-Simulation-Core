@@ -43,7 +43,7 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 
 	public Integration list() {
 		// Outbound list operations (not update packets) should contain never contain simplified routes
-		final Integration integration = new Integration();
+		final Integration integration = new Integration(simulator);
 		integration.add(simulator.stations, simulator.platforms, simulator.sidings, simulator.routes, simulator.depots, null);
 		return integration;
 	}
@@ -80,7 +80,7 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 		positionsToUpdate.removeIf(position -> !simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).isEmpty());
 
 		// Inbound update packets should never contain simplified routes
-		final Integration integration = new Integration();
+		final Integration integration = new Integration(simulator);
 		integration.add(stationsToUpdate, platformsToUpdate, sidingsToUpdate, routesToUpdate, depotsToUpdate, null);
 		integration.add(railsToUpdate, positionsToUpdate);
 		return integration;

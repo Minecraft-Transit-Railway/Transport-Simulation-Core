@@ -20,7 +20,7 @@ public final class IntegrationServlet extends ServletBase {
 
 	@Override
 	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator) {
-		final IntegrationResponse integrationResponse = new IntegrationResponse(data, parameters, new Integration(jsonReader), currentMillis, simulator);
+		final IntegrationResponse integrationResponse = new IntegrationResponse(data, parameters, new Integration(jsonReader, simulator), currentMillis, simulator);
 		switch (EnumHelper.valueOf(Operation.UPDATE, endpoint.toUpperCase(Locale.ROOT))) {
 			case UPDATE:
 				return Utilities.getJsonObjectFromData(integrationResponse.update());

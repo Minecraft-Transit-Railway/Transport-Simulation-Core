@@ -50,7 +50,7 @@ public final class SocketHandler {
 							});
 
 							// Outbound update packets (not the list operation) should contain simplified routes rather than the actual routes
-							final Integration integration = new Integration();
+							final Integration integration = new Integration(simulator);
 							integration.add(stations, platforms, sidings, null, depots, simplifiedRoutes);
 							integration.add(rails, null);
 							responseObject.add(client.uuid.toString(), Utilities.getJsonObjectFromData(integration));
