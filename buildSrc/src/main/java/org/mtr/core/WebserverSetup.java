@@ -28,10 +28,10 @@ public class WebserverSetup {
 		try (final Stream<Path> stream = Files.list(websitePath)) {
 			stream.forEach(websiteFilePath -> {
 				try {
-					final String text = FileUtils.readFileToString(websiteFilePath.toFile(), StandardCharsets.UTF_8).replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replaceAll("[\r\t]", "");
+					final String text = FileUtils.readFileToString(websiteFilePath.toFile(), StandardCharsets.UTF_8);
 					final List<String> splitText = new ArrayList<>();
 					for (int i = 0; i < text.length(); i += 32768) {
-						splitText.add(String.format("\"%s\"", text.substring(i, Math.min(text.length(), i + 32768))));
+						splitText.add(String.format("\"%s\"", text.substring(i, Math.min(text.length(), i + 32768)).replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replaceAll("[\r\t]", "")));
 					}
 					stringBuilder.append(String.format("case \"%s\":return new StringBuilder(%s).toString();", websiteFilePath.getFileName().toString(), String.join(").append(", splitText)));
 				} catch (Exception e) {
