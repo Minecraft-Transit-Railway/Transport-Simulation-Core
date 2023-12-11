@@ -308,7 +308,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	public static VehicleExtraData create(
 			long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
-			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime
+			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double brakingPower
 	) {
 		final double newRailLength = Siding.getRailLength(railLength);
 		final double newTotalVehicleLength = Siding.getTotalVehicleLength(vehicleCars);
