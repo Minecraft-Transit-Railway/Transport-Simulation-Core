@@ -60,6 +60,9 @@ public final class Siding extends SidingSchema implements Utilities {
 	public static final double ACCELERATION_DEFAULT = 1D / 250000;
 	public static final double MAX_ACCELERATION = 1D / 50000;
 	public static final double MIN_ACCELERATION = 1D / 2500000;
+	public static final double BRAKING_POWER_DEFAULT = 1D / 250000;
+	public static final double MAX_BRAKING_POWER = 1D / 50000;
+	public static final double MIN_BRAKING_POWER = 1D / 2500000;
 	private static final String KEY_PATH_SIDING_TO_MAIN_ROUTE = "pathSidingToMainRoute";
 	private static final String KEY_PATH_MAIN_ROUTE_TO_SIDING = "pathMainRouteToSiding";
 	private static final String KEY_VEHICLES = "vehicles";
@@ -104,7 +107,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		generatePathDistancesAndTimeSegments();
 
 		if (area != null && defaultPathData != null) {
-			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, false, readerBase, data)));
+			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime, brakingPower), this, false, readerBase, data)));
 		}
 	}
 
@@ -134,6 +137,10 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public double getAcceleration() {
 		return acceleration;
+	}
+
+	public double getBrakingPower() {
+		return brakingPower;
 	}
 
 	public void setVehicleCars(ObjectArrayList<VehicleCar> newVehicleCars) {
@@ -166,6 +173,10 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public void setAcceleration(double newAcceleration) {
 		acceleration = transportMode.continuousMovement ? MAX_ACCELERATION : roundAcceleration(newAcceleration);
+	}
+
+	public void setBrakingPower(double newBrakingPower) {
+		brakingPower = transportMode.continuousMovement ? MAX_BRAKING_POWER : roundAcceleration(newBrakingPower);
 	}
 
 	public void clearVehicles() {
@@ -252,7 +263,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
-			vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, false, transportMode, data));
+			vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime, brakingPower), this, false, transportMode, data));
 		}
 
 		if (!trainsToRemove.isEmpty()) {
@@ -612,8 +623,8 @@ public final class Siding extends SidingSchema implements Utilities {
 
 				while (railProgress < currentDistance) {
 					final int speedChange;
-					if (speed > railSpeed || nextStoppingDistance - railProgress + 1 < 0.5 * speed * speed / acceleration) {
-						speed = Math.max(speed - acceleration, acceleration);
+					if (speed > railSpeed || nextStoppingDistance - railProgress + 1 < 0.5 * speed * speed / brakingPower) {
+						speed = Math.max(speed - brakingPower, brakingPower);
 						speedChange = -1;
 					} else if (speed < railSpeed) {
 						speed = Math.min(speed + acceleration, railSpeed);
@@ -623,7 +634,7 @@ public final class Siding extends SidingSchema implements Utilities {
 					}
 
 					if (timeSegments.isEmpty() || Utilities.getElement(timeSegments, -1).speedChange != speedChange) {
-						timeSegments.add(new TimeSegment(railProgress, speed, time, speedChange, acceleration));
+						timeSegments.add(new TimeSegment(railProgress, speed, time, speedChange, acceleration, brakingPower));
 					}
 
 					railProgress = Math.min(railProgress + speed, currentDistance);
@@ -717,13 +728,15 @@ public final class Siding extends SidingSchema implements Utilities {
 		private final double startTime;
 		private final int speedChange;
 		private final double acceleration;
+		private final double brakingPower;
 
-		private TimeSegment(double startRailProgress, double startSpeed, double startTime, int speedChange, double acceleration) {
+		private TimeSegment(double startRailProgress, double startSpeed, double startTime, int speedChange, double acceleration, double brakingPower) {
 			this.startRailProgress = startRailProgress;
 			this.startSpeed = startSpeed;
 			this.startTime = startTime;
 			this.speedChange = Integer.compare(speedChange, 0);
 			this.acceleration = roundAcceleration(acceleration);
+			this.brakingPower = roundAcceleration(brakingPower);
 		}
 
 		@Override
@@ -737,7 +750,8 @@ public final class Siding extends SidingSchema implements Utilities {
 				return startTime + distance / startSpeed;
 			} else {
 				final double totalAcceleration = speedChange * acceleration;
-				return startTime + (distance == 0 ? 0 : (Math.sqrt(2 * totalAcceleration * distance + startSpeed * startSpeed) - startSpeed) / totalAcceleration);
+				final double totalBrakingPower = speedChange * brakingPower;
+				return startTime + (distance == 0 ? 0 : (Math.sqrt((totalAcceleration + totalBrakingPower) * distance + startSpeed * startSpeed) - startSpeed) / (totalAcceleration + totalBrakingPower) * 2);
 			}
 		}
 	}
