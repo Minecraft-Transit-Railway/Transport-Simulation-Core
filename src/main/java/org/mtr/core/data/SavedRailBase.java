@@ -72,7 +72,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 			previousPosition[1] = y;
 			previousPosition[2] = z;
 			final Position newPosition = new Position((long) Math.floor(x), (long) Math.floor(y), (long) Math.floor(z));
-			final long newDistance = newPosition.distManhattan(position);
+			final long newDistance = newPosition.manhattanDistance(position);
 			if (newDistance < closestDistance[0]) {
 				closestDistance[0] = newDistance;
 			}

@@ -39,17 +39,33 @@
 		"angle": {
 			"$ref": "Angle"
 		},
+		"currentFloor": {
+			"type": "number",
+			"minimum": 0
+		},
 		"speed": {
 			"type": "number",
 			"minimum": 0
 		},
-		"reversed": {
-			"type": "boolean"
+		"direction": {
+			"$ref": "LiftDirection"
+		},
+		"floors": {
+			"type": "array",
+			"items": {
+				"$ref": "liftFloor.json"
+			}
+		},
+		"instructions": {
+			"type": "array",
+			"items": {
+				"$ref": "liftInstruction.json"
+			}
 		},
 		"ridingEntities": {
 			"type": "array",
 			"items": {
-				"type": "string"
+				"$ref": "vehicleRidingEntity.json"
 			}
 		}
 	}

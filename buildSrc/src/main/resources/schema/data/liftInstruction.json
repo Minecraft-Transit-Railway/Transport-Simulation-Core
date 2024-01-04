@@ -1,0 +1,20 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"floor": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"direction": {
+			"$ref": "LiftDirection"
+		}
+	},
+	"required": [
+		"floor",
+		"direction"
+	]
+}

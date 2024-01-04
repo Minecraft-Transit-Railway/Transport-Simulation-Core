@@ -149,6 +149,14 @@ public interface TestUtilities {
 		return new Lift(getDefaultSimulator());
 	}
 
+	static LiftFloor randomLiftFloor() {
+		return new LiftFloor(randomPosition(), randomString(), randomString());
+	}
+
+	static LiftInstruction randomLiftInstruction() {
+		return new LiftInstruction(RANDOM.nextInt(), randomEnum(LiftDirection.values()));
+	}
+
 	static PathData randomPathData() {
 		return new PathData(randomRail(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), randomPosition(), randomPosition());
 	}
@@ -231,6 +239,14 @@ public interface TestUtilities {
 
 	static Lift newLift(ReaderBase readerBase) {
 		return new Lift(readerBase, getDefaultSimulator());
+	}
+
+	static LiftFloor newLiftFloor(ReaderBase readerBase) {
+		return new LiftFloor(readerBase);
+	}
+
+	static LiftInstruction newLiftInstruction(ReaderBase readerBase) {
+		return new LiftInstruction(readerBase);
 	}
 
 	static PathData newPathData(ReaderBase readerBase) {

@@ -42,7 +42,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return offset(position.x, position.y, position.z);
 	}
 
-	public long distManhattan(Position position) {
+	public long manhattanDistance(Position position) {
 		return Math.abs(position.x - x) + Math.abs(position.y - y) + Math.abs(position.z - z);
 	}
 

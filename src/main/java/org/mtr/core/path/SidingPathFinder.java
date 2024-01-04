@@ -78,7 +78,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 
 	@Override
 	protected long getWeightFromEndNode(PositionAndAngle node) {
-		return node.position.distManhattan(endNode.position);
+		return node.position.manhattanDistance(endNode.position);
 	}
 
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Runnable callbackSuccess, Runnable callbackFail) {
