@@ -39,16 +39,13 @@
 		"angle": {
 			"$ref": "Angle"
 		},
-		"currentFloor": {
+		"railProgress": {
 			"type": "number",
 			"minimum": 0
 		},
 		"speed": {
 			"type": "number",
 			"minimum": 0
-		},
-		"direction": {
-			"$ref": "LiftDirection"
 		},
 		"floors": {
 			"type": "array",

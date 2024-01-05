@@ -104,7 +104,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		generatePathDistancesAndTimeSegments();
 
 		if (area != null && defaultPathData != null) {
-			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, false, readerBase, data)));
+			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
 		}
 	}
 
@@ -252,7 +252,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
-			vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, false, transportMode, data));
+			vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data));
 		}
 
 		if (!trainsToRemove.isEmpty()) {

@@ -94,7 +94,7 @@ public class Simulator extends Data implements Utilities {
 				generateKey = null;
 			}
 
-			lifts.forEach(Lift::tick);
+			lifts.forEach(lift -> lift.tick(currentMillis - lastMillis));
 
 			if (!queuedRuns.isEmpty()) {
 				final Runnable runnable = queuedRuns.remove(0);
@@ -177,6 +177,7 @@ public class Simulator extends Data implements Utilities {
 		save(fileLoaderSidings, useReducedHash);
 		save(fileLoaderRoutes, useReducedHash);
 		save(fileLoaderDepots, useReducedHash);
+		save(fileLoaderLifts, useReducedHash);
 		save(fileLoaderRails, useReducedHash);
 		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}

@@ -214,7 +214,7 @@ public interface TestUtilities {
 	}
 
 	static Vehicle randomVehicle() {
-		return new Vehicle(randomVehicleExtraData(), randomSiding(), RANDOM.nextBoolean(), randomTransportMode(), getDefaultSimulator());
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), randomTransportMode(), getDefaultSimulator());
 	}
 
 	static Client newClient(ReaderBase readerBase) {
@@ -231,10 +231,6 @@ public interface TestUtilities {
 
 	static InterchangeRouteNamesForColor newInterchangeRouteNamesForColor(ReaderBase readerBase) {
 		return new InterchangeRouteNamesForColor(readerBase);
-	}
-
-	static InterchangeColorsForStationName newInterchangeColorsForStationName(ReaderBase readerBase) {
-		return new InterchangeColorsForStationName(readerBase);
 	}
 
 	static Lift newLift(ReaderBase readerBase) {
@@ -306,6 +302,6 @@ public interface TestUtilities {
 	}
 
 	static Vehicle newVehicle(ReaderBase readerBase) {
-		return new Vehicle(randomVehicleExtraData(), randomSiding(), RANDOM.nextBoolean(), readerBase, getDefaultSimulator());
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), readerBase, getDefaultSimulator());
 	}
 }
