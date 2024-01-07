@@ -1,24 +1,30 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.LiftSchema;
+import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
+import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
+import java.util.function.Consumer;
 
 public final class Lift extends LiftSchema {
 
 	private long stoppingCoolDown;
 	private boolean needsUpdate;
+	private Position minPosition = new Position(0, 0, 0);
+	private Position maxPosition = new Position(0, 0, 0);
 	private final LongArrayList distances = new LongArrayList();
 	/**
 	 * If a lift is clientside, don't close the doors or add instructions. Always wait for a socket update instead.
 	 */
 	private final boolean isClientside;
 
-	private static final int MAX_SPEED = 10 / Depot.MILLIS_PER_SECOND; // 10 m/s
+	private static final float MAX_SPEED = 10F / Depot.MILLIS_PER_SECOND; // 10 m/s
 	private static final int STOPPING_TIME = 4000;
 
 	public Lift(Data data) {
@@ -30,7 +36,13 @@ public final class Lift extends LiftSchema {
 		super(readerBase, data);
 		this.isClientside = !(data instanceof Simulator);
 		updateData(readerBase);
+	}
+
+	@Override
+	public void updateData(ReaderBase readerBase) {
+		super.updateData(readerBase);
 		setDistances();
+		needsUpdate = true;
 	}
 
 	/**
@@ -38,12 +50,12 @@ public final class Lift extends LiftSchema {
 	 */
 	@Deprecated
 	public Lift(ReaderBase readerBase) {
-		this(readerBase, new Data());
+		this(readerBase, Integration.getData());
 	}
 
 	@Override
 	public boolean isValid() {
-		return true;
+		return !floors.isEmpty();
 	}
 
 	public void tick(long millisElapsed) {
@@ -65,7 +77,12 @@ public final class Lift extends LiftSchema {
 				}
 			} else {
 				final long nextInstructionProgress = getProgress(instructions.get(0).getFloor());
-				speed = Utilities.clamp(speed + Siding.ACCELERATION_DEFAULT * millisElapsed * Math.signum(nextInstructionProgress - railProgress), -MAX_SPEED, MAX_SPEED);
+
+				if (speed * speed / 2 / Siding.ACCELERATION_DEFAULT > Math.abs(nextInstructionProgress - railProgress)) {
+					speed = Math.max(Math.abs(speed) - Siding.ACCELERATION_DEFAULT * millisElapsed, Siding.ACCELERATION_DEFAULT) * Math.signum(speed);
+				} else {
+					speed = Utilities.clamp(speed + Siding.ACCELERATION_DEFAULT * millisElapsed * Math.signum(nextInstructionProgress - railProgress), -MAX_SPEED, MAX_SPEED);
+				}
 
 				if (Math.abs(railProgress - nextInstructionProgress) < Siding.ACCELERATION_DEFAULT) {
 					railProgress = nextInstructionProgress;
@@ -75,14 +92,13 @@ public final class Lift extends LiftSchema {
 				}
 			}
 
-			railProgress = Utilities.clamp(speed * millisElapsed, 0, getProgress(Integer.MAX_VALUE));
+			railProgress = Utilities.clamp(railProgress + speed * millisElapsed, 0, getProgress(Integer.MAX_VALUE));
 		}
 
 		if (!isClientside && data instanceof Simulator) {
 			final double updateRadius = ((Simulator) data).clientGroup.getUpdateRadius();
 			((Simulator) data).clientGroup.iterateClients(client -> {
-				final Position position = client.getPosition();
-				if (floors.stream().anyMatch(liftFloor -> liftFloor.getPosition().manhattanDistance(position) <= updateRadius)) {
+				if (Utilities.isBetween(client.getPosition(), minPosition, maxPosition, updateRadius)) {
 					client.update(this, needsUpdate);
 				}
 			});
@@ -174,8 +190,24 @@ public final class Lift extends LiftSchema {
 		return angle;
 	}
 
-	public double getSpeed() {
-		return speed;
+	public Vector getPosition() {
+		return currentFloorCallback((percentage, index) -> {
+			final Position position1 = floors.get(index - 1).getPosition();
+			final Position position2 = floors.get(index).getPosition();
+			return new Vector(
+					getValueFromPercentage(percentage, position1.getX(), position2.getX()),
+					getValueFromPercentage(percentage, position1.getY(), position2.getY()),
+					getValueFromPercentage(percentage, position1.getZ(), position2.getZ())
+			);
+		}, new Vector(0, 0, 0));
+	}
+
+	public void iterateFloors(Consumer<LiftFloor> consumer) {
+		floors.forEach(consumer);
+	}
+
+	public LiftFloor getCurrentFloor() {
+		return currentFloorCallback((percentage, index) -> floors.get(index - (percentage < 0.5 ? 1 : 0)), new LiftFloor(new Position(0, 0, 0)));
 	}
 
 	public LiftDirection getDirection() {
@@ -215,6 +247,10 @@ public final class Lift extends LiftSchema {
 		needsUpdate = true;
 	}
 
+	public void setFloors(Lift lift) {
+		setFloors(lift.floors);
+	}
+
 	public int getFloorIndex(Position position) {
 		for (int i = 0; i < floors.size(); i++) {
 			if (position.equals(floors.get(i).getPosition())) {
@@ -224,17 +260,46 @@ public final class Lift extends LiftSchema {
 		return -1;
 	}
 
+	public boolean overlappingFloors(Lift lift) {
+		return lift.floors.stream().anyMatch(liftFloor -> getFloorIndex(liftFloor.getPosition()) >= 0);
+	}
+
+	public void updateFloor(LiftFloor liftFloor) {
+		floors.forEach(currentFloor -> {
+			if (currentFloor.getPosition().equals(liftFloor.getPosition())) {
+				currentFloor.setNumberAndDescription(liftFloor.getNumber(), liftFloor.getDescription());
+			}
+		});
+	}
+
 	private void setDistances() {
 		distances.clear();
+		long minX = Long.MAX_VALUE;
+		long maxX = -Long.MAX_VALUE;
+		long minY = Long.MAX_VALUE;
+		long maxY = -Long.MAX_VALUE;
+		long minZ = Long.MAX_VALUE;
+		long maxZ = -Long.MAX_VALUE;
 		long distance = 0;
+
 		for (int i = 0; i < floors.size(); i++) {
 			if (i == 0) {
 				distances.add(0);
 			} else {
-				distance += floors.get(i).getPosition().manhattanDistance(floors.get(i - 1).getPosition());
+				final Position position = floors.get(i).getPosition();
+				minX = Math.min(minX, position.getX());
+				maxX = Math.max(maxX, position.getX());
+				minY = Math.min(minY, position.getY());
+				maxY = Math.max(maxY, position.getY());
+				minZ = Math.min(minZ, position.getZ());
+				maxZ = Math.max(maxZ, position.getZ());
+				distance += position.manhattanDistance(floors.get(i - 1).getPosition());
 				distances.add(distance);
 			}
 		}
+
+		minPosition = new Position(minX, minY, minZ);
+		maxPosition = new Position(maxX, maxY, maxZ);
 	}
 
 	/**
@@ -242,6 +307,26 @@ public final class Lift extends LiftSchema {
 	 * @return the distance along the track from the very first floor
 	 */
 	private long getProgress(int floor) {
-		return distances.getLong(Utilities.clamp(floor, 0, distances.size() - 1));
+		return distances.isEmpty() ? 0 : distances.getLong(Utilities.clamp(floor, 0, distances.size() - 1));
+	}
+
+	private <T> T currentFloorCallback(PercentageCallback<T> percentageCallback, T defaultValue) {
+		for (int i = 1; i < Math.min(distances.size(), floors.size()); i++) {
+			final long distance1 = distances.getLong(i - 1);
+			final long distance2 = distances.getLong(i);
+			if (Utilities.isBetween(railProgress, distance1, distance2)) {
+				return percentageCallback.apply((railProgress - distance1) / (distance2 - distance1), i);
+			}
+		}
+		return defaultValue;
+	}
+
+	private static double getValueFromPercentage(double percentage, double value1, double value2) {
+		return percentage * (value2 - value1) + value1;
+	}
+
+	@FunctionalInterface
+	private interface PercentageCallback<T> {
+		T apply(double percentage, int index);
 	}
 }

@@ -16,8 +16,6 @@
 		}
 	},
 	"required": [
-		"position",
-		"number",
-		"description"
+		"position"
 	]
 }

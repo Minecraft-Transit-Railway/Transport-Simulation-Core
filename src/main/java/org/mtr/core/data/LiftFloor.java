@@ -5,8 +5,13 @@ import org.mtr.core.serializer.ReaderBase;
 
 public class LiftFloor extends LiftFloorSchema {
 
+	public LiftFloor(Position position) {
+		super(position);
+	}
+
 	public LiftFloor(Position position, String number, String description) {
-		super(position, number, description);
+		super(position);
+		setNumberAndDescription(number, description);
 	}
 
 	public LiftFloor(ReaderBase readerBase) {
@@ -24,5 +29,10 @@ public class LiftFloor extends LiftFloorSchema {
 
 	public String getDescription() {
 		return description;
+	}
+
+	public void setNumberAndDescription(String number, String description) {
+		this.number = number;
+		this.description = description;
 	}
 }

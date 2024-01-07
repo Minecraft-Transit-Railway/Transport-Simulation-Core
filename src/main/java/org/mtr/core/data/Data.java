@@ -27,6 +27,7 @@ public class Data {
 	public final Long2ObjectOpenHashMap<Siding> sidingIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Route> routeIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Depot> depotIdMap = new Long2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Lift> liftIdMap = new Long2ObjectOpenHashMap<>();
 	public final Object2ObjectOpenHashMap<String, Rail> railIdMap = new Object2ObjectOpenHashMap<>();
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail = new Object2ObjectOpenHashMap<>();
@@ -49,6 +50,7 @@ public class Data {
 			mapIds(sidingIdMap, sidings);
 			mapIds(routeIdMap, routes);
 			mapIds(depotIdMap, depots);
+			mapIds(liftIdMap, lifts);
 			mapIds(railIdMap, rails);
 
 			mapAreasAndSavedRails(platforms, stations);

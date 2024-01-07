@@ -18,44 +18,50 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 	}
 
 	public Integration update() {
-		return parseBody(IntegrationResponse::update, PositionCallback.EMPTY, (signalModification, railsToUpdate, positionsToUpdate) -> signalModification.applyModificationToRail(simulator, railsToUpdate, positionsToUpdate), true);
+		return parseBody(IntegrationResponse::update, RailNodePositionCallback.EMPTY, (signalModification, railsToUpdate, railNodePositionsToUpdate) -> signalModification.applyModificationToRail(simulator, railsToUpdate, railNodePositionsToUpdate), true);
 	}
 
 	public Integration get() {
-		return parseBody(IntegrationResponse::get, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
+		return parseBody(IntegrationResponse::get, RailNodePositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
 	public Integration delete() {
-		return parseBody(IntegrationResponse::delete, (position, railsToUpdate, positionsToUpdate) -> simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).forEach((connectedPosition, rail) -> {
+		return parseBody(IntegrationResponse::delete, (railNodePosition, railsToUpdate, railNodePositionsToUpdate) -> simulator.positionsToRail.getOrDefault(railNodePosition, new Object2ObjectOpenHashMap<>()).forEach((connectedRailNodePosition, rail) -> {
 			simulator.rails.remove(rail);
 			railsToUpdate.add(rail);
-			positionsToUpdate.add(connectedPosition);
+			railNodePositionsToUpdate.add(connectedRailNodePosition);
 		}), SignalModificationCallback.EMPTY, true);
 	}
 
 	public Integration generate() {
-		return parseBody(IntegrationResponse::generate, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
+		return parseBody(IntegrationResponse::generate, RailNodePositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
 	public Integration clear() {
-		return parseBody(IntegrationResponse::clear, PositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
+		return parseBody(IntegrationResponse::clear, RailNodePositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
 	}
 
 	public Integration list() {
 		// Outbound list operations (not update packets) should contain never contain simplified routes
 		final Integration integration = new Integration(simulator);
-		integration.add(simulator.stations, simulator.platforms, simulator.sidings, simulator.routes, simulator.depots, null);
+		integration.add(simulator.stations, simulator.platforms, simulator.sidings, simulator.routes, simulator.depots, simulator.lifts, null);
 		return integration;
 	}
 
-	private Integration parseBody(BodyCallback bodyCallback, PositionCallback positionCallback, SignalModificationCallback signalModificationCallback, boolean shouldSync) {
+	private Integration parseBody(
+			BodyCallback bodyCallback,
+			RailNodePositionCallback railNodePositionCallback,
+			SignalModificationCallback signalModificationCallback,
+			boolean shouldSync
+	) {
 		final ObjectAVLTreeSet<Station> stationsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Platform> platformsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Siding> sidingsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Route> routesToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectAVLTreeSet<Depot> depotsToUpdate = new ObjectAVLTreeSet<>();
+		final ObjectAVLTreeSet<Lift> liftsToUpdate = new ObjectAVLTreeSet<>();
 		final ObjectOpenHashSet<Rail> railsToUpdate = new ObjectOpenHashSet<>();
-		final ObjectOpenHashSet<Position> positionsToUpdate = new ObjectOpenHashSet<>();
+		final ObjectOpenHashSet<Position> railNodePositionsToUpdate = new ObjectOpenHashSet<>();
 
 		try {
 			body.iterateStations(station -> bodyCallback.accept(station, true, simulator.stationIdMap.get(station.getId()), simulator.stations, stationsToUpdate));
@@ -63,12 +69,13 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 			body.iterateSidings(siding -> bodyCallback.accept(siding, false, simulator.sidingIdMap.get(siding.getId()), simulator.sidings, sidingsToUpdate));
 			body.iterateRoutes(route -> bodyCallback.accept(route, true, simulator.routeIdMap.get(route.getId()), simulator.routes, routesToUpdate));
 			body.iterateDepots(depot -> bodyCallback.accept(depot, true, simulator.depotIdMap.get(depot.getId()), simulator.depots, depotsToUpdate));
-			body.iterateRails(rail -> bodyCallback.accept(rail, true, rail.getRailFromData(simulator, positionsToUpdate), simulator.rails, railsToUpdate));
-			body.iteratePositions(position -> {
-				positionsToUpdate.add(position);
-				positionCallback.accept(position, railsToUpdate, positionsToUpdate);
+			body.iterateLifts(lift -> bodyCallback.accept(lift, true, simulator.liftIdMap.get(lift.getId()), simulator.lifts, liftsToUpdate));
+			body.iterateRails(rail -> bodyCallback.accept(rail, true, rail.getRailFromData(simulator, railNodePositionsToUpdate), simulator.rails, railsToUpdate));
+			body.iterateRailNodePositions(railNodePosition -> {
+				railNodePositionsToUpdate.add(railNodePosition);
+				railNodePositionCallback.accept(railNodePosition, railsToUpdate, railNodePositionsToUpdate);
 			});
-			body.iterateSignals(signalModification -> signalModificationCallback.accept(signalModification, railsToUpdate, positionsToUpdate));
+			body.iterateSignals(signalModification -> signalModificationCallback.accept(signalModification, railsToUpdate, railNodePositionsToUpdate));
 		} catch (Exception e) {
 			Main.logException(e);
 		}
@@ -77,12 +84,12 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 			railsToUpdate.forEach(rail -> rail.checkOrCreatePlatform(simulator, platformsToUpdate, sidingsToUpdate));
 			simulator.sync();
 		}
-		positionsToUpdate.removeIf(position -> !simulator.positionsToRail.getOrDefault(position, new Object2ObjectOpenHashMap<>()).isEmpty());
+		railNodePositionsToUpdate.removeIf(railNodePosition -> !simulator.positionsToRail.getOrDefault(railNodePosition, new Object2ObjectOpenHashMap<>()).isEmpty());
 
 		// Inbound update packets should never contain simplified routes
 		final Integration integration = new Integration(simulator);
-		integration.add(stationsToUpdate, platformsToUpdate, sidingsToUpdate, routesToUpdate, depotsToUpdate, null);
-		integration.add(railsToUpdate, positionsToUpdate);
+		integration.add(stationsToUpdate, platformsToUpdate, sidingsToUpdate, routesToUpdate, depotsToUpdate, liftsToUpdate, null);
+		integration.add(railsToUpdate, railNodePositionsToUpdate);
 		return integration;
 	}
 
@@ -116,7 +123,9 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 	}
 
 	private static <T extends SerializedDataBase> void delete(T bodyData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectSet<T> dataToUpdate) {
-		if (existingData != null && dataSet.remove(existingData)) {
+		if (bodyData instanceof Lift) {
+			dataSet.removeIf(lift -> ((Lift) lift).overlappingFloors((Lift) bodyData));
+		} else if (existingData != null && dataSet.remove(existingData)) {
 			dataToUpdate.add(existingData);
 		}
 	}
@@ -125,6 +134,25 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 		if (existingData instanceof Depot) {
 			dataToUpdate.add(existingData);
 			((Depot) existingData).generateMainRoute();
+		}
+
+		if (bodyData instanceof Lift) {
+			T liftToModify = null;
+
+			for (final T lift : dataSet) {
+				if (((Lift) lift).overlappingFloors((Lift) bodyData)) {
+					liftToModify = lift;
+					break;
+				}
+			}
+
+			if (liftToModify != null) {
+				dataSet.remove(liftToModify);
+				((Lift) liftToModify).setFloors((Lift) bodyData);
+				dataSet.add(liftToModify);
+			} else {
+				dataSet.add(bodyData);
+			}
 		}
 	}
 
@@ -145,18 +173,18 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 	}
 
 	@FunctionalInterface
-	private interface PositionCallback {
-		PositionCallback EMPTY = (position, railsToUpdate, positionsToUpdate) -> {
+	private interface RailNodePositionCallback {
+		RailNodePositionCallback EMPTY = (railNodePosition, railsToUpdate, railNodePositionsToUpdate) -> {
 		};
 
-		void accept(Position position, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> positionsToUpdate);
+		void accept(Position railNodePosition, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> railNodePositionsToUpdate);
 	}
 
 	@FunctionalInterface
 	private interface SignalModificationCallback {
-		SignalModificationCallback EMPTY = (signalModification, railsToUpdate, positionsToUpdate) -> {
+		SignalModificationCallback EMPTY = (signalModification, railsToUpdate, railNodePositionsToUpdate) -> {
 		};
 
-		void accept(SignalModification signalModification, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> positionsToUpdate);
+		void accept(SignalModification signalModification, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> railNodePositionsToUpdate);
 	}
 }
