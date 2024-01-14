@@ -21,4 +21,13 @@ public class LiftInstruction extends LiftInstructionSchema {
 	public LiftDirection getDirection() {
 		return direction;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof LiftInstruction) {
+			return floor == ((LiftInstruction) obj).floor && direction == ((LiftInstruction) obj).direction;
+		} else {
+			return super.equals(obj);
+		}
+	}
 }

@@ -34,7 +34,7 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 	}
 
 	public Integration generate() {
-		return parseBody(IntegrationResponse::generate, RailNodePositionCallback.EMPTY, SignalModificationCallback.EMPTY, false);
+		return parseBody(IntegrationResponse::generate, RailNodePositionCallback.EMPTY, SignalModificationCallback.EMPTY, true);
 	}
 
 	public Integration clear() {
@@ -69,7 +69,7 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 			body.iterateSidings(siding -> bodyCallback.accept(siding, false, simulator.sidingIdMap.get(siding.getId()), simulator.sidings, sidingsToUpdate));
 			body.iterateRoutes(route -> bodyCallback.accept(route, true, simulator.routeIdMap.get(route.getId()), simulator.routes, routesToUpdate));
 			body.iterateDepots(depot -> bodyCallback.accept(depot, true, simulator.depotIdMap.get(depot.getId()), simulator.depots, depotsToUpdate));
-			body.iterateLifts(lift -> bodyCallback.accept(lift, true, simulator.liftIdMap.get(lift.getId()), simulator.lifts, liftsToUpdate));
+			body.iterateLifts(lift -> bodyCallback.accept(lift, false, simulator.liftIdMap.get(lift.getId()), simulator.lifts, liftsToUpdate));
 			body.iterateRails(rail -> bodyCallback.accept(rail, true, rail.getRailFromData(simulator, railNodePositionsToUpdate), simulator.rails, railsToUpdate));
 			body.iterateRailNodePositions(railNodePosition -> {
 				railNodePositionsToUpdate.add(railNodePosition);

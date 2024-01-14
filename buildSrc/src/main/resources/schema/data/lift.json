@@ -47,6 +47,10 @@
 			"type": "number",
 			"minimum": 0
 		},
+		"stoppingCoolDown": {
+			"type": "integer",
+			"minimum": 0
+		},
 		"floors": {
 			"type": "array",
 			"items": {

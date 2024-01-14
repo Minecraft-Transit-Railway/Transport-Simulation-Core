@@ -9,12 +9,12 @@ import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import java.util.function.Consumer;
 
-public final class Lift extends LiftSchema {
+public class Lift extends LiftSchema {
 
-	private long stoppingCoolDown;
 	private boolean needsUpdate;
 	private Position minPosition = new Position(0, 0, 0);
 	private Position maxPosition = new Position(0, 0, 0);
@@ -26,6 +26,7 @@ public final class Lift extends LiftSchema {
 
 	private static final float MAX_SPEED = 10F / Depot.MILLIS_PER_SECOND; // 10 m/s
 	private static final int STOPPING_TIME = 4000;
+	private static final int DOOR_TIME = 1000;
 
 	public Lift(Data data) {
 		super(TransportMode.values()[0], data);
@@ -70,11 +71,7 @@ public final class Lift extends LiftSchema {
 			}
 		} else {
 			if (instructions.isEmpty()) {
-				speed = speed - Siding.ACCELERATION_DEFAULT * millisElapsed * Math.signum(speed);
-
-				if (Math.abs(speed) < Siding.ACCELERATION_DEFAULT) {
-					speed = 0;
-				}
+				speed = Math.max(Math.abs(speed) - Siding.ACCELERATION_DEFAULT * millisElapsed, 0) * Math.signum(speed);
 			} else {
 				final long nextInstructionProgress = getProgress(instructions.get(0).getFloor());
 
@@ -84,18 +81,21 @@ public final class Lift extends LiftSchema {
 					speed = Utilities.clamp(speed + Siding.ACCELERATION_DEFAULT * millisElapsed * Math.signum(nextInstructionProgress - railProgress), -MAX_SPEED, MAX_SPEED);
 				}
 
-				if (Math.abs(railProgress - nextInstructionProgress) < Siding.ACCELERATION_DEFAULT) {
+				if (Math.abs(railProgress - nextInstructionProgress) <= Math.abs(speed * millisElapsed)) {
 					railProgress = nextInstructionProgress;
 					speed = 0;
-					instructions.remove(0);
-					stoppingCoolDown = STOPPING_TIME;
+					if (!isClientside) {
+						instructions.remove(0);
+						stoppingCoolDown = STOPPING_TIME;
+						needsUpdate = true;
+					}
 				}
 			}
 
 			railProgress = Utilities.clamp(railProgress + speed * millisElapsed, 0, getProgress(Integer.MAX_VALUE));
 		}
 
-		if (!isClientside && data instanceof Simulator) {
+		if (data instanceof Simulator) {
 			final double updateRadius = ((Simulator) data).clientGroup.getUpdateRadius();
 			((Simulator) data).clientGroup.iterateClients(client -> {
 				if (Utilities.isBetween(client.getPosition(), minPosition, maxPosition, updateRadius)) {
@@ -113,36 +113,48 @@ public final class Lift extends LiftSchema {
 	 * @return the distance the lift has to travel before fulfilling the instruction or -1 if button can't be pressed
 	 */
 	public double pressButton(LiftInstruction liftInstruction, boolean add) {
+		if (isClientside) {
+			return -1;
+		}
+
 		final int buttonFloor = liftInstruction.getFloor();
-		final LiftDirection buttonDirection = liftInstruction.getDirection();
 		if (buttonFloor < 0 || buttonFloor >= floors.size()) {
 			return -1;
 		}
 
-		// Track the lift progress and distance covered when iterating through the existing instructions
+		final long buttonProgress = getProgress(buttonFloor);
+		final LiftDirection buttonDirection = liftInstruction.getDirection();
+		// Track the lift direction, progress, and distance covered when iterating through the existing instructions
+		LiftDirection tempDirection = getDirection();
 		double tempProgress = railProgress + speed * speed / 2 / Siding.ACCELERATION_DEFAULT * Math.signum(speed);
 		double distance = 0;
 
 		for (int i = 0; i < instructions.size(); i++) {
 			final LiftInstruction nextInstruction = instructions.get(i);
+
+			if (liftInstruction.equals(nextInstruction)) {
+				return -1;
+			}
+
 			final long nextInstructionProgress = getProgress(nextInstruction.getFloor());
 			final LiftDirection nextInstructionDirection = nextInstruction.getDirection();
-			final LiftDirection directionToNextFloor = LiftDirection.fromDifference(nextInstructionProgress - railProgress);
+			final LiftDirection directionToNextFloor = LiftDirection.fromDifference(nextInstructionProgress - tempProgress);
 
 			// If button press comes from inside the lift or is in the same direction as the lift, slot it in as soon as possible
-			final boolean condition1 = (buttonDirection == LiftDirection.NONE || buttonDirection == directionToNextFloor) && Utilities.isBetween(buttonFloor, tempProgress, nextInstructionProgress);
+			final boolean condition1 = (buttonDirection == LiftDirection.NONE || buttonDirection == directionToNextFloor) && Utilities.isBetween(buttonProgress, tempProgress, nextInstructionProgress);
 			// If the lift is going to change directions at the next instruction, slot in any remaining button presses that would have be visited if the lift didn't change direction
-			final boolean condition2 = nextInstructionDirection != LiftDirection.NONE && nextInstructionDirection != directionToNextFloor && LiftDirection.fromDifference(buttonFloor - tempProgress) == directionToNextFloor;
+			final boolean condition2 = nextInstructionDirection != LiftDirection.NONE && nextInstructionDirection != directionToNextFloor && LiftDirection.fromDifference(buttonProgress - nextInstructionProgress) == (directionToNextFloor == LiftDirection.NONE ? tempDirection : directionToNextFloor);
 
 			if (condition1 || condition2) {
 				if (add) {
 					instructions.add(i, liftInstruction);
 					needsUpdate = true;
 				}
-				return distance + Math.abs(buttonFloor - tempProgress);
+				return distance + Math.abs(buttonProgress - tempProgress);
 			}
 
 			distance += Math.abs(nextInstructionProgress - tempProgress);
+			tempDirection = directionToNextFloor;
 			tempProgress = nextInstructionProgress;
 		}
 
@@ -151,7 +163,7 @@ public final class Lift extends LiftSchema {
 			instructions.add(liftInstruction);
 			needsUpdate = true;
 		}
-		return distance + Math.abs(buttonFloor - tempProgress);
+		return distance + Math.abs(buttonProgress - tempProgress);
 	}
 
 	public double getHeight() {
@@ -202,8 +214,32 @@ public final class Lift extends LiftSchema {
 		}, new Vector(0, 0, 0));
 	}
 
+	public float getDoorValue() {
+		if (stoppingCoolDown < DOOR_TIME) {
+			return (float) stoppingCoolDown / DOOR_TIME;
+		} else if (stoppingCoolDown <= STOPPING_TIME - DOOR_TIME) {
+			return 1;
+		} else {
+			return (float) (STOPPING_TIME - stoppingCoolDown) / DOOR_TIME;
+		}
+	}
+
 	public void iterateFloors(Consumer<LiftFloor> consumer) {
 		floors.forEach(consumer);
+	}
+
+	public int getFloorCount() {
+		return floors.size();
+	}
+
+	public ObjectArraySet<LiftDirection> hasInstruction(int floor) {
+		final ObjectArraySet<LiftDirection> liftDirections = new ObjectArraySet<>();
+		instructions.forEach(liftInstruction -> {
+			if (liftInstruction.getFloor() == floor) {
+				liftDirections.add(liftInstruction.getDirection());
+			}
+		});
+		return liftDirections;
 	}
 
 	public LiftFloor getCurrentFloor() {
