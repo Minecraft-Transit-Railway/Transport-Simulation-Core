@@ -25,8 +25,10 @@ public class Lift extends LiftSchema {
 	private final boolean isClientside;
 
 	private static final float MAX_SPEED = 10F / Depot.MILLIS_PER_SECOND; // 10 m/s
-	private static final int STOPPING_TIME = 4000;
-	private static final int DOOR_TIME = 1000;
+	private static final int DOOR_OPEN_TIME = 2000;
+	private static final int DOOR_MOVE_TIME = Vehicle.DOOR_MOVE_TIME / 2;
+	private static final int DOOR_DELAY = 500;
+	private static final int STOPPING_TIME = DOOR_MOVE_TIME * 2 + DOOR_OPEN_TIME + DOOR_DELAY;
 
 	public Lift(Data data) {
 		super(TransportMode.values()[0], data);
@@ -215,13 +217,19 @@ public class Lift extends LiftSchema {
 	}
 
 	public float getDoorValue() {
-		if (stoppingCoolDown < DOOR_TIME) {
-			return (float) stoppingCoolDown / DOOR_TIME;
-		} else if (stoppingCoolDown <= STOPPING_TIME - DOOR_TIME) {
+		if (stoppingCoolDown < DOOR_DELAY) {
+			return 0;
+		} else if (stoppingCoolDown < DOOR_DELAY + DOOR_MOVE_TIME) {
+			return (float) (stoppingCoolDown - DOOR_DELAY) / DOOR_MOVE_TIME;
+		} else if (stoppingCoolDown <= DOOR_DELAY + DOOR_MOVE_TIME + DOOR_OPEN_TIME) {
 			return 1;
 		} else {
-			return (float) (STOPPING_TIME - stoppingCoolDown) / DOOR_TIME;
+			return (float) (DOOR_DELAY + DOOR_MOVE_TIME * 2 + DOOR_OPEN_TIME - stoppingCoolDown) / DOOR_MOVE_TIME;
 		}
+	}
+
+	public boolean hasCoolDown() {
+		return stoppingCoolDown > 0;
 	}
 
 	public void iterateFloors(Consumer<LiftFloor> consumer) {
