@@ -44,12 +44,16 @@ public final class Integration extends IntegrationSchema {
 		depots.forEach(consumer);
 	}
 
+	public void iterateLifts(Consumer<Lift> consumer) {
+		lifts.forEach(consumer);
+	}
+
 	public void iterateRails(Consumer<Rail> consumer) {
 		rails.forEach(consumer);
 	}
 
-	public void iteratePositions(Consumer<Position> consumer) {
-		positions.forEach(consumer);
+	public void iterateRailNodePositions(Consumer<Position> consumer) {
+		railNodePositions.forEach(consumer);
 	}
 
 	public void iterateSignals(Consumer<SignalModification> consumer) {
@@ -61,18 +65,30 @@ public final class Integration extends IntegrationSchema {
 	}
 
 	public void iterateVehiclesToUpdate(Consumer<VehicleUpdate> consumer) {
-		update.forEach(consumer);
+		vehiclesToUpdate.forEach(consumer);
 	}
 
 	public void iterateVehiclesToKeep(LongConsumer consumer) {
-		keep.forEach(consumer);
+		vehiclesToKeep.forEach(consumer);
 	}
 
 	public void iterateVehiclesToRemove(LongConsumer consumer) {
-		remove.forEach(consumer);
+		vehiclesToRemove.forEach(consumer);
 	}
 
-	public void add(@Nullable ObjectSet<Station> stations, @Nullable ObjectSet<Platform> platforms, @Nullable ObjectSet<Siding> sidings, @Nullable ObjectSet<Route> routes, @Nullable ObjectSet<Depot> depots, @Nullable ObjectSet<SimplifiedRoute> simplifiedRoutes) {
+	public void iterateLiftsToUpdate(Consumer<Lift> consumer) {
+		liftsToUpdate.forEach(consumer);
+	}
+
+	public void iterateLiftsToKeep(LongConsumer consumer) {
+		liftsToKeep.forEach(consumer);
+	}
+
+	public void iterateLiftsToRemove(LongConsumer consumer) {
+		liftsToRemove.forEach(consumer);
+	}
+
+	public void add(@Nullable ObjectSet<Station> stations, @Nullable ObjectSet<Platform> platforms, @Nullable ObjectSet<Siding> sidings, @Nullable ObjectSet<Route> routes, @Nullable ObjectSet<Depot> depots, @Nullable ObjectSet<Lift> lifts, @Nullable ObjectSet<SimplifiedRoute> simplifiedRoutes) {
 		if (stations != null) {
 			this.stations.addAll(stations);
 		}
@@ -88,17 +104,20 @@ public final class Integration extends IntegrationSchema {
 		if (depots != null) {
 			this.depots.addAll(depots);
 		}
+		if (lifts != null) {
+			this.lifts.addAll(lifts);
+		}
 		if (simplifiedRoutes != null) {
 			this.simplifiedRoutes.addAll(simplifiedRoutes);
 		}
 	}
 
-	public void add(@Nullable ObjectSet<Rail> rails, @Nullable ObjectSet<Position> positions) {
+	public void add(@Nullable ObjectSet<Rail> rails, @Nullable ObjectSet<Position> railNodePositions) {
 		if (rails != null) {
 			this.rails.addAll(rails);
 		}
-		if (positions != null) {
-			this.positions.addAll(positions);
+		if (railNodePositions != null) {
+			this.railNodePositions.addAll(railNodePositions);
 		}
 	}
 
@@ -109,27 +128,39 @@ public final class Integration extends IntegrationSchema {
 	}
 
 	public void addVehicleToUpdate(VehicleUpdate vehicleUpdate) {
-		update.add(vehicleUpdate);
+		vehiclesToUpdate.add(vehicleUpdate);
 	}
 
 	public void addVehicleToKeep(long vehicleId) {
-		keep.add(vehicleId);
+		vehiclesToKeep.add(vehicleId);
 	}
 
 	public void addVehicleToRemove(long vehicleId) {
-		remove.add(vehicleId);
+		vehiclesToRemove.add(vehicleId);
 	}
 
-	public boolean noVehicleUpdates() {
-		return update.isEmpty() && remove.isEmpty();
+	public void addLiftToUpdate(Lift lift) {
+		liftsToUpdate.add(lift);
+	}
+
+	public void addLiftToKeep(long liftId) {
+		liftsToKeep.add(liftId);
+	}
+
+	public void addLiftToRemove(long liftId) {
+		liftsToRemove.add(liftId);
+	}
+
+	public boolean noVehicleOrLiftUpdates() {
+		return vehiclesToUpdate.isEmpty() && vehiclesToRemove.isEmpty() && liftsToUpdate.isEmpty() && liftsToRemove.isEmpty();
 	}
 
 	public boolean hasData() {
-		return !stations.isEmpty() || !platforms.isEmpty() || !sidings.isEmpty() || !routes.isEmpty() || !depots.isEmpty() || !rails.isEmpty() || !positions.isEmpty() || !signals.isEmpty();
+		return !stations.isEmpty() || !platforms.isEmpty() || !sidings.isEmpty() || !routes.isEmpty() || !depots.isEmpty() || !lifts.isEmpty() || !rails.isEmpty() || !railNodePositions.isEmpty() || !signals.isEmpty();
 	}
 
-	public boolean hasVehicle() {
-		return !update.isEmpty() || !keep.isEmpty() || !remove.isEmpty();
+	public boolean hasVehicleOrLift() {
+		return !vehiclesToUpdate.isEmpty() || !vehiclesToKeep.isEmpty() || !vehiclesToRemove.isEmpty() || !liftsToUpdate.isEmpty() || !liftsToKeep.isEmpty() || !liftsToRemove.isEmpty();
 	}
 
 	@Deprecated

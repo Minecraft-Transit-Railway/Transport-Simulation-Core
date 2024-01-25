@@ -32,6 +32,7 @@ public class Simulator extends Data implements Utilities {
 	private final FileLoader<Siding> fileLoaderSidings;
 	private final FileLoader<Route> fileLoaderRoutes;
 	private final FileLoader<Depot> fileLoaderDepots;
+	private final FileLoader<Lift> fileLoaderLifts;
 	private final FileLoader<Rail> fileLoaderRails;
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
@@ -47,6 +48,7 @@ public class Simulator extends Data implements Utilities {
 		fileLoaderSidings = new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings");
 		fileLoaderRoutes = new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes");
 		fileLoaderDepots = new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots");
+		fileLoaderLifts = new FileLoader<>(lifts, messagePackHelper -> new Lift(messagePackHelper, this), savePath, "lifts");
 		fileLoaderRails = new FileLoader<>(rails, Rail::new, savePath, "rails");
 
 		currentMillis = System.currentTimeMillis();
@@ -91,6 +93,8 @@ public class Simulator extends Data implements Utilities {
 				depots.stream().filter(depot -> depot.getName().toLowerCase(Locale.ENGLISH).contains(generateKey)).forEach(Depot::generateMainRoute);
 				generateKey = null;
 			}
+
+			lifts.forEach(lift -> lift.tick(currentMillis - lastMillis));
 
 			if (!queuedRuns.isEmpty()) {
 				final Runnable runnable = queuedRuns.remove(0);
@@ -173,6 +177,7 @@ public class Simulator extends Data implements Utilities {
 		save(fileLoaderSidings, useReducedHash);
 		save(fileLoaderRoutes, useReducedHash);
 		save(fileLoaderDepots, useReducedHash);
+		save(fileLoaderLifts, useReducedHash);
 		save(fileLoaderRails, useReducedHash);
 		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
 	}

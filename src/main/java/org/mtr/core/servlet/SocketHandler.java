@@ -50,8 +50,9 @@ public final class SocketHandler {
 							});
 
 							// Outbound update packets (not the list operation) should contain simplified routes rather than the actual routes
+							// Outbound update packets should also not include lifts because they are dynamically sent to the clients on lift tick
 							final Integration integration = new Integration(simulator);
-							integration.add(stations, platforms, sidings, null, depots, simplifiedRoutes);
+							integration.add(stations, platforms, sidings, null, depots, null, simplifiedRoutes);
 							integration.add(rails, null);
 							responseObject.add(client.uuid.toString(), Utilities.getJsonObjectFromData(integration));
 						} catch (Exception e) {

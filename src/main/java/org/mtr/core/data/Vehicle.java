@@ -34,20 +34,20 @@ public class Vehicle extends VehicleSchema {
 	public static final int DOOR_MOVE_TIME = 3200;
 	private static final int DOOR_DELAY = 1000;
 
-	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, boolean isClientside, TransportMode transportMode, Data data) {
+	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, TransportMode transportMode, Data data) {
 		super(transportMode, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
 		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
-		this.isClientside = isClientside;
+		this.isClientside = !(data instanceof Simulator);
 	}
 
-	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, boolean isClientside, ReaderBase readerBase, Data data) {
+	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, ReaderBase readerBase, Data data) {
 		super(readerBase, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
 		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
-		this.isClientside = isClientside;
+		this.isClientside = !(data instanceof Simulator);
 		updateData(readerBase);
 	}
 
@@ -56,7 +56,7 @@ public class Vehicle extends VehicleSchema {
 	 */
 	@Deprecated
 	public Vehicle(ReaderBase readerBase) {
-		this(new VehicleExtraData(readerBase), null, false, readerBase, new Data());
+		this(new VehicleExtraData(readerBase), null, readerBase, new Data());
 	}
 
 	@Override

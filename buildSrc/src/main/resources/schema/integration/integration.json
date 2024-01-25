@@ -35,6 +35,12 @@
 				"$ref": "depot.json"
 			}
 		},
+		"lifts": {
+			"type": "array",
+			"items": {
+				"$ref": "lift.json"
+			}
+		},
 		"simplifiedRoutes": {
 			"type": "array",
 			"items": {
@@ -47,7 +53,7 @@
 				"$ref": "rail.json"
 			}
 		},
-		"positions": {
+		"railNodePositions": {
 			"type": "array",
 			"items": {
 				"$ref": "position.json"
@@ -59,19 +65,37 @@
 				"$ref": "signalModification.json"
 			}
 		},
-		"update": {
+		"vehiclesToUpdate": {
 			"type": "array",
 			"items": {
 				"$ref": "vehicleUpdate.json"
 			}
 		},
-		"keep": {
+		"vehiclesToKeep": {
 			"type": "array",
 			"items": {
 				"type": "integer"
 			}
 		},
-		"remove": {
+		"vehiclesToRemove": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"liftsToUpdate": {
+			"type": "array",
+			"items": {
+				"$ref": "lift.json"
+			}
+		},
+		"liftsToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"liftsToRemove": {
 			"type": "array",
 			"items": {
 				"type": "integer"

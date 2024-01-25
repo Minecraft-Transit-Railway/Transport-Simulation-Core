@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"depots": {
+			"type": "array",
+			"items": {
+				"$ref": "depot.json"
+			}
+		},
+		"stations": {
+			"type": "array",
+			"items": {
+				"$ref": "station.json"
+			}
+		}
+	}
+}

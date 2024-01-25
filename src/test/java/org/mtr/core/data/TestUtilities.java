@@ -149,6 +149,14 @@ public interface TestUtilities {
 		return new Lift(getDefaultSimulator());
 	}
 
+	static LiftFloor randomLiftFloor() {
+		return new LiftFloor(randomPosition(), randomString(), randomString());
+	}
+
+	static LiftInstruction randomLiftInstruction() {
+		return new LiftInstruction(RANDOM.nextInt(), randomEnum(LiftDirection.values()));
+	}
+
 	static PathData randomPathData() {
 		return new PathData(randomRail(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), randomPosition(), randomPosition());
 	}
@@ -206,7 +214,7 @@ public interface TestUtilities {
 	}
 
 	static Vehicle randomVehicle() {
-		return new Vehicle(randomVehicleExtraData(), randomSiding(), RANDOM.nextBoolean(), randomTransportMode(), getDefaultSimulator());
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), randomTransportMode(), getDefaultSimulator());
 	}
 
 	static Client newClient(ReaderBase readerBase) {
@@ -225,12 +233,16 @@ public interface TestUtilities {
 		return new InterchangeRouteNamesForColor(readerBase);
 	}
 
-	static InterchangeColorsForStationName newInterchangeColorsForStationName(ReaderBase readerBase) {
-		return new InterchangeColorsForStationName(readerBase);
-	}
-
 	static Lift newLift(ReaderBase readerBase) {
 		return new Lift(readerBase, getDefaultSimulator());
+	}
+
+	static LiftFloor newLiftFloor(ReaderBase readerBase) {
+		return new LiftFloor(readerBase);
+	}
+
+	static LiftInstruction newLiftInstruction(ReaderBase readerBase) {
+		return new LiftInstruction(readerBase);
 	}
 
 	static PathData newPathData(ReaderBase readerBase) {
@@ -290,6 +302,6 @@ public interface TestUtilities {
 	}
 
 	static Vehicle newVehicle(ReaderBase readerBase) {
-		return new Vehicle(randomVehicleExtraData(), randomSiding(), RANDOM.nextBoolean(), readerBase, getDefaultSimulator());
+		return new Vehicle(randomVehicleExtraData(), randomSiding(), readerBase, getDefaultSimulator());
 	}
 }
