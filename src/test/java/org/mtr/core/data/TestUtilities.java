@@ -182,7 +182,7 @@ public interface TestUtilities {
 	}
 
 	static Siding randomSiding() {
-		return new Siding(randomPosition(), randomPosition(), RANDOM.nextDouble(), randomTransportMode(), getDefaultSimulator(), RANDOM.nextDouble());
+		return new Siding(randomPosition(), randomPosition(), RANDOM.nextDouble(), randomTransportMode(), getDefaultSimulator());
 	}
 
 	static SignalModification randomSignalModification() {
