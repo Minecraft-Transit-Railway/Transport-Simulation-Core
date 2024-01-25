@@ -182,7 +182,7 @@ public interface TestUtilities {
 	}
 
 	static Siding randomSiding() {
-		return new Siding(randomPosition(), randomPosition(), RANDOM.nextDouble(), randomTransportMode(), getDefaultSimulator());
+		return new Siding(randomPosition(), randomPosition(), RANDOM.nextDouble(), randomTransportMode(), getDefaultSimulator(), RANDOM.nextDouble());
 	}
 
 	static SignalModification randomSignalModification() {
@@ -206,7 +206,7 @@ public interface TestUtilities {
 	}
 
 	static VehicleExtraData randomVehicleExtraData() {
-		return VehicleExtraData.create(RANDOM.nextLong(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong());
+		return VehicleExtraData.create(RANDOM.nextLong(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong(), RANDOM.nextDouble());
 	}
 
 	static VehicleRidingEntity randomVehicleRidingEntity() {
