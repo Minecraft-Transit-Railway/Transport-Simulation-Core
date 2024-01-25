@@ -147,6 +147,7 @@
 		"maxManualSpeed",
 		"manualToAutomaticTime",
 		"totalDistance",
-		"defaultPosition"
+		"defaultPosition",
+		"brakingPower"
 	]
 }
