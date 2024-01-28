@@ -284,7 +284,14 @@ public class Vehicle extends VehicleSchema {
 		final double railBlockedDistance = railBlockedDistance(currentIndex, railProgress, safeStoppingDistance, vehiclePositions, true, false);
 		final double stoppingPoint;
 
-		if (isClientside || stoppingCoolDown > 0) {
+		if (transportMode.continuousMovement) {
+			stoppingPoint = Double.MAX_VALUE;
+			if (vehicleExtraData.immutablePath.get(currentIndex).getDwellTime() > 0) {
+				vehicleExtraData.openDoors();
+			} else {
+				vehicleExtraData.closeDoors();
+			}
+		} else if (isClientside || stoppingCoolDown > 0) {
 			stoppingPoint = vehicleExtraData.getStoppingPoint();
 		} else if (railBlockedDistance < 0) {
 			if (nextStoppingIndex >= vehicleExtraData.immutablePath.size() - 1) {
@@ -346,7 +353,7 @@ public class Vehicle extends VehicleSchema {
 		final Position[] minMaxPositions = {null, null};
 		int index = currentIndex;
 
-		while (index >= 0) {
+		while (!transportMode.continuousMovement && index >= 0) {
 			final PathData pathData = vehicleExtraData.immutablePath.get(index);
 
 			if (railProgress - vehicleExtraData.getTotalVehicleLength() > pathData.getEndDistance()) {
@@ -377,7 +384,8 @@ public class Vehicle extends VehicleSchema {
 			if (siding.area != null && data instanceof Simulator) {
 				final double updateRadius = ((Simulator) data).clientGroup.getUpdateRadius();
 				final boolean needsUpdate = vehicleExtraData.checkForUpdate();
-				final int pathUpdateIndex = Math.max(0, index + 1);
+				// TODO for continuous movement, maybe only send the path once rather than sending the entire path for each vehicle
+				final int pathUpdateIndex = transportMode.continuousMovement ? 0 : Math.max(0, index + 1);
 				((Simulator) data).clientGroup.iterateClients(client -> {
 					final Position position = client.getPosition();
 					if ((minMaxPositions[0] == null || minMaxPositions[1] == null) ? siding.area.inArea(position, updateRadius) : Utilities.isBetween(position, minMaxPositions[0], minMaxPositions[1], updateRadius)) {
