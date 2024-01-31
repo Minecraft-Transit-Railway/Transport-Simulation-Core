@@ -140,6 +140,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return isTerminating;
 	}
 
+	public double getAcceleration() {
+		return acceleration;
+	}
+
 	public void iterateInterchanges(BiConsumer<String, InterchangeColorsForStationName> consumer) {
 		interchangeColorsForStationNameList.forEach(interchangeColorsForStationName -> consumer.accept(interchangeColorsForStationName.getStationName(), interchangeColorsForStationName));
 	}
@@ -170,10 +174,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	protected int getRepeatIndex2() {
 		return (int) repeatIndex2;
-	}
-
-	protected double getAcceleration() {
-		return acceleration;
 	}
 
 	protected boolean getIsManualAllowed() {
