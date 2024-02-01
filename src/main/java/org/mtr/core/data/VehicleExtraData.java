@@ -156,7 +156,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return doorTarget ? 1 : -1;
 	}
   
-  public double getAcceleration() {
+  	public double getAcceleration() {
 		return acceleration;
 	}
 
