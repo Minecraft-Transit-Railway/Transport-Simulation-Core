@@ -81,8 +81,11 @@ public final class IntegrationResponse extends ResponseBase<Integration> {
 		}
 
 		if (shouldSync) {
-			railsToUpdate.forEach(rail -> rail.checkOrCreatePlatform(simulator, platformsToUpdate, sidingsToUpdate));
+			ObjectAVLTreeSet<Siding> sidingsToInit = new ObjectAVLTreeSet<>();
+			railsToUpdate.forEach(rail -> rail.checkOrCreatePlatform(simulator, platformsToUpdate, sidingsToInit));
 			simulator.sync();
+			sidingsToInit.forEach(Siding::init);
+			sidingsToUpdate.addAll(sidingsToInit);
 		}
 		railNodePositionsToUpdate.removeIf(railNodePosition -> !simulator.positionsToRail.getOrDefault(railNodePosition, new Object2ObjectOpenHashMap<>()).isEmpty());
 
