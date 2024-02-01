@@ -144,6 +144,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return acceleration;
 	}
 
+	public double getBrakingPower() {
+		return brakingPower;
+	}
+
 	public void iterateInterchanges(BiConsumer<String, InterchangeColorsForStationName> consumer) {
 		interchangeColorsForStationNameList.forEach(interchangeColorsForStationName -> consumer.accept(interchangeColorsForStationName.getStationName(), interchangeColorsForStationName));
 	}
@@ -154,14 +158,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	public int getDoorMultiplier() {
 		return doorTarget ? 1 : -1;
-	}
-  
-  	public double getAcceleration() {
-		return acceleration;
-	}
-
-	public double getBrakingPower() {
-		return brakingPower;
 	}
 
 	protected double getStoppingPoint() {
