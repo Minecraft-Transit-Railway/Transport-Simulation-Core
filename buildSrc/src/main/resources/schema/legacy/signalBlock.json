@@ -1,0 +1,18 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBaseWithId"
+	],
+	"properties": {
+		"color": {
+			"type": "integer"
+		},
+		"rails": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	}
+}

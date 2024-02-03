@@ -1,7 +1,7 @@
 package org.mtr.core.serializer;
 
 import org.mtr.core.Main;
-import org.mtr.core.tool.DataFixer;
+import org.mtr.legacy.data.DataFixer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntConsumer;
@@ -134,6 +134,14 @@ public final class MessagePackReader extends ReaderBase {
 		if (readerBase instanceof MessagePackReader) {
 			map.putAll(((MessagePackReader) readerBase).map);
 		}
+	}
+
+	/**
+	 * @deprecated for {@link DataFixer} use only
+	 */
+	@Deprecated
+	public void iterateMap(String key, BiConsumer<String, Value> consumer) {
+		unpack(key, value -> iterateMap(value, consumer));
 	}
 
 	private void unpack(String key, Consumer<Value> consumer) {

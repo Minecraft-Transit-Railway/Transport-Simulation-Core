@@ -4,6 +4,7 @@ import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
+import org.mtr.legacy.data.LegacyRailLoader;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
@@ -43,6 +44,7 @@ public class Simulator extends Data implements Utilities {
 		final long startMillis = System.currentTimeMillis();
 
 		final Path savePath = rootPath.resolve(dimension);
+		LegacyRailLoader.load(savePath, rails);
 		fileLoaderStations = new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations");
 		fileLoaderPlatforms = new FileLoader<>(platforms, messagePackHelper -> new Platform(messagePackHelper, this), savePath, "platforms");
 		fileLoaderSidings = new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings");

@@ -1,0 +1,79 @@
+package org.mtr.legacy.data;
+
+import org.mtr.core.data.Position;
+import org.mtr.core.data.Rail;
+import org.mtr.core.data.SignalModification;
+import org.mtr.core.data.TransportMode;
+import org.mtr.core.simulation.FileLoader;
+import org.mtr.core.tool.Angle;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
+
+import java.nio.file.Path;
+import java.util.UUID;
+
+public final class LegacyRailLoader {
+
+	public static void load(Path savePath, ObjectOpenHashBigSet<Rail> rails) {
+		final ObjectOpenHashBigSet<LegacyRailNode> legacyRailNodes = new ObjectOpenHashBigSet<>();
+		final ObjectOpenHashBigSet<LegacySignalBlock> legacySignalBlocks = new ObjectOpenHashBigSet<>();
+		new FileLoader<>(legacyRailNodes, LegacyRailNode::new, savePath, "rails");
+		new FileLoader<>(legacySignalBlocks, LegacySignalBlock::new, savePath, "signal-blocks");
+
+		final Object2ObjectOpenHashMap<UUID, DataFixer.RailType> railCache = new Object2ObjectOpenHashMap<>();
+
+		legacyRailNodes.forEach(legacyRailNode -> {
+			final Position startPosition = legacyRailNode.getStartPosition();
+			final long startPositionLong = legacyRailNode.getStartPositionLong();
+			legacyRailNode.iterateConnections(railNodeConnection -> {
+				final DataFixer.RailType railType = railNodeConnection.getRailType();
+				final Position endPosition = railNodeConnection.getEndPosition();
+				final long endPositionLong = railNodeConnection.getEndPositionLong();
+				final Angle startAngle = railNodeConnection.getStartAngle();
+				final Angle endAngle = railNodeConnection.getEndAngle();
+				final TransportMode transportMode = railNodeConnection.getTransportMode();
+				final UUID uuid = getUuid(startPositionLong, endPositionLong);
+				final DataFixer.RailType oldRailType = railCache.get(uuid);
+
+				if (oldRailType != null) {
+					final Rail rail;
+					switch (railType) {
+						case PLATFORM:
+							rail = Rail.newPlatformRail(startPosition, startAngle, Rail.Shape.CURVE, endPosition, endAngle, Rail.Shape.CURVE, transportMode);
+							break;
+						case SIDING:
+							rail = Rail.newSidingRail(startPosition, startAngle, Rail.Shape.CURVE, endPosition, endAngle, Rail.Shape.CURVE, transportMode);
+							break;
+						case TURN_BACK:
+							rail = Rail.newTurnBackRail(startPosition, startAngle, Rail.Shape.CURVE, endPosition, endAngle, Rail.Shape.CURVE, transportMode);
+							break;
+						default:
+							final Rail.Shape shape = railType == DataFixer.RailType.CABLE_CAR || oldRailType == DataFixer.RailType.CABLE_CAR ? Rail.Shape.STRAIGHT : Rail.Shape.CURVE;
+							rail = Rail.newRail(
+									startPosition, startAngle, shape,
+									endPosition, endAngle, shape,
+									railType.speedLimitKilometersPerHour, oldRailType.speedLimitKilometersPerHour,
+									false, false, true, true, transportMode
+							);
+							break;
+					}
+
+					final SignalModification signalModification = new SignalModification(startPosition, endPosition, false);
+					legacySignalBlocks.forEach(legacySignalBlock -> {
+						if (legacySignalBlock.isRail(startPosition, endPosition)) {
+							signalModification.putColorToAdd(legacySignalBlock.getColor());
+						}
+					});
+					rail.applyModification(signalModification);
+					rails.add(rail);
+				} else {
+					railCache.put(uuid, railType);
+				}
+			});
+		});
+	}
+
+	private static UUID getUuid(long value1, long value2) {
+		return value1 > value2 ? new UUID(value1, value2) : new UUID(value2, value1);
+	}
+}

@@ -4,7 +4,6 @@ import org.mtr.core.generated.data.RailSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Angle;
-import org.mtr.core.tool.DataFixer;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
@@ -59,7 +58,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	}
 
 	public Rail(ReaderBase readerBase) {
-		super(DataFixer.convertRail(readerBase));
+		super(readerBase);
 		reversePositions = position1.compareTo(position2) > 0;
 		railMath = reversePositions ? new RailMath(position2, angle2, shape2, position1, angle1, shape1) : new RailMath(position1, angle1, shape1, position2, angle2, shape2);
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
@@ -161,7 +160,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		return returnSet;
 	}
 
-	void applyModification(SignalModification signalModification) {
+	public void applyModification(SignalModification signalModification) {
 		if (matchesPositions(signalModification)) {
 			if (signalModification.getIsClearAll()) {
 				signalColors.clear();

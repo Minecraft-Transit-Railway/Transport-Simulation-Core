@@ -1,0 +1,18 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBaseWithId"
+	],
+	"properties": {
+		"node_pos": {
+			"type": "integer"
+		},
+		"rail_connections": {
+			"type": "array",
+			"items": {
+				"$ref": "railNodeConnection.json"
+			}
+		}
+	}
+}

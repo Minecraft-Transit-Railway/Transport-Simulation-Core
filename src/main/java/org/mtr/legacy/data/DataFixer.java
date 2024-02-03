@@ -1,14 +1,13 @@
-package org.mtr.core.tool;
+package org.mtr.legacy.data;
 
 import org.mtr.core.Main;
-import org.mtr.core.data.Position;
-import org.mtr.core.data.Rail;
-import org.mtr.core.data.TransportMode;
-import org.mtr.core.data.VehicleCar;
+import org.mtr.core.data.*;
 import org.mtr.core.serializer.MessagePackReader;
 import org.mtr.core.serializer.MessagePackWriter;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.WriterBase;
+import org.mtr.core.tool.Angle;
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
@@ -22,7 +21,7 @@ import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class DataFixer {
+public final class DataFixer {
 
 	private static final int PACKED_X_LENGTH = 26;
 	private static final int PACKED_Z_LENGTH = PACKED_X_LENGTH;
@@ -40,44 +39,6 @@ public class DataFixer {
 
 	public static void unpackPlatformDwellTime(ReaderBase readerBase, IntConsumer consumer) {
 		readerBase.unpackInt("dwell_time", value -> consumer.accept(value * 500));
-	}
-
-	public static ReaderBase convertRail(ReaderBase readerBase) {
-		packExtra(readerBase, messagePackWriter -> readerBase.unpackString("rail_type", value -> {
-			final RailType railType = EnumHelper.valueOf(RailType.IRON, value);
-			if (railType != RailType.NONE) {
-				messagePackWriter.writeLong("speedLimit", railType.speedLimitKilometersPerHour);
-				final String shapeString = (railType.railSlopeStyle == RailSlopeStyle.CURVE ? Rail.Shape.CURVE : Rail.Shape.STRAIGHT).toString();
-				messagePackWriter.writeString("shapeStart", shapeString);
-				messagePackWriter.writeString("shapeEnd", shapeString);
-				messagePackWriter.writeBoolean("isSavedRail", railType.hasSavedRail);
-				messagePackWriter.writeBoolean("canAccelerate", railType.canAccelerate);
-				messagePackWriter.writeBoolean("canTurnBack", railType == RailType.TURN_BACK);
-				messagePackWriter.writeBoolean("canHaveSignal", railType.canHaveSignal);
-			}
-		}));
-		return readerBase;
-	}
-
-	// TODO
-	public static ReaderBase convertRailNode(ReaderBase readerBase) {
-		packExtra(readerBase, messagePackWriter -> {
-//			readerBase.unpackLong("node_pos", value -> convertPosition(value).serializeData(messagePackWriter.writeChild("position")));
-//			final ObjectArrayList<RailNodeConnection> connections = new ObjectArrayList<>();
-//			readerBase.iterateReaderArray("rail_connections", connections::clear, readerBaseChild -> connections.add(new RailNodeConnection(readerBaseChild)));
-//			if (!connections.isEmpty()) {
-//				messagePackWriter.writeDataset(connections, "connections");
-//			}
-		});
-		return readerBase;
-	}
-
-	public static ReaderBase convertRailNodeConnection(ReaderBase readerBase) {
-		packExtra(readerBase, messagePackWriter -> readerBase.unpackLong("node_pos", value -> {
-			new Rail(readerBase).serializeData(messagePackWriter.writeChild("rail"));
-			convertPosition(value).serializeData(messagePackWriter.writeChild("position"));
-		}));
-		return readerBase;
 	}
 
 	public static ReaderBase convertRoute(ReaderBase readerBase) {
@@ -141,8 +102,15 @@ public class DataFixer {
 				final int trainLength = Integer.parseInt(trainTypeSplit[trainTypeSplit.length - 2]) + 1;
 				final int trainWidth = Integer.parseInt(trainTypeSplit[trainTypeSplit.length - 1]);
 				final int trainCars = Math.min(transportMode.maxLength, (int) Math.floor(railLength / trainLength));
+				final double bogiePosition = trainLength < 10 ? 0 : trainLength * 0.34;
 				for (int i = 0; i < trainCars; i++) {
-					vehicleCars.add(new VehicleCar(trainId, trainLength, trainWidth, 0, 0, 0, 0));
+					final int type = trainCars == 1 ? 3 : i == 0 ? 1 : i == trainCars - 1 ? 2 : 0;
+					vehicleCars.add(new VehicleCar(
+							transportMode == TransportMode.TRAIN ? String.format("%s_%s", trainId, type == 0 ? "trailer" : "cab_" + type) : trainId,
+							trainLength, trainWidth,
+							-bogiePosition, bogiePosition,
+							(type & 0b01) == 0 ? 0 : 1, (type & 0b10) == 0 ? 0 : 1
+					));
 				}
 			} catch (Exception ignored) {
 			}
@@ -166,7 +134,45 @@ public class DataFixer {
 	}
 
 	public static ReaderBase convertStation(ReaderBase readerBase) {
-		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("zone", value -> messagePackWriter.writeLong("zone1", value)));
+		packExtra(readerBase, messagePackWriter -> {
+			readerBase.unpackInt("zone", value -> messagePackWriter.writeLong("zone1", value));
+			final Object2ObjectArrayMap<String, ObjectArrayList<String>> exits = new Object2ObjectArrayMap<>();
+
+			if (readerBase instanceof MessagePackReader) {
+				((MessagePackReader) readerBase).iterateMap("exits", (key, value) -> {
+					final ObjectArrayList<String> destinations = new ObjectArrayList<>();
+					exits.put(key, destinations);
+					value.asArrayValue().forEach(destination -> destinations.add(destination.asStringValue().asString()));
+				});
+			}
+
+			final WriterBase.Array exitsWriterBaseArray = messagePackWriter.writeArray("exits");
+			exits.forEach((name, destinations) -> {
+				final WriterBase writerBase = exitsWriterBaseArray.writeChild();
+				writerBase.writeString("name", name);
+				final WriterBase.Array destinationsWriterBaseArray = writerBase.writeArray("destinations");
+				destinations.forEach(destinationsWriterBaseArray::writeString);
+			});
+		});
+
+		return readerBase;
+	}
+
+	public static ReaderBase convertLift(ReaderBase readerBase) {
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("lift_height", value -> messagePackWriter.writeDouble("height", value / 2D)));
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("lift_width", value -> messagePackWriter.writeDouble("width", value)));
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("lift_depth", value -> messagePackWriter.writeDouble("depth", value)));
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("lift_offset_x", value -> messagePackWriter.writeDouble("offsetX", value / 2D)));
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("lift_offset_y", value -> messagePackWriter.writeDouble("offsetY", value)));
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("lift_offset_z", value -> messagePackWriter.writeDouble("offsetZ", value / 2D)));
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackString("lift_style", value -> messagePackWriter.writeString("style", value)));
+		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("facing", value -> {
+			messagePackWriter.writeString("angle", Angle.fromAngle(value + 90).toString());
+			final ObjectArrayList<LiftFloor> liftFloors = new ObjectArrayList<>();
+			readerBase.iterateLongArray("floors", () -> {
+			}, floor -> liftFloors.add(new LiftFloor(convertPosition(floor))));
+			messagePackWriter.writeDataset(liftFloors, "floors");
+		}));
 		return readerBase;
 	}
 
@@ -211,42 +217,40 @@ public class DataFixer {
 		}
 	}
 
-	private enum RailType {
-		WOODEN(20, false, true, true, RailSlopeStyle.CURVE),
-		STONE(40, false, true, true, RailSlopeStyle.CURVE),
-		EMERALD(60, false, true, true, RailSlopeStyle.CURVE),
-		IRON(80, false, true, true, RailSlopeStyle.CURVE),
-		OBSIDIAN(120, false, true, true, RailSlopeStyle.CURVE),
-		BLAZE(160, false, true, true, RailSlopeStyle.CURVE),
-		QUARTZ(200, false, true, true, RailSlopeStyle.CURVE),
-		DIAMOND(300, false, true, true, RailSlopeStyle.CURVE),
-		PLATFORM(80, true, false, true, RailSlopeStyle.CURVE),
-		SIDING(40, true, false, true, RailSlopeStyle.CURVE),
-		TURN_BACK(80, false, false, true, RailSlopeStyle.CURVE),
-		CABLE_CAR(30, false, true, true, RailSlopeStyle.CABLE),
-		CABLE_CAR_STATION(2, false, true, true, RailSlopeStyle.CURVE),
-		RUNWAY(300, false, true, false, RailSlopeStyle.CURVE),
-		AIRPLANE_DUMMY(900, false, true, false, RailSlopeStyle.CURVE),
-		NONE(20, false, false, true, RailSlopeStyle.CURVE);
+	public enum RailType {
+		WOODEN(20, false, true, true, Rail.Shape.CURVE),
+		STONE(40, false, true, true, Rail.Shape.CURVE),
+		EMERALD(60, false, true, true, Rail.Shape.CURVE),
+		IRON(80, false, true, true, Rail.Shape.CURVE),
+		OBSIDIAN(120, false, true, true, Rail.Shape.CURVE),
+		BLAZE(160, false, true, true, Rail.Shape.CURVE),
+		QUARTZ(200, false, true, true, Rail.Shape.CURVE),
+		DIAMOND(300, false, true, true, Rail.Shape.CURVE),
+		PLATFORM(80, true, false, true, Rail.Shape.CURVE),
+		SIDING(40, true, false, true, Rail.Shape.CURVE),
+		TURN_BACK(80, false, false, true, Rail.Shape.CURVE),
+		CABLE_CAR(30, false, true, true, Rail.Shape.STRAIGHT),
+		CABLE_CAR_STATION(2, false, true, true, Rail.Shape.CURVE),
+		RUNWAY(300, false, true, false, Rail.Shape.CURVE),
+		AIRPLANE_DUMMY(900, false, true, false, Rail.Shape.CURVE),
+		NONE(0, false, false, true, Rail.Shape.CURVE);
 
 		public final int speedLimitKilometersPerHour;
 		public final double speedLimitMetersPerMillisecond;
 		public final boolean hasSavedRail;
 		public final boolean canAccelerate;
 		public final boolean canHaveSignal;
-		public final RailSlopeStyle railSlopeStyle;
+		public final Rail.Shape shape;
 
-		RailType(int speedLimitKilometersPerHour, boolean hasSavedRail, boolean canAccelerate, boolean canHaveSignal, RailSlopeStyle railSlopeStyle) {
+		RailType(int speedLimitKilometersPerHour, boolean hasSavedRail, boolean canAccelerate, boolean canHaveSignal, Rail.Shape shape) {
 			this.speedLimitKilometersPerHour = speedLimitKilometersPerHour;
 			speedLimitMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimitKilometersPerHour);
 			this.hasSavedRail = hasSavedRail;
 			this.canAccelerate = canAccelerate;
 			this.canHaveSignal = canHaveSignal;
-			this.railSlopeStyle = railSlopeStyle;
+			this.shape = shape;
 		}
 	}
-
-	private enum RailSlopeStyle {CURVE, CABLE}
 
 	private enum TrainType {
 		SP1900("train_24_2"),
@@ -369,5 +373,67 @@ public class DataFixer {
 		TrainType(String baseTrainType) {
 			this.baseTrainType = baseTrainType;
 		}
+	}
+
+	// The following is copied from Minecraft's BlockPos and MathHelper
+	private static final int SIZE_BITS_X = 1 + floorLog2(smallestEncompassingPowerOfTwo(30000000));
+	private static final int SIZE_BITS_Z = SIZE_BITS_X;
+	private static final int SIZE_BITS_Y = 64 - SIZE_BITS_X - SIZE_BITS_Z;
+	private static final int BIT_SHIFT_Z = SIZE_BITS_Y;
+	private static final int BIT_SHIFT_X = SIZE_BITS_Y + SIZE_BITS_Z;
+	private static final long BITS_X = (1L << SIZE_BITS_X) - 1L;
+	private static final long BITS_Y = (1L << SIZE_BITS_Y) - 1L;
+	private static final long BITS_Z = (1L << SIZE_BITS_Z) - 1L;
+
+	private static boolean isPowerOfTwo(int value) {
+		return value != 0 && (value & value - 1) == 0;
+	}
+
+	private static int smallestEncompassingPowerOfTwo(int value) {
+		int i = value - 1;
+		i |= i >> 1;
+		i |= i >> 2;
+		i |= i >> 4;
+		i |= i >> 8;
+		i |= i >> 16;
+		return i + 1;
+	}
+
+	private static int ceilLog2(int value) {
+		value = isPowerOfTwo(value) ? value : smallestEncompassingPowerOfTwo(value);
+		final int[] MULTIPLY_DE_BRUIJN_BIT_POSITION = {0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9};
+		return MULTIPLY_DE_BRUIJN_BIT_POSITION[(int) ((long) value * 125613361L >> 27) & 31];
+	}
+
+	private static int floorLog2(int value) {
+		return ceilLog2(value) - (isPowerOfTwo(value) ? 0 : 1);
+	}
+
+	private static int unpackLongX(long packedPos) {
+		return (int) (packedPos << 64 - BIT_SHIFT_X - SIZE_BITS_X >> 64 - SIZE_BITS_X);
+	}
+
+	private static int unpackLongY(long packedPos) {
+		return (int) (packedPos << 64 - SIZE_BITS_Y >> 64 - SIZE_BITS_Y);
+	}
+
+	private static int unpackLongZ(long packedPos) {
+		return (int) (packedPos << 64 - BIT_SHIFT_Z - SIZE_BITS_Z >> 64 - SIZE_BITS_Z);
+	}
+
+	public static Position fromLong(long packedPos) {
+		return new Position(unpackLongX(packedPos), unpackLongY(packedPos), unpackLongZ(packedPos));
+	}
+
+	public static long asLong(Position position) {
+		return asLong((int) position.getX(), (int) position.getY(), (int) position.getZ());
+	}
+
+	private static long asLong(int x, int y, int z) {
+		long l = 0L;
+		l |= ((long) x & BITS_X) << BIT_SHIFT_X;
+		l |= ((long) y & BITS_Y);
+		l |= ((long) z & BITS_Z) << BIT_SHIFT_Z;
+		return l;
 	}
 }

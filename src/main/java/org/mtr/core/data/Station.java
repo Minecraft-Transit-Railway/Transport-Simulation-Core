@@ -3,7 +3,7 @@ package org.mtr.core.data;
 import org.mtr.core.generated.data.StationSchema;
 import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.ReaderBase;
-import org.mtr.core.tool.DataFixer;
+import org.mtr.legacy.data.DataFixer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;

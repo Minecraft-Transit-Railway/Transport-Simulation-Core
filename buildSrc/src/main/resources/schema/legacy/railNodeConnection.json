@@ -1,0 +1,66 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"node_pos": {
+			"type": "integer"
+		},
+		"h_1": {
+			"type": "number"
+		},
+		"k_1": {
+			"type": "number"
+		},
+		"h_2": {
+			"type": "number"
+		},
+		"k_2": {
+			"type": "number"
+		},
+		"r_1": {
+			"type": "number"
+		},
+		"r_2": {
+			"type": "number"
+		},
+		"t_start_1": {
+			"type": "number"
+		},
+		"t_end_1": {
+			"type": "number"
+		},
+		"t_start_2": {
+			"type": "number"
+		},
+		"t_end_2": {
+			"type": "number"
+		},
+		"y_start": {
+			"type": "integer"
+		},
+		"y_end": {
+			"type": "integer"
+		},
+		"reverse_t_1": {
+			"type": "boolean"
+		},
+		"is_straight_1": {
+			"type": "boolean"
+		},
+		"reverse_t_2": {
+			"type": "boolean"
+		},
+		"is_straight_2": {
+			"type": "boolean"
+		},
+		"rail_type": {
+			"type": "string"
+		},
+		"transportMode": {
+			"$ref": "TransportMode"
+		}
+	}
+}
