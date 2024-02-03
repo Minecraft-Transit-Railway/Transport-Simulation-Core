@@ -473,8 +473,8 @@ public class Vehicle extends VehicleSchema {
 
 	@Nullable
 	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {
-		final Vector position1 = getPosition(value - (reversed ? -1 : 1));
-		final Vector position2 = getPosition(value + (reversed ? -1 : 1));
+		final Vector position1 = getPosition(value + (reversed ? -1 : 1));
+		final Vector position2 = getPosition(value - (reversed ? -1 : 1));
 		return position1 == null || position2 == null ? null : new ObjectObjectImmutablePair<>(position1, position2);
 	}
 

@@ -167,7 +167,7 @@ public final class DataFixer {
 		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("lift_offset_z", value -> messagePackWriter.writeDouble("offsetZ", value / 2D)));
 		packExtra(readerBase, messagePackWriter -> readerBase.unpackString("lift_style", value -> messagePackWriter.writeString("style", value)));
 		packExtra(readerBase, messagePackWriter -> readerBase.unpackInt("facing", value -> {
-			messagePackWriter.writeString("angle", Angle.fromAngle(value + 90).toString());
+			messagePackWriter.writeString("angle", Angle.fromAngle(value - 90).toString());
 			final ObjectArrayList<LiftFloor> liftFloors = new ObjectArrayList<>();
 			readerBase.iterateLongArray("floors", () -> {
 			}, floor -> liftFloors.add(new LiftFloor(convertPosition(floor))));
