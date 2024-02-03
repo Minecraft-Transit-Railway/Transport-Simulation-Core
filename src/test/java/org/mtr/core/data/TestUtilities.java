@@ -201,6 +201,10 @@ public interface TestUtilities {
 		return new Station(getDefaultSimulator());
 	}
 
+	static StationExit randomStationExit() {
+		return new StationExit();
+	}
+
 	static VehicleCar randomVehicleCar() {
 		return new VehicleCar(randomString(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble());
 	}
@@ -279,6 +283,10 @@ public interface TestUtilities {
 
 	static Station newStation(ReaderBase readerBase) {
 		return new Station(readerBase, getDefaultSimulator());
+	}
+
+	static StationExit newStationExit(ReaderBase readerBase) {
+		return new StationExit(readerBase);
 	}
 
 	static SimplifiedRoute newSimplifiedRoute(ReaderBase readerBase) {

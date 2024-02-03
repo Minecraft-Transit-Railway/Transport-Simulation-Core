@@ -8,27 +8,24 @@
 	"properties": {
 		"height": {
 			"type": "number",
-			"minimum": 0
+			"minimum": 1
 		},
 		"width": {
 			"type": "number",
-			"minimum": 0
+			"minimum": 1
 		},
 		"depth": {
 			"type": "number",
-			"minimum": 0
+			"minimum": 1
 		},
 		"offsetX": {
-			"type": "number",
-			"minimum": 0
+			"type": "number"
 		},
 		"offsetY": {
-			"type": "number",
-			"minimum": 0
+			"type": "number"
 		},
 		"offsetZ": {
-			"type": "number",
-			"minimum": 0
+			"type": "number"
 		},
 		"isDoubleSided": {
 			"type": "boolean"

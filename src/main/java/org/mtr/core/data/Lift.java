@@ -7,6 +7,7 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
+import org.mtr.legacy.data.DataFixer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
@@ -36,7 +37,7 @@ public class Lift extends LiftSchema {
 	}
 
 	public Lift(ReaderBase readerBase, Data data) {
-		super(readerBase, data);
+		super(DataFixer.convertLift(readerBase), data);
 		this.isClientside = !(data instanceof Simulator);
 		updateData(readerBase);
 	}
@@ -327,16 +328,17 @@ public class Lift extends LiftSchema {
 		long distance = 0;
 
 		for (int i = 0; i < floors.size(); i++) {
+			final Position position = floors.get(i).getPosition();
+			minX = Math.min(minX, position.getX());
+			maxX = Math.max(maxX, position.getX());
+			minY = Math.min(minY, position.getY());
+			maxY = Math.max(maxY, position.getY());
+			minZ = Math.min(minZ, position.getZ());
+			maxZ = Math.max(maxZ, position.getZ());
+
 			if (i == 0) {
 				distances.add(0);
 			} else {
-				final Position position = floors.get(i).getPosition();
-				minX = Math.min(minX, position.getX());
-				maxX = Math.max(maxX, position.getX());
-				minY = Math.min(minY, position.getY());
-				maxY = Math.max(maxY, position.getY());
-				minZ = Math.min(minZ, position.getZ());
-				maxZ = Math.max(maxZ, position.getZ());
 				distance += position.manhattanDistance(floors.get(i - 1).getPosition());
 				distances.add(distance);
 			}

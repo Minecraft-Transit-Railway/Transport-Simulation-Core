@@ -2,8 +2,8 @@ package org.mtr.core.data;
 
 import org.mtr.core.generated.data.SavedRailBaseSchema;
 import org.mtr.core.serializer.ReaderBase;
-import org.mtr.core.tool.DataFixer;
 import org.mtr.core.tool.Utilities;
+import org.mtr.legacy.data.DataFixer;
 
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends SavedRailBaseSchema {
 
