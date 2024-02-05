@@ -33,6 +33,8 @@ public final class OperationServlet extends ServletBase {
 				return new NearbyAreasRequest<Station, Platform>(jsonReader).query(simulator.stations);
 			case "nearby-depots":
 				return new NearbyAreasRequest<Depot, Siding>(jsonReader).query(simulator.depots);
+			case "generate":
+				return new GenerateMultiple(jsonReader).generate(simulator);
 			default:
 				return null;
 		}
