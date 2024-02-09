@@ -354,28 +354,29 @@ public class Vehicle extends VehicleSchema {
 		final Position[] minMaxPositions = {null, null};
 		int index = currentIndex;
 
-		while (!transportMode.continuousMovement && index >= 0) {
+		while (index >= 0) {
 			final PathData pathData = vehicleExtraData.immutablePath.get(index);
+			final Position position1 = pathData.getOrderedPosition1();
+			final Position position2 = pathData.getOrderedPosition2();
+			minMaxPositions[0] = Position.getMin(minMaxPositions[0], Position.getMin(position1, position2));
+			minMaxPositions[1] = Position.getMax(minMaxPositions[1], Position.getMax(position1, position2));
 
 			if (railProgress - vehicleExtraData.getTotalVehicleLength() > pathData.getEndDistance()) {
 				break;
 			}
 
-			final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress);
-
-			if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
-				final Position position1 = pathData.getOrderedPosition1();
-				final Position position2 = pathData.getOrderedPosition2();
-				if (getIsOnRoute() && index > 0) {
-					Data.put(vehiclePositions, position1, position2, vehiclePosition -> {
-						final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
-						newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
-						return newVehiclePosition;
-					}, Object2ObjectAVLTreeMap::new);
-					pathData.isSignalBlocked(id, true);
+			if (!transportMode.continuousMovement) {
+				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress);
+				if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
+					if (getIsOnRoute() && index > 0) {
+						Data.put(vehiclePositions, position1, position2, vehiclePosition -> {
+							final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
+							newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
+							return newVehiclePosition;
+						}, Object2ObjectAVLTreeMap::new);
+						pathData.isSignalBlocked(id, true);
+					}
 				}
-				minMaxPositions[0] = Position.getMin(minMaxPositions[0], Position.getMin(position1, position2));
-				minMaxPositions[1] = Position.getMax(minMaxPositions[1], Position.getMax(position1, position2));
 			}
 
 			index--;

@@ -106,8 +106,20 @@ public final class DataFixer {
 				final double bogiePosition = trainLength < 10 ? 0 : trainLength * 0.34;
 				for (int i = 0; i < trainCars; i++) {
 					final int type = trainCars == 1 ? 3 : i == 0 ? 1 : i == trainCars - 1 ? 2 : 0;
+					final String vehicleId;
+					if (transportMode == TransportMode.TRAIN) {
+						if (trainId.startsWith("light_rail")) {
+							vehicleId = trainId + (trainId.endsWith("_rht") ? "" : "_lht");
+						} else {
+							vehicleId = trainId + (type == 0 ? "_trailer" : "_cab_" + type);
+						}
+					} else if (transportMode == TransportMode.CABLE_CAR) {
+						vehicleId = trainId + (trainId.endsWith("_rht") ? "" : "_lht");
+					} else {
+						vehicleId = trainId;
+					}
 					vehicleCars.add(new VehicleCar(
-							transportMode == TransportMode.TRAIN ? String.format("%s_%s", trainId, type == 0 ? "trailer" : "cab_" + type) : trainId,
+							vehicleId,
 							trainLength, trainWidth,
 							-bogiePosition, bogiePosition,
 							(type & 0b01) == 0 ? 0 : 1, (type & 0b10) == 0 ? 0 : 1

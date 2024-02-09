@@ -734,7 +734,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			this.startRailProgress = startRailProgress;
 			this.startSpeed = startSpeed;
 			this.startTime = startTime;
-			this.speedChange = Integer.compare(speedChange, 0);
+			this.speedChange = speedChange;
 			this.acceleration = roundAcceleration(acceleration);
 			this.brakingPower = roundAcceleration(brakingPower);
 		}

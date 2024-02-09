@@ -5,6 +5,9 @@
 		"SerializedDataBase"
 	],
 	"properties": {
+		"id": {
+			"type": "integer"
+		},
 		"name": {
 			"type": "string"
 		},
@@ -24,6 +27,7 @@
 		}
 	},
 	"required": [
+		"id",
 		"name",
 		"color",
 		"destination",
