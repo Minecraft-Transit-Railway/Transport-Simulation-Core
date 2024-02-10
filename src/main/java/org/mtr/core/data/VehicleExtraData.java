@@ -84,6 +84,18 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return previousRouteName;
 	}
 
+	public String getPreviousRouteNumber() {
+		return previousRouteNumber;
+	}
+
+	public RouteType getPreviousRouteType() {
+		return previousRouteType;
+	}
+
+	public Route.CircularState getPreviousRouteCircularState() {
+		return previousRouteCircularState;
+	}
+
 	public String getPreviousStationName() {
 		return previousStationName;
 	}
@@ -112,12 +124,28 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return thisRouteName;
 	}
 
+	public String getThisRouteNumber() {
+		return thisRouteNumber;
+	}
+
+	public RouteType getThisRouteType() {
+		return thisRouteType;
+	}
+
+	public Route.CircularState getThisRouteCircularState() {
+		return thisRouteCircularState;
+	}
+
 	public String getThisStationName() {
 		return thisStationName;
 	}
 
 	public String getThisRouteDestination() {
 		return thisRouteDestination;
+	}
+
+	public long getNextRouteId() {
+		return nextRouteId;
 	}
 
 	public long getNextPlatformId() {
@@ -128,8 +156,32 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return nextStationId;
 	}
 
+	public int getNextRouteColor() {
+		return (int) (nextRouteColor & 0xFFFFFF);
+	}
+
+	public String getNextRouteName() {
+		return nextRouteName;
+	}
+
+	public String getNextRouteNumber() {
+		return nextRouteNumber;
+	}
+
+	public RouteType getNextRouteType() {
+		return nextRouteType;
+	}
+
+	public Route.CircularState getNextRouteCircularState() {
+		return nextRouteCircularState;
+	}
+
 	public String getNextStationName() {
 		return nextStationName;
+	}
+
+	public String getNextRouteDestination() {
+		return nextRouteDestination;
 	}
 
 	public int getStopIndex() {
@@ -156,16 +208,16 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return doorTarget ? 1 : -1;
 	}
 
+	public double getTotalVehicleLength() {
+		return totalVehicleLength;
+	}
+
 	protected double getStoppingPoint() {
 		return stoppingPoint;
 	}
 
 	protected double getRailLength() {
 		return railLength;
-	}
-
-	protected double getTotalVehicleLength() {
-		return totalVehicleLength;
 	}
 
 	protected int getRepeatIndex1() {
@@ -227,6 +279,9 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			previousStationId = 0;
 			previousRouteColor = 0;
 			previousRouteName = "";
+			previousRouteNumber = "";
+			previousRouteType = RouteType.NORMAL;
+			previousRouteCircularState = Route.CircularState.NONE;
 			previousStationName = "";
 			previousRouteDestination = "";
 
@@ -235,12 +290,22 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			thisStationId = 0;
 			thisRouteColor = 0;
 			thisRouteName = "";
+			thisRouteNumber = "";
+			thisRouteType = RouteType.NORMAL;
+			thisRouteCircularState = Route.CircularState.NONE;
 			thisStationName = "";
 			thisRouteDestination = "";
 
+			nextRouteId = 0;
 			nextPlatformId = 0;
 			nextStationId = 0;
+			nextRouteColor = 0;
+			nextRouteName = "";
+			nextRouteNumber = "";
+			nextRouteType = RouteType.NORMAL;
+			nextRouteCircularState = Route.CircularState.NONE;
 			nextStationName = "";
+			nextRouteDestination = "";
 		} else {
 			final int newStopIndex = immutablePath.get(currentIndex).getStopIndex();
 			if (newStopIndex == stopIndex) {
@@ -256,6 +321,9 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			previousStationId = getStationId(vehiclePlatformRouteInfo.previousPlatform);
 			previousRouteColor = getColor(vehiclePlatformRouteInfo.previousRoute);
 			previousRouteName = getName(vehiclePlatformRouteInfo.previousRoute);
+			previousRouteNumber = getRouteNumber(vehiclePlatformRouteInfo.previousRoute);
+			previousRouteType = getRouteType(vehiclePlatformRouteInfo.previousRoute);
+			previousRouteCircularState = getRouteCircularState(vehiclePlatformRouteInfo.previousRoute);
 			previousStationName = getStationName(vehiclePlatformRouteInfo.previousPlatform);
 			previousRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.previousRoute, 0);
 
@@ -264,12 +332,22 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			thisStationId = getStationId(vehiclePlatformRouteInfo.thisPlatform);
 			thisRouteColor = getColor(vehiclePlatformRouteInfo.thisRoute);
 			thisRouteName = getName(vehiclePlatformRouteInfo.thisRoute);
+			thisRouteNumber = getRouteNumber(vehiclePlatformRouteInfo.thisRoute);
+			thisRouteType = getRouteType(vehiclePlatformRouteInfo.thisRoute);
+			thisRouteCircularState = getRouteCircularState(vehiclePlatformRouteInfo.thisRoute);
 			thisStationName = getStationName(vehiclePlatformRouteInfo.thisPlatform);
 			thisRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.thisRoute, newStopIndex);
 
+			nextRouteId = getId(vehiclePlatformRouteInfo.nextRoute);
 			nextPlatformId = getId(vehiclePlatformRouteInfo.nextPlatform);
 			nextStationId = getStationId(vehiclePlatformRouteInfo.nextPlatform);
+			nextRouteColor = getColor(vehiclePlatformRouteInfo.nextRoute);
+			nextRouteName = getName(vehiclePlatformRouteInfo.nextRoute);
+			nextRouteNumber = getRouteNumber(vehiclePlatformRouteInfo.nextRoute);
+			nextRouteType = getRouteType(vehiclePlatformRouteInfo.nextRoute);
+			nextRouteCircularState = getRouteCircularState(vehiclePlatformRouteInfo.nextRoute);
 			nextStationName = getStationName(vehiclePlatformRouteInfo.nextPlatform);
+			nextRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.nextRoute, 0);
 
 			isTerminating = vehiclePlatformRouteInfo.thisRoute != null && stopIndex >= vehiclePlatformRouteInfo.thisRoute.getRoutePlatforms().size() - 1;
 
@@ -355,6 +433,18 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return platform == null ? "" : getName(platform.area);
 	}
 
+	private static String getRouteNumber(@Nullable Route route) {
+		return route == null ? "" : route.getRouteNumber();
+	}
+
+	private static RouteType getRouteType(@Nullable Route route) {
+		return route == null ? RouteType.NORMAL : route.getRouteType();
+	}
+
+	private static Route.CircularState getRouteCircularState(@Nullable Route route) {
+		return route == null ? Route.CircularState.NONE : route.getCircularState();
+	}
+
 	private static String getRouteDestination(@Nullable Route route, int stopIndex) {
 		return route == null ? "" : route.getDestination(stopIndex);
 	}
@@ -366,13 +456,15 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		private final Platform nextPlatform;
 		private final Route previousRoute;
 		private final Route thisRoute;
+		private final Route nextRoute;
 
-		public VehiclePlatformRouteInfo(@Nullable Platform previousPlatform, @Nullable Platform thisPlatform, @Nullable Platform nextPlatform, @Nullable Route previousRoute, @Nullable Route thisRoute) {
+		public VehiclePlatformRouteInfo(@Nullable Platform previousPlatform, @Nullable Platform thisPlatform, @Nullable Platform nextPlatform, @Nullable Route previousRoute, @Nullable Route thisRoute, @Nullable Route nextRoute) {
 			this.previousPlatform = previousPlatform;
 			this.thisPlatform = thisPlatform;
 			this.nextPlatform = nextPlatform;
 			this.previousRoute = previousRoute;
 			this.thisRoute = thisRoute;
+			this.nextRoute = nextRoute;
 		}
 	}
 }

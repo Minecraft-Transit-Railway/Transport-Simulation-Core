@@ -23,6 +23,15 @@
 		"previousRouteName": {
 			"type": "string"
 		},
+		"previousRouteNumber": {
+			"type": "string"
+		},
+		"previousRouteType": {
+			"$ref": "RouteType"
+		},
+		"previousRouteCircularState": {
+			"$ref": "Route.CircularState"
+		},
 		"previousStationName": {
 			"type": "string"
 		},
@@ -44,11 +53,23 @@
 		"thisRouteName": {
 			"type": "string"
 		},
+		"thisRouteNumber": {
+			"type": "string"
+		},
+		"thisRouteType": {
+			"$ref": "RouteType"
+		},
+		"thisRouteCircularState": {
+			"$ref": "Route.CircularState"
+		},
 		"thisStationName": {
 			"type": "string"
 		},
 		"thisRouteDestination": {
 			"type": "string"
+		},
+		"nextRouteId": {
+			"type": "integer"
 		},
 		"nextPlatformId": {
 			"type": "integer"
@@ -56,7 +77,25 @@
 		"nextStationId": {
 			"type": "integer"
 		},
+		"nextRouteColor": {
+			"type": "integer"
+		},
+		"nextRouteName": {
+			"type": "string"
+		},
+		"nextRouteNumber": {
+			"type": "string"
+		},
+		"nextRouteType": {
+			"$ref": "RouteType"
+		},
+		"nextRouteCircularState": {
+			"$ref": "Route.CircularState"
+		},
 		"nextStationName": {
+			"type": "string"
+		},
+		"nextRouteDestination": {
 			"type": "string"
 		},
 		"isTerminating": {

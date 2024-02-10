@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 public final class Response extends ResponseSchema {
 
-	private final JsonObject data;
+	public final JsonObject data;
 
 	public Response(int code, long currentTime, String text, @Nullable JsonObject data) {
 		super(code, currentTime, text, 1);

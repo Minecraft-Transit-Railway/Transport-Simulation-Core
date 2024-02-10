@@ -87,7 +87,7 @@ public final class Route extends RouteSchema {
 				platform = Utilities.getElement(routePlatformData, -1).platform;
 			}
 
-			return platform != null && platform.area != null ? String.format("%s%s%s", circularState.emoji, circularState.emoji.isEmpty() ? "" : " ", platform.area.getName()) : "";
+			return platform != null && platform.area != null ? platform.area.getName() : "";
 		}
 	}
 
@@ -131,7 +131,7 @@ public final class Route extends RouteSchema {
 	public enum CircularState {
 		NONE(""), CLOCKWISE("\u21A9"), ANTICLOCKWISE("\u21AA");
 
-		private final String emoji;
+		public final String emoji;
 
 		CircularState(String emoji) {
 			this.emoji = emoji;

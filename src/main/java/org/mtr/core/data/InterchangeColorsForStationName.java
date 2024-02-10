@@ -15,6 +15,7 @@ public class InterchangeColorsForStationName extends InterchangeColorsForStation
 	}
 
 	public void forEach(ColorConsumer consumer) {
+		interchangeRouteNamesForColorList.sort((interchangeRouteNamesForColor1, interchangeRouteNamesForColor2) -> interchangeRouteNamesForColor2.getColor() - interchangeRouteNamesForColor1.getColor());
 		interchangeRouteNamesForColorList.forEach(interchangeRouteNamesForColor -> consumer.accept(interchangeRouteNamesForColor.getColor(), interchangeRouteNamesForColor));
 	}
 

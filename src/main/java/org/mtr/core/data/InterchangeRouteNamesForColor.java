@@ -4,6 +4,7 @@ import org.mtr.core.generated.data.InterchangeRouteNamesForColorSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
+import java.util.Collections;
 import java.util.function.Consumer;
 
 public final class InterchangeRouteNamesForColor extends InterchangeRouteNamesForColorSchema implements Comparable<InterchangeRouteNamesForColor> {
@@ -18,6 +19,7 @@ public final class InterchangeRouteNamesForColor extends InterchangeRouteNamesFo
 	}
 
 	public void forEach(Consumer<String> consumer) {
+		Collections.sort(routeNames);
 		routeNames.forEach(consumer);
 	}
 

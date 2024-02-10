@@ -706,7 +706,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			this.route = route;
 			this.routeIndex = routeIndex;
 			this.platformId = platformId;
-			this.customDestination = customDestination == null ? "" : Utilities.formatName(customDestination);
+			this.customDestination = customDestination == null ? "" : customDestination;
 		}
 	}
 

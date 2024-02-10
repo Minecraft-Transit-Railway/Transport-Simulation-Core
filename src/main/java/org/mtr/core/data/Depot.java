@@ -185,19 +185,23 @@ public final class Depot extends DepotSchema implements Utilities {
 		final ObjectObjectImmutablePair<Platform, Route> previousData;
 		final ObjectObjectImmutablePair<Platform, Route> thisData;
 		final ObjectObjectImmutablePair<Platform, Route> nextData;
+		final ObjectObjectImmutablePair<Platform, Route> nextNextData;
 
 		if (platformCount == 0) {
 			previousData = null;
 			thisData = null;
 			nextData = null;
+			nextNextData = null;
 		} else if (repeatInfinitely) {
 			previousData = Utilities.getElement(platformsInRoute, (stopIndex - 1 + platformCount) % platformCount);
 			thisData = Utilities.getElement(platformsInRoute, stopIndex % platformCount);
 			nextData = Utilities.getElement(platformsInRoute, (stopIndex + 1) % platformCount);
+			nextNextData = Utilities.getElement(platformsInRoute, (stopIndex + 2) % platformCount);
 		} else {
 			previousData = Utilities.getElement(platformsInRoute, stopIndex - 1);
 			thisData = Utilities.getElement(platformsInRoute, stopIndex);
 			nextData = Utilities.getElement(platformsInRoute, stopIndex + 1);
+			nextNextData = Utilities.getElement(platformsInRoute, stopIndex + 2);
 		}
 
 		return new VehicleExtraData.VehiclePlatformRouteInfo(
@@ -205,7 +209,8 @@ public final class Depot extends DepotSchema implements Utilities {
 				thisData == null ? null : thisData.left(),
 				nextData == null ? null : nextData.left(),
 				thisData == null ? null : thisData.right(),
-				nextData == null ? null : nextData.right()
+				nextData == null ? null : nextData.right(),
+				nextNextData == null ? null : nextNextData.right()
 		);
 	}
 

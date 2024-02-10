@@ -52,7 +52,7 @@ public final class ArrivalAndDeparture extends ArrivalAndDepartureSchema impleme
 				trip.tripIndexInBlock,
 				Utilities.formatName(trip.route.getRouteNumber()),
 				Utilities.formatName(trip.route.getName()),
-				(isTerminating ? "(Terminating) " : "") + stopTime.customDestination,
+				String.format("%s%s%s", isTerminating ? "(Terminating) " : "", trip.route.getCircularState().emoji.isEmpty() ? "" : trip.route.getCircularState().emoji + " ", Utilities.formatName(stopTime.customDestination)),
 				stopTime.tripStopIndex > 0,
 				!isTerminating,
 				scheduledArrivalTime,
