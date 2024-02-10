@@ -3,33 +3,31 @@ package org.mtr.core.data;
 import org.mtr.core.generated.data.ClientGroupSchema;
 import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.servlet.Webserver;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.corundumstudio.socketio.SocketIOClient;
 import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.webserver.Webserver;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class ClientGroup extends ClientGroupSchema {
 
-	private Consumer<JsonObject> sendToClient = jsonObject -> {
-	};
+	private final int clientWebserverPort;
 
-	public ClientGroup() {
+	public ClientGroup(int clientWebserverPort) {
 		super();
+		this.clientWebserverPort = clientWebserverPort;
 	}
 
-	public ClientGroup(ReaderBase readerBase) {
+	public ClientGroup(ReaderBase readerBase, int clientWebserverPort) {
 		super(readerBase);
 		updateData(readerBase);
+		this.clientWebserverPort = clientWebserverPort;
 	}
 
 	public double getUpdateRadius() {
 		return updateRadius;
-	}
-
-	public void setSendToClient(Webserver webserver, SocketIOClient socketIOClient, String channel) {
-		sendToClient = jsonObject -> webserver.sendSocketEvent(socketIOClient, channel, jsonObject);
 	}
 
 	public void iterateClients(Consumer<Client> consumer) {
@@ -37,7 +35,15 @@ public class ClientGroup extends ClientGroupSchema {
 	}
 
 	public void sendToClient(JsonObject jsonObject) {
-		sendToClient.accept(jsonObject);
+		Webserver.sendPostRequest(String.format("http://localhost:%s/mtr/api/socket", clientWebserverPort), jsonObject, null);
+	}
+
+	public void saveAndUpdate(ReaderBase readerBase) {
+		final Object2ObjectArrayMap<UUID, Client> clientMap = new Object2ObjectArrayMap<>();
+		clients.forEach(client -> clientMap.put(client.uuid, client));
+		updateData(readerBase);
+		clients.forEach(client -> clientMap.remove(client.uuid));
+		clients.addAll(clientMap.values());
 	}
 
 	public void tick() {
@@ -53,7 +59,7 @@ public class ClientGroup extends ClientGroupSchema {
 		}
 
 		if (update) {
-			sendToClient.accept(updateObject);
+			sendToClient(updateObject);
 		}
 	}
 }

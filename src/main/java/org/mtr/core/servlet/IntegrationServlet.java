@@ -8,14 +8,13 @@ import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.webserver.Webserver;
 
 import java.util.Locale;
 
 public final class IntegrationServlet extends ServletBase {
 
-	public IntegrationServlet(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
-		super(webserver, path, simulators);
+	public IntegrationServlet(ObjectImmutableList<Simulator> simulators) {
+		super(simulators);
 	}
 
 	@Override

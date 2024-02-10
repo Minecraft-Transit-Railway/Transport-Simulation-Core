@@ -1,17 +1,15 @@
 package org.mtr.core;
 
-import org.mtr.core.generated.WebserverResources;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.mtr.core.servlet.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.webserver.Webserver;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -37,9 +35,10 @@ public class Main {
 			int i = 0;
 			final Path rootPath = Paths.get(args[i++]);
 			final int webserverPort = Integer.parseInt(args[i++]);
+			final int clientWebserverPort = Integer.parseInt(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(rootPath, webserverPort, dimensions);
+			final Main main = new Main(rootPath, webserverPort, clientWebserverPort, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -47,21 +46,22 @@ public class Main {
 		}
 	}
 
-	public Main(Path rootPath, int webserverPort, String... dimensions) {
+	public Main(Path rootPath, int webserverPort, int clientWebserverPort, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
 		for (final String dimension : dimensions) {
-			tempSimulators.add(new Simulator(dimension, rootPath));
+			tempSimulators.add(new Simulator(dimension, rootPath, clientWebserverPort));
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);
-		webserver = new Webserver(Main.class, WebserverResources::get, Utilities.clamp(webserverPort, 1025, 65535), StandardCharsets.UTF_8, jsonObject -> 0);
-		new IntegrationServlet(webserver, "/mtr/api/data/*", simulators);
-		new OperationServlet(webserver, "/mtr/api/operation/*", simulators);
-		new SystemMapServlet(webserver, "/mtr/api/map/stations-and-routes", simulators);
-		new OBAServlet(webserver, "/oba/api/where/*", simulators);
-		SocketHandler.register(webserver, simulators);
+		webserver = new Webserver(webserverPort);
+		webserver.addServlet(new ServletHolder(new WebServlet()), "/");
+		webserver.addServlet(new ServletHolder(new IntegrationServlet(simulators)), "/mtr/api/data/*");
+		webserver.addServlet(new ServletHolder(new OperationServlet(simulators)), "/mtr/api/operation/*");
+		webserver.addServlet(new ServletHolder(new SocketServlet(simulators)), "/mtr/api/socket");
+		webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/stations-and-routes");
+		webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
 		webserver.start();
 		scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
 		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));

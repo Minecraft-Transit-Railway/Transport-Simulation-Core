@@ -247,7 +247,7 @@ public class Vehicle extends VehicleSchema {
 			final boolean isOpposite = currentPathData != null && nextPathData != null && currentPathData.isOppositeRail(nextPathData);
 			final double nextStartDistance = nextPathData == null ? 0 : nextPathData.getStartDistance();
 			final long totalDwellMillis = currentPathData == null ? 0 : currentPathData.getDwellTime();
-			final long doorCloseTime = Math.max(0, totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY);
+			final long doorCloseTime = Math.max(totalDwellMillis / 2, totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY);
 			final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions, elapsedDwellTime >= doorCloseTime, false) < 0;
 
 			if (Utilities.isBetween(elapsedDwellTime, DOOR_DELAY, doorCloseTime)) {

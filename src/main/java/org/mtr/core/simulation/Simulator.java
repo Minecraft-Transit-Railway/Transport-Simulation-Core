@@ -25,7 +25,7 @@ public class Simulator extends Data implements Utilities {
 	private long gameMillisPerDay;
 	private long lastSetGameMillis;
 
-	public final ClientGroup clientGroup = new ClientGroup();
+	public final ClientGroup clientGroup;
 
 	private final String dimension;
 	private final FileLoader<Station> fileLoaderStations;
@@ -39,8 +39,9 @@ public class Simulator extends Data implements Utilities {
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
 	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
 
-	public Simulator(String dimension, Path rootPath) {
+	public Simulator(String dimension, Path rootPath, int clientWebserverPort) {
 		this.dimension = dimension;
+		clientGroup = new ClientGroup(clientWebserverPort);
 		final long startMillis = System.currentTimeMillis();
 
 		final Path savePath = rootPath.resolve(dimension);

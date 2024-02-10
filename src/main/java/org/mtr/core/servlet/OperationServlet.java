@@ -10,12 +10,11 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.webserver.Webserver;
 
 public final class OperationServlet extends ServletBase {
 
-	public OperationServlet(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
-		super(webserver, path, simulators);
+	public OperationServlet(ObjectImmutableList<Simulator> simulators) {
+		super(simulators);
 	}
 
 	@Override

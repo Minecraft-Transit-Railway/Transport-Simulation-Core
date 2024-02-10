@@ -15,11 +15,14 @@ repositories {
 }
 
 dependencies {
-	implementation "com.github.jonafanho:Socket-IO-Webserver:master-SNAPSHOT"
 	implementation "com.github.jonafanho:Shadow-Libraries:master-SNAPSHOT"
+	implementation "commons-io:commons-io:+"
+	implementation "org.eclipse.jetty:jetty-server:9.+"
+	implementation "org.eclipse.jetty:jetty-servlet:9.+"
+	implementation "org.eclipse.jetty:jetty-util:9.+"
+	implementation "javax.servlet:javax.servlet-api:+"
 	compileOnly "com.google.code.findbugs:jsr305:+"
 	testImplementation "org.junit.jupiter:junit-jupiter-api:+"
-	testImplementation "commons-io:commons-io:+"
 	testImplementation "org.apache.httpcomponents:httpclient:+"
 	testCompileOnly "com.google.code.findbugs:jsr305:+"
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:+"

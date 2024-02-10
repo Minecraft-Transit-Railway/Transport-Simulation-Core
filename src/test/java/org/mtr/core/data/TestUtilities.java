@@ -50,7 +50,7 @@ public interface TestUtilities {
 	}
 
 	static Simulator getDefaultSimulator() {
-		return new Simulator("test", TEST_DIRECTORY);
+		return new Simulator("test", TEST_DIRECTORY, 0);
 	}
 
 	static JsonObject sendHttpDataRequest(String endpoint, JsonObject bodyObject) {
@@ -130,7 +130,7 @@ public interface TestUtilities {
 	}
 
 	static ClientGroup randomClientGroup() {
-		return new ClientGroup();
+		return new ClientGroup(RANDOM.nextInt());
 	}
 
 	static Depot randomDepot() {
@@ -226,7 +226,7 @@ public interface TestUtilities {
 	}
 
 	static ClientGroup newClientGroup(ReaderBase readerBase) {
-		return new ClientGroup(readerBase);
+		return new ClientGroup(readerBase, RANDOM.nextInt());
 	}
 
 	static Depot newDepot(ReaderBase readerBase) {

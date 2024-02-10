@@ -7,12 +7,11 @@ import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.webserver.Webserver;
 
 public final class SystemMapServlet extends ServletBase {
 
-	public SystemMapServlet(Webserver webserver, String path, ObjectImmutableList<Simulator> simulators) {
-		super(webserver, path, simulators);
+	public SystemMapServlet(ObjectImmutableList<Simulator> simulators) {
+		super(simulators);
 	}
 
 	@Override
