@@ -11,8 +11,9 @@
 		"position": {
 			"$ref": "position.json"
 		},
-		"forceUpdate": {
-			"type": "boolean"
+		"updateRadius": {
+			"type": "number",
+			"minimum": 0
 		}
 	},
 	"required": [

@@ -52,11 +52,11 @@ public class Vehicle extends VehicleSchema {
 	}
 
 	/**
-	 * @deprecated for {@link org.mtr.core.integration.VehicleUpdate} use only
+	 * @deprecated for {@link org.mtr.core.operation.VehicleUpdate} use only
 	 */
 	@Deprecated
 	public Vehicle(ReaderBase readerBase) {
-		this(new VehicleExtraData(readerBase), null, readerBase, new Data());
+		this(new VehicleExtraData(readerBase), null, readerBase, new ClientData());
 	}
 
 	@Override
@@ -383,12 +383,12 @@ public class Vehicle extends VehicleSchema {
 
 		if (siding != null) {
 			if (siding.area != null && data instanceof Simulator) {
-				final double updateRadius = ((Simulator) data).clientGroup.getUpdateRadius();
 				final boolean needsUpdate = vehicleExtraData.checkForUpdate();
 				// TODO for continuous movement, maybe only send the path once rather than sending the entire path for each vehicle
 				final int pathUpdateIndex = transportMode.continuousMovement ? 0 : Math.max(0, index + 1);
-				((Simulator) data).clientGroup.iterateClients(client -> {
+				((Simulator) data).clients.values().forEach(client -> {
 					final Position position = client.getPosition();
+					final double updateRadius = client.getUpdateRadius();
 					if ((minMaxPositions[0] == null || minMaxPositions[1] == null) ? siding.area.inArea(position, updateRadius) : Utilities.isBetween(position, minMaxPositions[0], minMaxPositions[1], updateRadius)) {
 						client.update(this, needsUpdate, pathUpdateIndex);
 					}

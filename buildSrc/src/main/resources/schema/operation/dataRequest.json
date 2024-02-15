@@ -1,0 +1,59 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"clientId": {
+			"type": "string"
+		},
+		"clientPosition": {
+			"$ref": "position.json"
+		},
+		"requestRadius": {
+			"type": "integer"
+		},
+		"existingStationIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"existingPlatformIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"existingSidingIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"existingSimplifiedRouteIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"existingDepotIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"existingRailIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"required": [
+		"clientId",
+		"clientPosition",
+		"requestRadius"
+	]
+}

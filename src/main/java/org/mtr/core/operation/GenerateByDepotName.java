@@ -1,16 +1,16 @@
 package org.mtr.core.operation;
 
-import org.mtr.core.generated.operation.GenerateMultipleSchema;
+import org.mtr.core.generated.operation.GenerateByDepotNameSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
 
-public final class GenerateMultiple extends GenerateMultipleSchema {
+public final class GenerateByDepotName extends GenerateByDepotNameSchema {
 
-	public GenerateMultiple() {
+	public GenerateByDepotName() {
 	}
 
-	public GenerateMultiple(ReaderBase readerBase) {
+	public GenerateByDepotName(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}

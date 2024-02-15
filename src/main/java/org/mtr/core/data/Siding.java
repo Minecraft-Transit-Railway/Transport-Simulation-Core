@@ -2,7 +2,6 @@ package org.mtr.core.data;
 
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.SidingSchema;
-import org.mtr.core.integration.Integration;
 import org.mtr.core.oba.*;
 import org.mtr.core.operation.ArrivalResponse;
 import org.mtr.core.path.SidingPathFinder;
@@ -77,14 +76,6 @@ public final class Siding extends SidingSchema implements Utilities {
 		updateData(readerBase);
 		DataFixer.unpackSidingVehicleCars(readerBase, transportMode, railLength, vehicleCars);
 		DataFixer.unpackSidingMaxVehicles(readerBase, value -> maxVehicles = value);
-	}
-
-	/**
-	 * @deprecated for {@link Integration} use only
-	 */
-	@Deprecated
-	public Siding(ReaderBase readerBase) {
-		this(readerBase, Integration.getData());
 	}
 
 	@Override

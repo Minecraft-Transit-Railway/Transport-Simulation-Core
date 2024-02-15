@@ -126,11 +126,7 @@ public interface TestUtilities {
 	}
 
 	static Client randomClient() {
-		return new Client(UUID.randomUUID());
-	}
-
-	static ClientGroup randomClientGroup() {
-		return new ClientGroup(RANDOM.nextInt());
+		return new Client(randomString());
 	}
 
 	static Depot randomDepot() {
@@ -223,10 +219,6 @@ public interface TestUtilities {
 
 	static Client newClient(ReaderBase readerBase) {
 		return new Client(readerBase);
-	}
-
-	static ClientGroup newClientGroup(ReaderBase readerBase) {
-		return new ClientGroup(readerBase, RANDOM.nextInt());
 	}
 
 	static Depot newDepot(ReaderBase readerBase) {

@@ -8,13 +8,19 @@
 		"depots": {
 			"type": "array",
 			"items": {
-				"$ref": "depot.json"
+				"$ref": "depot.json",
+				"parameters": [
+					"Data"
+				]
 			}
 		},
 		"stations": {
 			"type": "array",
 			"items": {
-				"$ref": "station.json"
+				"$ref": "station.json",
+				"parameters": [
+					"Data"
+				]
 			}
 		}
 	}

@@ -5,6 +5,7 @@ import org.mtr.core.data.Position;
 import org.mtr.core.data.SavedRailBase;
 import org.mtr.core.generated.operation.NearbyAreasRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
@@ -20,8 +21,8 @@ public final class NearbyAreasRequest<T extends AreaBase<T, U>, U extends SavedR
 		updateData(readerBase);
 	}
 
-	public JsonObject query(ObjectAVLTreeSet<T> areaSet) {
-		final NearbyAreasResponse nearbyAreasResponse = new NearbyAreasResponse();
+	public JsonObject query(Simulator simulator, ObjectAVLTreeSet<T> areaSet) {
+		final NearbyAreasResponse nearbyAreasResponse = new NearbyAreasResponse(simulator);
 		areaSet.forEach(area -> {
 			if (area.inArea(position, radius)) {
 				nearbyAreasResponse.add(area);

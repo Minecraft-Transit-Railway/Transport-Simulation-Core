@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.RouteSchema;
-import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
@@ -20,14 +19,6 @@ public final class Route extends RouteSchema {
 	public Route(ReaderBase readerBase, Data data) {
 		super(DataFixer.convertRoute(readerBase), data);
 		updateData(readerBase);
-	}
-
-	/**
-	 * @deprecated for {@link Integration} use only
-	 */
-	@Deprecated
-	public Route(ReaderBase readerBase) {
-		this(readerBase, Integration.getData());
 	}
 
 	@Override

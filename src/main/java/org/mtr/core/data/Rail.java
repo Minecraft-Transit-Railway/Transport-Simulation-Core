@@ -8,7 +8,7 @@ import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 public final class Rail extends RailSchema implements SerializedDataBaseWithId {
@@ -141,7 +141,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		blockedVehicleIds.clear();
 	}
 
-	public void checkOrCreatePlatform(Data data, ObjectAVLTreeSet<Platform> platformsToAdd, ObjectAVLTreeSet<Siding> sidingsToAdd) {
+	public void checkOrCreateSavedRail(Data data, ObjectArrayList<Platform> platformsToAdd, ObjectArrayList<Siding> sidingsToAdd) {
 		if (isPlatform && data.platforms.stream().noneMatch(platform -> platform.containsPos(position1) && platform.containsPos(position2))) {
 			final Platform platform = new Platform(position1, position2, transportMode, data);
 			data.platforms.add(platform);

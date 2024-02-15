@@ -1,0 +1,57 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"stationIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"platformIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"sidingIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"routeIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"depotIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"liftIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"railIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"railNodePositions": {
+			"type": "array",
+			"items": {
+				"$ref": "position.json"
+			}
+		}
+	}
+}

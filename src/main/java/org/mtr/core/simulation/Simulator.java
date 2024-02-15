@@ -6,10 +6,7 @@ import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.LegacyRailLoader;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import java.nio.file.Path;
 import java.util.Locale;
@@ -25,9 +22,10 @@ public class Simulator extends Data implements Utilities {
 	private long gameMillisPerDay;
 	private long lastSetGameMillis;
 
-	public final ClientGroup clientGroup;
+	public final Object2ObjectOpenHashMap<String, Client> clients = new Object2ObjectOpenHashMap<>();
 
 	private final String dimension;
+	private final int clientWebserverPort;
 	private final FileLoader<Station> fileLoaderStations;
 	private final FileLoader<Platform> fileLoaderPlatforms;
 	private final FileLoader<Siding> fileLoaderSidings;
@@ -41,7 +39,7 @@ public class Simulator extends Data implements Utilities {
 
 	public Simulator(String dimension, Path rootPath, int clientWebserverPort) {
 		this.dimension = dimension;
-		clientGroup = new ClientGroup(clientWebserverPort);
+		this.clientWebserverPort = clientWebserverPort;
 		final long startMillis = System.currentTimeMillis();
 
 		final Path savePath = rootPath.resolve(dimension);
@@ -85,7 +83,7 @@ public class Simulator extends Data implements Utilities {
 			depots.forEach(Depot::tick);
 			sidings.forEach(Siding::tick);
 			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.getTransportModeOrdinal())));
-			clientGroup.tick();
+			clients.forEach((clientId, client) -> client.sendUpdates(this, clientWebserverPort));
 
 			if (autoSave) {
 				save(true);

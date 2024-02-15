@@ -80,6 +80,14 @@ public class SchemaParser {
 					}
 				}
 
+				typeWithData.extraParameters.forEach(parameter -> {
+					final String methodName = String.format("%s%sParameter", key, Utilities.capitalizeFirstLetter(parameter));
+					final Method method = new Method(VisibilityModifier.PROTECTED, Type.createObject(Utilities.capitalizeFirstLetter(parameter)), methodName);
+					method.otherModifiers.add(OtherModifier.ABSTRACT);
+					method.annotations.add("Nonnull");
+					schemaClass.methods.add(method);
+				});
+
 				schemaClass.fields.add(field);
 				toStringMethod.content.add(String.format("\t+ \"%1$s: \" + %1$s + \"\\n\"", key));
 			}
@@ -129,7 +137,9 @@ public class SchemaParser {
 		if (refName != null) {
 			final String formattedRefName = Utilities.formatRefName(refName);
 			if (Utilities.isObject(refName)) {
-				return isArray ? TypeWithData.createArray(Type.createArray(formattedRefName), formattedRefName) : TypeWithData.createObject(formattedRefName);
+				final ObjectArrayList<String> extraParameters = new ObjectArrayList<>();
+				Utilities.iterateStringArray(jsonObject.getAsJsonArray("parameters"), parameter -> extraParameters.add(Utilities.formatRefName(parameter)));
+				return isArray ? TypeWithData.createArray(Type.createArray(formattedRefName), formattedRefName, extraParameters) : TypeWithData.createObject(formattedRefName, extraParameters);
 			} else {
 				return isArray ? null : TypeWithData.createEnum(formattedRefName);
 			}

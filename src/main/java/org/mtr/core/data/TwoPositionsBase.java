@@ -4,32 +4,16 @@ import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import javax.annotation.Nullable;
-
 public abstract class TwoPositionsBase implements SerializedDataBaseWithId {
 
 	@Override
 	public final String getHexId() {
-		final boolean reversePositions = getPosition1().compareTo(getPosition2()) > 0;
-		return String.format(
-				"%s-%s-%s-%s-%s-%s",
-				Utilities.numberToPaddedHexString((reversePositions ? getPosition2() : getPosition1()).getX()),
-				Utilities.numberToPaddedHexString((reversePositions ? getPosition2() : getPosition1()).getY()),
-				Utilities.numberToPaddedHexString((reversePositions ? getPosition2() : getPosition1()).getZ()),
-				Utilities.numberToPaddedHexString((reversePositions ? getPosition1() : getPosition2()).getX()),
-				Utilities.numberToPaddedHexString((reversePositions ? getPosition1() : getPosition2()).getY()),
-				Utilities.numberToPaddedHexString((reversePositions ? getPosition1() : getPosition2()).getZ())
-		);
+		return getHexId(getPosition1(), getPosition2());
 	}
 
-	@Nullable
-	public final Rail getRailFromData(Data data, ObjectOpenHashSet<Position> positionsToUpdate) {
-		final Rail rail = data.railIdMap.get(getHexId());
-		if (rail != null) {
-			positionsToUpdate.add(getPosition1());
-			positionsToUpdate.add(getPosition2());
-		}
-		return rail;
+	public final void writePositions(ObjectOpenHashSet<Position> positionsToUpdate) {
+		positionsToUpdate.add(getPosition1());
+		positionsToUpdate.add(getPosition2());
 	}
 
 	protected final boolean matchesPositions(TwoPositionsBase twoPositionsBase) {
@@ -39,4 +23,17 @@ public abstract class TwoPositionsBase implements SerializedDataBaseWithId {
 	protected abstract Position getPosition1();
 
 	protected abstract Position getPosition2();
+
+	public static String getHexId(Position position1, Position position2) {
+		final boolean reversePositions = position1.compareTo(position2) > 0;
+		return String.format(
+				"%s-%s-%s-%s-%s-%s",
+				Utilities.numberToPaddedHexString((reversePositions ? position2 : position1).getX()),
+				Utilities.numberToPaddedHexString((reversePositions ? position2 : position1).getY()),
+				Utilities.numberToPaddedHexString((reversePositions ? position2 : position1).getZ()),
+				Utilities.numberToPaddedHexString((reversePositions ? position1 : position2).getX()),
+				Utilities.numberToPaddedHexString((reversePositions ? position1 : position2).getY()),
+				Utilities.numberToPaddedHexString((reversePositions ? position1 : position2).getZ())
+		);
+	}
 }

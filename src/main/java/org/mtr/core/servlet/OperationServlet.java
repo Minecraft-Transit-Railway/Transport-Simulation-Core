@@ -20,6 +20,14 @@ public final class OperationServlet extends ServletBase {
 	@Override
 	protected JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator) {
 		switch (endpoint) {
+			case "get-data":
+				return new DataRequest(jsonReader).getData(simulator);
+			case "update-data":
+				return new UpdateDataRequest(jsonReader, simulator).update();
+			case "delete-data":
+				return new DeleteDataRequest(jsonReader).delete(simulator);
+			case "list-data":
+				return new ListDataResponse(jsonReader, simulator).list();
 			case "arrivals":
 				return new ArrivalsRequest(jsonReader).getArrivals(simulator, currentMillis);
 			case "set-time":
@@ -29,11 +37,13 @@ public final class OperationServlet extends ServletBase {
 			case "press-lift":
 				return new PressLift(jsonReader).pressLift(simulator);
 			case "nearby-stations":
-				return new NearbyAreasRequest<Station, Platform>(jsonReader).query(simulator.stations);
+				return new NearbyAreasRequest<Station, Platform>(jsonReader).query(simulator, simulator.stations);
 			case "nearby-depots":
-				return new NearbyAreasRequest<Depot, Siding>(jsonReader).query(simulator.depots);
-			case "generate":
-				return new GenerateMultiple(jsonReader).generate(simulator);
+				return new NearbyAreasRequest<Depot, Siding>(jsonReader).query(simulator, simulator.depots);
+			case "generate-by-depot-ids":
+				return new GenerateByDepotIds(jsonReader).generate(simulator);
+			case "generate-by-depot-name":
+				return new GenerateByDepotName(jsonReader).generate(simulator);
 			default:
 				return null;
 		}

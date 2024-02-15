@@ -5,14 +5,10 @@
 		"SerializedDataBase"
 	],
 	"properties": {
-		"updateRadius": {
-			"type": "number",
-			"minimum": 0
-		},
-		"clients": {
+		"depotIds": {
 			"type": "array",
 			"items": {
-				"$ref": "client.json"
+				"type": "integer"
 			}
 		}
 	}

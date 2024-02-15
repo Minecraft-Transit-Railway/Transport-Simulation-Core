@@ -1,21 +1,23 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.ClientSchema;
-import org.mtr.core.integration.Integration;
-import org.mtr.core.integration.VehicleUpdate;
+import org.mtr.core.integration.Response;
+import org.mtr.core.operation.VehicleLiftResponse;
+import org.mtr.core.operation.VehicleUpdate;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
+import org.mtr.core.simulation.Simulator;
+import org.mtr.core.tool.RequestHelper;
+import org.mtr.core.tool.Utilities;
+import org.mtr.libraries.io.netty.handler.codec.http.HttpResponseStatus;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 
-import javax.annotation.Nullable;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
 public class Client extends ClientSchema {
 
-	public final UUID uuid;
 	private final LongAVLTreeSet existingVehicleIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepVehicleIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<VehicleUpdate> vehicleUpdates = new Long2ObjectAVLTreeMap<>();
@@ -23,15 +25,15 @@ public class Client extends ClientSchema {
 	private final LongAVLTreeSet keepLiftIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<Lift> liftUpdates = new Long2ObjectAVLTreeMap<>();
 
-	public Client(UUID uuid) {
-		super(uuid.toString());
-		this.uuid = uuid;
+	private static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
+
+	public Client(String id) {
+		super(id);
 	}
 
 	public Client(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
-		this.uuid = UUID.fromString(clientId);
 	}
 
 	@Override
@@ -43,17 +45,22 @@ public class Client extends ClientSchema {
 		return position;
 	}
 
-	@Nullable
-	public Integration getUpdates() {
-		final Integration integration = new Integration(new Data());
-		process(vehicleUpdates, existingVehicleIds, keepVehicleIds, integration::addVehicleToUpdate, integration::addVehicleToKeep, integration::addVehicleToRemove);
-		process(liftUpdates, existingLiftIds, keepLiftIds, integration::addLiftToUpdate, integration::addLiftToKeep, integration::addLiftToRemove);
+	public double getUpdateRadius() {
+		return updateRadius;
+	}
 
-		if (integration.noVehicleOrLiftUpdates() && !forceUpdate) {
-			return null;
-		} else {
-			forceUpdate = false;
-			return integration;
+	public void setPositionAndUpdateRadius(Position position, long updateRadius) {
+		this.position = position;
+		this.updateRadius = updateRadius;
+	}
+
+	public void sendUpdates(Simulator simulator, int clientWebserverPort) {
+		final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
+		process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep, vehicleLiftResponse::addVehicleToRemove);
+		process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep, vehicleLiftResponse::addLiftToRemove);
+
+		if (vehicleLiftResponse.hasUpdate()) {
+			REQUEST_HELPER.sendPostRequest("http://localhost:" + clientWebserverPort, new Response(HttpResponseStatus.OK.code(), System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(vehicleLiftResponse)).getJson(), null);
 		}
 	}
 

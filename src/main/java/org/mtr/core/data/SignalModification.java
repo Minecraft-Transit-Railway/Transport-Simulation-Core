@@ -3,7 +3,7 @@ package org.mtr.core.data;
 import org.mtr.core.generated.data.SignalModificationSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class SignalModification extends SignalModificationSchema {
 
@@ -31,8 +31,8 @@ public final class SignalModification extends SignalModificationSchema {
 		return position2;
 	}
 
-	public void applyModificationToRail(Data data, ObjectOpenHashSet<Rail> railsToUpdate, ObjectOpenHashSet<Position> positionsToUpdate) {
-		final Rail rail = getRailFromData(data, positionsToUpdate);
+	public void applyModificationToRail(Data data, ObjectArrayList<Rail> railsToUpdate) {
+		final Rail rail = data.railIdMap.get(getHexId());
 		if (rail != null) {
 			rail.applyModification(this);
 			railsToUpdate.add(rail);

@@ -1,0 +1,54 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"stations": {
+			"type": "array",
+			"items": {
+				"$ref": "station.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		},
+		"platforms": {
+			"type": "array",
+			"items": {
+				"$ref": "platform.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		},
+		"sidings": {
+			"type": "array",
+			"items": {
+				"$ref": "siding.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		},
+		"routes": {
+			"type": "array",
+			"items": {
+				"$ref": "route.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		},
+		"depots": {
+			"type": "array",
+			"items": {
+				"$ref": "depot.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		}
+	}
+}

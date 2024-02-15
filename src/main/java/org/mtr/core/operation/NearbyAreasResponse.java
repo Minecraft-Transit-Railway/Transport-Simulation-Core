@@ -1,22 +1,37 @@
 package org.mtr.core.operation;
 
-import org.mtr.core.data.AreaBase;
-import org.mtr.core.data.Depot;
-import org.mtr.core.data.SavedRailBase;
-import org.mtr.core.data.Station;
+import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.NearbyAreasResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
+import javax.annotation.Nonnull;
+
 public final class NearbyAreasResponse extends NearbyAreasResponseSchema {
 
-	NearbyAreasResponse() {
+	private final Data data;
+
+	NearbyAreasResponse(Data data) {
 		super();
+		this.data = data;
 	}
 
-	public NearbyAreasResponse(ReaderBase readerBase) {
+	public NearbyAreasResponse(ReaderBase readerBase, Data data) {
 		super(readerBase);
+		this.data = data;
 		updateData(readerBase);
+	}
+
+	@Nonnull
+	@Override
+	protected Data depotsDataParameter() {
+		return data;
+	}
+
+	@Nonnull
+	@Override
+	protected Data stationsDataParameter() {
+		return data;
 	}
 
 	public ObjectImmutableList<Station> getStations() {

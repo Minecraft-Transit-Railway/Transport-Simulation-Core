@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class Data {
+public abstract class Data {
 
 	public final ObjectAVLTreeSet<Station> stations = new ObjectAVLTreeSet<>();
 	public final ObjectAVLTreeSet<Platform> platforms = new ObjectAVLTreeSet<>();

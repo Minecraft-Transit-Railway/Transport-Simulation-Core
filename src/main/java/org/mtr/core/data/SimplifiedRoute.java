@@ -5,7 +5,6 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comparable<SimplifiedRoute> {
 
@@ -35,6 +34,10 @@ public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comp
 		updateData(readerBase);
 	}
 
+	public long getId() {
+		return id;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -60,7 +63,7 @@ public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comp
 		return -1;
 	}
 
-	public static void addToSet(ObjectArraySet<SimplifiedRoute> simplifiedRoutes, Route route) {
+	public static void addToList(ObjectArrayList<SimplifiedRoute> simplifiedRoutes, Route route) {
 		if (!route.getHidden()) {
 			simplifiedRoutes.add(new SimplifiedRoute(route));
 		}

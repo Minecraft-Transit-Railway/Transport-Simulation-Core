@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.PlatformSchema;
-import org.mtr.core.integration.Integration;
 import org.mtr.core.oba.Stop;
 import org.mtr.core.oba.StopDirection;
 import org.mtr.core.serializer.ReaderBase;
@@ -28,14 +27,6 @@ public final class Platform extends PlatformSchema {
 		super(readerBase, data);
 		updateData(readerBase);
 		DataFixer.unpackPlatformDwellTime(readerBase, value -> dwellTime = value);
-	}
-
-	/**
-	 * @deprecated for {@link Integration} use only
-	 */
-	@Deprecated
-	public Platform(ReaderBase readerBase) {
-		this(readerBase, Integration.getData());
 	}
 
 	public void setDwellTime(long dwellTime) {

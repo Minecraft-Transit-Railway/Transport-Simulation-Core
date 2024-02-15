@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.LiftSchema;
-import org.mtr.core.integration.Integration;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
@@ -49,14 +48,6 @@ public class Lift extends LiftSchema {
 		needsUpdate = true;
 	}
 
-	/**
-	 * @deprecated for {@link org.mtr.core.integration.Integration} use only
-	 */
-	@Deprecated
-	public Lift(ReaderBase readerBase) {
-		this(readerBase, Integration.getData());
-	}
-
 	@Override
 	public boolean isValid() {
 		return !floors.isEmpty();
@@ -99,9 +90,8 @@ public class Lift extends LiftSchema {
 		}
 
 		if (data instanceof Simulator) {
-			final double updateRadius = ((Simulator) data).clientGroup.getUpdateRadius();
-			((Simulator) data).clientGroup.iterateClients(client -> {
-				if (Utilities.isBetween(client.getPosition(), minPosition, maxPosition, updateRadius)) {
+			((Simulator) data).clients.values().forEach(client -> {
+				if (Utilities.isBetween(client.getPosition(), minPosition, maxPosition, client.getUpdateRadius())) {
 					client.update(this, needsUpdate);
 				}
 			});

@@ -2,7 +2,6 @@ package org.mtr.core.data;
 
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.DepotSchema;
-import org.mtr.core.integration.Integration;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.WriterBase;
@@ -43,14 +42,6 @@ public final class Depot extends DepotSchema implements Utilities {
 		readerBase.iterateReaderArray(KEY_PATH, path::clear, readerBaseChild -> path.add(new PathData(readerBaseChild)));
 		updateData(readerBase);
 		DataFixer.unpackDepotDepartures(readerBase, realTimeDepartures);
-	}
-
-	/**
-	 * @deprecated for {@link Integration} use only
-	 */
-	@Deprecated
-	public Depot(ReaderBase readerBase) {
-		this(readerBase, Integration.getData());
 	}
 
 	@Override

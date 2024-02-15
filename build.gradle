@@ -17,6 +17,7 @@ repositories {
 dependencies {
 	implementation "com.github.jonafanho:Shadow-Libraries:master-SNAPSHOT"
 	implementation "commons-io:commons-io:+"
+	implementation "com.squareup.okhttp3:okhttp:+"
 	implementation "org.eclipse.jetty:jetty-server:9.+"
 	implementation "org.eclipse.jetty:jetty-servlet:9.+"
 	implementation "org.eclipse.jetty:jetty-util:9.+"
