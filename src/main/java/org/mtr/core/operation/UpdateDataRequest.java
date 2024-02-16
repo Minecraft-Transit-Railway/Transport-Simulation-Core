@@ -112,18 +112,10 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		routes.forEach(route -> update(route, true, data.routeIdMap.get(route.getId()), data.routes, updateDataResponse.getRoutes()));
 		depots.forEach(depot -> update(depot, true, data.depotIdMap.get(depot.getId()), data.depots, updateDataResponse.getDepots()));
 		lifts.forEach(lift -> {
-			final ObjectArrayList<Lift> liftsToModify = new ObjectArrayList<>();
-			data.lifts.removeIf(existingLift -> {
-				if (lift.overlappingFloors(existingLift)) {
-					liftsToModify.add(existingLift);
-					return true;
-				} else {
-					return false;
-				}
-			});
-			update(lift, true, liftsToModify.isEmpty() ? null : liftsToModify.get(0), data.lifts, updateDataResponse.getLifts());
+			final ObjectArrayList<Lift> liftsToModify = getMatchingLifts(data, lift);
+			update(lift, true, liftsToModify.isEmpty() ? null : liftsToModify.get(0), data.lifts, ObjectArrayList.of());
 		});
-		rails.forEach(rail -> update(rail, false, data.railIdMap.get(rail.getHexId()), data.rails, updateDataResponse.getRails()));
+		rails.forEach(rail -> update(rail, true, data.railIdMap.get(rail.getHexId()), data.rails, updateDataResponse.getRails()));
 		signalModifications.forEach(signalModification -> signalModification.applyModificationToRail(data, updateDataResponse.getRails()));
 
 		final ObjectArrayList<Siding> sidingsToInit = new ObjectArrayList<>();
@@ -137,6 +129,19 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		updateDataResponse.getRoutes().forEach(route -> SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), route));
 
 		return Utilities.getJsonObjectFromData(updateDataResponse);
+	}
+
+	public static ObjectArrayList<Lift> getMatchingLifts(Data data, Lift lift) {
+		final ObjectArrayList<Lift> liftsToModify = new ObjectArrayList<>();
+		data.lifts.removeIf(existingLift -> {
+			if (lift.overlappingFloors(existingLift)) {
+				liftsToModify.add(existingLift);
+				return true;
+			} else {
+				return false;
+			}
+		});
+		return liftsToModify;
 	}
 
 	private static <T extends SerializedDataBase> void update(T newData, boolean addNewData, @Nullable T existingData, ObjectSet<T> dataSet, ObjectArrayList<T> dataToUpdate) {

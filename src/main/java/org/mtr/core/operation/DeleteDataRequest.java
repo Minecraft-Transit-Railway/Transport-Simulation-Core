@@ -9,10 +9,7 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
 
@@ -83,8 +80,8 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 				return false;
 			}
 		}));
-		railIds.forEach(railId -> delete(simulator.railIdMap.get(railId), railId, deleteDataResponse.getRailIds(), railNodePositionsToUpdate));
-		railNodePositions.forEach(railNodePosition -> simulator.positionsToRail.getOrDefault(railNodePosition, new Object2ObjectOpenHashMap<>()).values().forEach(rail -> delete(rail, rail.getHexId(), deleteDataResponse.getRailIds(), railNodePositionsToUpdate)));
+		railIds.forEach(railId -> delete(simulator.railIdMap.get(railId), simulator.rails, railId, deleteDataResponse.getRailIds(), railNodePositionsToUpdate));
+		railNodePositions.forEach(railNodePosition -> simulator.positionsToRail.getOrDefault(railNodePosition, new Object2ObjectOpenHashMap<>()).values().forEach(rail -> delete(rail, simulator.rails, rail.getHexId(), deleteDataResponse.getRailIds(), railNodePositionsToUpdate)));
 
 		simulator.sync();
 		railNodePositionsToUpdate.forEach(railNodePosition -> {
@@ -102,8 +99,9 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 		}
 	}
 
-	private static void delete(@Nullable Rail rail, String railId, ObjectArrayList<String> railsIdsToUpdate, ObjectOpenHashSet<Position> railNodePositionsToUpdate) {
+	private static void delete(@Nullable Rail rail, ObjectOpenHashBigSet<Rail> rails, String railId, ObjectArrayList<String> railsIdsToUpdate, ObjectOpenHashSet<Position> railNodePositionsToUpdate) {
 		if (rail != null) {
+			rails.remove(rail);
 			railsIdsToUpdate.add(railId);
 			rail.writePositions(railNodePositionsToUpdate);
 		}

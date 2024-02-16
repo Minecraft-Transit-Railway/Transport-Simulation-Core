@@ -56,15 +56,6 @@
 				]
 			}
 		},
-		"lifts": {
-			"type": "array",
-			"items": {
-				"$ref": "lift.json",
-				"parameters": [
-					"Data"
-				]
-			}
-		},
 		"rails": {
 			"type": "array",
 			"items": {

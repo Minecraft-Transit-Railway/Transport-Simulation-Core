@@ -5,13 +5,17 @@ import org.mtr.core.serializer.MessagePackReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.ConditionalList;
+import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
+import javax.annotation.Nullable;
+
 public class PathData extends PathDataSchema implements ConditionalList {
 
-	private Rail rail = new Rail(new MessagePackReader());
+	@Nullable
+	private Rail rail;
 	public final boolean reversePositions;
 
 	public PathData(Rail rail, long savedRailBaseId, long dwellTime, int stopIndex, Position startPosition, Position endPosition) {
@@ -22,7 +26,7 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		this(oldPathData.rail, oldPathData.savedRailBaseId, oldPathData.dwellTime, oldPathData.stopIndex, startDistance, endDistance, oldPathData.startPosition, oldPathData.endPosition);
 	}
 
-	public PathData(Rail rail, long savedRailBaseId, long dwellTime, long stopIndex, double startDistance, double endDistance, Position startPosition, Position endPosition) {
+	public PathData(@Nullable Rail rail, long savedRailBaseId, long dwellTime, long stopIndex, double startDistance, double endDistance, Position startPosition, Position endPosition) {
 		super(savedRailBaseId, dwellTime, stopIndex, startDistance, endDistance, startPosition, endPosition);
 		this.rail = rail;
 		reversePositions = startPosition.compareTo(endPosition) > 0;
@@ -39,7 +43,7 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	}
 
 	public final Rail getRail() {
-		return rail;
+		return rail == null ? new Rail(new MessagePackReader()) : rail;
 	}
 
 	public final long getSavedRailBaseId() {
@@ -79,46 +83,50 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	}
 
 	public Angle getFacingStart() {
-		return rail.getStartAngle(reversePositions);
+		return getRail().getStartAngle(reversePositions);
 	}
 
 	public double getSpeedLimitMetersPerMillisecond() {
-		return rail.getSpeedLimitMetersPerMillisecond(reversePositions);
+		return getRail().getSpeedLimitMetersPerMillisecond(reversePositions);
 	}
 
 	public long getSpeedLimitKilometersPerHour() {
-		return rail.getSpeedLimitKilometersPerHour(reversePositions);
+		return getRail().getSpeedLimitKilometersPerHour(reversePositions);
 	}
 
 	public boolean canAccelerate() {
-		return rail.canAccelerate();
+		return getRail().canAccelerate();
 	}
 
 	public double getRailLength() {
-		return rail.railMath.getLength();
+		return rail == null ? endDistance - startDistance : rail.railMath.getLength();
 	}
 
 	public Vector getPosition(double rawValue) {
-		return rail.railMath.getPosition(rawValue, reversePositions);
+		if (rail == null) {
+			// TODO better positioning when vehicle is moving too quickly
+			final double ratio = Utilities.clamp(rawValue / getRailLength(), 0, 1);
+			return new Vector(
+					startPosition.getX() + ratio * (endPosition.getX() - startPosition.getX()),
+					startPosition.getY() + ratio * (endPosition.getY() - startPosition.getY()),
+					startPosition.getZ() + ratio * (endPosition.getZ() - startPosition.getZ())
+			);
+		} else {
+			return rail.railMath.getPosition(rawValue, reversePositions);
+		}
 	}
 
 	public boolean isSignalBlocked(long vehicleId, boolean reserveRail) {
-		return rail.isBlocked(vehicleId, reserveRail);
+		return getRail().isBlocked(vehicleId, reserveRail);
 	}
 
 	public IntAVLTreeSet getSignalColors() {
-		return rail.getSignalColors();
+		return getRail().getSignalColors();
 	}
 
 	public boolean writePathCache(Data data) {
-		final Rail tempRail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
-		if (tempRail == null) {
-			rail = new Rail(new MessagePackReader());
-			return true;
-		} else {
-			rail = tempRail;
-			return false;
-		}
+		rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
+		return rail == null;
 	}
 
 	public static void writePathCache(ObjectArrayList<PathData> path, Data data, boolean removePathIfInvalid) {

@@ -42,20 +42,12 @@ public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 		vehiclesToKeep.forEach(consumer);
 	}
 
-	public void iterateVehiclesToRemove(LongConsumer consumer) {
-		vehiclesToRemove.forEach(consumer);
-	}
-
 	public void iterateLiftsToUpdate(Consumer<Lift> consumer) {
 		liftsToUpdate.forEach(consumer);
 	}
 
 	public void iterateLiftsToKeep(LongConsumer consumer) {
 		liftsToKeep.forEach(consumer);
-	}
-
-	public void iterateLiftsToRemove(LongConsumer consumer) {
-		liftsToRemove.forEach(consumer);
 	}
 
 	public void addVehicleToUpdate(VehicleUpdate vehicleUpdate) {
@@ -66,23 +58,11 @@ public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 		vehiclesToKeep.add(vehicleId);
 	}
 
-	public void addVehicleToRemove(long vehicleId) {
-		vehiclesToRemove.add(vehicleId);
-	}
-
 	public void addLiftToUpdate(Lift lift) {
 		liftsToUpdate.add(lift);
 	}
 
 	public void addLiftToKeep(long liftId) {
 		liftsToKeep.add(liftId);
-	}
-
-	public void addLiftToRemove(long liftId) {
-		liftsToRemove.add(liftId);
-	}
-
-	public boolean hasUpdate() {
-		return !vehiclesToUpdate.isEmpty() || !vehiclesToRemove.isEmpty() || !liftsToUpdate.isEmpty() || !liftsToRemove.isEmpty();
 	}
 }

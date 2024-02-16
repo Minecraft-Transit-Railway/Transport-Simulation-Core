@@ -173,20 +173,10 @@ public class Vehicle extends VehicleSchema {
 			checkRailProgress += (reversed ? 1 : -1) * vehicleCar.getCouplingPadding1(i == 0);
 			final double halfLength = vehicleCar.getLength() / 2;
 			final ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>> bogiePositionsList = new ObjectArrayList<>();
-			final ObjectObjectImmutablePair<Vector, Vector> bogiePositions1 = getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie1Position()));
-			if (bogiePositions1 == null) {
-				return new ObjectArrayList<>();
-			} else {
-				bogiePositionsList.add(bogiePositions1);
-			}
+			bogiePositionsList.add(getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie1Position())));
 
 			if (!vehicleCar.hasOneBogie) {
-				final ObjectObjectImmutablePair<Vector, Vector> bogiePositions2 = getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie2Position()));
-				if (bogiePositions2 == null) {
-					return new ObjectArrayList<>();
-				} else {
-					bogiePositionsList.add(bogiePositions2);
-				}
+				bogiePositionsList.add(getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie2Position())));
 			}
 
 			vehicleCarsAndPositions.add(new ObjectObjectImmutablePair<>(vehicleCar, bogiePositionsList));
@@ -472,11 +462,12 @@ public class Vehicle extends VehicleSchema {
 		return pathData == null ? null : pathData.getPosition(value - pathData.getStartDistance());
 	}
 
-	@Nullable
 	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {
-		final Vector position1 = getPosition(value + (reversed ? -1 : 1));
-		final Vector position2 = getPosition(value - (reversed ? -1 : 1));
-		return position1 == null || position2 == null ? null : new ObjectObjectImmutablePair<>(position1, position2);
+		final double value1 = value + (reversed ? -1 : 1);
+		final double value2 = value - (reversed ? -1 : 1);
+		final Vector position1 = getPosition(value1);
+		final Vector position2 = getPosition(value2);
+		return position1 == null || position2 == null ? new ObjectObjectImmutablePair<>(new Vector(value1, 0, 0), new Vector(value2, 0, 0)) : new ObjectObjectImmutablePair<>(position1, position2);
 	}
 
 	private static DoubleDoubleImmutablePair getBlockedBounds(PathData pathData, double lowerRailProgress, double upperRailProgress) {

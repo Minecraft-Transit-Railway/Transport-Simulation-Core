@@ -8,7 +8,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import javax.annotation.Nonnull;
-import java.util.function.Function;
+import javax.annotation.Nullable;
 
 public final class UpdateDataResponse extends UpdateDataResponseSchema {
 
@@ -54,22 +54,15 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 		return data;
 	}
 
-	@Nonnull
-	@Override
-	protected Data liftsDataParameter() {
-		return data;
-	}
-
 	public void write() {
-		stations.forEach(station -> update(station, data.stations, NameColorDataBase::getId));
-		platforms.forEach(platform -> update(platform, data.platforms, NameColorDataBase::getId));
-		sidings.forEach(siding -> update(siding, data.sidings, NameColorDataBase::getId));
-		routes.forEach(route -> update(route, data.routes, NameColorDataBase::getId));
-		depots.forEach(depot -> update(depot, data.depots, NameColorDataBase::getId));
-		lifts.forEach(lift -> update(lift, data.lifts, NameColorDataBase::getId));
-		rails.forEach(rail -> update(rail, data.rails, TwoPositionsBase::getHexId));
+		stations.forEach(station -> update(station, data.stations, data.stationIdMap.get(station.getId())));
+		platforms.forEach(platform -> update(platform, data.platforms, data.platformIdMap.get(platform.getId())));
+		sidings.forEach(siding -> update(siding, data.sidings, data.sidingIdMap.get(siding.getId())));
+		routes.forEach(route -> update(route, data.routes, data.routeIdMap.get(route.getId())));
+		depots.forEach(depot -> update(depot, data.depots, data.depotIdMap.get(depot.getId())));
+		rails.forEach(rail -> update(rail, data.rails, data.railIdMap.get(rail.getHexId())));
 		if (data instanceof ClientData) {
-			simplifiedRoutes.forEach(simplifiedRoute -> update(simplifiedRoute, ((ClientData) data).simplifiedRoutes, SimplifiedRoute::getId));
+			simplifiedRoutes.forEach(simplifiedRoute -> update(simplifiedRoute, ((ClientData) data).simplifiedRoutes, ((ClientData) data).simplifiedRoutes.stream().filter(existingSimplifiedRoute -> existingSimplifiedRoute.getId() == simplifiedRoute.getId()).findFirst().orElse(null)));
 		}
 		data.sync();
 	}
@@ -98,16 +91,14 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 		return depots;
 	}
 
-	ObjectArrayList<Lift> getLifts() {
-		return lifts;
-	}
-
 	ObjectArrayList<Rail> getRails() {
 		return rails;
 	}
 
-	private static <T extends SerializedDataBase, U> void update(T newData, ObjectSet<T> dataSet, Function<T, U> getId) {
-		dataSet.removeIf(data -> getId.apply(data).equals(getId.apply(newData)));
+	private static <T extends SerializedDataBase> void update(T newData, ObjectSet<T> dataSet, @Nullable T existingData) {
+		if (existingData != null) {
+			dataSet.remove(existingData);
+		}
 		dataSet.add(newData);
 	}
 }

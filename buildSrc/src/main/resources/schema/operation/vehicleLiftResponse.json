@@ -20,12 +20,6 @@
 				"type": "integer"
 			}
 		},
-		"vehiclesToRemove": {
-			"type": "array",
-			"items": {
-				"type": "integer"
-			}
-		},
 		"liftsToUpdate": {
 			"type": "array",
 			"items": {
@@ -36,12 +30,6 @@
 			}
 		},
 		"liftsToKeep": {
-			"type": "array",
-			"items": {
-				"type": "integer"
-			}
-		},
-		"liftsToRemove": {
 			"type": "array",
 			"items": {
 				"type": "integer"

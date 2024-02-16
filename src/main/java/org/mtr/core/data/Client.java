@@ -2,8 +2,10 @@ package org.mtr.core.data;
 
 import org.mtr.core.generated.data.ClientSchema;
 import org.mtr.core.integration.Response;
+import org.mtr.core.operation.PlayerPresentResponse;
 import org.mtr.core.operation.VehicleLiftResponse;
 import org.mtr.core.operation.VehicleUpdate;
+import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.simulation.Simulator;
@@ -18,6 +20,7 @@ import java.util.function.LongConsumer;
 
 public class Client extends ClientSchema {
 
+	private boolean canSend = true;
 	private final LongAVLTreeSet existingVehicleIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepVehicleIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<VehicleUpdate> vehicleUpdates = new Long2ObjectAVLTreeMap<>();
@@ -55,12 +58,18 @@ public class Client extends ClientSchema {
 	}
 
 	public void sendUpdates(Simulator simulator, int clientWebserverPort) {
-		final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
-		process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep, vehicleLiftResponse::addVehicleToRemove);
-		process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep, vehicleLiftResponse::addLiftToRemove);
+		if (canSend) {
+			final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
+			final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep);
+			final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
 
-		if (vehicleLiftResponse.hasUpdate()) {
-			REQUEST_HELPER.sendPostRequest("http://localhost:" + clientWebserverPort, new Response(HttpResponseStatus.OK.code(), System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(vehicleLiftResponse)).getJson(), null);
+			if (hasUpdate1 || hasUpdate2) {
+				canSend = false;
+				REQUEST_HELPER.sendPostRequest("http://localhost:" + clientWebserverPort, new Response(HttpResponseStatus.OK.code(), System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(vehicleLiftResponse)).getJson(), responseObject -> {
+					new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId);
+					canSend = true;
+				});
+			}
 		}
 	}
 
@@ -68,7 +77,8 @@ public class Client extends ClientSchema {
 		final long vehicleId = vehicle.getId();
 		if (needsUpdate || !existingVehicleIds.contains(vehicleId)) {
 			vehicleUpdates.put(vehicleId, new VehicleUpdate(vehicle, vehicle.vehicleExtraData.copy(pathUpdateIndex)));
-		} else {
+			keepVehicleIds.remove(vehicleId);
+		} else if (!vehicleUpdates.containsKey(vehicleId)) {
 			keepVehicleIds.add(vehicleId);
 		}
 	}
@@ -77,12 +87,13 @@ public class Client extends ClientSchema {
 		final long liftId = lift.getId();
 		if (needsUpdate || !existingLiftIds.contains(liftId)) {
 			liftUpdates.put(liftId, lift);
-		} else {
+			keepLiftIds.remove(liftId);
+		} else if (!liftUpdates.containsKey(liftId)) {
 			keepLiftIds.add(liftId);
 		}
 	}
 
-	private static <T extends SerializedDataBase> void process(Long2ObjectAVLTreeMap<T> dataUpdates, LongAVLTreeSet existingIds, LongAVLTreeSet keepIds, Consumer<T> addDataToUpdate, LongConsumer addDataToKeep, LongConsumer addDataToRemove) {
+	private static <T extends SerializedDataBase> boolean process(Long2ObjectAVLTreeMap<T> dataUpdates, LongAVLTreeSet existingIds, LongAVLTreeSet keepIds, Consumer<T> addDataToUpdate, LongConsumer addDataToKeep) {
 		dataUpdates.forEach((id, data) -> {
 			addDataToUpdate.accept(data);
 			existingIds.remove(id.longValue());
@@ -93,12 +104,15 @@ public class Client extends ClientSchema {
 			existingIds.remove(id);
 		});
 
-		existingIds.forEach(addDataToRemove::accept);
+		// Has data to remove or has data to update
+		final boolean hasUpdate = !existingIds.isEmpty() || !dataUpdates.isEmpty();
 
 		existingIds.clear();
 		existingIds.addAll(dataUpdates.keySet());
-		dataUpdates.clear();
 		existingIds.addAll(keepIds);
+
+		dataUpdates.clear();
 		keepIds.clear();
+		return hasUpdate;
 	}
 }

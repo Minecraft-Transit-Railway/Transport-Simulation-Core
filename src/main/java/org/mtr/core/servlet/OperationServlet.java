@@ -44,6 +44,8 @@ public final class OperationServlet extends ServletBase {
 				return new GenerateByDepotIds(jsonReader).generate(simulator);
 			case "generate-by-depot-name":
 				return new GenerateByDepotName(jsonReader).generate(simulator);
+			case "generate-by-lift":
+				return new GenerateByLift(jsonReader, simulator).generate();
 			default:
 				return null;
 		}
