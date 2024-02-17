@@ -40,6 +40,18 @@ public final class RailNodeConnection extends RailNodeConnectionSchema {
 		return transportMode;
 	}
 
+	public String getModelKey() {
+		return model_key;
+	}
+
+	public boolean getIsSecondaryDirection() {
+		return is_secondary_dir;
+	}
+
+	public double getVerticalRadius() {
+		return vertical_curve_radius;
+	}
+
 	private Angle getAngle(boolean reverse) {
 		final Vector vector1 = getPosition(0, reverse);
 		final Vector vector2 = getPosition(0.1, reverse);

@@ -40,6 +40,8 @@ public final class OperationServlet extends ServletBase {
 				return new NearbyAreasRequest<Station, Platform>(jsonReader).query(simulator, simulator.stations);
 			case "nearby-depots":
 				return new NearbyAreasRequest<Depot, Siding>(jsonReader).query(simulator, simulator.depots);
+			case "rails":
+				return new RailsRequest(jsonReader).query(simulator);
 			case "generate-by-depot-ids":
 				return new GenerateByDepotIds(jsonReader).generate(simulator);
 			case "generate-by-depot-name":

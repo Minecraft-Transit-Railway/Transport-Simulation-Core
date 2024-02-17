@@ -230,22 +230,22 @@ public final class DataFixer {
 	}
 
 	public enum RailType {
-		WOODEN(20, false, true, true, Rail.Shape.CURVE),
-		STONE(40, false, true, true, Rail.Shape.CURVE),
-		EMERALD(60, false, true, true, Rail.Shape.CURVE),
-		IRON(80, false, true, true, Rail.Shape.CURVE),
-		OBSIDIAN(120, false, true, true, Rail.Shape.CURVE),
-		BLAZE(160, false, true, true, Rail.Shape.CURVE),
-		QUARTZ(200, false, true, true, Rail.Shape.CURVE),
-		DIAMOND(300, false, true, true, Rail.Shape.CURVE),
-		PLATFORM(80, true, false, true, Rail.Shape.CURVE),
-		SIDING(40, true, false, true, Rail.Shape.CURVE),
-		TURN_BACK(80, false, false, true, Rail.Shape.CURVE),
-		CABLE_CAR(30, false, true, true, Rail.Shape.STRAIGHT),
-		CABLE_CAR_STATION(2, false, true, true, Rail.Shape.CURVE),
-		RUNWAY(300, false, true, false, Rail.Shape.CURVE),
-		AIRPLANE_DUMMY(900, false, true, false, Rail.Shape.CURVE),
-		NONE(0, false, false, true, Rail.Shape.CURVE);
+		WOODEN(20, false, true, true, Rail.Shape.QUADRATIC),
+		STONE(40, false, true, true, Rail.Shape.QUADRATIC),
+		EMERALD(60, false, true, true, Rail.Shape.QUADRATIC),
+		IRON(80, false, true, true, Rail.Shape.QUADRATIC),
+		OBSIDIAN(120, false, true, true, Rail.Shape.QUADRATIC),
+		BLAZE(160, false, true, true, Rail.Shape.QUADRATIC),
+		QUARTZ(200, false, true, true, Rail.Shape.QUADRATIC),
+		DIAMOND(300, false, true, true, Rail.Shape.QUADRATIC),
+		PLATFORM(80, true, false, true, Rail.Shape.QUADRATIC),
+		SIDING(40, true, false, true, Rail.Shape.QUADRATIC),
+		TURN_BACK(80, false, false, true, Rail.Shape.QUADRATIC),
+		CABLE_CAR(30, false, true, true, Rail.Shape.CABLE),
+		CABLE_CAR_STATION(2, false, true, true, Rail.Shape.QUADRATIC),
+		RUNWAY(300, false, true, false, Rail.Shape.QUADRATIC),
+		AIRPLANE_DUMMY(900, false, true, false, Rail.Shape.QUADRATIC),
+		NONE(0, false, false, true, Rail.Shape.QUADRATIC);
 
 		public final int speedLimitKilometersPerHour;
 		public final double speedLimitMetersPerMillisecond;

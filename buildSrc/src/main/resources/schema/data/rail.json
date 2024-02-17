@@ -11,17 +11,20 @@
 		"angle1": {
 			"$ref": "Angle"
 		},
-		"shape1": {
-			"$ref": "Rail.Shape"
-		},
 		"position2": {
 			"$ref": "position.json"
 		},
 		"angle2": {
 			"$ref": "Angle"
 		},
-		"shape2": {
+		"shape": {
 			"$ref": "Rail.Shape"
+		},
+		"verticalRadius": {
+			"type": "number"
+		},
+		"style": {
+			"type": "string"
 		},
 		"speedLimit1": {
 			"type": "integer"
@@ -56,11 +59,12 @@
 	},
 	"required": [
 		"position1",
-		"position2",
 		"angle1",
+		"position2",
 		"angle2",
-		"shape1",
-		"shape2",
+		"shape",
+		"verticalRadius",
+		"style",
 		"speedLimit1",
 		"speedLimit2",
 		"isPlatform",

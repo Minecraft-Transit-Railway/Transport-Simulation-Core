@@ -32,6 +32,9 @@ public final class LegacyRailLoader {
 				final Angle startAngle = railNodeConnection.getStartAngle();
 				final Angle endAngle = railNodeConnection.getEndAngle();
 				final TransportMode transportMode = railNodeConnection.getTransportMode();
+				final String modelKey = railNodeConnection.getModelKey();
+				final boolean isSecondaryDirection = railNodeConnection.getIsSecondaryDirection();
+				final double verticalRadius = railNodeConnection.getVerticalRadius();
 				final UUID uuid = getUuid(startPositionLong, endPositionLong);
 				final DataFixer.RailType oldRailType = railCache.get(uuid);
 
@@ -39,20 +42,20 @@ public final class LegacyRailLoader {
 					final Rail rail;
 					switch (railType) {
 						case PLATFORM:
-							rail = Rail.newPlatformRail(startPosition, startAngle, Rail.Shape.CURVE, endPosition, endAngle, Rail.Shape.CURVE, transportMode);
+							rail = Rail.newPlatformRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), modelKey, transportMode);
 							break;
 						case SIDING:
-							rail = Rail.newSidingRail(startPosition, startAngle, Rail.Shape.CURVE, endPosition, endAngle, Rail.Shape.CURVE, transportMode);
+							rail = Rail.newSidingRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), modelKey, transportMode);
 							break;
 						case TURN_BACK:
-							rail = Rail.newTurnBackRail(startPosition, startAngle, Rail.Shape.CURVE, endPosition, endAngle, Rail.Shape.CURVE, transportMode);
+							rail = Rail.newTurnBackRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), modelKey, transportMode);
 							break;
 						default:
-							final Rail.Shape shape = railType == DataFixer.RailType.CABLE_CAR || oldRailType == DataFixer.RailType.CABLE_CAR ? Rail.Shape.STRAIGHT : Rail.Shape.CURVE;
+							final Rail.Shape shape = railType == DataFixer.RailType.CABLE_CAR || oldRailType == DataFixer.RailType.CABLE_CAR ? Rail.Shape.CABLE : verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII;
 							rail = Rail.newRail(
-									startPosition, startAngle, shape,
-									endPosition, endAngle, shape,
-									railType.speedLimitKilometersPerHour, oldRailType.speedLimitKilometersPerHour,
+									startPosition, startAngle,
+									endPosition, endAngle,
+									shape, Math.max(verticalRadius, 0), modelKey, railType.speedLimitKilometersPerHour, oldRailType.speedLimitKilometersPerHour,
 									false, false, true, true, transportMode
 							);
 							break;

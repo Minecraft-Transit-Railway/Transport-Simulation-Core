@@ -6,8 +6,8 @@ import org.mtr.core.tool.Vector;
 
 public class RailMath {
 
-	private final Rail.Shape shape1;
-	private final Rail.Shape shape2;
+	private final Rail.Shape shape;
+	private final double verticalRadius;
 	private final double h1;
 	private final double k1;
 	private final double h2;
@@ -38,7 +38,7 @@ public class RailMath {
 	// for straight lines (otherwise):
 	// x = h*T + k*r
 	// z = k*T + h*r
-	public RailMath(Position position1, Angle angle1, Rail.Shape shape1, Position position2, Angle angle2, Rail.Shape shape2) {
+	public RailMath(Position position1, Angle angle1, Position position2, Angle angle2, Rail.Shape shape, double verticalRadius) {
 		final long xStart = position1.getX();
 		final long zStart = position1.getZ();
 		final long xEnd = position2.getX();
@@ -187,10 +187,10 @@ public class RailMath {
 			}
 		}
 
-		this.shape1 = shape1;
-		this.shape2 = shape2;
 		yStart = position1.getY();
 		yEnd = position2.getY();
+		this.shape = shape;
+		this.verticalRadius = Math.min(verticalRadius, getMaxVerticalRadius());
 	}
 
 	public Vector getPosition(double rawValue, boolean reverse) {
@@ -209,6 +209,20 @@ public class RailMath {
 
 	public double getLength() {
 		return Math.abs(tEnd2 - tStart2) + Math.abs(tEnd1 - tStart1);
+	}
+
+	public Rail.Shape getShape() {
+		return shape;
+	}
+
+	public double getVerticalRadius() {
+		return verticalRadius;
+	}
+
+	public double getMaxVerticalRadius() {
+		final double length = getLength();
+		final double height = yEnd - yStart;
+		return Math.floor((length * length + height * height) * 100 / Math.abs(4 * height)) / 100;
 	}
 
 	public void render(RenderRail callback, float offsetRadius1, float offsetRadius2) {
@@ -244,38 +258,68 @@ public class RailMath {
 	}
 
 	private double getPositionY(double value) {
+		if (yStart == yEnd) {
+			return yStart;
+		}
+
 		final double length = getLength();
 
-		if (shape1 == Rail.Shape.STRAIGHT) {
-			if (value < 0.5) {
-				return yStart;
-			} else if (value > length - 0.5) {
-				return yEnd;
-			}
+		switch (shape) {
+			case TWO_RADII:
+				// Copied from NTE
+				if (verticalRadius <= 0) {
+					return (value / length) * (yEnd - yStart) + yStart;
+				} else {
+					final double vTheta = getVTheta();
+					final double curveLength = Math.sin(vTheta) * verticalRadius;
+					final double curveHeight = (1 - Math.cos(vTheta)) * verticalRadius;
+					final int sign = yStart < yEnd ? 1 : -1;
 
-			final double offsetValue = value - 0.5;
-			final double offsetLength = length - 1;
-			final double posY = yStart + (yEnd - yStart) * offsetValue / offsetLength;
-			final double dip = offsetLength * offsetLength / 4 / CABLE_CURVATURE_SCALE;
-			return posY + (dip > MAX_CABLE_DIP ? MAX_CABLE_DIP / dip : 1) * (offsetValue - offsetLength) * offsetValue / CABLE_CURVATURE_SCALE;
-		} else {
-			final double intercept = length / 2;
-			final double yChange;
-			final double yInitial;
-			final double offsetValue;
+					if (value < curveLength) {
+						return sign * (verticalRadius - Math.sqrt(verticalRadius * verticalRadius - value * value)) + yStart;
+					} else if (value > length - curveLength) {
+						final double r = length - value;
+						return -sign * (verticalRadius - Math.sqrt(verticalRadius * verticalRadius - r * r)) + yEnd;
+					} else {
+						return sign * (((value - curveLength) / (length - 2 * curveLength)) * (Math.abs(yEnd - yStart) - 2 * curveHeight) + curveHeight) + yStart;
+					}
+				}
+			case CABLE:
+				if (value < 0.5) {
+					return yStart;
+				} else if (value > length - 0.5) {
+					return yEnd;
+				}
 
-			if (value < intercept) {
-				yChange = (yEnd - yStart) / 2D;
-				yInitial = yStart;
-				offsetValue = value;
-			} else {
-				yChange = (yStart - yEnd) / 2D;
-				yInitial = yEnd;
-				offsetValue = length - value;
-			}
+				final double cableOffsetValue = value - 0.5;
+				final double offsetLength = length - 1;
+				final double posY = yStart + (yEnd - yStart) * cableOffsetValue / offsetLength;
+				final double dip = offsetLength * offsetLength / 4 / CABLE_CURVATURE_SCALE;
+				return posY + (dip > MAX_CABLE_DIP ? MAX_CABLE_DIP / dip : 1) * (cableOffsetValue - offsetLength) * cableOffsetValue / CABLE_CURVATURE_SCALE;
+			default:
+				final double intercept = length / 2;
+				final double yChange;
+				final double yInitial;
+				final double offsetValue;
 
-			return yChange * offsetValue * offsetValue / (intercept * intercept) + yInitial;
+				if (value < intercept) {
+					yChange = (yEnd - yStart) / 2D;
+					yInitial = yStart;
+					offsetValue = value;
+				} else {
+					yChange = (yStart - yEnd) / 2D;
+					yInitial = yEnd;
+					offsetValue = length - value;
+				}
+
+				return yChange * offsetValue * offsetValue / (intercept * intercept) + yInitial;
 		}
+	}
+
+	private double getVTheta() {
+		final double height = Math.abs(yEnd - yStart);
+		final double length = getLength();
+		return 2 * Math.atan2(Math.sqrt(height * height - 4 * verticalRadius * height + length * length) - length, height - 4 * verticalRadius);
 	}
 
 	private static Vector getPositionXZ(double h, double k, double r, double t, double radiusOffset, boolean isStraight) {

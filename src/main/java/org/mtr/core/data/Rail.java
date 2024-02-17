@@ -23,36 +23,45 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	private final Long2LongAVLTreeMap blockedVehicleIdsOld = new Long2LongAVLTreeMap();
 	private final boolean reversePositions;
 
-	public static Rail newRail(Position position1, Angle angle1, Shape shape1, Position position2, Angle angle2, Shape shape2, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
-		return new Rail(position1, angle1, shape1, position2, angle2, shape2, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canHaveSignal, transportMode);
+	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canHaveSignal, transportMode);
 	}
 
-	public static Rail newTurnBackRail(Position position1, Angle angle1, Shape shape1, Position position2, Angle angle2, Shape shape2, TransportMode transportMode) {
-		return new Rail(position1, angle1, shape1, position2, angle2, shape2, 80, 80, false, false, false, true, false, transportMode);
+	public static Rail newTurnBackRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, 80, 80, false, false, false, true, false, transportMode);
 	}
 
-	public static Rail newPlatformRail(Position position1, Angle angle1, Shape shape1, Position position2, Angle angle2, Shape shape2, TransportMode transportMode) {
-		return newPlatformOrSidingRail(position1, angle1, shape1, position2, angle2, shape2, true, transportMode);
+	public static Rail newPlatformRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
+		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, style, true, transportMode);
 	}
 
-	public static Rail newSidingRail(Position position1, Angle angle1, Shape shape1, Position position2, Angle angle2, Shape shape2, TransportMode transportMode) {
-		return newPlatformOrSidingRail(position1, angle1, shape1, position2, angle2, shape2, false, transportMode);
+	public static Rail newSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
+		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, style, false, transportMode);
 	}
 
-	private static Rail newPlatformOrSidingRail(Position position1, Angle angle1, Shape shape1, Position position2, Angle angle2, Shape shape2, boolean isPlatform, TransportMode transportMode) {
+	private static Rail newPlatformOrSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, boolean isPlatform, TransportMode transportMode) {
 		final long speedLimit = isPlatform ? 80 : 40;
-		return new Rail(position1, angle1, shape1, position2, angle2, shape2, speedLimit, speedLimit, isPlatform, !isPlatform, false, false, true, transportMode);
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit, speedLimit, isPlatform, !isPlatform, false, false, true, transportMode);
+	}
+
+	public static Rail copy(Rail rail, Shape newShape, double newVerticalRadius) {
+		return new Rail(
+				rail.position1, rail.angle1,
+				rail.position2, rail.angle2,
+				newShape, newVerticalRadius, rail.style, rail.speedLimit1, rail.speedLimit2,
+				rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canHaveSignal, rail.transportMode
+		);
 	}
 
 	private Rail(
-			Position position1, Angle angle1, Rail.Shape shape1,
-			Position position2, Angle angle2, Rail.Shape shape2,
-			long speedLimit1, long speedLimit2,
+			Position position1, Angle angle1,
+			Position position2, Angle angle2,
+			Rail.Shape shape, double verticalRadius, String style, long speedLimit1, long speedLimit2,
 			boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode
 	) {
-		super(position1, angle1, shape1, position2, angle2, shape2, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, canTurnBack, canHaveSignal, transportMode);
+		super(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, canTurnBack, canHaveSignal, transportMode);
 		reversePositions = position1.compareTo(position2) > 0;
-		railMath = reversePositions ? new RailMath(position2, angle2, shape2, position1, angle1, shape1) : new RailMath(position1, angle1, shape1, position2, angle2, shape2);
+		railMath = reversePositions ? new RailMath(position2, angle2, position1, angle1, shape, verticalRadius) : new RailMath(position1, angle1, position2, angle2, shape, verticalRadius);
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
 		speedLimit2MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit2);
 	}
@@ -60,7 +69,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	public Rail(ReaderBase readerBase) {
 		super(readerBase);
 		reversePositions = position1.compareTo(position2) > 0;
-		railMath = reversePositions ? new RailMath(position2, angle2, shape2, position1, angle1, shape1) : new RailMath(position1, angle1, shape1, position2, angle2, shape2);
+		railMath = reversePositions ? new RailMath(position2, angle2, position1, angle1, shape, verticalRadius) : new RailMath(position1, angle1, position2, angle2, shape, verticalRadius);
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
 		speedLimit2MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit2);
 		updateData(readerBase);
@@ -214,5 +223,5 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		return blockedVehicleIds.values().longStream().allMatch(blockedVehicleId -> blockedVehicleId == vehicleId);
 	}
 
-	public enum Shape {CURVE, STRAIGHT}
+	public enum Shape {QUADRATIC, TWO_RADII, CABLE}
 }

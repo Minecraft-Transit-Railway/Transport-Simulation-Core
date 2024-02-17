@@ -61,6 +61,15 @@
 		},
 		"transportMode": {
 			"$ref": "TransportMode"
+		},
+		"model_key": {
+			"type": "string"
+		},
+		"is_secondary_dir": {
+			"type": "boolean"
+		},
+		"vertical_curve_radius": {
+			"type": "number"
 		}
 	}
 }
