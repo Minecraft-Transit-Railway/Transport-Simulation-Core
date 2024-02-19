@@ -190,10 +190,10 @@ public interface Utilities {
 	static void awaitTermination(ExecutorService executorService) {
 		try {
 			while (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
-				Main.LOGGER.warning("Termination failed, retrying...");
+				Main.LOGGER.warn("Termination failed, retrying...");
 			}
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 	}
 }

@@ -2,6 +2,8 @@ package org.mtr.core;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.net.URL;
@@ -11,13 +13,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public class WebserverSetup {
 
-	private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+	private static final Logger LOGGER = LogManager.getLogger("WebserverSetup");
 
 	public static void setup(File projectPath) {
 		final Path websitePath = projectPath.toPath().resolve("buildSrc/src/main/resources/website");
@@ -35,11 +35,11 @@ public class WebserverSetup {
 					}
 					stringBuilder.append(String.format("case \"%s\":return new StringBuilder(%s).toString();", websiteFilePath.getFileName().toString(), String.join(").append(", splitText)));
 				} catch (Exception e) {
-					logException(e);
+					LOGGER.error(e);
 				}
 			});
 		} catch (Exception e) {
-			logException(e);
+			LOGGER.error(e);
 		}
 		stringBuilder.append("default:return null;}}}");
 		write(projectPath.toPath().resolve("src/main/java/org/mtr/core/generated/WebserverResources.java"), stringBuilder.toString());
@@ -49,7 +49,7 @@ public class WebserverSetup {
 		try {
 			return IOUtils.toString(new URL(url), StandardCharsets.UTF_8);
 		} catch (Exception e) {
-			logException(e);
+			LOGGER.error(e);
 			return "";
 		}
 	}
@@ -58,11 +58,7 @@ public class WebserverSetup {
 		try {
 			Files.write(path, content.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (Exception e) {
-			logException(e);
+			LOGGER.error(e);
 		}
-	}
-
-	private static void logException(Exception e) {
-		LOGGER.log(Level.INFO, e.getMessage(), e);
 	}
 }

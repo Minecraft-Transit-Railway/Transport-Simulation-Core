@@ -1,5 +1,7 @@
 package org.mtr.core;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.mtr.core.servlet.*;
 import org.mtr.core.simulation.Simulator;
@@ -17,8 +19,6 @@ import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @ParametersAreNonnullByDefault
 public class Main {
@@ -27,7 +27,7 @@ public class Main {
 	private final Webserver webserver;
 	private final ScheduledExecutorService scheduledExecutorService;
 
-	public static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+	public static final Logger LOGGER = LogManager.getLogger("TransportSimulationCore");
 	public static final int MILLISECONDS_PER_TICK = 10;
 
 	public static void main(String[] args) {
@@ -42,7 +42,7 @@ public class Main {
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
-			logException(e);
+			LOGGER.error(e);
 		}
 	}
 
@@ -108,15 +108,11 @@ public class Main {
 						break;
 				}
 			} catch (Exception e) {
-				logException(e);
+				LOGGER.error(e);
 				stop();
 				return;
 			}
 		}
-	}
-
-	public static void logException(Exception e) {
-		LOGGER.log(Level.INFO, e.getMessage(), e);
 	}
 
 	private static void printHelp() {

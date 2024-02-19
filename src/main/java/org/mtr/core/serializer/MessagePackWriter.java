@@ -59,7 +59,7 @@ public final class MessagePackWriter extends WriterBase {
 			messagePacker.packMapHeader(instructions.size());
 			serializePart();
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 	}
 

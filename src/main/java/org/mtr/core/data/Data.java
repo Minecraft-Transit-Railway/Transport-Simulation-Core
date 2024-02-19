@@ -95,7 +95,7 @@ public abstract class Data {
 				});
 			});
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 	}
 

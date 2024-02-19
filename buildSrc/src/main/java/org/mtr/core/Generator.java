@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.gradle.api.Project;
 import org.mtr.core.generator.objects.Class;
 import org.mtr.core.generator.objects.Method;
@@ -16,14 +18,12 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 @ParametersAreNonnullByDefault
 public class Generator {
 
-	private static final Logger LOGGER = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+	private static final Logger LOGGER = LogManager.getLogger("Generator");
 
 	public static void generate(Project project, String inputPath, String outputPath, boolean writeTests, String... imports) {
 		final Object2ObjectAVLTreeMap<String, SchemaParser> schemaParsers = new Object2ObjectAVLTreeMap<>();
@@ -54,11 +54,11 @@ public class Generator {
 
 					schemaParsers.put(schemaClassName, new SchemaParser(schemaClass, extendsClassName, testMethod, jsonObject));
 				} catch (Exception e) {
-					logException(e);
+					LOGGER.error(e);
 				}
 			});
 		} catch (Exception e) {
-			logException(e);
+			LOGGER.error(e);
 		}
 
 		final Path projectPath = project.getProjectDir().toPath();
@@ -67,7 +67,7 @@ public class Generator {
 			try {
 				FileUtils.write(projectPath.resolve("src/main/java/org/mtr").resolve(outputPath).resolve(schemaClassName + ".java").toFile(), schemaParser.generateSchemaClass(schemaParsers, testClass), StandardCharsets.UTF_8);
 			} catch (Exception e) {
-				logException(e);
+				LOGGER.error(e);
 			}
 		});
 
@@ -75,7 +75,7 @@ public class Generator {
 			try {
 				FileUtils.write(projectPath.resolve("src/test/java/org/mtr").resolve(outputPath).resolve("SchemaTests.java").toFile(), String.join("\n", testClass.generate()), StandardCharsets.UTF_8);
 			} catch (Exception e) {
-				logException(e);
+				LOGGER.error(e);
 			}
 		}
 
@@ -86,7 +86,7 @@ public class Generator {
 					StandardCharsets.UTF_8
 			);
 		} catch (Exception e) {
-			logException(e);
+			LOGGER.error(e);
 		}
 	}
 
@@ -101,9 +101,5 @@ public class Generator {
 		for (final String importPackage : imports) {
 			newClass.imports.add(String.format("org.mtr.%s.*", importPackage));
 		}
-	}
-
-	private static void logException(Exception e) {
-		LOGGER.log(Level.INFO, e.getMessage(), e);
 	}
 }

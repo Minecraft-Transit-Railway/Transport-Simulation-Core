@@ -104,7 +104,7 @@ public class Simulator extends Data implements Utilities {
 				}
 			}
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 			throw e;
 		}
 	}

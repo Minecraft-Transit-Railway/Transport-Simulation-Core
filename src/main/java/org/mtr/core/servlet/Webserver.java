@@ -31,7 +31,7 @@ public final class Webserver {
 		try {
 			server.start();
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 	}
 
@@ -39,12 +39,12 @@ public final class Webserver {
 		try {
 			server.stop();
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 		try {
 			serverConnector.stop();
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 	}
 }

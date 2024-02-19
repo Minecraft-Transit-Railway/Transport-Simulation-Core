@@ -118,7 +118,7 @@ public abstract class ServletBase extends HttpServlet {
 				}
 			});
 		} catch (IOException e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 	}
 

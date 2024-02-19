@@ -64,7 +64,7 @@ public interface TestUtilities {
 			try {
 				((HttpPost) httpUriRequest).setEntity(new StringEntity(bodyObject.toString()));
 			} catch (Exception e) {
-				Main.logException(e);
+				Main.LOGGER.error(e);
 			}
 		}
 
@@ -75,7 +75,7 @@ public interface TestUtilities {
 				responseObject = Utilities.parseJson(EntityUtils.toString(response.getEntity()));
 			}
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 
 		return responseObject;
@@ -94,7 +94,7 @@ public interface TestUtilities {
 				compareObjects(data, newInstance.apply(new MessagePackReader(messageUnpacker)));
 			}
 		} catch (Exception e) {
-			Main.logException(e);
+			Main.LOGGER.error(e);
 		}
 	}
 
