@@ -154,14 +154,12 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 				dataToUpdate.add(newData);
 			}
 		} else if (isValid) {
-			// For AVL tree sets, data must be removed and re-added when modified
-			dataSet.remove(existingData);
 			if (isRail) {
+				dataSet.remove(existingData);
 				dataSet.add(newData);
 				dataToUpdate.add(newData);
 			} else {
 				existingData.updateData(new JsonReader(Utilities.getJsonObjectFromData(newData)));
-				dataSet.add(existingData);
 				dataToUpdate.add(existingData);
 			}
 		}

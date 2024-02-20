@@ -2,6 +2,7 @@ package org.mtr.core.data;
 
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.DepotSchema;
+import org.mtr.core.operation.DepotGenerationUpdate;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.WriterBase;
@@ -40,8 +41,22 @@ public final class Depot extends DepotSchema implements Utilities {
 	public Depot(ReaderBase readerBase, Data data) {
 		super(readerBase, data);
 		readerBase.iterateReaderArray(KEY_PATH, path::clear, readerBaseChild -> path.add(new PathData(readerBaseChild)));
-		updateData(readerBase);
+		super.updateData(readerBase);
 		DataFixer.unpackDepotDepartures(readerBase, realTimeDepartures);
+	}
+
+	@Override
+	public void updateData(ReaderBase readerBase) {
+		// If this is serverside, don't update these values from an incoming update packet
+		final long tempLastGeneratedMillis = lastGeneratedMillis;
+		final long tempLastGeneratedFailedStartId = lastGeneratedFailedStartId;
+		final long tempLastGeneratedFailedEndId = lastGeneratedFailedEndId;
+		super.updateData(readerBase);
+		if (data instanceof Simulator) {
+			lastGeneratedMillis = tempLastGeneratedMillis;
+			lastGeneratedFailedStartId = tempLastGeneratedFailedStartId;
+			lastGeneratedFailedEndId = tempLastGeneratedFailedEndId;
+		}
 	}
 
 	@Override
@@ -84,6 +99,21 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public LongArrayList getRouteIds() {
 		return routeIds;
+	}
+
+	public long getLastGeneratedMillis() {
+		return lastGeneratedMillis;
+	}
+
+	/**
+	 * @param generationStatus if path generation failed between two saved rails, this consumer will be called with the saved rail IDs that path generation failed at
+	 * @return {@code true} if there are no path generation problems regarding saved rails (but it doesn't necessarily mean that the path was generated successfully), {@code false} otherwise
+	 */
+	public boolean getLastGeneratedStatus(GenerationStatus generationStatus) {
+		if (lastGeneratedFailedStartId != 0 && lastGeneratedFailedEndId != 0) {
+			generationStatus.accept(lastGeneratedFailedStartId, lastGeneratedFailedEndId);
+		}
+		return lastGeneratedMillis > 0 && lastGeneratedFailedStartId == 0 && lastGeneratedFailedEndId == 0;
 	}
 
 	public boolean getRepeatInfinitely() {
@@ -137,7 +167,7 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public void generateMainRoute() {
 		if (savedRails.isEmpty()) {
-			Main.LOGGER.info(String.format("No sidings in %s", name));
+			updateGenerationStatus(0, 0, "No sidings in %s");
 		} else {
 			Main.LOGGER.info(String.format("Starting path generation for %s...", name));
 			path.clear();
@@ -147,7 +177,7 @@ public final class Depot extends DepotSchema implements Utilities {
 				sidingPathFinders.add(new SidingPathFinder<>(data, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
 			}
 			if (sidingPathFinders.isEmpty()) {
-				Main.LOGGER.info("At least two platforms are required for path generation");
+				updateGenerationStatus(0, 0, "At least two platforms are required for path generation");
 			}
 		}
 	}
@@ -160,13 +190,13 @@ public final class Depot extends DepotSchema implements Utilities {
 					generatingSidingIds.add(siding.getId());
 				});
 			}
-		}, () -> Main.LOGGER.info(String.format("Path not found for %s", name)));
+		}, (startSavedRail, endSavedRail) -> updateGenerationStatus(startSavedRail.getId(), endSavedRail.getId(), "Path not found for %s"));
 	}
 
 	public void finishGeneratingPath(long sidingId) {
 		generatingSidingIds.remove(sidingId);
 		if (generatingSidingIds.isEmpty()) {
-			Main.LOGGER.info(String.format("Path generation complete for %s", name));
+			updateGenerationStatus(0, 0, "Path generation complete for %s");
 			generatePlatformDirectionsAndWriteDeparturesToSidings();
 		}
 	}
@@ -284,5 +314,24 @@ public final class Depot extends DepotSchema implements Utilities {
 				}
 			}
 		}
+	}
+
+	public void updateGenerationStatus(long lastGeneratedMillis, long lastGeneratedFailedStartId, long lastGeneratedFailedEndId) {
+		this.lastGeneratedMillis = lastGeneratedMillis;
+		this.lastGeneratedFailedStartId = lastGeneratedFailedStartId;
+		this.lastGeneratedFailedEndId = lastGeneratedFailedEndId;
+	}
+
+	private void updateGenerationStatus(long lastGeneratedFailedStartId, long lastGeneratedFailedEndId, String message) {
+		updateGenerationStatus(System.currentTimeMillis(), lastGeneratedFailedStartId, lastGeneratedFailedEndId);
+		Main.LOGGER.info(String.format(message, name));
+		if (data instanceof Simulator) {
+			((Simulator) data).addDepotGenerationUpdate(new DepotGenerationUpdate(getId(), lastGeneratedMillis, lastGeneratedFailedStartId, lastGeneratedFailedEndId));
+		}
+	}
+
+	@FunctionalInterface
+	public interface GenerationStatus {
+		void accept(long lastGeneratedFailedStartId, long lastGeneratedFailedEndId);
 	}
 }

@@ -1,7 +1,6 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.ClientSchema;
-import org.mtr.core.integration.Response;
 import org.mtr.core.operation.PlayerPresentResponse;
 import org.mtr.core.operation.VehicleLiftResponse;
 import org.mtr.core.operation.VehicleUpdate;
@@ -9,9 +8,6 @@ import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tool.RequestHelper;
-import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.io.netty.handler.codec.http.HttpResponseStatus;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 
@@ -27,8 +23,6 @@ public class Client extends ClientSchema {
 	private final LongAVLTreeSet existingLiftIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepLiftIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<Lift> liftUpdates = new Long2ObjectAVLTreeMap<>();
-
-	private static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
 
 	public Client(String id) {
 		super(id);
@@ -57,15 +51,14 @@ public class Client extends ClientSchema {
 		this.updateRadius = updateRadius;
 	}
 
-	public void sendUpdates(Simulator simulator, int clientWebserverPort) {
+	public void sendUpdates(Simulator simulator) {
 		if (canSend) {
 			final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
 			final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep);
 			final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
 
 			if (hasUpdate1 || hasUpdate2) {
-				canSend = false;
-				REQUEST_HELPER.sendPostRequest("http://localhost:" + clientWebserverPort, new Response(HttpResponseStatus.OK.code(), System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(vehicleLiftResponse)).getJson(), responseObject -> {
+				simulator.sendHttpRequest("vehicles-lifts", vehicleLiftResponse, responseObject -> {
 					new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId);
 					canSend = true;
 				});

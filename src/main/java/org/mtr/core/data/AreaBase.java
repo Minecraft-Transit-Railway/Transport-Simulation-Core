@@ -4,13 +4,13 @@ import org.mtr.core.generated.data.AreaBaseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import javax.annotation.Nullable;
 
 public abstract class AreaBase<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends AreaBaseSchema {
 
-	public final ObjectAVLTreeSet<U> savedRails = new ObjectAVLTreeSet<>();
+	public final ObjectArraySet<U> savedRails = new ObjectArraySet<>();
 
 	public AreaBase(TransportMode transportMode, Data data) {
 		super(transportMode, data);

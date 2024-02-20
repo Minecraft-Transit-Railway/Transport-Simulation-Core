@@ -12,6 +12,16 @@
 				"type": "integer"
 			}
 		},
+		"lastGeneratedMillis": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"lastGeneratedFailedStartId": {
+			"type": "integer"
+		},
+		"lastGeneratedFailedEndId": {
+			"type": "integer"
+		},
 		"useRealTime": {
 			"type": "boolean"
 		},

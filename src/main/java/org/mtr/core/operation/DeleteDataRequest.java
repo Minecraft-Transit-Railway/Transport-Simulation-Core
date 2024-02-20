@@ -9,7 +9,9 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import javax.annotation.Nullable;
 
@@ -65,7 +67,7 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 
 	public JsonObject delete(Simulator simulator) {
 		final DeleteDataResponse deleteDataResponse = new DeleteDataResponse();
-		final ObjectOpenHashSet<Position> railNodePositionsToUpdate = new ObjectOpenHashSet<>();
+		final ObjectArraySet<Position> railNodePositionsToUpdate = new ObjectArraySet<>();
 
 		stationIds.forEach(stationId -> delete(stationId, simulator.stations, deleteDataResponse.getStationIds()));
 		platformIds.forEach(platformId -> delete(platformId, simulator.platforms, deleteDataResponse.getPlatformIds()));
@@ -93,13 +95,13 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 		return Utilities.getJsonObjectFromData(deleteDataResponse);
 	}
 
-	private static <T extends NameColorDataBase> void delete(long id, ObjectAVLTreeSet<T> dataSet, LongArrayList dataToUpdate) {
+	private static <T extends NameColorDataBase> void delete(long id, ObjectArraySet<T> dataSet, LongArrayList dataToUpdate) {
 		if (dataSet.removeIf(data -> data.getId() == id)) {
 			dataToUpdate.add(id);
 		}
 	}
 
-	private static void delete(@Nullable Rail rail, ObjectOpenHashBigSet<Rail> rails, String railId, ObjectArrayList<String> railsIdsToUpdate, ObjectOpenHashSet<Position> railNodePositionsToUpdate) {
+	private static void delete(@Nullable Rail rail, ObjectArraySet<Rail> rails, String railId, ObjectArrayList<String> railsIdsToUpdate, ObjectArraySet<Position> railNodePositionsToUpdate) {
 		if (rail != null) {
 			rails.remove(rail);
 			railsIdsToUpdate.add(railId);

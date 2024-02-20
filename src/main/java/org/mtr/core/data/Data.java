@@ -5,7 +5,10 @@ import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import java.util.Collection;
 import java.util.Map;
@@ -14,13 +17,13 @@ import java.util.function.Supplier;
 
 public abstract class Data {
 
-	public final ObjectAVLTreeSet<Station> stations = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Platform> platforms = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Siding> sidings = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Depot> depots = new ObjectAVLTreeSet<>();
-	public final ObjectAVLTreeSet<Lift> lifts = new ObjectAVLTreeSet<>();
-	public final ObjectOpenHashBigSet<Rail> rails = new ObjectOpenHashBigSet<>();
+	public final ObjectArraySet<Station> stations = new ObjectArraySet<>();
+	public final ObjectArraySet<Platform> platforms = new ObjectArraySet<>();
+	public final ObjectArraySet<Siding> sidings = new ObjectArraySet<>();
+	public final ObjectArraySet<Route> routes = new ObjectArraySet<>();
+	public final ObjectArraySet<Depot> depots = new ObjectArraySet<>();
+	public final ObjectArraySet<Lift> lifts = new ObjectArraySet<>();
+	public final ObjectArraySet<Rail> rails = new ObjectArraySet<>();
 
 	public final Long2ObjectOpenHashMap<Station> stationIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Platform> platformIdMap = new Long2ObjectOpenHashMap<>();
@@ -159,7 +162,7 @@ public abstract class Data {
 		source.forEach(data -> map.put(data.getHexId(), data));
 	}
 
-	private static <U extends SavedRailBase<U, V>, V extends AreaBase<V, U>> void mapAreasAndSavedRails(ObjectAVLTreeSet<U> savedRails, ObjectAVLTreeSet<V> areas) {
+	private static <U extends SavedRailBase<U, V>, V extends AreaBase<V, U>> void mapAreasAndSavedRails(ObjectArraySet<U> savedRails, ObjectArraySet<V> areas) {
 		areas.forEach(area -> area.savedRails.clear());
 		savedRails.forEach(savedRail -> {
 			savedRail.area = null;

@@ -10,6 +10,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> extends PathFinder<SidingPathFinder.PositionAndAngle, PathData> {
 
@@ -81,7 +82,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 		return node.position.manhattanDistance(endNode.position);
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Runnable callbackSuccess, Runnable callbackFail) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Runnable callbackSuccess, BiConsumer<U, W> callbackFail) {
 		if (!sidingPathFinders.isEmpty()) {
 			final long startMillis = System.currentTimeMillis();
 			while (System.currentTimeMillis() - startMillis < 5) {
@@ -92,7 +93,7 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 					if (tempPath.size() < 2) {
 						sidingPathFinders.clear();
 						path.clear();
-						callbackFail.run();
+						callbackFail.accept(sidingPathFinder.startSavedRail, sidingPathFinder.endSavedRail);
 						return;
 					} else {
 						if (overlappingPaths(path, tempPath)) {

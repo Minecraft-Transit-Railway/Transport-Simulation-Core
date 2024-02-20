@@ -176,7 +176,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void tick() {
-		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, this::finishGeneratingPath, () -> {
+		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, this::finishGeneratingPath, (startSavedRail, endSavedRail) -> {
 			Main.LOGGER.info(String.format("Path not found from %s siding %s to main route", getDepotName(), name));
 			finishGeneratingPath();
 		});
@@ -187,7 +187,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				}
 			}
 			finishGeneratingPath();
-		}, () -> {
+		}, (startSavedRail, endSavedRail) -> {
 			Main.LOGGER.info(String.format("Path not found from main route to %s siding %s", getDepotName(), name));
 			finishGeneratingPath();
 		});

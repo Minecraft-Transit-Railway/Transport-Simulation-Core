@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"clientIds": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"depotGenerationUpdates": {
+			"type": "array",
+			"items": {
+				"$ref": "depotGenerationUpdate.json"
+			}
+		}
+	}
+}

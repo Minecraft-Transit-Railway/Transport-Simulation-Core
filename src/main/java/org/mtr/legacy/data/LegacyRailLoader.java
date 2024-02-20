@@ -7,16 +7,16 @@ import org.mtr.core.data.TransportMode;
 import org.mtr.core.simulation.FileLoader;
 import org.mtr.core.tool.Angle;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashBigSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import java.nio.file.Path;
 import java.util.UUID;
 
 public final class LegacyRailLoader {
 
-	public static void load(Path savePath, ObjectOpenHashBigSet<Rail> rails) {
-		final ObjectOpenHashBigSet<LegacyRailNode> legacyRailNodes = new ObjectOpenHashBigSet<>();
-		final ObjectOpenHashBigSet<LegacySignalBlock> legacySignalBlocks = new ObjectOpenHashBigSet<>();
+	public static void load(Path savePath, ObjectArraySet<Rail> rails) {
+		final ObjectArraySet<LegacyRailNode> legacyRailNodes = new ObjectArraySet<>();
+		final ObjectArraySet<LegacySignalBlock> legacySignalBlocks = new ObjectArraySet<>();
 		new FileLoader<>(legacyRailNodes, LegacyRailNode::new, savePath, "rails");
 		new FileLoader<>(legacySignalBlocks, LegacySignalBlock::new, savePath, "signal-blocks");
 

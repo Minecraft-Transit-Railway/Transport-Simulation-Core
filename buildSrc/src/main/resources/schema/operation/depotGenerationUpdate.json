@@ -1,0 +1,28 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"depotId": {
+			"type": "integer"
+		},
+		"lastGeneratedMillis": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"lastGeneratedFailedStartId": {
+			"type": "integer"
+		},
+		"lastGeneratedFailedEndId": {
+			"type": "integer"
+		}
+	},
+	"required": [
+		"depotId",
+		"lastGeneratedMillis",
+		"lastGeneratedFailedStartId",
+		"lastGeneratedFailedEndId"
+	]
+}

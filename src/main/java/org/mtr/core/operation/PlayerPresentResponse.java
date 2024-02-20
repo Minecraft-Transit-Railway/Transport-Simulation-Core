@@ -18,8 +18,10 @@ public class PlayerPresentResponse extends PlayerPresentResponseSchema {
 
 	public void verify(Simulator simulator, String clientId) {
 		if (!playerPresent) {
-			simulator.run(() -> simulator.clients.remove(clientId));
-			Main.LOGGER.info(String.format("Removing player %s", clientId));
+			simulator.run(() -> {
+				simulator.clients.remove(clientId);
+				Main.LOGGER.info(String.format("Removing player %s", clientId));
+			});
 		}
 	}
 }

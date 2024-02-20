@@ -2,15 +2,24 @@ package org.mtr.core.simulation;
 
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
+import org.mtr.core.integration.Response;
+import org.mtr.core.operation.DepotGenerationResponse;
+import org.mtr.core.operation.DepotGenerationUpdate;
+import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
+import org.mtr.core.tool.RequestHelper;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.LegacyRailLoader;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.io.netty.handler.codec.http.HttpResponseStatus;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class Simulator extends Data implements Utilities {
 
@@ -36,6 +45,9 @@ public class Simulator extends Data implements Utilities {
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
 	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
+	private final DepotGenerationResponse depotGenerationResponse = new DepotGenerationResponse();
+
+	private static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
 
 	public Simulator(String dimension, Path rootPath, int clientWebserverPort) {
 		this.dimension = dimension;
@@ -83,7 +95,7 @@ public class Simulator extends Data implements Utilities {
 			depots.forEach(Depot::tick);
 			sidings.forEach(Siding::tick);
 			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.getTransportModeOrdinal())));
-			clients.forEach((clientId, client) -> client.sendUpdates(this, clientWebserverPort));
+			clients.forEach((clientId, client) -> client.sendUpdates(this));
 
 			if (autoSave) {
 				save(true);
@@ -96,6 +108,8 @@ public class Simulator extends Data implements Utilities {
 			}
 
 			lifts.forEach(lift -> lift.tick(currentMillis - lastMillis));
+
+			depotGenerationResponse.trySend(clients, () -> sendHttpRequest("depot-generation", depotGenerationResponse, null));
 
 			if (!queuedRuns.isEmpty()) {
 				final Runnable runnable = queuedRuns.remove(0);
@@ -119,6 +133,10 @@ public class Simulator extends Data implements Utilities {
 
 	public void generatePath(String generateKey) {
 		this.generateKey = generateKey.toLowerCase(Locale.ENGLISH).trim();
+	}
+
+	public void addDepotGenerationUpdate(DepotGenerationUpdate depotGenerationUpdate) {
+		depotGenerationResponse.addDepotGenerationUpdate(depotGenerationUpdate);
 	}
 
 	/**
@@ -191,5 +209,9 @@ public class Simulator extends Data implements Utilities {
 		if (saveCounts.rightInt() > 0) {
 			Main.LOGGER.info(String.format("- Deleted %s: %s", fileLoader.key, saveCounts.rightInt()));
 		}
+	}
+
+	public void sendHttpRequest(String endpoint, SerializedDataBase data, @Nullable Consumer<JsonObject> consumer) {
+		REQUEST_HELPER.sendPostRequest(String.format("http://localhost:%s/%s", clientWebserverPort, endpoint), new Response(HttpResponseStatus.OK.code(), System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(data)).getJson(), consumer);
 	}
 }
