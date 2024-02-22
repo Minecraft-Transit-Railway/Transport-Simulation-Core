@@ -225,7 +225,7 @@ public final class DataFixer {
 				readerBase.merge(new MessagePackReader(messageUnpacker));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error(e);
+			Main.LOGGER.error("", e);
 		}
 	}
 

@@ -1,0 +1,63 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"startPlatformId": {
+			"type": "integer"
+		},
+		"startPlatformName": {
+			"type": "string"
+		},
+		"startStationName": {
+			"type": "string"
+		},
+		"endPlatformId": {
+			"type": "integer"
+		},
+		"endPlatformName": {
+			"type": "string"
+		},
+		"endStationName": {
+			"type": "string"
+		},
+		"routeId": {
+			"type": "integer"
+		},
+		"routeColor": {
+			"type": "integer"
+		},
+		"routeName": {
+			"type": "string"
+		},
+		"routeNumber": {
+			"type": "string"
+		},
+		"routeCircularState": {
+			"$ref": "Route.CircularState"
+		},
+		"duration": {
+			"type": "integer"
+		},
+		"waitingTime": {
+			"type": "integer"
+		}
+	},
+	"required": [
+		"startPlatformId",
+		"startPlatformName",
+		"startStationName",
+		"endPlatformId",
+		"endPlatformName",
+		"endStationName",
+		"routeId",
+		"routeColor",
+		"routeName",
+		"routeNumber",
+		"routeCircularState",
+		"duration",
+		"waitingTime"
+	]
+}

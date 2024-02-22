@@ -35,11 +35,11 @@ public class WebserverSetup {
 					}
 					stringBuilder.append(String.format("case \"%s\":return new StringBuilder(%s).toString();", websiteFilePath.getFileName().toString(), String.join(").append(", splitText)));
 				} catch (Exception e) {
-					LOGGER.error(e);
+					LOGGER.error("", e);
 				}
 			});
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("", e);
 		}
 		stringBuilder.append("default:return null;}}}");
 		write(projectPath.toPath().resolve("src/main/java/org/mtr/core/generated/WebserverResources.java"), stringBuilder.toString());
@@ -49,7 +49,7 @@ public class WebserverSetup {
 		try {
 			return IOUtils.toString(new URL(url), StandardCharsets.UTF_8);
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("", e);
 			return "";
 		}
 	}
@@ -58,7 +58,7 @@ public class WebserverSetup {
 		try {
 			Files.write(path, content.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("", e);
 		}
 	}
 }

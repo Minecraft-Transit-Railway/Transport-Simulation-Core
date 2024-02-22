@@ -39,7 +39,7 @@ public final class RequestHelper {
 		call.enqueue(new Callback() {
 			@Override
 			public void onFailure(Call call, IOException e) {
-				Main.LOGGER.error(e);
+				Main.LOGGER.error("", e);
 			}
 
 			@Override
@@ -49,7 +49,7 @@ public final class RequestHelper {
 						consumer.accept(responseBody.string());
 					}
 				} catch (IOException e) {
-					Main.LOGGER.error(e);
+					Main.LOGGER.error("", e);
 				}
 			}
 		});

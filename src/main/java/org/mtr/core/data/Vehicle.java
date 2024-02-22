@@ -355,7 +355,7 @@ public class Vehicle extends VehicleSchema {
 			}
 
 			if (!transportMode.continuousMovement) {
-				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress);
+				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress - 0.01);
 				if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
 					if (getIsOnRoute() && index > 0) {
 						Data.put(vehiclePositions, position1, position2, vehiclePosition -> {

@@ -1,10 +1,11 @@
 package org.mtr.core.path;
 
+import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-public abstract class PathFinder<T, U> {
+public abstract class PathFinder<T> {
 
 	private long totalTime = Long.MAX_VALUE;
 	private boolean completed;
@@ -23,12 +24,10 @@ public abstract class PathFinder<T, U> {
 		tempData = ObjectArrayList.of(new ConnectionDetails<>(startNode, 0, 0, 0));
 	}
 
-	public abstract ObjectArrayList<U> tick();
-
 	protected ObjectArrayList<ConnectionDetails<T>> findPath() {
 		if (!completed) {
 			final long elapsedTime = tempData.stream().mapToLong(data -> data.duration).sum();
-			final ConnectionDetails<T> prevConnectionDetails = tempData.isEmpty() ? null : tempData.get(tempData.size() - 1);
+			final ConnectionDetails<T> prevConnectionDetails = Utilities.getElement(tempData, -1);
 			final T prevNode = prevConnectionDetails == null ? startNode : prevConnectionDetails.node;
 
 			T bestNode = null;
@@ -37,7 +36,7 @@ public abstract class PathFinder<T, U> {
 			long bestWaitingTime = 0;
 			long bestRouteId = 0;
 
-			for (final ConnectionDetails<T> connectionDetails : getConnections(prevNode)) {
+			for (final ConnectionDetails<T> connectionDetails : getConnections(elapsedTime, prevNode)) {
 				final T thisNode = connectionDetails.node;
 				final long duration = connectionDetails.duration;
 				final long waitingTime = connectionDetails.waitingTime;
@@ -83,7 +82,7 @@ public abstract class PathFinder<T, U> {
 		return completed ? data : null;
 	}
 
-	protected abstract ObjectOpenHashSet<ConnectionDetails<T>> getConnections(T data);
+	protected abstract ObjectOpenHashSet<ConnectionDetails<T>> getConnections(long elapsedTime, T data);
 
 	protected abstract long getWeightFromEndNode(T node);
 
@@ -98,9 +97,9 @@ public abstract class PathFinder<T, U> {
 	protected static class ConnectionDetails<T> {
 
 		public final T node;
-		private final long duration;
-		private final long waitingTime;
-		private final long routeId;
+		public final long duration;
+		public final long waitingTime;
+		public final long routeId;
 
 		protected ConnectionDetails(T node, long duration, long waitingTime, long routeId) {
 			this.node = node;

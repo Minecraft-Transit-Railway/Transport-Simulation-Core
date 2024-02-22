@@ -3,8 +3,7 @@ package org.mtr.core.simulation;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.integration.Response;
-import org.mtr.core.operation.DepotGenerationResponse;
-import org.mtr.core.operation.DepotGenerationUpdate;
+import org.mtr.core.path.DirectionsPathFinder;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.RequestHelper;
@@ -17,7 +16,6 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -26,7 +24,6 @@ public class Simulator extends Data implements Utilities {
 	private long lastMillis;
 	private long currentMillis;
 	private boolean autoSave = false;
-	private String generateKey = null;
 	private long gameMillis;
 	private long gameMillisPerDay;
 	private long lastSetGameMillis;
@@ -45,7 +42,7 @@ public class Simulator extends Data implements Utilities {
 	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
 	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
-	private final DepotGenerationResponse depotGenerationResponse = new DepotGenerationResponse();
+	private final ObjectOpenHashSet<DirectionsPathFinder> directionsPathFinders = new ObjectOpenHashSet<>();
 
 	private static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
 
@@ -93,7 +90,13 @@ public class Simulator extends Data implements Utilities {
 
 			rails.forEach(Rail::tick);
 			depots.forEach(Depot::tick);
-			sidings.forEach(Siding::tick);
+
+			// Try setting a siding's default path data
+			// If a siding doesn't have a rail associated with it, it should be removed from the data set
+			if (sidings.removeIf(Siding::tick)) {
+				sync();
+			}
+
 			sidings.forEach(siding -> siding.simulateTrain(currentMillis - lastMillis, vehiclePositions.get(siding.getTransportModeOrdinal())));
 			clients.forEach((clientId, client) -> client.sendUpdates(this));
 
@@ -102,14 +105,13 @@ public class Simulator extends Data implements Utilities {
 				autoSave = false;
 			}
 
-			if (generateKey != null) {
-				depots.stream().filter(depot -> depot.getName().toLowerCase(Locale.ENGLISH).contains(generateKey)).forEach(Depot::generateMainRoute);
-				generateKey = null;
-			}
-
 			lifts.forEach(lift -> lift.tick(currentMillis - lastMillis));
 
-			depotGenerationResponse.trySend(clients, () -> sendHttpRequest("depot-generation", depotGenerationResponse, null));
+			// Process directions requests
+			final long startMillis = System.currentTimeMillis();
+			while (!directionsPathFinders.isEmpty() && System.currentTimeMillis() - startMillis < 200) {
+				directionsPathFinders.removeIf(DirectionsPathFinder::tick);
+			}
 
 			if (!queuedRuns.isEmpty()) {
 				final Runnable runnable = queuedRuns.remove(0);
@@ -118,7 +120,7 @@ public class Simulator extends Data implements Utilities {
 				}
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error(e);
+			Main.LOGGER.error("", e);
 			throw e;
 		}
 	}
@@ -131,12 +133,8 @@ public class Simulator extends Data implements Utilities {
 		save(false);
 	}
 
-	public void generatePath(String generateKey) {
-		this.generateKey = generateKey.toLowerCase(Locale.ENGLISH).trim();
-	}
-
-	public void addDepotGenerationUpdate(DepotGenerationUpdate depotGenerationUpdate) {
-		depotGenerationResponse.addDepotGenerationUpdate(depotGenerationUpdate);
+	public void addDirectionsPathFinder(Position position1, Position position2, Consumer<JsonObject> sendResponse) {
+		directionsPathFinders.add(new DirectionsPathFinder(this, position1, position2, sendResponse));
 	}
 
 	/**

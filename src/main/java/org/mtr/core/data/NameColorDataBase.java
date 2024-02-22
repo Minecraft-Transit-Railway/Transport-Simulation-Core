@@ -5,8 +5,11 @@ import org.mtr.core.generated.data.StationSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public abstract class NameColorDataBase extends NameColorDataBaseSchema implements SerializedDataBaseWithId, Comparable<NameColorDataBase> {
 
@@ -65,6 +68,10 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 
 	private boolean noTransportMode() {
 		return this instanceof StationSchema;
+	}
+
+	public static <T extends NameColorDataBase> ObjectArrayList<T> getDataByName(ObjectArraySet<T> dataSet, String filter) {
+		return dataSet.stream().filter(data -> data.getName().toLowerCase(Locale.ENGLISH).contains(filter.toLowerCase(Locale.ENGLISH).trim())).collect(Collectors.toCollection(ObjectArrayList::new));
 	}
 
 	@Override

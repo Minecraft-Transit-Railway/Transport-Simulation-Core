@@ -2,7 +2,7 @@ package org.mtr.core.data;
 
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.DepotSchema;
-import org.mtr.core.operation.DepotGenerationUpdate;
+import org.mtr.core.operation.UpdateDataResponse;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.WriterBase;
@@ -10,15 +10,20 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
+import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
+import java.util.function.Consumer;
 
 public final class Depot extends DepotSchema implements Utilities {
+
+	private OnGenerationComplete onGenerationComplete;
 
 	public final ObjectArrayList<Route> routes = new ObjectArrayList<>();
 
@@ -49,11 +54,13 @@ public final class Depot extends DepotSchema implements Utilities {
 	public void updateData(ReaderBase readerBase) {
 		// If this is serverside, don't update these values from an incoming update packet
 		final long tempLastGeneratedMillis = lastGeneratedMillis;
+		final GeneratedStatus tempLastGeneratedStatus = lastGeneratedStatus;
 		final long tempLastGeneratedFailedStartId = lastGeneratedFailedStartId;
 		final long tempLastGeneratedFailedEndId = lastGeneratedFailedEndId;
 		super.updateData(readerBase);
 		if (data instanceof Simulator) {
 			lastGeneratedMillis = tempLastGeneratedMillis;
+			lastGeneratedStatus = tempLastGeneratedStatus;
 			lastGeneratedFailedStartId = tempLastGeneratedFailedStartId;
 			lastGeneratedFailedEndId = tempLastGeneratedFailedEndId;
 		}
@@ -67,7 +74,7 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public void init() {
 		writePathCache(true);
-		savedRails.forEach(Siding::init);
+		savedRails.forEach(Siding::init); // Sidings not under a depot will be ignored, but it doesn't matter
 		generatePlatformDirectionsAndWriteDeparturesToSidings();
 	}
 
@@ -105,15 +112,17 @@ public final class Depot extends DepotSchema implements Utilities {
 		return lastGeneratedMillis;
 	}
 
+	public GeneratedStatus getLastGeneratedStatus() {
+		return lastGeneratedStatus;
+	}
+
 	/**
-	 * @param generationStatus if path generation failed between two saved rails, this consumer will be called with the saved rail IDs that path generation failed at
-	 * @return {@code true} if there are no path generation problems regarding saved rails (but it doesn't necessarily mean that the path was generated successfully), {@code false} otherwise
+	 * @param generationStatusConsumer if path generation failed between two saved rails, this consumer will be called with the saved rail IDs that path generation failed at
 	 */
-	public boolean getLastGeneratedStatus(GenerationStatus generationStatus) {
+	public void getFailedPlatformIds(GenerationStatusConsumer generationStatusConsumer) {
 		if (lastGeneratedFailedStartId != 0 && lastGeneratedFailedEndId != 0) {
-			generationStatus.accept(lastGeneratedFailedStartId, lastGeneratedFailedEndId);
+			generationStatusConsumer.accept(lastGeneratedFailedStartId, lastGeneratedFailedEndId);
 		}
-		return lastGeneratedMillis > 0 && lastGeneratedFailedStartId == 0 && lastGeneratedFailedEndId == 0;
 	}
 
 	public boolean getRepeatInfinitely() {
@@ -165,23 +174,6 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 	}
 
-	public void generateMainRoute() {
-		if (savedRails.isEmpty()) {
-			updateGenerationStatus(0, 0, "No sidings in %s");
-		} else {
-			Main.LOGGER.info(String.format("Starting path generation for %s...", name));
-			path.clear();
-			sidingPathFinders.clear();
-			generatingSidingIds.clear();
-			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
-				sidingPathFinders.add(new SidingPathFinder<>(data, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
-			}
-			if (sidingPathFinders.isEmpty()) {
-				updateGenerationStatus(0, 0, "At least two platforms are required for path generation");
-			}
-		}
-	}
-
 	public void tick() {
 		SidingPathFinder.findPathTick(path, sidingPathFinders, () -> {
 			if (!platformsInRoute.isEmpty()) {
@@ -190,13 +182,13 @@ public final class Depot extends DepotSchema implements Utilities {
 					generatingSidingIds.add(siding.getId());
 				});
 			}
-		}, (startSavedRail, endSavedRail) -> updateGenerationStatus(startSavedRail.getId(), endSavedRail.getId(), "Path not found for %s"));
+		}, (startSavedRail, endSavedRail) -> updateGenerationStatus(GeneratedStatus.PATH_NOT_FOUND, startSavedRail.getId(), endSavedRail.getId(), "Path not found for %s"));
 	}
 
 	public void finishGeneratingPath(long sidingId) {
 		generatingSidingIds.remove(sidingId);
 		if (generatingSidingIds.isEmpty()) {
-			updateGenerationStatus(0, 0, "Path generation complete for %s");
+			updateGenerationStatus(GeneratedStatus.SUCCESSFUL, 0, 0, "Path generation complete for %s");
 			generatePlatformDirectionsAndWriteDeparturesToSidings();
 		}
 	}
@@ -316,22 +308,73 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 	}
 
-	public void updateGenerationStatus(long lastGeneratedMillis, long lastGeneratedFailedStartId, long lastGeneratedFailedEndId) {
+	public void updateGenerationStatus(long lastGeneratedMillis, GeneratedStatus lastGeneratedStatus, long lastGeneratedFailedStartId, long lastGeneratedFailedEndId) {
 		this.lastGeneratedMillis = lastGeneratedMillis;
+		this.lastGeneratedStatus = lastGeneratedStatus;
 		this.lastGeneratedFailedStartId = lastGeneratedFailedStartId;
 		this.lastGeneratedFailedEndId = lastGeneratedFailedEndId;
 	}
 
-	private void updateGenerationStatus(long lastGeneratedFailedStartId, long lastGeneratedFailedEndId, String message) {
-		updateGenerationStatus(System.currentTimeMillis(), lastGeneratedFailedStartId, lastGeneratedFailedEndId);
-		Main.LOGGER.info(String.format(message, name));
-		if (data instanceof Simulator) {
-			((Simulator) data).addDepotGenerationUpdate(new DepotGenerationUpdate(getId(), lastGeneratedMillis, lastGeneratedFailedStartId, lastGeneratedFailedEndId));
+	private void generateMainRoute(OnGenerationComplete newOnGenerationComplete) {
+		if (onGenerationComplete != null) {
+			onGenerationComplete.accept(true);
+		}
+		onGenerationComplete = newOnGenerationComplete;
+
+		if (savedRails.isEmpty()) {
+			updateGenerationStatus(GeneratedStatus.NO_SIDINGS, 0, 0, "No sidings in %s");
+		} else {
+			Main.LOGGER.info(String.format("Starting path generation for %s...", name));
+			path.clear();
+			sidingPathFinders.clear();
+			generatingSidingIds.clear();
+			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
+				sidingPathFinders.add(new SidingPathFinder<>(data, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
+			}
+			if (sidingPathFinders.isEmpty()) {
+				updateGenerationStatus(GeneratedStatus.TWO_PLATFORMS_REQUIRED, 0, 0, "At least two platforms are required for path generation");
+			}
 		}
 	}
 
+	private void updateGenerationStatus(GeneratedStatus lastGeneratedStatus, long lastGeneratedFailedStartId, long lastGeneratedFailedEndId, String message) {
+		updateGenerationStatus(System.currentTimeMillis(), lastGeneratedStatus, lastGeneratedFailedStartId, lastGeneratedFailedEndId);
+		onGenerationComplete.accept(false);
+		onGenerationComplete = null;
+		Main.LOGGER.info(String.format(message, name));
+	}
+
+	public static void generateDepotsByName(Simulator simulator, String filter, @Nullable Consumer<JsonObject> sendResponse) {
+		generateDepots(simulator, getDataByName(simulator.depots, filter), sendResponse);
+	}
+
+	public static void generateDepots(Simulator simulator, ObjectArrayList<Depot> depotsToGenerate, @Nullable Consumer<JsonObject> sendResponse) {
+		final LongAVLTreeSet idsToGenerate = new LongAVLTreeSet();
+		final UpdateDataResponse updateDataResponse = new UpdateDataResponse(simulator);
+
+		depotsToGenerate.forEach(depot -> {
+			idsToGenerate.add(depot.getId());
+			depot.generateMainRoute(forceComplete -> {
+				idsToGenerate.remove(depot.getId());
+				updateDataResponse.addDepot(depot);
+				if (sendResponse != null && (forceComplete || idsToGenerate.isEmpty())) {
+					sendResponse.accept(Utilities.getJsonObjectFromData(updateDataResponse));
+				}
+			});
+		});
+	}
+
 	@FunctionalInterface
-	public interface GenerationStatus {
+	public interface GenerationStatusConsumer {
 		void accept(long lastGeneratedFailedStartId, long lastGeneratedFailedEndId);
+	}
+
+	@FunctionalInterface
+	private interface OnGenerationComplete {
+		void accept(boolean forceComplete);
+	}
+
+	public enum GeneratedStatus {
+		NONE, SUCCESSFUL, NO_SIDINGS, TWO_PLATFORMS_REQUIRED, PATH_NOT_FOUND
 	}
 }

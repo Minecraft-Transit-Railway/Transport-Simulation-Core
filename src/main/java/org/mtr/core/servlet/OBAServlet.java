@@ -6,7 +6,7 @@ import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
-import javax.annotation.Nullable;
+import java.util.function.Consumer;
 
 public final class OBAServlet extends ServletBase {
 
@@ -14,69 +14,97 @@ public final class OBAServlet extends ServletBase {
 		super(simulators);
 	}
 
-	@Nullable
 	@Override
-	public JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator) {
+	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator, Consumer<JsonObject> sendResponse) {
 		final OBAResponse obaResponse = new OBAResponse(data, parameters, currentMillis, simulator);
 		switch (endpoint) {
 			case "agencies-with-coverage":
-				return obaResponse.getAgenciesWithCoverage();
+				sendResponse.accept(obaResponse.getAgenciesWithCoverage());
+				break;
 			case "agency":
-				return obaResponse.getAgency();
+				sendResponse.accept(obaResponse.getAgency());
+				break;
 			case "arrival-and-departure-for-stop":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "arrivals-and-departures-for-stop":
-				return obaResponse.getArrivalsAndDeparturesForStop();
+				sendResponse.accept(obaResponse.getArrivalsAndDeparturesForStop());
+				break;
 			case "arrivals-and-departures-for-location":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "block":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "cancel-alarm":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "current-time":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "register-alarm-for-arrival-and-departure-at-stop":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "report-problem-with-stop":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "report-problem-with-trip":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "route-ids-for-agency":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "route":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "routes-for-agency":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "routes-for-location":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "schedule-for-route":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "schedule-for-stop":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "shape":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "stop-ids-for-agency":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "stop":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "stops-for-location":
-				return obaResponse.getStopsForLocation();
+				sendResponse.accept(obaResponse.getStopsForLocation());
+				break;
 			case "stops-for-route":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "trip-details":
-				return obaResponse.getTripDetails();
+				sendResponse.accept(obaResponse.getTripDetails());
+				break;
 			case "trip-for-vehicle":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "trip":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "trips-for-location":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "trips-for-route":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			case "vehicles-for-agency":
-				return new JsonObject();
+				sendResponse.accept(new JsonObject());
+				break;
 			default:
-				return null;
+				sendResponse.accept(null);
+				break;
 		}
 	}
 }

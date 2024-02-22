@@ -193,7 +193,7 @@ public interface Utilities {
 				Main.LOGGER.warn("Termination failed, retrying...");
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error(e);
+			Main.LOGGER.error("", e);
 		}
 	}
 }

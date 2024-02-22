@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"startPosition": {
+			"$ref": "position.json"
+		},
+		"startStation": {
+			"type": "string"
+		},
+		"endPosition": {
+			"$ref": "position.json"
+		},
+		"endStation": {
+			"type": "string"
+		}
+	}
+}

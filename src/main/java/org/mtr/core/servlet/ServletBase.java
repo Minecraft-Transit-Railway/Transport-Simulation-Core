@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class ServletBase extends HttpServlet {
@@ -63,8 +64,7 @@ public abstract class ServletBase extends HttpServlet {
 		}
 	}
 
-	@Nullable
-	protected abstract JsonObject getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator);
+	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator, Consumer<JsonObject> sendResponse);
 
 	private void run(HttpServletRequest httpServletRequest, @Nullable HttpServletResponse httpServletResponse, @Nullable AsyncContext asyncContext, JsonReader jsonReader, long currentMillis, Simulator simulator) {
 		final String endpoint;
@@ -86,19 +86,18 @@ public abstract class ServletBase extends HttpServlet {
 			}
 		});
 
-		simulator.run(() -> {
-			final JsonObject jsonObject = getContent(endpoint, data, parameters, jsonReader, currentMillis, simulator);
+		simulator.run(() -> getContent(endpoint, data, parameters, jsonReader, currentMillis, simulator, jsonObject -> {
 			if (httpServletResponse != null && asyncContext != null) {
 				buildResponseObject(httpServletResponse, asyncContext, currentMillis, jsonObject, jsonObject == null ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, endpoint, data);
 			}
-		});
+		}));
 	}
 
 	public static void sendResponse(HttpServletResponse httpServletResponse, AsyncContext asyncContext, String content, String contentType, HttpResponseStatus httpResponseStatus) {
-		final ByteBuffer byteBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
-		httpServletResponse.addHeader("Content-Type", contentType);
 		try {
 			final ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
+			final ByteBuffer byteBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
+			httpServletResponse.addHeader("Content-Type", contentType);
 			servletOutputStream.setWriteListener(new WriteListener() {
 				@Override
 				public void onWritePossible() throws IOException {
@@ -117,8 +116,9 @@ public abstract class ServletBase extends HttpServlet {
 					asyncContext.complete();
 				}
 			});
-		} catch (IOException e) {
-			Main.LOGGER.error(e);
+		} catch (IllegalStateException ignored) {
+		} catch (Exception e) {
+			Main.LOGGER.error("", e);
 		}
 	}
 

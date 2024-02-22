@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> extends PathFinder<SidingPathFinder.PositionAndAngle, PathData> {
+public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> extends PathFinder<SidingPathFinder.PositionAndAngle> {
 
 	public final U startSavedRail;
 	public final W endSavedRail;
@@ -28,7 +28,29 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 	}
 
 	@Override
-	public ObjectArrayList<PathData> tick() {
+	protected ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> getConnections(long elapsedTime, PositionAndAngle node) {
+		final ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> connections = new ObjectOpenHashSet<>();
+		final Object2ObjectOpenHashMap<Position, Rail> railConnections = positionsToRail.get(node.position);
+
+		if (railConnections != null) {
+			railConnections.forEach((position, rail) -> {
+				final double speedLimit = rail.getSpeedLimitMetersPerMillisecond(node.position);
+				if (speedLimit > 0 && (node.angle == null || node.angle == rail.getStartAngle(node.position) || rail.canTurnBack())) {
+					connections.add(new ConnectionDetails<>(new PositionAndAngle(position, rail.getStartAngle(position).getOpposite()), Math.round(rail.railMath.getLength() / speedLimit), 0, 0));
+				}
+			});
+		}
+
+		return connections;
+	}
+
+	@Override
+	protected long getWeightFromEndNode(PositionAndAngle node) {
+		return node.position.manhattanDistance(endNode.position);
+	}
+
+	@Nullable
+	private ObjectArrayList<PathData> tick() {
 		final ObjectArrayList<ConnectionDetails<PositionAndAngle>> connectionDetailsList = findPath();
 
 		if (connectionDetailsList == null) {
@@ -58,28 +80,6 @@ public class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<
 
 			return path;
 		}
-	}
-
-	@Override
-	protected ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> getConnections(PositionAndAngle node) {
-		final ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> connections = new ObjectOpenHashSet<>();
-		final Object2ObjectOpenHashMap<Position, Rail> railConnections = positionsToRail.get(node.position);
-
-		if (railConnections != null) {
-			railConnections.forEach((position, rail) -> {
-				final double speedLimit = rail.getSpeedLimitMetersPerMillisecond(node.position);
-				if (speedLimit > 0 && (node.angle == null || node.angle == rail.getStartAngle(node.position) || rail.canTurnBack())) {
-					connections.add(new ConnectionDetails<>(new PositionAndAngle(position, rail.getStartAngle(position).getOpposite()), Math.round(rail.railMath.getLength() / speedLimit), 0, 0));
-				}
-			});
-		}
-
-		return connections;
-	}
-
-	@Override
-	protected long getWeightFromEndNode(PositionAndAngle node) {
-		return node.position.manhattanDistance(endNode.position);
 	}
 
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(ObjectArrayList<PathData> path, List<SidingPathFinder<T, U, V, W>> sidingPathFinders, Runnable callbackSuccess, BiConsumer<U, W> callbackFail) {

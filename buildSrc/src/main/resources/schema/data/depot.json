@@ -16,6 +16,9 @@
 			"type": "integer",
 			"minimum": 0
 		},
+		"lastGeneratedStatus": {
+			"$ref": "Depot.GeneratedStatus"
+		},
 		"lastGeneratedFailedStartId": {
 			"type": "integer"
 		},

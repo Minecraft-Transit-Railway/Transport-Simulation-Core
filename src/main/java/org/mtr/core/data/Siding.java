@@ -16,6 +16,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
@@ -86,14 +87,12 @@ public final class Siding extends SidingSchema implements Utilities {
 		writerBase.writeDataset(vehicles, KEY_VEHICLES);
 	}
 
+	/**
+	 * Should only be called during initialization and when a siding is created (by building a siding rail)
+	 */
 	public void init() {
-		final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
-		if (rail != null) {
-			defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, position2);
-		}
-
+		tick();
 		generatePathDistancesAndTimeSegments();
-
 		if (area != null && defaultPathData != null) {
 			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
 		}
@@ -175,7 +174,8 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 	}
 
-	public void tick() {
+	public boolean tick() {
+		// Generate any pending paths
 		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, this::finishGeneratingPath, (startSavedRail, endSavedRail) -> {
 			Main.LOGGER.info(String.format("Path not found from %s siding %s to main route", getDepotName(), name));
 			finishGeneratingPath();
@@ -191,6 +191,17 @@ public final class Siding extends SidingSchema implements Utilities {
 			Main.LOGGER.info(String.format("Path not found from main route to %s siding %s", getDepotName(), name));
 			finishGeneratingPath();
 		});
+
+		// Attempt to find a corresponding rail for this siding and return true if failed
+		if (defaultPathData == null) {
+			final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
+			if (rail != null) {
+				defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, position2);
+			}
+			return defaultPathData == null;
+		} else {
+			return false;
+		}
 	}
 
 	public void initVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
@@ -297,7 +308,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public void getArrivals(long currentMillis, Platform platform, boolean realtimeOnly, long count, ObjectArrayList<ArrivalResponse> arrivalResponseList) {
 		final long[] maxArrivalAndCount = {0, 0};
-		iterateArrivals(currentMillis, platform, 0, MILLIS_PER_DAY, (trip, tripId, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
+		iterateArrivals(currentMillis, platform.getId(), 0, MILLIS_PER_DAY, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
 			if ((!realtimeOnly || predicted) && (scheduledArrivalTime + deviation < maxArrivalAndCount[0] || maxArrivalAndCount[1] < count)) {
 				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, stopTime.tripStopIndex, trip.route, platform);
 				arrivalResponse.setCarDetails(getVehicleCars());
@@ -308,9 +319,30 @@ public final class Siding extends SidingSchema implements Utilities {
 		});
 	}
 
+	public void getArrivals(long currentMillis, long platformId, ArrivalPathFindingConsumer consumer) {
+		if (area != null) {
+			final Long2ObjectAVLTreeMap<LongObjectImmutablePair<Runnable>> stopTimesForPlatform = new Long2ObjectAVLTreeMap<>();
+			iterateArrivals(currentMillis, platformId, 0, MILLIS_PER_DAY, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
+				trip.getUpcomingStopTimes(
+						tripStopIndex,
+						trips,
+						area.getRepeatInfinitely(),
+						(routeIds, newStopTime) -> {
+							final long departureTime = scheduledDepartureTime + deviation;
+							final LongObjectImmutablePair<Runnable> existingStopTime = stopTimesForPlatform.get(newStopTime.platformId);
+							if (existingStopTime == null || departureTime < existingStopTime.leftLong()) {
+								stopTimesForPlatform.put(newStopTime.platformId, new LongObjectImmutablePair<>(departureTime, () -> consumer.accept(newStopTime.platformId, routeIds, departureTime, newStopTime.startTime - stopTime.endTime)));
+							}
+						}
+				);
+			});
+			stopTimesForPlatform.values().forEach(departureTimePair -> departureTimePair.right().run());
+		}
+	}
+
 	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(SingleElement<StopWithArrivalsAndDepartures> singleElement, StopWithArrivalsAndDepartures stopWithArrivalsAndDepartures, long currentMillis, Platform platform, int millsBefore, int millisAfter) {
 		final ObjectAVLTreeSet<String> addedTripIds = new ObjectAVLTreeSet<>();
-		iterateArrivals(currentMillis, platform, millsBefore, millisAfter, (trip, tripId, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
+		iterateArrivals(currentMillis, platform.getId(), millsBefore, millisAfter, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
 			stopWithArrivalsAndDepartures.add(ArrivalAndDeparture.create(
 					trip,
 					tripId,
@@ -450,12 +482,12 @@ public final class Siding extends SidingSchema implements Utilities {
 		return new BooleanLongImmutablePair(predicted, deviation);
 	}
 
-	private void iterateArrivals(long currentMillis, Platform platform, int millsBefore, int millisAfter, ArrivalConsumer arrivalConsumer) {
+	private void iterateArrivals(long currentMillis, long platformId, int millsBefore, int millisAfter, ArrivalConsumer arrivalConsumer) {
 		if (area == null || departures.isEmpty()) {
 			return;
 		}
 
-		final ObjectArraySet<Trip.StopTime> tripStopTimes = platformTripStopTimes.get(platform.getId());
+		final ObjectArraySet<Trip.StopTime> tripStopTimes = platformTripStopTimes.get(platformId);
 		if (tripStopTimes == null) {
 			return;
 		}
@@ -493,7 +525,7 @@ public final class Siding extends SidingSchema implements Utilities {
 						continue;
 					}
 
-					arrivalConsumer.accept(trip, tripId, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex);
+					arrivalConsumer.accept(trip, tripId, stopTime.tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex);
 
 					if (transportMode.continuousMovement) {
 						break;
@@ -734,7 +766,12 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	@FunctionalInterface
+	public interface ArrivalPathFindingConsumer {
+		void accept(long platformId, LongArrayList routeIds, long departureTime, long duration);
+	}
+
+	@FunctionalInterface
 	private interface ArrivalConsumer {
-		void accept(Trip trip, String tripId, Trip.StopTime stopTime, long scheduledArrivalTime, long scheduledDepartureTime, boolean predicted, long deviation, int departureIndex);
+		void accept(Trip trip, String tripId, int tripStopIndex, Trip.StopTime stopTime, long scheduledArrivalTime, long scheduledDepartureTime, boolean predicted, long deviation, int departureIndex);
 	}
 }

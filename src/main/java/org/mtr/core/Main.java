@@ -3,6 +3,7 @@ package org.mtr.core;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.mtr.core.data.Depot;
 import org.mtr.core.servlet.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
@@ -42,7 +43,7 @@ public class Main {
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
-			LOGGER.error(e);
+			LOGGER.error("", e);
 		}
 	}
 
@@ -101,14 +102,14 @@ public class Main {
 						for (int i = 1; i < input.length; i++) {
 							generateKey.append(input[i]).append(" ");
 						}
-						simulators.forEach(simulator -> simulator.generatePath(generateKey.toString()));
+						simulators.forEach(simulator -> Depot.generateDepotsByName(simulator, generateKey.toString(), null));
 						break;
 					default:
 						LOGGER.info(String.format("Unknown command \"%s\"", input[0]));
 						break;
 				}
 			} catch (Exception e) {
-				LOGGER.error(e);
+				LOGGER.error("", e);
 				stop();
 				return;
 			}

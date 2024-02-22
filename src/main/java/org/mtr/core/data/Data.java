@@ -34,6 +34,7 @@ public abstract class Data {
 	public final Object2ObjectOpenHashMap<String, Rail> railIdMap = new Object2ObjectOpenHashMap<>();
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail = new Object2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Position> platformIdToPosition = new Long2ObjectOpenHashMap<>();
 
 	public void sync() {
 		try {
@@ -61,9 +62,13 @@ public abstract class Data {
 
 			// clear platform routes
 			// clear platform route colors
+			// clear platform to position
+			// write platform to position
+			platformIdToPosition.clear();
 			platforms.forEach(platform -> {
 				platform.routes.clear();
 				platform.routeColors.clear();
+				platformIdToPosition.put(platform.getId(), platform.getMidPosition());
 			});
 
 			// clear route depots
@@ -98,7 +103,7 @@ public abstract class Data {
 				});
 			});
 		} catch (Exception e) {
-			Main.LOGGER.error(e);
+			Main.LOGGER.error("", e);
 		}
 	}
 

@@ -54,11 +54,11 @@ public class Generator {
 
 					schemaParsers.put(schemaClassName, new SchemaParser(schemaClass, extendsClassName, testMethod, jsonObject));
 				} catch (Exception e) {
-					LOGGER.error(e);
+					LOGGER.error("", e);
 				}
 			});
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("", e);
 		}
 
 		final Path projectPath = project.getProjectDir().toPath();
@@ -67,7 +67,7 @@ public class Generator {
 			try {
 				FileUtils.write(projectPath.resolve("src/main/java/org/mtr").resolve(outputPath).resolve(schemaClassName + ".java").toFile(), schemaParser.generateSchemaClass(schemaParsers, testClass), StandardCharsets.UTF_8);
 			} catch (Exception e) {
-				LOGGER.error(e);
+				LOGGER.error("", e);
 			}
 		});
 
@@ -75,7 +75,7 @@ public class Generator {
 			try {
 				FileUtils.write(projectPath.resolve("src/test/java/org/mtr").resolve(outputPath).resolve("SchemaTests.java").toFile(), String.join("\n", testClass.generate()), StandardCharsets.UTF_8);
 			} catch (Exception e) {
-				LOGGER.error(e);
+				LOGGER.error("", e);
 			}
 		}
 
@@ -86,7 +86,7 @@ public class Generator {
 					StandardCharsets.UTF_8
 			);
 		} catch (Exception e) {
-			LOGGER.error(e);
+			LOGGER.error("", e);
 		}
 	}
 

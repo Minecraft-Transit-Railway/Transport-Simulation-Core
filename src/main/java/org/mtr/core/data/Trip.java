@@ -4,9 +4,11 @@ import org.mtr.core.oba.Schedule;
 import org.mtr.core.oba.SingleElement;
 import org.mtr.core.oba.TripDetails;
 import org.mtr.core.tool.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nullable;
+import java.util.function.BiConsumer;
 
 public class Trip implements Utilities {
 
@@ -31,6 +33,42 @@ public class Trip implements Utilities {
 
 	public String getTripId(int departureIndex, long departureOffset) {
 		return String.format("%s_%s_%s_%s", siding.getHexId(), tripIndexInBlock, departureIndex, departureOffset);
+	}
+
+	public void getUpcomingStopTimes(int tripStopIndex, ObjectArrayList<Trip> trips, boolean repeatIndefinitely, BiConsumer<LongArrayList, StopTime> consumer) {
+		final StopTime stopTime1 = Utilities.getElement(stopTimes, tripStopIndex);
+		if (stopTime1 == null) {
+			return;
+		}
+
+		final int tripsCount = trips.size();
+		final LongArrayList routeIds = new LongArrayList();
+		int tempTripIndex = tripIndexInBlock;
+		int tempTripStopIndex = tripStopIndex + 1;
+
+		while (true) {
+			final Trip trip = trips.get(tempTripIndex % tripsCount);
+
+			if (tempTripStopIndex < trip.stopTimes.size()) {
+				final StopTime stopTime2 = trip.stopTimes.get(tempTripStopIndex);
+				if (stopTime1.platformId != stopTime2.platformId) {
+					final LongArrayList newRouteIds = new LongArrayList(routeIds);
+					newRouteIds.add(trip.route.getId());
+					consumer.accept(newRouteIds, stopTime2);
+				}
+				tempTripStopIndex++;
+			} else {
+				tempTripIndex++;
+				tempTripStopIndex = 0;
+				routeIds.add(trip.route.getId());
+			}
+
+			final boolean shouldBreak1 = !repeatIndefinitely && tempTripIndex >= tripsCount;
+			final boolean shouldBreak2 = repeatIndefinitely && tempTripIndex >= tripIndexInBlock + tripsCount && tempTripStopIndex >= tripStopIndex;
+			if (shouldBreak1 || shouldBreak2) {
+				break;
+			}
+		}
 	}
 
 	public void getOBATripDetailsWithDataUsed(SingleElement<TripDetails> singleElement, long currentMillis, long offsetMillis, int departureIndex, long departureOffset, @Nullable Trip nextTrip, @Nullable Trip previousTrip) {

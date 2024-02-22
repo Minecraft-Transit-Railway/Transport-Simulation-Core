@@ -5,17 +5,17 @@
 		"SerializedDataBase"
 	],
 	"properties": {
-		"clientIds": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			}
+		"responseTime": {
+			"type": "integer"
 		},
-		"depotGenerationUpdates": {
+		"directionsSegments": {
 			"type": "array",
 			"items": {
-				"$ref": "depotGenerationUpdate.json"
+				"$ref": "directionsSegment.json"
 			}
 		}
-	}
+	},
+	"required": [
+		"responseTime"
+	]
 }

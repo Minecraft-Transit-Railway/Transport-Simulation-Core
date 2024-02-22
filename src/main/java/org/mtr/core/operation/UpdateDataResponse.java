@@ -67,6 +67,10 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 		data.sync();
 	}
 
+	public void addDepot(Depot depot) {
+		depots.add(depot);
+	}
+
 	ObjectArrayList<Station> getStations() {
 		return stations;
 	}
