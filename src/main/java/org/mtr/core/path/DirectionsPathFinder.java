@@ -22,7 +22,7 @@ public final class DirectionsPathFinder extends PathFinder<DirectionsPathFinder.
 	private static final int WALKING_MULTIPLIER = 1000; // milliseconds per meter
 
 	public DirectionsPathFinder(Simulator simulator, Position startPosition, Position endPosition, Consumer<JsonObject> sendResponse) {
-		super(new PositionAndPlatform(startPosition, 0, 0), new PositionAndPlatform(endPosition, 0, 0));
+		super(new PositionAndPlatform(startPosition, 0), new PositionAndPlatform(endPosition, 0));
 		this.simulator = simulator;
 		startMillis = System.currentTimeMillis();
 		this.sendResponse = sendResponse;
@@ -33,34 +33,29 @@ public final class DirectionsPathFinder extends PathFinder<DirectionsPathFinder.
 		final ObjectOpenHashSet<ConnectionDetails<PositionAndPlatform>> connections = new ObjectOpenHashSet<>();
 		final Platform platform = data.platformId == 0 ? null : simulator.platformIdMap.get(data.platformId);
 		final LongAVLTreeSet visitedPlatformIds = new LongAVLTreeSet();
+		visitedPlatformIds.add(data.platformId);
 
 		if (platform != null) {
-			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> {
-				if (data.sidingId != siding.getId()) {
-					siding.getArrivals(startMillis + elapsedTime, data.platformId, (newPlatformId, routeIds, departureTime, duration) -> {
-						final Position position = simulator.platformIdToPosition.get(newPlatformId);
-						if (position != null) {
-							visitedPlatformIds.add(newPlatformId);
-							final long waitingTime = departureTime - startMillis - elapsedTime;
-							final long walkingTime = data.position.manhattanDistance(position) * WALKING_MULTIPLIER;
-							if (walkingTime < waitingTime + duration) {
-								connections.add(new ConnectionDetails<>(new PositionAndPlatform(position, newPlatformId, 0), walkingTime, 0, 0));
-							} else {
-								connections.add(new ConnectionDetails<>(new PositionAndPlatform(position, newPlatformId, siding.getId()), duration, waitingTime, routeIds.getLong(0)));
-							}
-						}
-					});
+			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> siding.getArrivals(startMillis + elapsedTime, data.platformId, (newPlatformId, routeIds, departureTime, duration) -> {
+				final Position position = simulator.platformIdToPosition.get(newPlatformId);
+				if (position != null && !visitedPlatformIds.contains(newPlatformId)) {
+					visitedPlatformIds.add(newPlatformId);
+					final long waitingTime = departureTime - startMillis - elapsedTime;
+					final long walkingTime = data.position.manhattanDistance(position) * WALKING_MULTIPLIER;
+					if (walkingTime < waitingTime + duration) {
+						connections.add(new ConnectionDetails<>(new PositionAndPlatform(position, newPlatformId), walkingTime, 0, 0));
+					} else {
+						connections.add(new ConnectionDetails<>(new PositionAndPlatform(position, newPlatformId), duration, waitingTime, routeIds.getLong(0)));
+					}
 				}
-			})));
+			}))));
 		}
 
-		if (data.sidingId != 0) {
-			simulator.platformIdToPosition.forEach((newPlatformId, platformPosition) -> {
-				if (data.platformId != newPlatformId && !visitedPlatformIds.contains(newPlatformId.longValue())) {
-					connections.add(new ConnectionDetails<>(new PositionAndPlatform(platformPosition, newPlatformId, 0), data.position.manhattanDistance(platformPosition) * WALKING_MULTIPLIER, 0, 0));
-				}
-			});
-		}
+		simulator.platformIdToPosition.forEach((newPlatformId, platformPosition) -> {
+			if (!visitedPlatformIds.contains(newPlatformId.longValue())) {
+				connections.add(new ConnectionDetails<>(new PositionAndPlatform(platformPosition, newPlatformId), data.position.manhattanDistance(platformPosition) * WALKING_MULTIPLIER, 0, 0));
+			}
+		});
 
 		connections.add(new ConnectionDetails<>(endNode, data.position.manhattanDistance(endNode.position) * WALKING_MULTIPLIER, 0, 0));
 		return connections;
@@ -109,14 +104,10 @@ public final class DirectionsPathFinder extends PathFinder<DirectionsPathFinder.
 
 		private final Position position;
 		private final long platformId;
-		// A unique identifier for how we got to the current node (0 for walking)
-		// Used to prevent using the same mode twice (e.g. getting off and on the same train, walking two times in a row, etc.)
-		private final long sidingId;
 
-		private PositionAndPlatform(Position position, long platformId, long sidingId) {
+		private PositionAndPlatform(Position position, long platformId) {
 			this.position = position;
 			this.platformId = platformId;
-			this.sidingId = sidingId;
 		}
 
 		@Override

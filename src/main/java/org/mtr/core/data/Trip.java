@@ -16,6 +16,7 @@ public class Trip implements Utilities {
 	public final int routeIndex;
 	public final int tripIndexInBlock;
 	private final Siding siding;
+	private final String tripIdPrefix;
 	private final ObjectArrayList<StopTime> stopTimes = new ObjectArrayList<>();
 
 	public Trip(Route route, int routeIndex, int tripIndexInBlock, Siding siding) {
@@ -23,6 +24,7 @@ public class Trip implements Utilities {
 		this.routeIndex = routeIndex;
 		this.tripIndexInBlock = tripIndexInBlock;
 		this.siding = siding;
+		tripIdPrefix = String.format("%s_%s", siding.getHexId(), tripIndexInBlock);
 	}
 
 	public StopTime addStopTime(long startTime, long endTime, long platformId, int tripStopIndex, String customDestination) {
@@ -32,7 +34,7 @@ public class Trip implements Utilities {
 	}
 
 	public String getTripId(int departureIndex, long departureOffset) {
-		return String.format("%s_%s_%s_%s", siding.getHexId(), tripIndexInBlock, departureIndex, departureOffset);
+		return Utilities.concat(tripIdPrefix, "_", departureIndex, "_", departureOffset);
 	}
 
 	public void getUpcomingStopTimes(int tripStopIndex, ObjectArrayList<Trip> trips, boolean repeatIndefinitely, BiConsumer<LongArrayList, StopTime> consumer) {

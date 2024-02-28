@@ -85,6 +85,14 @@ public interface Utilities {
 		return String.format("%" + length + "s", Long.toHexString(value)).replace(' ', '0').toUpperCase(Locale.ENGLISH);
 	}
 
+	static String concat(Object... objects) {
+		final StringBuilder stringBuilder = new StringBuilder();
+		for (final Object object : objects) {
+			stringBuilder.append(object);
+		}
+		return stringBuilder.toString();
+	}
+
 	static String formatName(String text) {
 		return text.split("\\|\\|")[0].replace("|", " ");
 	}

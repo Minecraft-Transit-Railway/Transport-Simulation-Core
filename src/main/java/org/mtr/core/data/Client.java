@@ -16,7 +16,7 @@ import java.util.function.LongConsumer;
 
 public class Client extends ClientSchema {
 
-	private boolean canSend = true;
+	private long nextSendTime;
 	private final LongAVLTreeSet existingVehicleIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepVehicleIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<VehicleUpdate> vehicleUpdates = new Long2ObjectAVLTreeMap<>();
@@ -52,7 +52,9 @@ public class Client extends ClientSchema {
 	}
 
 	public void sendUpdates(Simulator simulator) {
-		if (canSend) {
+		final long currentMillis = System.currentTimeMillis();
+		if (currentMillis > nextSendTime) {
+			nextSendTime = currentMillis + 100;
 			final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
 			final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep);
 			final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
@@ -60,7 +62,6 @@ public class Client extends ClientSchema {
 			if (hasUpdate1 || hasUpdate2) {
 				simulator.sendHttpRequest("vehicles-lifts", vehicleLiftResponse, responseObject -> {
 					new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId);
-					canSend = true;
 				});
 			}
 		}

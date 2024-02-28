@@ -6,9 +6,14 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 public abstract class TwoPositionsBase implements SerializedDataBaseWithId {
 
+	private String hexId;
+
 	@Override
 	public final String getHexId() {
-		return getHexId(getPosition1(), getPosition2());
+		if (hexId == null) {
+			hexId = getHexId(getPosition1(), getPosition2());
+		}
+		return hexId;
 	}
 
 	public final void writePositions(ObjectArraySet<Position> positionsToUpdate) {

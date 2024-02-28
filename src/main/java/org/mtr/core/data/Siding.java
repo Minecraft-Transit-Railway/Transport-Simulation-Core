@@ -322,20 +322,18 @@ public final class Siding extends SidingSchema implements Utilities {
 	public void getArrivals(long currentMillis, long platformId, ArrivalPathFindingConsumer consumer) {
 		if (area != null) {
 			final Long2ObjectAVLTreeMap<LongObjectImmutablePair<Runnable>> stopTimesForPlatform = new Long2ObjectAVLTreeMap<>();
-			iterateArrivals(currentMillis, platformId, 0, MILLIS_PER_DAY, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
-				trip.getUpcomingStopTimes(
-						tripStopIndex,
-						trips,
-						area.getRepeatInfinitely(),
-						(routeIds, newStopTime) -> {
-							final long departureTime = scheduledDepartureTime + deviation;
-							final LongObjectImmutablePair<Runnable> existingStopTime = stopTimesForPlatform.get(newStopTime.platformId);
-							if (existingStopTime == null || departureTime < existingStopTime.leftLong()) {
-								stopTimesForPlatform.put(newStopTime.platformId, new LongObjectImmutablePair<>(departureTime, () -> consumer.accept(newStopTime.platformId, routeIds, departureTime, newStopTime.startTime - stopTime.endTime)));
-							}
+			iterateArrivals(currentMillis, platformId, 0, MILLIS_PER_DAY, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> trip.getUpcomingStopTimes(
+					tripStopIndex,
+					trips,
+					area.getRepeatInfinitely(),
+					(routeIds, newStopTime) -> {
+						final long departureTime = scheduledDepartureTime + deviation;
+						final LongObjectImmutablePair<Runnable> existingStopTime = stopTimesForPlatform.get(newStopTime.platformId);
+						if (existingStopTime == null || departureTime < existingStopTime.leftLong()) {
+							stopTimesForPlatform.put(newStopTime.platformId, new LongObjectImmutablePair<>(departureTime, () -> consumer.accept(newStopTime.platformId, routeIds, departureTime, newStopTime.startTime - stopTime.endTime)));
 						}
-				);
-			});
+					}
+			));
 			stopTimesForPlatform.values().forEach(departureTimePair -> departureTimePair.right().run());
 		}
 	}

@@ -148,23 +148,26 @@ public final class DataFixer {
 	public static ReaderBase convertStation(ReaderBase readerBase) {
 		packExtra(readerBase, messagePackWriter -> {
 			readerBase.unpackInt("zone", value -> messagePackWriter.writeLong("zone1", value));
-			final Object2ObjectArrayMap<String, ObjectArrayList<String>> exits = new Object2ObjectArrayMap<>();
 
 			if (readerBase instanceof MessagePackReader) {
-				((MessagePackReader) readerBase).iterateMap("exits", (key, value) -> {
-					final ObjectArrayList<String> destinations = new ObjectArrayList<>();
-					exits.put(key, destinations);
-					value.asArrayValue().forEach(destination -> destinations.add(destination.asStringValue().asString()));
-				});
-			}
+				try {
+					final Object2ObjectArrayMap<String, ObjectArrayList<String>> exits = new Object2ObjectArrayMap<>();
+					((MessagePackReader) readerBase).iterateMap("exits", (key, value) -> {
+						final ObjectArrayList<String> destinations = new ObjectArrayList<>();
+						exits.put(key, destinations);
+						value.asArrayValue().forEach(destination -> destinations.add(destination.asStringValue().asString()));
+					});
 
-			final WriterBase.Array exitsWriterBaseArray = messagePackWriter.writeArray("exits");
-			exits.forEach((name, destinations) -> {
-				final WriterBase writerBase = exitsWriterBaseArray.writeChild();
-				writerBase.writeString("name", name);
-				final WriterBase.Array destinationsWriterBaseArray = writerBase.writeArray("destinations");
-				destinations.forEach(destinationsWriterBaseArray::writeString);
-			});
+					final WriterBase.Array exitsWriterBaseArray = messagePackWriter.writeArray("exits");
+					exits.forEach((name, destinations) -> {
+						final WriterBase writerBase = exitsWriterBaseArray.writeChild();
+						writerBase.writeString("name", name);
+						final WriterBase.Array destinationsWriterBaseArray = writerBase.writeArray("destinations");
+						destinations.forEach(destinationsWriterBaseArray::writeString);
+					});
+				} catch (Exception ignored) {
+				}
+			}
 		});
 
 		return readerBase;

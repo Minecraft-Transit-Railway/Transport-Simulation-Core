@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 
 public abstract class NameColorDataBase extends NameColorDataBaseSchema implements SerializedDataBaseWithId, Comparable<NameColorDataBase> {
 
+	private String hexId;
+
 	public NameColorDataBase(TransportMode transportMode, Data data) {
 		super(transportMode, data);
 	}
@@ -23,7 +25,10 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 
 	@Override
 	public final String getHexId() {
-		return Utilities.numberToPaddedHexString(id);
+		if (hexId == null) {
+			hexId = Utilities.numberToPaddedHexString(id);
+		}
+		return hexId;
 	}
 
 	public final long getId() {
