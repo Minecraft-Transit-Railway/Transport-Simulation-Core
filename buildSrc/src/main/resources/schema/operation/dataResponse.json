@@ -14,6 +14,12 @@
 				]
 			}
 		},
+		"stationsToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
 		"platforms": {
 			"type": "array",
 			"items": {
@@ -21,6 +27,12 @@
 				"parameters": [
 					"Data"
 				]
+			}
+		},
+		"platformsToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
 			}
 		},
 		"sidings": {
@@ -32,10 +44,22 @@
 				]
 			}
 		},
+		"sidingsToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
 		"simplifiedRoutes": {
 			"type": "array",
 			"items": {
 				"$ref": "simplifiedRoute.json"
+			}
+		},
+		"simplifiedRoutesToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
 			}
 		},
 		"depots": {
@@ -47,10 +71,22 @@
 				]
 			}
 		},
+		"depotsToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
 		"rails": {
 			"type": "array",
 			"items": {
 				"$ref": "rail.json"
+			}
+		},
+		"railsToKeep": {
+			"type": "array",
+			"items": {
+				"type": "string"
 			}
 		}
 	}

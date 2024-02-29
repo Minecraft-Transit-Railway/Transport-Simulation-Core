@@ -1,13 +1,13 @@
 package org.mtr.core.operation;
 
-import org.mtr.core.data.Client;
-import org.mtr.core.data.ClientData;
-import org.mtr.core.data.Position;
+import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.DataRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class DataRequest extends DataRequestSchema {
 
@@ -22,36 +22,65 @@ public final class DataRequest extends DataRequestSchema {
 
 	public JsonObject getData(Simulator simulator) {
 		final DataResponse dataResponse = new DataResponse(simulator);
+		final LongAVLTreeSet addedStationIds = new LongAVLTreeSet();
+		final LongAVLTreeSet addedPlatformIds = new LongAVLTreeSet();
+		final LongAVLTreeSet addedRouteIds = new LongAVLTreeSet();
+
 		simulator.stations.forEach(station -> {
-			if (!existingStationIds.contains(station.getId()) && station.inArea(clientPosition, requestRadius)) {
-				dataResponse.addStation(station);
-			}
-		});
-		simulator.platforms.forEach(platform -> {
-			if (!existingPlatformIds.contains(platform.getId()) && platform.closeTo(clientPosition, requestRadius)) {
-				dataResponse.addPlatform(platform);
-				platform.routes.forEach(route -> {
-					if (!existingSimplifiedRouteIds.contains(route.getId())) {
-						dataResponse.addRoute(route);
+			if (station.inArea(clientPosition, requestRadius)) {
+				final ObjectArrayList<Station> stationsToAdd = new ObjectArrayList<>();
+				stationsToAdd.add(station);
+				stationsToAdd.addAll(station.connectedStations);
+				stationsToAdd.forEach(addStation -> {
+					if (!addedStationIds.contains(addStation.getId())) {
+						if (existingStationIds.contains(addStation.getId())) {
+							dataResponse.addStation(addStation.getId());
+						} else {
+							dataResponse.addStation(addStation);
+						}
+						addedStationIds.add(addStation.getId());
+						addStation.savedRails.forEach(platform -> addPlatform(platform, dataResponse, addedPlatformIds, addedRouteIds));
 					}
 				});
 			}
 		});
+
+		simulator.platforms.forEach(platform -> {
+			if (platform.closeTo(clientPosition, requestRadius)) {
+				addPlatform(platform, dataResponse, addedPlatformIds, addedRouteIds);
+			}
+		});
+
 		simulator.sidings.forEach(siding -> {
-			if (!existingSidingIds.contains(siding.getId()) && siding.closeTo(clientPosition, requestRadius)) {
-				dataResponse.addSiding(siding);
+			if (siding.closeTo(clientPosition, requestRadius)) {
+				if (existingSidingIds.contains(siding.getId())) {
+					dataResponse.addSiding(siding.getId());
+				} else {
+					dataResponse.addSiding(siding);
+				}
 			}
 		});
+
 		simulator.depots.forEach(depot -> {
-			if (!existingDepotIds.contains(depot.getId()) && depot.inArea(clientPosition, requestRadius)) {
-				dataResponse.addDepot(depot);
+			if (depot.inArea(clientPosition, requestRadius)) {
+				if (existingDepotIds.contains(depot.getId())) {
+					dataResponse.addDepot(depot.getId());
+				} else {
+					dataResponse.addDepot(depot);
+				}
 			}
 		});
+
 		simulator.railIdMap.forEach((railId, rail) -> {
-			if (!existingRailIds.contains(railId) && rail.closeTo(clientPosition, requestRadius)) {
-				dataResponse.addRail(rail);
+			if (rail.closeTo(clientPosition, requestRadius)) {
+				if (existingRailIds.contains(railId)) {
+					dataResponse.addRail(rail.getHexId());
+				} else {
+					dataResponse.addRail(rail);
+				}
 			}
 		});
+
 		simulator.clients.computeIfAbsent(clientId, key -> new Client(clientId)).setPositionAndUpdateRadius(clientPosition, requestRadius);
 		return Utilities.getJsonObjectFromData(dataResponse);
 	}
@@ -63,5 +92,26 @@ public final class DataRequest extends DataRequestSchema {
 		existingSimplifiedRouteIds.addAll(clientData.simplifiedRouteIds);
 		existingDepotIds.addAll(clientData.depotIdMap.keySet());
 		existingRailIds.addAll(clientData.railIdMap.keySet());
+	}
+
+	private void addPlatform(Platform platform, DataResponse dataResponse, LongAVLTreeSet addedPlatformIds, LongAVLTreeSet addedRouteIds) {
+		if (!addedPlatformIds.contains(platform.getId())) {
+			if (existingPlatformIds.contains(platform.getId())) {
+				dataResponse.addPlatform(platform.getId());
+			} else {
+				dataResponse.addPlatform(platform);
+			}
+			addedPlatformIds.add(platform.getId());
+			platform.routes.forEach(route -> {
+				if (!addedRouteIds.contains(route.getId())) {
+					if (existingSimplifiedRouteIds.contains(route.getId())) {
+						dataResponse.addRoute(route.getId());
+					} else {
+						dataResponse.addRoute(route);
+					}
+					addedRouteIds.add(route.getId());
+				}
+			});
+		}
 	}
 }
