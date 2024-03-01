@@ -190,7 +190,7 @@ public interface TestUtilities {
 	}
 
 	static SimplifiedRoutePlatform randomSimplifiedRoutePlatform() {
-		return new SimplifiedRoutePlatform(RANDOM.nextLong(), randomString(), randomString());
+		return new SimplifiedRoutePlatform(RANDOM.nextLong(), RANDOM.nextLong(), randomString(), randomString());
 	}
 
 	static Station randomStation() {

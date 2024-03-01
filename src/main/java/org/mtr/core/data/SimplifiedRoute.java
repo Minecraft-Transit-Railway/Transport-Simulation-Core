@@ -23,7 +23,7 @@ public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comp
 				station.savedRails.forEach(stationPlatform -> addInterchangeRoutes(route.getColor(), interchangeRoutes, stationPlatform.routes));
 			}
 
-			final SimplifiedRoutePlatform simplifiedRoutePlatform = new SimplifiedRoutePlatform(platform == null ? 0 : platform.getId(), route.getDestination(i), station == null ? "" : station.getName());
+			final SimplifiedRoutePlatform simplifiedRoutePlatform = new SimplifiedRoutePlatform(platform == null ? 0 : platform.getId(), station == null ? 0 : station.getId(), route.getDestination(i), station == null ? "" : station.getName());
 			interchangeRoutes.forEach((color, interchangeRouteNamesForColor) -> simplifiedRoutePlatform.addColor(interchangeRouteNamesForColor));
 			platforms.add(simplifiedRoutePlatform);
 		}

@@ -9,12 +9,16 @@
 		"platformId": {
 			"type": "integer"
 		},
+		"stationId": {
+			"type": "integer"
+		},
 		"destination": {
 			"type": "string"
 		}
 	},
 	"required": [
 		"platformId",
+		"stationId",
 		"destination"
 	]
 }
