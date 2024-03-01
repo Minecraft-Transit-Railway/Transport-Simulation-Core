@@ -17,7 +17,7 @@ public final class GenerateByLift {
 	}
 
 	public JsonObject generate() {
-		final ObjectArrayList<Lift> liftsToModify = UpdateDataRequest.getMatchingLifts(data, lift);
+		final ObjectArrayList<Lift> liftsToModify = UpdateDataRequest.getAndRemoveMatchingLifts(data, lift);
 		liftsToModify.add(lift);
 		liftsToModify.get(0).setFloors(lift);
 		data.lifts.add(liftsToModify.get(0));

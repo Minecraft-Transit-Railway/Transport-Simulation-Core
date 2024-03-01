@@ -1,7 +1,7 @@
 package org.mtr.core.operation;
 
 import org.mtr.core.data.Depot;
-import org.mtr.core.generated.operation.GenerateByDepotIdsSchema;
+import org.mtr.core.generated.operation.GenerateOrClearByDepotIdsSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
@@ -9,12 +9,12 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.function.Consumer;
 
-public final class GenerateByDepotIds extends GenerateByDepotIdsSchema {
+public final class GenerateOrClearByDepotIds extends GenerateOrClearByDepotIdsSchema {
 
-	public GenerateByDepotIds() {
+	public GenerateOrClearByDepotIds() {
 	}
 
-	public GenerateByDepotIds(ReaderBase readerBase) {
+	public GenerateOrClearByDepotIds(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}
@@ -24,6 +24,16 @@ public final class GenerateByDepotIds extends GenerateByDepotIdsSchema {
 	}
 
 	public JsonObject generate(Simulator simulator, Consumer<JsonObject> sendResponse) {
+		Depot.generateDepots(simulator, getDepots(simulator), sendResponse);
+		return new JsonObject();
+	}
+
+	public JsonObject clear(Simulator simulator) {
+		Depot.clearDepots(getDepots(simulator));
+		return new JsonObject();
+	}
+
+	private ObjectArrayList<Depot> getDepots(Simulator simulator) {
 		final ObjectArrayList<Depot> depots = new ObjectArrayList<>();
 		depotIds.forEach(depotId -> {
 			final Depot depot = simulator.depotIdMap.get(depotId);
@@ -31,7 +41,6 @@ public final class GenerateByDepotIds extends GenerateByDepotIdsSchema {
 				depots.add(depot);
 			}
 		});
-		Depot.generateDepots(simulator, depots, sendResponse);
-		return new JsonObject();
+		return depots;
 	}
 }

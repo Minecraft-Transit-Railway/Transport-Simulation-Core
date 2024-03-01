@@ -283,7 +283,9 @@ public class Lift extends LiftSchema {
 	}
 
 	public void setFloors(Lift lift) {
-		setFloors(lift.floors);
+		if (lift != this) {
+			setFloors(lift.floors);
+		}
 	}
 
 	public int getFloorIndex(Position position) {

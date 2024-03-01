@@ -4,7 +4,7 @@ import org.mtr.core.generated.data.StationExitSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-public final class StationExit extends StationExitSchema {
+public final class StationExit extends StationExitSchema implements Comparable<StationExit> {
 
 	public StationExit() {
 		super();
@@ -25,5 +25,14 @@ public final class StationExit extends StationExitSchema {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	@Override
+	public int compareTo(StationExit stationExit) {
+		if (equals(stationExit)) {
+			return 0;
+		} else {
+			return getName().compareTo(stationExit.getName());
+		}
 	}
 }

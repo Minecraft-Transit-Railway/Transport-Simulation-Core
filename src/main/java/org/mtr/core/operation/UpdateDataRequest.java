@@ -112,8 +112,8 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		routes.forEach(route -> update(route, true, data.routeIdMap.get(route.getId()), data.routes, updateDataResponse.getRoutes()));
 		depots.forEach(depot -> update(depot, true, data.depotIdMap.get(depot.getId()), data.depots, updateDataResponse.getDepots()));
 		lifts.forEach(lift -> {
-			final ObjectArrayList<Lift> liftsToModify = getMatchingLifts(data, lift);
-			update(lift, true, liftsToModify.isEmpty() ? null : liftsToModify.get(0), data.lifts, ObjectArrayList.of());
+			getAndRemoveMatchingLifts(data, lift);
+			update(lift, true, null, data.lifts, ObjectArrayList.of());
 		});
 		rails.forEach(rail -> update(rail, true, data.railIdMap.get(rail.getHexId()), data.rails, updateDataResponse.getRails()));
 		signalModifications.forEach(signalModification -> signalModification.applyModificationToRail(data, updateDataResponse.getRails()));
@@ -131,7 +131,7 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		return Utilities.getJsonObjectFromData(updateDataResponse);
 	}
 
-	public static ObjectArrayList<Lift> getMatchingLifts(Data data, Lift lift) {
+	public static ObjectArrayList<Lift> getAndRemoveMatchingLifts(Data data, Lift lift) {
 		final ObjectArrayList<Lift> liftsToModify = new ObjectArrayList<>();
 		data.lifts.removeIf(existingLift -> {
 			if (lift.overlappingFloors(existingLift)) {

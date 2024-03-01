@@ -56,13 +56,19 @@ public final class OperationServlet extends ServletBase {
 				sendResponse.accept(new RailsRequest(jsonReader).query(simulator));
 				break;
 			case "generate-by-depot-ids":
-				new GenerateByDepotIds(jsonReader).generate(simulator, sendResponse);
+				new GenerateOrClearByDepotIds(jsonReader).generate(simulator, sendResponse);
 				break;
 			case "generate-by-depot-name":
-				new GenerateByDepotName(jsonReader).generate(simulator, sendResponse);
+				new GenerateOrClearByDepotName(jsonReader).generate(simulator, sendResponse);
 				break;
 			case "generate-by-lift":
 				sendResponse.accept(new GenerateByLift(jsonReader, simulator).generate());
+				break;
+			case "clear-by-depot-ids":
+				new GenerateOrClearByDepotIds(jsonReader).clear(simulator);
+				break;
+			case "clear-by-depot-name":
+				new GenerateOrClearByDepotName(jsonReader).clear(simulator);
 				break;
 			case "directions":
 				new DirectionsRequest(jsonReader).find(simulator, sendResponse);

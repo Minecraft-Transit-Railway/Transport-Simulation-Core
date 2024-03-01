@@ -37,6 +37,10 @@ public final class Station extends StationSchema {
 		return zone3;
 	}
 
+	public ObjectArrayList<StationExit> getExits() {
+		return exits;
+	}
+
 	public void setZone1(long zone1) {
 		this.zone1 = zone1;
 	}

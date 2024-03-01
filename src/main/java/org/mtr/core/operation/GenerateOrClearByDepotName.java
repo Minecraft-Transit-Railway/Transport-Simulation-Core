@@ -1,19 +1,19 @@
 package org.mtr.core.operation;
 
 import org.mtr.core.data.Depot;
-import org.mtr.core.generated.operation.GenerateByDepotNameSchema;
+import org.mtr.core.generated.operation.GenerateOrClearByDepotNameSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
 
 import java.util.function.Consumer;
 
-public final class GenerateByDepotName extends GenerateByDepotNameSchema {
+public final class GenerateOrClearByDepotName extends GenerateOrClearByDepotNameSchema {
 
-	public GenerateByDepotName() {
+	public GenerateOrClearByDepotName() {
 	}
 
-	public GenerateByDepotName(ReaderBase readerBase) {
+	public GenerateOrClearByDepotName(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}
@@ -24,6 +24,11 @@ public final class GenerateByDepotName extends GenerateByDepotNameSchema {
 
 	public JsonObject generate(Simulator simulator, Consumer<JsonObject> sendResponse) {
 		Depot.generateDepotsByName(simulator, filter, sendResponse);
+		return new JsonObject();
+	}
+
+	public JsonObject clear(Simulator simulator) {
+		Depot.clearDepotsByName(simulator, filter);
 		return new JsonObject();
 	}
 }

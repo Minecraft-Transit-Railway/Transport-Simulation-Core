@@ -364,6 +364,14 @@ public final class Depot extends DepotSchema implements Utilities {
 		});
 	}
 
+	public static void clearDepotsByName(Simulator simulator, String filter) {
+		clearDepots(getDataByName(simulator.depots, filter));
+	}
+
+	public static void clearDepots(ObjectArrayList<Depot> depotsToClear) {
+		depotsToClear.forEach(depot -> depot.savedRails.forEach(Siding::clearVehicles));
+	}
+
 	@FunctionalInterface
 	public interface GenerationStatusConsumer {
 		void accept(long lastGeneratedFailedStartId, long lastGeneratedFailedEndId);
