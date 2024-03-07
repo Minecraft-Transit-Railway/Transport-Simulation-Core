@@ -1,4 +1,4 @@
-import {Component, OnInit} from "@angular/core";
+import {AfterViewInit, Component, OnInit, ViewChild} from "@angular/core";
 import {MapComponent} from "./map/map.component";
 import {arrayAverage, pushIfNotExists, setIfUndefined} from "./data/utilities";
 import {plainToInstance, Type} from "class-transformer";
@@ -6,29 +6,97 @@ import {ROUTE_TYPES} from "./data/routeType";
 import {Station} from "./data/station";
 import {LineConnection} from "./data/lineConnection";
 import {StationConnection} from "./data/stationConnection";
+import {PanelComponent} from "./panel/panel.component";
+import {MatSidenav, MatSidenavContainer, MatSidenavContent} from "@angular/material/sidenav";
+import {MatIcon, MatIconModule} from "@angular/material/icon";
+import {MatButtonModule, MatFabButton} from "@angular/material/button";
+import {MatDivider} from "@angular/material/divider";
+import {MatAutocomplete, MatAutocompleteTrigger, MatOptgroup, MatOption} from "@angular/material/autocomplete";
+import {MatFormField, MatLabel} from "@angular/material/form-field";
+import {MatInput} from "@angular/material/input";
+import {AsyncPipe, NgForOf, NgIf} from "@angular/common";
+import {MatToolbar} from "@angular/material/toolbar";
+import {map, Observable} from "rxjs";
+import {FormControl, ReactiveFormsModule} from "@angular/forms";
 
 @Component({
 	selector: "app-root",
 	standalone: true,
-	imports: [MapComponent],
+	imports: [
+		MapComponent,
+		PanelComponent,
+		MatSidenavContainer,
+		MatSidenav,
+		MatSidenavContent,
+		MatIcon,
+		MatIconModule,
+		MatButtonModule,
+		MatFabButton,
+		MatDivider,
+		MatAutocomplete,
+		MatAutocompleteTrigger,
+		MatFormField,
+		MatInput,
+		MatLabel,
+		MatOption,
+		NgForOf,
+		MatToolbar,
+		AsyncPipe,
+		ReactiveFormsModule,
+		MatOptgroup,
+		NgIf,
+	],
 	templateUrl: "./app.component.html",
 	styleUrls: ["./app.component.css"],
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
 
+	@ViewChild("map") private readonly map!: MapComponent;
 	private readonly url = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/map/`;
 	private routeTypes: { [key: string]: number } = {};
 	private tempRoutes: TempRoute[] = [];
 	private stations: Station[] = [];
+	private allStations: [string, string][] = [];
+	private allRoutes: [string, string][] = [];
 	private stationConnections: StationConnection[] = [];
 	private lineConnections: LineConnection[] = [];
 	private maxLineConnectionLength = 0;
 	private centerX = 0;
 	private centerY = 0;
+	searchBox = new FormControl("");
+	searchedStations = new Observable<[string, string][]>();
+	searchedRoutes = new Observable<[string, string][]>();
+	hasStations = false;
+	hasRoutes = false;
 
 	ngOnInit() {
+		const filter = (getList: () => [string, string][], setHasData: (value: boolean) => void): Observable<[string, string][]> => this.searchBox.valueChanges.pipe(map(value => {
+			if (value == null || value === "") {
+				return [];
+			} else {
+				const matches: [string, string, number][] = [];
+				getList().forEach(data => {
+					const index = data[1].toLowerCase().indexOf(value.toLowerCase());
+					if (index >= 0) {
+						matches.push([data[0], data[1], index]);
+					}
+				});
+				const result: [string, string][] = matches.sort((match1, match2) => {
+					const indexDifference = match1[2] - match2[2];
+					return indexDifference === 0 ? match1[1].localeCompare(match2[1]) : indexDifference;
+				}).map(match => [match[0], match[1]]);
+				setHasData(result.length > 0);
+				return result;
+			}
+		}));
+		this.searchedStations = filter(() => this.allStations, value => this.hasStations = value);
+		this.searchedRoutes = filter(() => this.allRoutes, value => this.hasRoutes = value);
+	}
+
+	ngAfterViewInit() {
 		const update = () => this.getData(() => {
 			this.updateData1();
+			this.map.draw();
 			setTimeout(update, 30000);
 		});
 		update();
@@ -92,7 +160,7 @@ export class AppComponent implements OnInit {
 			for (let i = 0; i < allRouteTypes.length; i++) {
 				const routeType = allRouteTypes[i];
 				if (availableRouteTypes.includes(routeType)) {
-					this.routeTypes[routeType] = i === 0 ? 1 : 0;
+					this.routeTypes[routeType] = i === 0 ? 1 : i === 1 ? 2 : 0;
 				}
 			}
 
@@ -104,8 +172,10 @@ export class AppComponent implements OnInit {
 		const tempStationData: { [key: string]: { id: string, name: string, color: string, zone1: number, zone2: number, zone3: number, connections: string[], xPositions: number[], yPositions: number[], zPositions: number[], types: string[] } } = {};
 		const routeTypes: string[] = [];
 		const stationsPhase1: { id: string, name: string, color: string, zone1: number, zone2: number, zone3: number, connections: string[], x: number, y: number, z: number, rotate: boolean, routeCount: number, width: number, height: number }[] = [];
+		this.allRoutes = [];
 
 		this.tempRoutes.forEach(tempRoute => {
+			this.allRoutes.push([tempRoute.color, tempRoute.name.split("||")[0].replaceAll("|", " ")]);
 			const routeTypeSelected = this.routeTypes[tempRoute.type] > 0;
 			tempRoute.tempStations.forEach(({id, name, color, zone1, zone2, zone3, connections, x, y, z}) => {
 				setIfUndefined(tempStationData, id, () => ({id, name, color, zone1, zone2, zone3, connections, xPositions: [], yPositions: [], zPositions: [], types: []}));
@@ -121,10 +191,14 @@ export class AppComponent implements OnInit {
 			});
 		});
 
+		this.allStations = [];
+
 		Object.values(tempStationData).forEach(({id, name, color, zone1, zone2, zone3, connections, xPositions, yPositions, zPositions}) => {
 			if (xPositions.length > 0 && yPositions.length > 0 && zPositions.length > 0) {
 				stationsPhase1.push({id, name, color, zone1, zone2, zone3, connections, x: arrayAverage(xPositions), y: arrayAverage(yPositions), z: arrayAverage(zPositions), rotate: false, routeCount: 0, width: 0, height: 0});
 			}
+
+			this.allStations.push([color, name.replaceAll("|", " ")]);
 		});
 
 		this.updateData2(stationsPhase1);

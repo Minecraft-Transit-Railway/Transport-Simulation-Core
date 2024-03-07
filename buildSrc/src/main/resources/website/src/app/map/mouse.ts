@@ -12,14 +12,14 @@ export class Mouse {
 	private mouseCallback = () => {
 	};
 
-	constructor(private canvasElement: HTMLCanvasElement) {
-		document.addEventListener("wheel", (event: WheelEvent) => {
+	constructor(private canvasElement: HTMLCanvasElement, wrapperElement: HTMLDivElement) {
+		wrapperElement.addEventListener("wheel", (event: WheelEvent) => {
 			const {clientX, clientY, deltaY} = event;
 			this.zoomCanvas(clientX, clientY, deltaY);
 			event.preventDefault();
 		}, {passive: false});
 
-		document.addEventListener("mousemove", (event: MouseEvent) => {
+		wrapperElement.addEventListener("mousemove", (event: MouseEvent) => {
 			if (this.isMouseDown) {
 				const {movementX, movementY} = event;
 				this.moveCanvas(movementX, movementY);
@@ -27,7 +27,7 @@ export class Mouse {
 			event.preventDefault();
 		}, {passive: false});
 
-		document.addEventListener("touchmove", (event: TouchEvent) => {
+		wrapperElement.addEventListener("touchmove", (event: TouchEvent) => {
 			const touchCount = this.touchPoints.length;
 			const {touches} = event;
 			if (touches.length === touchCount) {
@@ -48,27 +48,27 @@ export class Mouse {
 			event.preventDefault();
 		}, {passive: false});
 
-		document.addEventListener("mousedown", () => {
+		wrapperElement.addEventListener("mousedown", () => {
 			this.isMouseDown = this.enabled;
 			this.animateTarget = undefined;
 		});
 
-		document.addEventListener("mouseup", () => {
+		wrapperElement.addEventListener("mouseup", () => {
 			this.isMouseDown = false;
 			this.animateTarget = undefined;
 		});
 
-		document.addEventListener("mouseleave", () => {
+		wrapperElement.addEventListener("mouseleave", () => {
 			this.isMouseDown = false;
 			this.animateTarget = undefined;
 		});
 
-		document.addEventListener("touchstart", event => {
+		wrapperElement.addEventListener("touchstart", event => {
 			this.setTouchPoints(event);
 			this.animateTarget = undefined;
 		});
 
-		document.addEventListener("touchend", () => {
+		wrapperElement.addEventListener("touchend", () => {
 			this.touchPoints = [];
 			this.animateTarget = undefined;
 		});

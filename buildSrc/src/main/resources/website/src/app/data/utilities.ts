@@ -1,8 +1,3 @@
-export function getColorStyle(style: string, parseString = false) {
-	const color = getComputedStyle(document.body).getPropertyValue(`--${style}`).replace(/#/g, "");
-	return parseString ? parseInt(color, 16) : color;
-}
-
 export function getCookie(name: string) {
 	const splitCookies = document.cookie.split("; ").filter(cookie => cookie.startsWith(name + "="));
 	if (splitCookies.length > 0 && splitCookies[0].includes("=")) {
@@ -33,7 +28,7 @@ export function arrayAverage(array: number[]) {
 }
 
 export function isCJK(text: string) {
-	return text.match(/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFF9F\u4E00-\u9FAF\u3400-\u4DBF]/);
+	return text.match(/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFF9F\u4E00-\u9FAF\u3400-\u4DBF]/) != null;
 }
 
 export function atan45(y: number, x: number) {

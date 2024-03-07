@@ -7,7 +7,7 @@ const arrowSpacing = 80;
 
 export function connectStations(
 	positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array,
-	color: string, backgroundColor: string, textColor: string, blackAndWhite: boolean,
+	color: number, backgroundColor: number, textColor: number, blackAndWhite: boolean,
 	index: number,
 	canvasX1: number, canvasY1: number, canvasX2: number, canvasY2: number,
 	direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3,
@@ -145,7 +145,7 @@ function connectWith45(points: [number, number][], x1: number, y1: number, x2: n
 	points.push([x2, y2]);
 }
 
-export function drawLine(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: string, blackAndWhite: boolean, index: number, x1: number, y1: number, x2: number, y2: number, z: number, width: number) {
+export function drawLine(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, blackAndWhite: boolean, index: number, x1: number, y1: number, x2: number, y2: number, z: number, width: number) {
 	const angle = atan45(y2 - y1, x2 - x1);
 	const [endOffsetX1, endOffsetY1] = trig45(angle + 2, width / 2 * SETTINGS.scale);
 	const [endOffsetX2, endOffsetY2] = trig45(angle, tan225 * width / 2 * SETTINGS.scale);
@@ -161,7 +161,7 @@ export function drawLine(positionAttribute: THREE.BufferAttribute, colorArray: U
 	return index + 6;
 }
 
-function drawArrow(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: string, blackAndWhite: boolean, index: number, angle: number, x: number, y: number, z: number) {
+function drawArrow(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, blackAndWhite: boolean, index: number, angle: number, x: number, y: number, z: number) {
 	const [offset1X, offset1Y] = rotate(3 * SETTINGS.scale, 0, angle);
 	const [offset2X, offset2Y] = rotate(0, 3 * SETTINGS.scale, angle);
 	positionAttribute.setXYZ(index + 0, x - offset1X, -(y - offset1Y), -z);
@@ -179,11 +179,10 @@ function drawArrow(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Ar
 	return index + 9;
 }
 
-export function setColorByIndex(colorArray: Uint8Array, color: string, index: number, blackAndWhite: boolean) {
-	const colorInt = parseInt(color, 16);
-	const r = (colorInt >> 16) & 0xFF;
-	const g = (colorInt >> 8) & 0xFF;
-	const b = colorInt & 0xFF;
+export function setColorByIndex(colorArray: Uint8Array, color: number, index: number, blackAndWhite: boolean) {
+	const r = (color >> 16) & 0xFF;
+	const g = (color >> 8) & 0xFF;
+	const b = color & 0xFF;
 	const colorComponents = [r, g, b];
 	for (let i = 0; i < 3; i++) {
 		colorArray[index * 3 + i] = blackAndWhite ? (r + g + b) / 3 : colorComponents[i];

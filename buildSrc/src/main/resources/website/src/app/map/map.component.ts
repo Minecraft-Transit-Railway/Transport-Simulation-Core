@@ -3,21 +3,26 @@ import {Mouse} from "./mouse";
 import {Callback} from "./callback";
 import {AppComponent} from "../app.component";
 import SETTINGS from "./settings";
-import {getColorStyle, isCJK} from "../data/utilities";
+import {isCJK} from "../data/utilities";
 import {ROUTE_TYPES} from "../data/routeType";
+import {NgForOf} from "@angular/common";
 
 @Component({
 	selector: "app-map",
 	standalone: true,
-	imports: [],
+	imports: [
+		NgForOf,
+	],
 	templateUrl: "./map.component.html",
 	styleUrls: ["./map.component.css"],
 })
 export class MapComponent implements AfterViewInit {
 
 	@Input() appComponent!: AppComponent;
-	@ViewChild("canvas") private readonly canvas!: ElementRef;
+	@ViewChild("canvas") private readonly canvas!: ElementRef<HTMLCanvasElement>;
+	@ViewChild("wrapper") private readonly wrapper!: ElementRef<HTMLDivElement>;
 	loading: boolean = true;
+	textLabels: TextLabel[] = [];
 	private readonly callback = new Callback<[number, number, number], undefined>();
 	private mouse!: Mouse;
 	private canvasElement!: HTMLCanvasElement;
@@ -29,7 +34,7 @@ export class MapComponent implements AfterViewInit {
 		this.worker = new Worker(new URL("./offscreen.ts", import.meta.url), {type: "module"});
 		this.worker.postMessage({type: "setup", canvas: offscreen}, [offscreen]);
 		this.worker.onmessage = () => this.loading = false;
-		this.mouse = new Mouse(this.canvasElement);
+		this.mouse = new Mouse(this.canvasElement, this.wrapper.nativeElement);
 
 		this.mouse.setMouseCallback((zoom, centerX, centerY, blackAndWhite) => {
 			this.worker.postMessage({
@@ -57,32 +62,23 @@ export class MapComponent implements AfterViewInit {
 			});
 			this.callback.update([zoom, centerX, centerY]);
 		});
-
-		setTimeout(() => this.draw(), 1000);
 	}
 
 	draw() {
 		let renderedTextCount = 0;
 		this.callback.reset();
-		this.callback.add(() => renderedTextCount = 0);
+		this.callback.add(() => {
+			this.textLabels = [];
+			renderedTextCount = 0;
+		});
 
 		this.appComponent.getStations().forEach(station => {
 			const {name, types, x, z, rotate, width, height} = station;
 			const newWidth = width * 3 * SETTINGS.scale;
 			const newHeight = height * 3 * SETTINGS.scale;
 			const textOffset = (rotate ? Math.max(newHeight, newWidth) * Math.SQRT1_2 : newHeight) + 9 * SETTINGS.scale;
-			const element = document.createElement("div");
-			name.split("|").forEach(namePart => {
-				const namePartElement = document.createElement("p");
-				namePartElement.innerText = namePart;
-				namePartElement.className = `station-name ${isCJK(namePart) ? "cjk" : ""}`;
-				element.appendChild(namePartElement);
-			});
-			const routeTypesIconsElement = document.createElement("p");
-			routeTypesIconsElement.className = "station-name material-symbols-outlined";
-			routeTypesIconsElement.innerText = types.filter(type => this.appComponent.getRouteTypes()[type] === 0).map(type => ROUTE_TYPES[type].icon).join("");
-			element.style.display = "none";
-			element.appendChild(routeTypesIconsElement);
+			const textLabelTexts: TextLabelText[] = name.split("|").map(namePart => new TextLabelText(namePart, isCJK(namePart)));
+			const icons = types.filter(type => this.appComponent.getRouteTypes()[type] === 0).map(type => ROUTE_TYPES[type].icon).join("");
 
 			this.callback.add(([zoom, centerX, centerY]) => {
 				const canvasX = x * zoom + centerX;
@@ -90,16 +86,15 @@ export class MapComponent implements AfterViewInit {
 				const halfCanvasWidth = this.canvasElement.clientWidth / 2;
 				const halfCanvasHeight = this.canvasElement.clientHeight / 2;
 				if (renderedTextCount < SETTINGS.maxText && Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight) {
-					element.style.transform = `translate(-50%,0)translate(${canvasX + halfCanvasWidth}px,${canvasY + halfCanvasHeight + textOffset}px)`;
-					element.style.display = "";
+					this.textLabels.push(new TextLabel(textLabelTexts, icons, canvasX + halfCanvasWidth, canvasY + halfCanvasHeight + textOffset));
 					renderedTextCount++;
-				} else {
-					element.style.display = "none";
 				}
 			});
 		});
 
+		this.mouse.setCenterOnFirstDraw(this.appComponent.getCenterX(), this.appComponent.getCenterY());
 		const [zoom, centerX, centerY, blackAndWhite] = this.mouse.getCurrentWindowValues();
+		const backgroundColorComponents = getComputedStyle(document.body).backgroundColor.match(/\d+/g)!.map(value => parseInt(value));
 		this.worker.postMessage({
 			type: "main",
 			stations: this.appComponent.getStations(),
@@ -115,9 +110,19 @@ export class MapComponent implements AfterViewInit {
 			canvasWidth: this.canvasElement.clientWidth * devicePixelRatio,
 			canvasHeight: this.canvasElement.clientHeight * devicePixelRatio,
 			devicePixelRatio,
-			backgroundColor: getColorStyle("backgroundColor"),
-			textColor: getColorStyle("textColor"),
+			backgroundColor: (backgroundColorComponents[0] << 16) + (backgroundColorComponents[1] << 8) + backgroundColorComponents[2],
+			darkMode: backgroundColorComponents[0] <= 0x7F,
 		});
 		this.callback.update([zoom, centerX, centerY]);
+	}
+}
+
+class TextLabel {
+	constructor(public readonly text: TextLabelText[], public readonly icons: string, public readonly x: number, public readonly z: number) {
+	}
+}
+
+class TextLabelText {
+	constructor(public readonly name: string, public readonly isCjk: boolean) {
 	}
 }

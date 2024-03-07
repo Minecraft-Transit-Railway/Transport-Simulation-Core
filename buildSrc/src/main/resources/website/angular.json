@@ -23,6 +23,8 @@
 						"assets": [
 						],
 						"styles": [
+							"@angular/material/prebuilt-themes/indigo-pink.css",
+							"@angular/material/prebuilt-themes/pink-bluegrey.css",
 							"src/styles.css"
 						],
 						"scripts": []
@@ -32,7 +34,7 @@
 							"budgets": [
 								{
 									"type": "initial",
-									"maximumWarning": "500kb",
+									"maximumWarning": "1mb",
 									"maximumError": "1mb"
 								},
 								{
@@ -80,6 +82,8 @@
 						"assets": [
 						],
 						"styles": [
+							"@angular/material/prebuilt-themes/indigo-pink.css",
+							"@angular/material/prebuilt-themes/pink-bluegrey.css",
 							"src/styles.css"
 						],
 						"scripts": []

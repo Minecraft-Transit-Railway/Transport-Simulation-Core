@@ -1,1 +1,44 @@
-<app-map [appComponent]="this"></app-map>
+<mat-sidenav-container [hasBackdrop]="false">
+	<mat-sidenav #sidenav position="end" disableClose>
+		<form class="column-reverse">
+			<div class="column gap margin">
+				<mat-form-field class="example-full-width">
+					<mat-label>Search for anything...</mat-label>
+					<input matInput type="search" aria-label="Search" [formControl]="searchBox" [matAutocomplete]="auto"/>
+				</mat-form-field>
+				<app-panel></app-panel>
+			</div>
+
+			<mat-toolbar>
+				<div>&nbsp;Menu</div>
+				<div class="spacing"></div>
+				<button mat-icon-button aria-label="Close Menu" (click)="sidenav.close()">
+					<mat-icon>close</mat-icon>
+				</button>
+			</mat-toolbar>
+		</form>
+	</mat-sidenav>
+
+	<mat-sidenav-content>
+		<app-map #map [appComponent]="this"></app-map>
+		<button mat-fab class="button-corner" color="" aria-label="Menu" (click)="sidenav.open()">
+			<mat-icon>menu</mat-icon>
+		</button>
+	</mat-sidenav-content>
+</mat-sidenav-container>
+
+<mat-autocomplete #auto="matAutocomplete">
+	<mat-option *ngFor="let station of searchedStations | async">
+		<div class="row gap center">
+			<div class="station-color-dot" style="{{'background-color:#'+station[0]}}"></div>
+			<div>{{ station[1] }}</div>
+		</div>
+	</mat-option>
+	<mat-divider *ngIf="hasStations&&hasRoutes"/>
+	<mat-option *ngFor="let route of searchedRoutes | async">
+		<div class="row gap center">
+			<div class="station-color-dot" style="{{'background-color:#'+route[0]}}"></div>
+			<div>{{ route[1] }}</div>
+		</div>
+	</mat-option>
+</mat-autocomplete>

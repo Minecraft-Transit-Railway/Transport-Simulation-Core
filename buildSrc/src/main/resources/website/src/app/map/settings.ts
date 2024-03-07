@@ -1,6 +1,6 @@
 const SETTINGS = {
 	scale: 1,
-	maxText: 16,
+	maxText: 64,
 	maxVertices: 99999,
 	interchangeStyle: 0,
 };

@@ -1,1 +1,8 @@
-<canvas #canvas></canvas>
+<div #wrapper class="wrapper">
+	<canvas #canvas></canvas>
+	<div #labels class="labels">
+		<div *ngFor="let textLabel of textLabels" style="{{'transform:translate(-50%,0)translate('+textLabel.x+'px,'+textLabel.z+'px)'}}">
+			<div *ngFor="let textLabelText of textLabel.text" class="station-name {{textLabelText.isCjk?'cjk':''}}">{{ textLabelText.name }}</div>
+		</div>
+	</div>
+</div>

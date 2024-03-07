@@ -15,6 +15,8 @@ const callback = new Callback<[number, number, number, number, number], number>(
 	renderer.render(scene, camera);
 });
 const materialWithVertexColors = new THREE.MeshBasicMaterial({vertexColors: true});
+const blackColor = 0x000000;
+const whiteColor = 0xFFFFFF;
 let renderer: THREE.WebGLRenderer;
 let scene: THREE.Scene;
 let camera: THREE.OrthographicCamera;
@@ -59,12 +61,12 @@ function main(data: MainData) {
 		maxLineConnectionLength,
 		stationConnections,
 		backgroundColor,
-		textColor,
+		darkMode,
 		blackAndWhite,
 		routeTypesSettings,
 		interchangeStyle,
 	} = data;
-	scene.background = new THREE.Color(parseInt(backgroundColor, 16));
+	scene.background = new THREE.Color(backgroundColor).convertLinearToSRGB();
 	scene.clear();
 	callback.reset()
 
@@ -91,7 +93,7 @@ function main(data: MainData) {
 		const geometry1 = new THREE.ShapeGeometry(createShape(7));
 		const geometry2 = new THREE.ShapeGeometry(createShape(5));
 
-		const configureGeometry = (geometry: THREE.ShapeGeometry, offset: number, rotation: number, color: string) => {
+		const configureGeometry = (geometry: THREE.ShapeGeometry, offset: number, rotation: number, color: number) => {
 			const count = geometry.getAttribute("position").count;
 			const colorArray = new Uint8Array(count * 3);
 			geometry.setAttribute("color", new THREE.BufferAttribute(colorArray, 3, true));
@@ -102,8 +104,8 @@ function main(data: MainData) {
 			}
 		}
 
-		configureGeometry(geometry1, -1, rotate ? Math.PI / 4 : 0, textColor);
-		configureGeometry(geometry2, 0, rotate ? Math.PI / 4 : 0, backgroundColor);
+		configureGeometry(geometry1, -1, rotate ? Math.PI / 4 : 0, darkMode ? whiteColor : blackColor);
+		configureGeometry(geometry2, 0, rotate ? Math.PI / 4 : 0, darkMode ? blackColor : whiteColor);
 
 		const blob = new THREE.Mesh(BufferGeometryUtils.mergeGeometries([geometry1, geometry2], false), materialWithVertexColors);
 		scene.add(blob);
@@ -129,8 +131,8 @@ function main(data: MainData) {
 		const {x1, z1, x2, z2} = stationConnection;
 
 		callback.add(([zoom, centerX, centerY]) => {
-			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? textColor : backgroundColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 1 : 0, 4);
-			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? backgroundColor : textColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 2 : 1, 8);
+			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 === darkMode ? whiteColor : blackColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 1 : 0, 4);
+			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? backgroundColor : darkMode ? whiteColor : blackColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 2 : 1, 8);
 		});
 	});
 
@@ -156,9 +158,9 @@ function main(data: MainData) {
 				tempIndex = connectStations(
 					positionAttribute,
 					colorAttribute.array,
-					color,
+					parseInt(color, 16),
 					backgroundColor,
-					textColor,
+					darkMode ? whiteColor : blackColor,
 					blackAndWhite,
 					tempIndex,
 					x1 * zoom + centerX,
@@ -215,8 +217,8 @@ class MainData extends ResizeData {
 		readonly stations: Station[],
 		readonly lineConnections: LineConnection[],
 		readonly stationConnections: StationConnection[],
-		readonly backgroundColor: string,
-		readonly textColor: string,
+		readonly backgroundColor: number,
+		readonly darkMode: boolean,
 		readonly blackAndWhite: boolean,
 		readonly routeTypesSettings: { [key: string]: number },
 		readonly interchangeStyle: number
