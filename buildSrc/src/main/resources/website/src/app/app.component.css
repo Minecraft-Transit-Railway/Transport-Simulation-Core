@@ -11,45 +11,8 @@ mat-sidenav {
 	width: 24em;
 }
 
-.column {
-	display: flex;
-	flex-flow: column nowrap;
-}
-
-.column-reverse {
-	display: flex;
-	flex-flow: column-reverse nowrap;
-}
-
-.row {
-	display: flex;
-	flex-flow: row nowrap;
-}
-
-.gap {
-	gap: 1em;
-}
-
-.margin {
-	margin: 1em;
-}
-
-.center {
-	align-items: center;
-}
-
-.spacing {
-	flex-grow: 1;
-}
-
 .button-corner {
 	position: absolute;
 	right: 2em;
 	bottom: 2em;
-}
-
-.station-color-dot {
-	border-radius: 0.5em;
-	min-width: 1em;
-	min-height: 1em;
 }

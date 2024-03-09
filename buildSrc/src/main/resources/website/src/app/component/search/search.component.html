@@ -1,0 +1,20 @@
+<mat-form-field class="example-full-width">
+	<mat-label>{{ label }}</mat-label>
+	<input matInput type="search" aria-label="Search" [formControl]="searchBox" [matAutocomplete]="auto"/>
+</mat-form-field>
+
+<mat-autocomplete #auto="matAutocomplete">
+	<mat-option *ngFor="let station of searchedStations | async">
+		<div class="row gap center">
+			<div class="station-color-dot" style="{{'background-color:#'+station.color}}"></div>
+			<div>{{ station.name }}</div>
+		</div>
+	</mat-option>
+	<mat-divider *ngIf="hasStations&&hasRoutes"/>
+	<mat-option *ngFor="let route of searchedRoutes | async">
+		<div class="row gap center">
+			<div class="station-color-dot" style="{{'background-color:#'+route.color}}"></div>
+			<div>{{ route.name }}</div>
+		</div>
+	</mat-option>
+</mat-autocomplete>

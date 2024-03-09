@@ -1,4 +1,4 @@
-export class RouteType {
+class RouteType {
 	constructor(public readonly icon: string, public readonly text: string) {
 	}
 }

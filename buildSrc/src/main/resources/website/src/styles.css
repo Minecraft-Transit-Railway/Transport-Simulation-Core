@@ -14,3 +14,39 @@ html, body {
 	width: 100%;
 	height: 100%;
 }
+
+.column {
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+.column-reverse {
+	display: flex;
+	flex-flow: column-reverse nowrap;
+}
+
+.row {
+	display: flex;
+	flex-flow: row nowrap;
+}
+
+.row-reverse {
+	display: flex;
+	flex-flow: row-reverse nowrap;
+}
+
+.gap {
+	gap: 1em;
+}
+
+.margin {
+	margin: 1em;
+}
+
+.center {
+	align-items: center;
+}
+
+.spacing {
+	flex-grow: 1;
+}

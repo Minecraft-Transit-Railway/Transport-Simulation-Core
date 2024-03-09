@@ -6,7 +6,6 @@
 }
 
 canvas, .wrapper {
-	display: block;
 	width: 100%;
 	height: 100%;
 }
@@ -44,4 +43,21 @@ canvas, .wrapper {
 
 .station-name.material-symbols-outlined {
 	font-size: 1.2em;
+}
+
+.loading-background {
+	align-items: center;
+	background-color: var(--mat-app-background-color);
+	display: flex;
+	justify-content: center;
+	left: 0;
+	top: 0;
+	position: absolute;
+	transition: opacity 0.2s;
+	width: 100%;
+	height: 100%;
+}
+
+.spinner {
+	filter: grayscale(1);
 }

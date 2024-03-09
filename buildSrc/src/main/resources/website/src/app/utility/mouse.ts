@@ -9,10 +9,14 @@ export class Mouse {
 	private readonly enabled: boolean = true;
 	private firstDraw: boolean = true;
 	private touchPoints: number[][] = [];
-	private mouseCallback = () => {
-	};
+	private readonly mouseCallback;
 
-	constructor(private canvasElement: HTMLCanvasElement, wrapperElement: HTMLDivElement) {
+	constructor(
+		private canvasElement: HTMLCanvasElement,
+		wrapperElement: HTMLDivElement,
+		mouseCallback: (zoom: number, centerX: number, centerY: number, clientWidth: number, clientHeight: number) => void,
+		resizeCallback: (zoom: number, centerX: number, centerY: number, clientWidth: number, clientHeight: number) => void
+	) {
 		wrapperElement.addEventListener("wheel", (event: WheelEvent) => {
 			const {clientX, clientY, deltaY} = event;
 			this.zoomCanvas(clientX, clientY, deltaY);
@@ -72,6 +76,9 @@ export class Mouse {
 			this.touchPoints = [];
 			this.animateTarget = undefined;
 		});
+
+		this.mouseCallback = () => mouseCallback(this.zoom, this.centerX, this.centerY, this.canvasElement.clientWidth, this.canvasElement.clientHeight);
+		window.onresize = () => resizeCallback(this.zoom, this.centerX, this.centerY, this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 	}
 
 	private zoomCanvas(clientX: number, clientY: number, deltaY: number) {
@@ -142,13 +149,5 @@ export class Mouse {
 
 	public getCurrentWindowValues() {
 		return [this.zoom, this.centerX, this.centerY];
-	}
-
-	public setMouseCallback(callback: (zoom: number, centerX: number, centerY: number, clientWidth: number, clientHeight: number) => void) {
-		this.mouseCallback = () => callback(this.zoom, this.centerX, this.centerY, this.canvasElement.clientWidth, this.canvasElement.clientHeight);
-	}
-
-	public setResizeCallback(callback: (zoom: number, centerX: number, centerY: number, clientWidth: number, clientHeight: number) => void) {
-		window.onresize = () => callback(this.zoom, this.centerX, this.centerY, this.canvasElement.clientWidth, this.canvasElement.clientHeight);
 	}
 }

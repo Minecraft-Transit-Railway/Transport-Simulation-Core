@@ -1,11 +1,11 @@
-import * as THREE from "./three.module.min.js";
-import * as BufferGeometryUtils from "./BufferGeometryUtils.js";
-import {connectStations, drawLine, setColorByIndex} from "./drawing";
-import {Callback} from "./callback";
-import SETTINGS from "./settings";
-import {Station} from "../data/station";
-import {LineConnection} from "../data/lineConnection";
-import {StationConnection} from "../data/stationConnection";
+import * as THREE from "../../utility/three.module.min.js";
+import * as BufferGeometryUtils from "../../utility/BufferGeometryUtils.js";
+import {connectStations, drawLine, setColorByIndex} from "../../utility/drawing";
+import {Callback} from "../../utility/callback";
+import SETTINGS from "../../utility/settings";
+import {Station} from "../../data/station";
+import {LineConnection} from "../../data/lineConnection";
+import {StationConnection} from "../../data/stationConnection";
 
 const handlers: { setup: (data: SetupData) => void, resize: (data: ResizeData) => void, draw: (data: DrawData) => void, main: (data: MainData) => void } = {setup, resize, draw, main};
 const callback = new Callback<[number, number, number, number, number], number>(drawParameters => {
