@@ -19,11 +19,14 @@ public class WebserverSetup {
 
 	private static final Logger LOGGER = LogManager.getLogger("WebserverSetup");
 
-	public static void setup(File projectPath) {
-		final Path websitePath = projectPath.toPath().resolve("buildSrc/src/main/resources/website");
-		write(websitePath.resolve("three.module.min.js"), download("https://raw.githubusercontent.com/mrdoob/three.js/dev/build/three.module.min.js"));
-		write(websitePath.resolve("BufferGeometryUtils.js"), download("https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/utils/BufferGeometryUtils.js").replace("from 'three'", "from './three.module.min.js'"));
+	public static void download(File projectPath) {
+		final Path mapPath = projectPath.toPath().resolve("buildSrc/src/main/resources/website/src/app/utility");
+		write(mapPath.resolve("three.module.min.js"), download("https://raw.githubusercontent.com/mrdoob/three.js/dev/build/three.module.min.js"));
+		write(mapPath.resolve("BufferGeometryUtils.js"), download("https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/utils/BufferGeometryUtils.js").replace("from 'three'", "from './three.module.min.js'"));
+	}
 
+	public static void setup(File projectPath) {
+		final Path websitePath = projectPath.toPath().resolve("buildSrc/src/main/resources/website/dist/website/browser");
 		final StringBuilder stringBuilder = new StringBuilder("package org.mtr.core.generated;@javax.annotation.Nullable public final class WebserverResources{public static String get(String resource){switch(resource.startsWith(\"/\")?resource.substring(1):resource){");
 		try (final Stream<Path> stream = Files.list(websitePath)) {
 			stream.forEach(websiteFilePath -> {

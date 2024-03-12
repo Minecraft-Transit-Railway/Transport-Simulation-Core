@@ -1,33 +1,44 @@
-import {atan45, rotate, trig45} from "./utilities.js";
-import SETTINGS from "./settings.js";
+import * as THREE from "./three.module.min.js";
+import {atan45, rotate, trig45} from "../data/utilities";
+import SETTINGS from "./settings";
 
 const tan225 = Math.tan(Math.PI / 8);
 const arrowSpacing = 80;
 
-export function connectStations(positionAttribute, colorArray, color, backgroundColor, textColor, blackAndWhite, index, canvasX1, canvasY1, canvasX2, canvasY2, direction1, direction2, offset1, offset2, colorOffset, lineZ, arrowZ, hollowZ, canvasWidth, canvasHeight, oneWay, hollow, retry = true) {
-	const getOffsetX = direction => {
+export function connectStations(
+	positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array,
+	color: number, backgroundColor: number, textColor: number, blackAndWhite: boolean,
+	index: number,
+	canvasX1: number, canvasY1: number, canvasX2: number, canvasY2: number,
+	direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3,
+	offset1: number, offset2: number, colorOffset: number,
+	lineZ: number, arrowZ: number, hollowZ: number,
+	canvasWidth: number, canvasHeight: number,
+	oneWay: number, hollow: boolean, retry = true
+) {
+	const getOffsetX = (direction: 0 | 1 | 2 | 3) => {
 		switch (direction % 4) {
-			case 0:
-				return 1;
 			case 1:
 				return Math.SQRT1_2;
 			case 2:
 				return 0;
 			case 3:
 				return Math.SQRT1_2;
+			default:
+				return 1;
 		}
 	};
 
-	const getOffsetY = direction => {
+	const getOffsetY = (direction: 0 | 1 | 2 | 3) => {
 		switch (direction % 4) {
-			case 0:
-				return 0;
 			case 1:
 				return -Math.SQRT1_2;
 			case 2:
 				return 1;
 			case 3:
 				return Math.SQRT1_2;
+			default:
+				return 0;
 		}
 	};
 
@@ -42,7 +53,7 @@ export function connectStations(positionAttribute, colorArray, color, background
 	const halfY = y / 2;
 	const quadrant = x > 0 === y > 0 ? -1 : 1;
 	const horizontal = Math.abs(x) > Math.abs(y);
-	const points = [];
+	const points: [number, number, boolean | undefined][] = [];
 
 	if (direction === 0) {
 		points.push([offset1X, 0, false]);
@@ -53,30 +64,32 @@ export function connectStations(positionAttribute, colorArray, color, background
 		} else {
 			points.push([offset1X, extraY / 2 - quadrant * offset1X + quadrant * newColorOffset * Math.SQRT2, true]);
 		}
-		points.push([x + offset2X, y]);
+		points.push([x + offset2X, y, undefined]);
 	} else if (direction === 2) {
 		points.push([offset1X, 0, false]);
 		points.push([signX * Math.abs((horizontal ? y : x) * 2 / 3) + quadrant * colorOffset * Math.SQRT2 - quadrant * offset2Y, y + offset2Y, true]);
-		points.push([x, y + offset2Y]);
+		points.push([x, y + offset2Y, undefined]);
 	} else if (quadrant > 0 && direction === 3 || quadrant < 0 && direction === 1) {
 		points.push([offset1X, 0, false]);
 		if (horizontal) {
 			points.push([signX * Math.abs(y / 3) + newColorOffset * tan225, halfY + quadrant * newColorOffset, false]);
 		}
-		points.push([x + offset2X, y + offset2Y]);
+		points.push([x + offset2X, y + offset2Y, undefined]);
 	} else if (horizontal) {
 		points.push([offset1X, 0, false]);
 		points.push([x / 3 + newColorOffset * tan225, y + signY * Math.abs(x / 3) + quadrant * newColorOffset, false]);
-		points.push([x + offset2X, y + offset2Y]);
+		points.push([x + offset2X, y + offset2Y, undefined]);
 	}
 
 	if (points.length === 0) {
 		console.assert(retry, "Line not drawn", quadrant, direction);
 		if (retry) {
 			return connectStations(positionAttribute, colorArray, color, backgroundColor, textColor, blackAndWhite, index, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, lineZ, arrowZ, hollowZ, canvasWidth, canvasHeight, oneWay, hollow, false);
+		} else {
+			return index;
 		}
 	} else {
-		const newPoints = [];
+		const newPoints: [number, number][] = [];
 
 		for (let i = 1; i < points.length; i++) {
 			const [point1X, point1Y, start45] = points[i - 1];
@@ -120,7 +133,7 @@ export function connectStations(positionAttribute, colorArray, color, background
 	}
 }
 
-function connectWith45(points, x1, y1, x2, y2, start45) {
+function connectWith45(points: [number, number][], x1: number, y1: number, x2: number, y2: number, start45: boolean) {
 	const x = x2 - x1;
 	const y = y2 - y1;
 	const extraX = Math.max(0, Math.abs(x) - Math.abs(y)) * Math.sign(x);
@@ -132,7 +145,7 @@ function connectWith45(points, x1, y1, x2, y2, start45) {
 	points.push([x2, y2]);
 }
 
-export function drawLine(positionAttribute, colorArray, color, blackAndWhite, index, x1, y1, x2, y2, z, width) {
+export function drawLine(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, blackAndWhite: boolean, index: number, x1: number, y1: number, x2: number, y2: number, z: number, width: number) {
 	const angle = atan45(y2 - y1, x2 - x1);
 	const [endOffsetX1, endOffsetY1] = trig45(angle + 2, width / 2 * SETTINGS.scale);
 	const [endOffsetX2, endOffsetY2] = trig45(angle, tan225 * width / 2 * SETTINGS.scale);
@@ -148,7 +161,7 @@ export function drawLine(positionAttribute, colorArray, color, blackAndWhite, in
 	return index + 6;
 }
 
-function drawArrow(positionAttribute, colorArray, color, blackAndWhite, index, angle, x, y, z) {
+function drawArrow(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, blackAndWhite: boolean, index: number, angle: number, x: number, y: number, z: number) {
 	const [offset1X, offset1Y] = rotate(3 * SETTINGS.scale, 0, angle);
 	const [offset2X, offset2Y] = rotate(0, 3 * SETTINGS.scale, angle);
 	positionAttribute.setXYZ(index + 0, x - offset1X, -(y - offset1Y), -z);
@@ -166,26 +179,25 @@ function drawArrow(positionAttribute, colorArray, color, blackAndWhite, index, a
 	return index + 9;
 }
 
-export function setColorByIndex(colorArray, color, index, blackAndWhite) {
-	const colorInt = parseInt(color, 16);
-	const r = (colorInt >> 16) & 0xFF;
-	const g = (colorInt >> 8) & 0xFF;
-	const b = colorInt & 0xFF;
+export function setColorByIndex(colorArray: Uint8Array, color: number, index: number, blackAndWhite: boolean) {
+	const r = (color >> 16) & 0xFF;
+	const g = (color >> 8) & 0xFF;
+	const b = color & 0xFF;
 	const colorComponents = [r, g, b];
 	for (let i = 0; i < 3; i++) {
 		colorArray[index * 3 + i] = blackAndWhite ? (r + g + b) / 3 : colorComponents[i];
 	}
 }
 
-function inBounds1(x, y, canvasWidth, canvasHeight) {
-	const check = (value, space) => Math.abs(value) <= space / 2;
+function inBounds1(x: number, y: number, canvasWidth: number, canvasHeight: number) {
+	const check = (value: number, space: number) => Math.abs(value) <= space / 2;
 	return check(x, canvasWidth) && check(y, canvasHeight);
 }
 
-function inBounds2(x1, y1, x2, y2, canvasWidth, canvasHeight) {
+function inBounds2(x1: number, y1: number, x2: number, y2: number, canvasWidth: number, canvasHeight: number) {
 	const halfWidth = canvasWidth / 2;
 	const halfHeight = canvasHeight / 2;
-	const check = (check1a, check1b, check2a, check2b, border, space) => {
+	const check = (check1a: number, check1b: number, check2a: number, check2b: number, border: number, space: number) => {
 		const reverse = check1a > check2a;
 		const check3a = reverse ? check2a : check1a;
 		const check3b = reverse ? check2b : check1b;

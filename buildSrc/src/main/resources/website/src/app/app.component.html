@@ -1,0 +1,25 @@
+<mat-sidenav-container [hasBackdrop]="false">
+	<mat-sidenav #sidenav position="end" disableClose>
+		<div class="column-reverse">
+			<div class="column margin">
+				<app-search [label]="'Search for anything...'" [includeRoutes]="true"/>
+				<app-panel/>
+			</div>
+
+			<mat-toolbar>
+				<div>&nbsp;{{ getTitle() }}</div>
+				<div class="spacing"></div>
+				<button mat-icon-button aria-label="Close Menu" (click)="sidenav.close()">
+					<mat-icon>close</mat-icon>
+				</button>
+			</mat-toolbar>
+		</div>
+	</mat-sidenav>
+
+	<mat-sidenav-content>
+		<app-map/>
+		<button mat-fab class="button-corner" color="" aria-label="Menu" (click)="sidenav.open()">
+			<mat-icon>menu</mat-icon>
+		</button>
+	</mat-sidenav-content>
+</mat-sidenav-container>

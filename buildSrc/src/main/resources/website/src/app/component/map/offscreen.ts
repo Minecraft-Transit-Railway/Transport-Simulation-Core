@@ -1,29 +1,34 @@
-import * as THREE from "./three.module.min.js";
-import * as BufferGeometryUtils from "./BufferGeometryUtils.js";
-import {connectStations, drawLine, setColorByIndex} from "./drawing.js";
-import Callback from "./callback.js";
-import SETTINGS from "./settings.js";
+import * as THREE from "../../utility/three.module.min.js";
+import * as BufferGeometryUtils from "../../utility/BufferGeometryUtils";
+import {connectStations, drawLine, setColorByIndex} from "../../utility/drawing";
+import {Callback} from "../../utility/callback";
+import SETTINGS from "../../utility/settings";
+import {LineConnection} from "../../data/lineConnection";
+import {StationConnection} from "../../data/stationConnection";
+import {StationWithPosition} from "../../service/data.service";
 
-const handlers = {setup, resize, draw, main};
-const callback = new Callback(data => {
-	if (data !== undefined) {
+const handlers: { setup: (data: SetupData) => void, resize: (data: ResizeData) => void, draw: (data: DrawData) => void, main: (data: MainData) => void } = {setup, resize, draw, main};
+const callback = new Callback<[number, number, number, number, number], number>(drawParameters => {
+	if (drawParameters !== undefined) {
 		postMessage("");
 	}
 	renderer.render(scene, camera);
 });
 const materialWithVertexColors = new THREE.MeshBasicMaterial({vertexColors: true});
-let renderer;
-let scene;
-let camera;
+const blackColor = 0x000000;
+const whiteColor = 0xFFFFFF;
+let renderer: THREE.WebGLRenderer;
+let scene: THREE.Scene;
+let camera: THREE.OrthographicCamera;
 
 onmessage = ({data}) => {
-	const handler = handlers[data.type];
+	const handler = handlers[data.type as "setup" | "resize" | "draw" | "main"];
 	if (handler !== undefined) {
 		handler(data);
 	}
 };
 
-function setup(data) {
+function setup(data: SetupData) {
 	const {canvas} = data;
 	renderer = new THREE.WebGLRenderer({antialias: true, canvas});
 	renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
@@ -31,7 +36,7 @@ function setup(data) {
 	camera = new THREE.OrthographicCamera(0, 0, 0, 0, -20, 20);
 }
 
-function resize(data) {
+function resize(data: ResizeData) {
 	const {canvasWidth, canvasHeight, devicePixelRatio} = data;
 	camera.aspect = canvasWidth / canvasHeight;
 	camera.left = -canvasWidth / 2;
@@ -44,24 +49,24 @@ function resize(data) {
 	draw(data);
 }
 
-function draw(data) {
+function draw(data: DrawData) {
 	const {zoom, centerX, centerY, canvasWidth, canvasHeight, maxLineConnectionLength} = data;
 	callback.update([zoom, centerX, centerY, canvasWidth, canvasHeight], maxLineConnectionLength);
 }
 
-function main(data) {
+function main(data: MainData) {
 	const {
 		stations,
-		lineConnectionValues,
+		lineConnections,
 		maxLineConnectionLength,
-		stationConnectionValues,
+		stationConnections,
 		backgroundColor,
-		textColor,
+		darkMode,
 		blackAndWhite,
 		routeTypesSettings,
 		interchangeStyle,
 	} = data;
-	scene.background = new THREE.Color(parseInt(backgroundColor, 16));
+	scene.background = new THREE.Color(backgroundColor).convertLinearToSRGB();
 	scene.clear();
 	callback.reset()
 
@@ -70,10 +75,10 @@ function main(data) {
 		const newWidth = width * 3 * SETTINGS.scale;
 		const newHeight = height * 3 * SETTINGS.scale;
 
-		const createShape = radius => {
+		const createShape = (radius: number) => {
 			const newRadius = radius * SETTINGS.scale;
 			const shape = new THREE.Shape();
-			const toRadians = angle => angle * Math.PI / 180;
+			const toRadians = (angle: number) => angle * Math.PI / 180;
 			shape.moveTo(-newWidth, newHeight + newRadius);
 			shape.arc(0, -newRadius, newRadius, toRadians(90), toRadians(180));
 			shape.lineTo(-newWidth - newRadius, -newHeight);
@@ -88,7 +93,7 @@ function main(data) {
 		const geometry1 = new THREE.ShapeGeometry(createShape(7));
 		const geometry2 = new THREE.ShapeGeometry(createShape(5));
 
-		const configureGeometry = (geometry, offset, rotation, color) => {
+		const configureGeometry = (geometry: THREE.ShapeGeometry, offset: number, rotation: number, color: number) => {
 			const count = geometry.getAttribute("position").count;
 			const colorArray = new Uint8Array(count * 3);
 			geometry.setAttribute("color", new THREE.BufferAttribute(colorArray, 3, true));
@@ -99,8 +104,8 @@ function main(data) {
 			}
 		}
 
-		configureGeometry(geometry1, -1, rotate ? Math.PI / 4 : 0, textColor);
-		configureGeometry(geometry2, 0, rotate ? Math.PI / 4 : 0, backgroundColor);
+		configureGeometry(geometry1, -1, rotate ? Math.PI / 4 : 0, darkMode ? whiteColor : blackColor);
+		configureGeometry(geometry2, 0, rotate ? Math.PI / 4 : 0, darkMode ? blackColor : whiteColor);
 
 		const blob = new THREE.Mesh(BufferGeometryUtils.mergeGeometries([geometry1, geometry2], false), materialWithVertexColors);
 		scene.add(blob);
@@ -122,21 +127,21 @@ function main(data) {
 
 	callback.add(() => tempIndex = 0);
 
-	stationConnectionValues.forEach(stationConnection => {
+	stationConnections.forEach(stationConnection => {
 		const {x1, z1, x2, z2} = stationConnection;
 
 		callback.add(([zoom, centerX, centerY]) => {
-			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? textColor : backgroundColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 1 : 0, 4);
-			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? backgroundColor : textColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 2 : 1, 8);
+			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 === darkMode ? whiteColor : blackColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 1 : 0, 4);
+			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? backgroundColor : darkMode ? whiteColor : blackColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 2 : 1, 8);
 		});
 	});
 
-	lineConnectionValues.forEach(lineConnection => {
-		const {lineConnectionDetailsList, direction1, direction2, x1, z1, x2, z2, length} = lineConnection;
+	lineConnections.forEach(lineConnection => {
+		const {lineConnectionParts, direction1, direction2, x1, z1, x2, z2, length} = lineConnection;
 
-		for (let i = 0; i < lineConnectionDetailsList.length; i++) {
-			const {color, offset1, offset2, oneWay} = lineConnectionDetailsList[i];
-			const colorOffset = (i - lineConnectionDetailsList.length / 2 + 0.5) * 6 * SETTINGS.scale;
+		for (let i = 0; i < lineConnectionParts.length; i++) {
+			const {color, offset1, offset2, oneWay} = lineConnectionParts[i];
+			const colorOffset = (i - lineConnectionParts.length / 2 + 0.5) * 6 * SETTINGS.scale;
 			const hollow = routeTypesSettings[color.split("|")[1]] === 2;
 
 			callback.add(([zoom, centerX, centerY, canvasWidth, canvasHeight]) => {
@@ -153,9 +158,9 @@ function main(data) {
 				tempIndex = connectStations(
 					positionAttribute,
 					colorAttribute.array,
-					color,
+					parseInt(color, 16),
 					backgroundColor,
-					textColor,
+					darkMode ? whiteColor : blackColor,
 					blackAndWhite,
 					tempIndex,
 					x1 * zoom + centerX,
@@ -188,4 +193,36 @@ function main(data) {
 
 	scene.add(new THREE.Mesh(geometry, materialWithVertexColors));
 	resize(data);
+}
+
+class SetupData {
+	constructor(readonly canvas: HTMLCanvasElement) {
+	}
+}
+
+class DrawData {
+	constructor(readonly zoom: number, readonly centerX: number, readonly centerY: number, readonly canvasWidth: number, readonly canvasHeight: number, readonly maxLineConnectionLength: number) {
+	}
+}
+
+class ResizeData extends DrawData {
+	constructor(zoom: number, centerX: number, centerY: number, canvasWidth: number, canvasHeight: number, maxLineConnectionLength: number, readonly devicePixelRatio: number) {
+		super(zoom, centerX, centerY, canvasWidth, canvasHeight, maxLineConnectionLength);
+	}
+}
+
+class MainData extends ResizeData {
+	constructor(
+		zoom: number, centerX: number, centerY: number, canvasWidth: number, canvasHeight: number, maxLineConnectionLength: number, devicePixelRatio: number,
+		readonly stations: StationWithPosition[],
+		readonly lineConnections: LineConnection[],
+		readonly stationConnections: StationConnection[],
+		readonly backgroundColor: number,
+		readonly darkMode: boolean,
+		readonly blackAndWhite: boolean,
+		readonly routeTypesSettings: { [key: string]: number },
+		readonly interchangeStyle: number
+	) {
+		super(zoom, centerX, centerY, canvasWidth, canvasHeight, maxLineConnectionLength, devicePixelRatio);
+	}
 }

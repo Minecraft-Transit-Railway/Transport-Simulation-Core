@@ -1,0 +1,56 @@
+@import "@angular/material/prebuilt-themes/indigo-pink.css";
+/*@import "@angular/material/prebuilt-themes/pink-bluegrey.css";*/
+
+* {
+	margin: 0;
+	padding: 0;
+	user-select: none;
+}
+
+html, body {
+	background-color: var(--mat-app-background-color);
+	color: var(--mat-app-text-color);
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+}
+
+.column {
+	display: flex;
+	flex-flow: column nowrap;
+}
+
+.column-reverse {
+	display: flex;
+	flex-flow: column-reverse nowrap;
+}
+
+.row {
+	display: flex;
+	flex-flow: row nowrap;
+}
+
+.row-reverse {
+	display: flex;
+	flex-flow: row-reverse nowrap;
+}
+
+.gap {
+	gap: 1em;
+}
+
+.gap_small {
+	gap: 0.5em;
+}
+
+.margin {
+	margin: 1em;
+}
+
+.center {
+	align-items: center;
+}
+
+.spacing {
+	flex-grow: 1;
+}

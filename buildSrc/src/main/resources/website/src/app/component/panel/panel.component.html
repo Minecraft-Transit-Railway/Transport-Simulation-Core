@@ -1,0 +1,26 @@
+<div class="column gap">
+	<mat-expansion-panel expanded>
+		<mat-expansion-panel-header>
+			<mat-panel-title>Layers</mat-panel-title>
+		</mat-expansion-panel-header>
+
+		<div class="column gap_small">
+			<div class="row-reverse gap center" *ngFor="let routeType of routeTypes">
+				<mat-button-toggle-group #group="matButtonToggleGroup" [value]="getSelected(routeType[0])?.toString()" (change)="onSelect(routeType[0], group.value)">
+					<mat-button-toggle value="0">
+						<mat-icon>visibility_off</mat-icon>
+					</mat-button-toggle>
+					<mat-button-toggle value="1">
+						<mat-icon>horizontal_rule</mat-icon>
+					</mat-button-toggle>
+					<mat-button-toggle value="2">
+						<mat-icon>drag_handle</mat-icon>
+					</mat-button-toggle>
+				</mat-button-toggle-group>
+				<div class="spacing"></div>
+				<div class="shrink">{{ routeType[1].text }}</div>
+				<mat-icon>{{ routeType[1].icon }}</mat-icon>
+			</div>
+		</div>
+	</mat-expansion-panel>
+</div>

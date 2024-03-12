@@ -1,0 +1,9 @@
+mat-form-field {
+	width: 100%;
+}
+
+.station-color-dot {
+	border-radius: 0.5em;
+	min-width: 1em;
+	min-height: 1em;
+}
