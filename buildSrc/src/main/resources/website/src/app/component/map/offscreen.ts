@@ -1,11 +1,11 @@
-import * as THREE from "./three.module.min.js";
-import * as BufferGeometryUtils from "./BufferGeometryUtils.js";
+import * as THREE from "../../utility/three.module.min.js";
+import * as BufferGeometryUtils from "../../utility/BufferGeometryUtils";
 import {connectStations, drawLine, setColorByIndex} from "../../utility/drawing";
 import {Callback} from "../../utility/callback";
 import SETTINGS from "../../utility/settings";
-import {Station} from "../../data/station";
 import {LineConnection} from "../../data/lineConnection";
 import {StationConnection} from "../../data/stationConnection";
+import {StationWithPosition} from "../../service/data.service";
 
 const handlers: { setup: (data: SetupData) => void, resize: (data: ResizeData) => void, draw: (data: DrawData) => void, main: (data: MainData) => void } = {setup, resize, draw, main};
 const callback = new Callback<[number, number, number, number, number], number>(drawParameters => {
@@ -214,7 +214,7 @@ class ResizeData extends DrawData {
 class MainData extends ResizeData {
 	constructor(
 		zoom: number, centerX: number, centerY: number, canvasWidth: number, canvasHeight: number, maxLineConnectionLength: number, devicePixelRatio: number,
-		readonly stations: Station[],
+		readonly stations: StationWithPosition[],
 		readonly lineConnections: LineConnection[],
 		readonly stationConnections: StationConnection[],
 		readonly backgroundColor: number,

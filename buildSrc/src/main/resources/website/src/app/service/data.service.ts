@@ -426,7 +426,7 @@ export class Station {
 	}
 }
 
-class StationWithPosition extends Station {
+export class StationWithPosition extends Station {
 	public readonly types: string[] = [];
 	public readonly rotate: boolean = false;
 	public readonly routeCount: number = 0;

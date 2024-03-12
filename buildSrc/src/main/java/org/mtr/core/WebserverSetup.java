@@ -20,7 +20,7 @@ public class WebserverSetup {
 	private static final Logger LOGGER = LogManager.getLogger("WebserverSetup");
 
 	public static void download(File projectPath) {
-		final Path mapPath = projectPath.toPath().resolve("buildSrc/src/main/resources/website/src/app/component/map");
+		final Path mapPath = projectPath.toPath().resolve("buildSrc/src/main/resources/website/src/app/utility");
 		write(mapPath.resolve("three.module.min.js"), download("https://raw.githubusercontent.com/mrdoob/three.js/dev/build/three.module.min.js"));
 		write(mapPath.resolve("BufferGeometryUtils.js"), download("https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/utils/BufferGeometryUtils.js").replace("from 'three'", "from './three.module.min.js'"));
 	}
