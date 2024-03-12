@@ -1,5 +1,5 @@
-import * as THREE from "../../utility/three.module.min.js";
-import * as BufferGeometryUtils from "../../utility/BufferGeometryUtils.js";
+import * as THREE from "./three.module.min.js";
+import * as BufferGeometryUtils from "./BufferGeometryUtils.js";
 import {connectStations, drawLine, setColorByIndex} from "../../utility/drawing";
 import {Callback} from "../../utility/callback";
 import SETTINGS from "../../utility/settings";
