@@ -1,3 +1,7 @@
 .shrink {
 	overflow: hidden;
 }
+
+.mat-button-toggle-group {
+	min-width: 146px;
+}

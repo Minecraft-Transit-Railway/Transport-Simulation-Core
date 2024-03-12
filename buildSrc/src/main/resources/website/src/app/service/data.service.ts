@@ -6,6 +6,8 @@ import {StationConnection} from "../data/stationConnection";
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 
+const REFRESH_INTERVAL = 30000;
+
 @Injectable({providedIn: "root"})
 export class DataService {
 
@@ -13,7 +15,7 @@ export class DataService {
 	private routeTypes: { [key: string]: number } = {};
 	private tempRoutes: Route[] = [];
 	private stations: StationWithPosition[] = [];
-	private allStations: Station[] = [];
+	private allStations: StationWithPosition[] = [];
 	private allRoutes: Route[] = [];
 	private stationConnections: StationConnection[] = [];
 	private lineConnections: LineConnection[] = [];
@@ -21,6 +23,8 @@ export class DataService {
 	private centerX = 0;
 	private centerY = 0;
 	public drawMap: () => void = () => {
+	};
+	public animateCenter: (x: number, z: number) => void = () => {
 	};
 
 	constructor(private readonly httpClient: HttpClient) {
@@ -47,17 +51,22 @@ export class DataService {
 					}
 				});
 
-				this.routeTypes = {};
 				const allRouteTypes = Object.keys(ROUTE_TYPES);
 				for (let i = 0; i < allRouteTypes.length; i++) {
 					const routeType = allRouteTypes[i];
 					if (availableRouteTypes.includes(routeType)) {
-						this.routeTypes[routeType] = i === 0 ? 1 : i === 1 ? 2 : 0;
+						setIfUndefined(this.routeTypes, routeType, () => 0);
+					} else {
+						delete this.routeTypes[routeType];
 					}
 				}
 
+				if (availableRouteTypes.length > 0 && Object.values(this.routeTypes).every(visibility => visibility === 0)) {
+					this.routeTypes[availableRouteTypes[0]] = 1;
+				}
+
 				this.updateData();
-				setTimeout(getData, 30000);
+				setTimeout(getData, REFRESH_INTERVAL);
 			});
 		};
 
@@ -101,9 +110,42 @@ export class DataService {
 	}
 
 	public updateData() {
-		const tempStationData: { [key: string]: { id: string, name: string, color: string, zone1: number, zone2: number, zone3: number, connections: string[], xPositions: number[], yPositions: number[], zPositions: number[], types: string[] } } = {};
+		const tempStationData: {
+			[key: string]: {
+				id: string,
+				name: string,
+				color: string,
+				zone1: number,
+				zone2: number,
+				zone3: number,
+				connections: string[],
+				xPositions: number[],
+				yPositions: number[],
+				zPositions: number[],
+				xPositionsAll: number[],
+				yPositionsAll: number[],
+				zPositionsAll: number[],
+				types: string[],
+			}
+		} = {};
 		const routeTypes: string[] = [];
-		const stationsPhase1: { id: string, name: string, color: string, zone1: number, zone2: number, zone3: number, connections: string[], x: number, y: number, z: number, rotate: boolean, routeCount: number, width: number, height: number, types: string[] }[] = [];
+		const stationsPhase1: {
+			id: string,
+			name: string,
+			color: string,
+			zone1: number,
+			zone2: number,
+			zone3: number,
+			connections: string[],
+			x: number,
+			y: number,
+			z: number,
+			rotate: boolean,
+			routeCount: number,
+			width: number,
+			height: number,
+			types: string[],
+		}[] = [];
 		this.allRoutes = [];
 
 		this.tempRoutes.forEach(tempRoute => {
@@ -113,7 +155,7 @@ export class DataService {
 
 			const routeTypeSelected = this.routeTypes[tempRoute.type] > 0;
 			tempRoute.stations.forEach(({id, name, color, zone1, zone2, zone3, connections, x, y, z}) => {
-				setIfUndefined(tempStationData, id, () => ({id, name, color, zone1, zone2, zone3, connections, xPositions: [], yPositions: [], zPositions: [], types: []}));
+				setIfUndefined(tempStationData, id, () => ({id, name, color, zone1, zone2, zone3, connections, xPositions: [], yPositions: [], zPositions: [], xPositionsAll: [], yPositionsAll: [], zPositionsAll: [], types: []}));
 
 				if (routeTypeSelected) {
 					tempStationData[id].xPositions.push(x);
@@ -121,6 +163,9 @@ export class DataService {
 					tempStationData[id].zPositions.push(z);
 				}
 
+				tempStationData[id].xPositionsAll.push(x);
+				tempStationData[id].yPositionsAll.push(y);
+				tempStationData[id].zPositionsAll.push(z);
 				pushIfNotExists(tempStationData[id].types, tempRoute.type);
 				pushIfNotExists(routeTypes, tempRoute.type);
 			});
@@ -128,13 +173,28 @@ export class DataService {
 
 		this.allStations = [];
 
-		Object.values(tempStationData).forEach(tempStation => {
-			const {id, name, color, zone1, zone2, zone3, connections, xPositions, yPositions, zPositions, types} = tempStation;
+		Object.values(tempStationData).forEach(({id, name, color, zone1, zone2, zone3, connections, xPositions, yPositions, zPositions, xPositionsAll, yPositionsAll, zPositionsAll, types}) => {
+			const tempStation = {
+				id,
+				name,
+				color,
+				zone1,
+				zone2,
+				zone3,
+				connections,
+				x: arrayAverage(xPositions.length == 0 ? xPositionsAll : xPositions),
+				y: arrayAverage(yPositions.length == 0 ? yPositionsAll : yPositions),
+				z: arrayAverage(zPositions.length == 0 ? zPositionsAll : zPositions),
+				rotate: false,
+				routeCount: 0,
+				width: 0,
+				height: 0,
+				types,
+			};
 			if (xPositions.length > 0 && yPositions.length > 0 && zPositions.length > 0) {
-				stationsPhase1.push({id, name, color, zone1, zone2, zone3, connections, x: arrayAverage(xPositions), y: arrayAverage(yPositions), z: arrayAverage(zPositions), rotate: false, routeCount: 0, width: 0, height: 0, types});
+				stationsPhase1.push(tempStation);
 			}
-
-			this.allStations.push(plainToInstance(Station, tempStation));
+			this.allStations.push(plainToInstance(StationWithPosition, tempStation));
 		});
 
 		this.updateData2(stationsPhase1);

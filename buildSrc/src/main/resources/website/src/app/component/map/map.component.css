@@ -1,5 +1,4 @@
 * {
-	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
 	margin: 0;
 	padding: 0;
 	user-select: none;
@@ -23,9 +22,7 @@ canvas, .wrapper {
 
 .station-name {
 	font-size: 0.6em;
-	font-weight: 600;
 	line-height: 1.2em;
-	user-select: none;
 	white-space: nowrap;
 	text-shadow: -2px -2px 0 var(--mat-app-background-color),
 	0 -2px 0 var(--mat-app-background-color),
@@ -41,7 +38,13 @@ canvas, .wrapper {
 	font-size: 1.2em;
 }
 
-.station-name.material-symbols-outlined {
+.station-name.text {
+	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
+	font-weight: 600;
+}
+
+
+.station-name.icon {
 	font-size: 1.2em;
 }
 

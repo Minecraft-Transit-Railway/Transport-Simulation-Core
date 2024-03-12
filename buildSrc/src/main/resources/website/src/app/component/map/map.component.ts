@@ -7,6 +7,7 @@ import {ROUTE_TYPES} from "../../data/routeType";
 import {NgForOf, NgIf} from "@angular/common";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {DataService} from "../../service/data.service";
+import {MatIcon} from "@angular/material/icon";
 
 @Component({
 	selector: "app-map",
@@ -15,6 +16,7 @@ import {DataService} from "../../service/data.service";
 		NgForOf,
 		MatProgressSpinner,
 		NgIf,
+		MatIcon,
 	],
 	templateUrl: "./map.component.html",
 	styleUrls: ["./map.component.css"],
@@ -76,7 +78,7 @@ export class MapComponent implements AfterViewInit {
 				const newHeight = height * 3 * SETTINGS.scale;
 				const textOffset = (rotate ? Math.max(newHeight, newWidth) * Math.SQRT1_2 : newHeight) + 9 * SETTINGS.scale;
 				const textLabelTexts: TextLabelText[] = name.split("|").map(namePart => new TextLabelText(namePart, isCJK(namePart)));
-				const icons = types.filter(type => this.dataService.getRouteTypes()[type] === 0).map(type => ROUTE_TYPES[type].icon).join("");
+				const icons = types.filter(type => this.dataService.getRouteTypes()[type] === 0).map(type => ROUTE_TYPES[type].icon);
 
 				callback.add(([zoom, centerX, centerY]) => {
 					const canvasX = x * zoom + centerX;
@@ -113,11 +115,13 @@ export class MapComponent implements AfterViewInit {
 			});
 			callback.update([zoom, centerX, centerY]);
 		};
+
+		this.dataService.animateCenter = (x, z) => mouse.animateCenter(-x, -z);
 	}
 }
 
 class TextLabel {
-	constructor(public readonly text: TextLabelText[], public readonly icons: string, public readonly x: number, public readonly z: number) {
+	constructor(public readonly text: TextLabelText[], public readonly icons: string[], public readonly x: number, public readonly z: number) {
 	}
 }
 

@@ -33,8 +33,8 @@ export class SearchComponent implements OnInit {
 	@Input() label!: string;
 	@Input() includeRoutes!: boolean;
 	searchBox = new FormControl("");
-	searchedStations = new Observable<{ color: string, name: string }[]>();
-	searchedRoutes = new Observable<{ color: string, name: string }[]>();
+	searchedStations$ = new Observable<{ id: string, color: string, name: string }[]>();
+	searchedRoutes$ = new Observable<{ id: string, color: string, name: string }[]>();
 	hasStations = false;
 	hasRoutes = false;
 
@@ -42,27 +42,38 @@ export class SearchComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		const filter = (getList: () => { color: string, name: string }[], setHasData: (value: boolean) => void): Observable<{ color: string, name: string }[]> => this.searchBox.valueChanges.pipe(map(value => {
+		const filter = (getList: () => { id: string, color: string, name: string }[], setHasData: (value: boolean) => void): Observable<{ id: string, color: string, name: string }[]> => this.searchBox.valueChanges.pipe(map(value => {
 			if (value == null || value === "") {
 				return [];
 			} else {
-				const matches: { color: string, name: string, index: number }[] = [];
-				getList().forEach(({color, name}) => {
+				const matches: { id: string, color: string, name: string, index: number }[] = [];
+				getList().forEach(({id, color, name}) => {
 					const index = name.toLowerCase().indexOf(value.toLowerCase());
 					if (index >= 0) {
-						matches.push({color, name, index});
+						matches.push({id, color, name, index});
 					}
 				});
-				const result: { color: string, name: string }[] = matches.sort((match1, match2) => {
+				const result: { id: string, color: string, name: string }[] = matches.sort((match1, match2) => {
 					const indexDifference = match1.index - match2.index;
 					return indexDifference === 0 ? match1.name.localeCompare(match2.name) : indexDifference;
-				}).map(({color, name}) => ({color, name}));
+				});
 				setHasData(result.length > 0);
 				return result;
 			}
 		}));
 
-		this.searchedStations = filter(() => this.simplifyStationsPipe.transform(this.dataService.getAllStations()), value => this.hasStations = value);
-		this.searchedRoutes = filter(() => this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.getAllRoutes()) : [], value => this.hasRoutes = value);
+		this.searchedStations$ = filter(() => this.simplifyStationsPipe.transform(this.dataService.getAllStations()), value => this.hasStations = value);
+		this.searchedRoutes$ = filter(() => this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.getAllRoutes()) : [], value => this.hasRoutes = value);
+	}
+
+	zoomToStation(id: string) {
+		const station = this.dataService.getAllStations().filter(station => station.id === id)[0];
+		if (station) {
+			if (station.types.every(routeType => this.dataService.getRouteTypes()[routeType] === 0)) {
+				station.types.forEach(routeType => this.dataService.getRouteTypes()[routeType] = 1);
+				this.dataService.updateData();
+			}
+			this.dataService.animateCenter(station.x, station.z);
+		}
 	}
 }

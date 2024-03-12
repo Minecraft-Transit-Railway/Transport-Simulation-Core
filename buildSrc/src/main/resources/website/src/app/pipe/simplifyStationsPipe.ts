@@ -8,7 +8,7 @@ import {Station} from "../service/data.service";
 })
 export class SimplifyStationsPipe implements PipeTransform {
 
-	transform(stations: Station[]): { color: string, name: string }[] {
-		return stations.map(station => ({color: station.color, name: station.name}));
+	transform(stations: Station[]): { id: string, color: string, name: string }[] {
+		return stations.map(station => ({id: station.id, color: station.color, name: station.name}));
 	}
 }

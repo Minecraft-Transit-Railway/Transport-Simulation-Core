@@ -39,6 +39,10 @@ html, body {
 	gap: 1em;
 }
 
+.gap_small {
+	gap: 0.5em;
+}
+
 .margin {
 	margin: 1em;
 }
