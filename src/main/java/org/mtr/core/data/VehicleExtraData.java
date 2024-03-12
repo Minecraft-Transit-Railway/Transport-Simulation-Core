@@ -23,8 +23,8 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	public final ObjectImmutableList<PathData> immutablePath;
 	public final ObjectImmutableList<VehicleCar> immutableVehicleCars;
 
-	private VehicleExtraData(long sidingId, double railLength, double totalVehicleLength, long repeatIndex1, long repeatIndex2, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double totalDistance, double defaultPosition, ObjectArrayList<VehicleCar> vehicleCars, ObjectArrayList<PathData> path) {
-		super(sidingId, railLength, totalVehicleLength, repeatIndex1, repeatIndex2, acceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition);
+	private VehicleExtraData(long sidingId, double railLength, double totalVehicleLength, long repeatIndex1, long repeatIndex2, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double totalDistance, double defaultPosition, ObjectArrayList<VehicleCar> vehicleCars, ObjectArrayList<PathData> path, double brakingPower) {
+		super(sidingId, railLength, totalVehicleLength, repeatIndex1, repeatIndex2, acceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition, brakingPower);
 		this.path.clear();
 		this.path.addAll(path);
 		immutablePath = new ObjectImmutableList<>(path);
@@ -196,6 +196,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return acceleration;
 	}
 
+	public double getBrakingPower() {
+		return brakingPower;
+	}
+
 	public void iterateInterchanges(BiConsumer<String, InterchangeColorsForStationName> consumer) {
 		interchangeColorsForStationNameList.forEach(interchangeColorsForStationName -> consumer.accept(interchangeColorsForStationName.getStationName(), interchangeColorsForStationName));
 	}
@@ -227,7 +231,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	protected int getRepeatIndex2() {
 		return (int) repeatIndex2;
 	}
-
+  
 	protected boolean getIsManualAllowed() {
 		return isManualAllowed;
 	}
@@ -382,7 +386,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	public static VehicleExtraData create(
 			long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
 			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
-			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime
+			boolean repeatInfinitely, double acceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double brakingPower
 	) {
 		final double newRailLength = Siding.getRailLength(railLength);
 		final double newTotalVehicleLength = Siding.getTotalVehicleLength(vehicleCars);
@@ -390,9 +394,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		final long repeatIndex1 = pathSidingToMainRoute.size();
 		final long repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 		final double newAcceleration = Siding.roundAcceleration(acceleration);
+		final double newBrakingPower = Siding.roundAcceleration(brakingPower);
 		final double totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).getEndDistance();
 		final double defaultPosition = (newRailLength + newTotalVehicleLength) / 2;
-		return new VehicleExtraData(sidingId, newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path);
+		return new VehicleExtraData(sidingId, newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path, newBrakingPower);
 	}
 
 	private static ObjectArrayList<PathData> createPathData(ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, boolean repeatInfinitely, PathData defaultPathData) {

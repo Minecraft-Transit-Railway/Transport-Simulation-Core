@@ -169,6 +169,10 @@
 			"items": {
 				"$ref": "vehicleRidingEntity.json"
 			}
+		},
+		"brakingPower": {
+			"type": "number",
+			"minimum": 0
 		}
 	},
 	"required": [
@@ -182,6 +186,7 @@
 		"maxManualSpeed",
 		"manualToAutomaticTime",
 		"totalDistance",
-		"defaultPosition"
+		"defaultPosition",
+		"brakingPower"
 	]
 }

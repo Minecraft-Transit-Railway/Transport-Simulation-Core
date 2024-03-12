@@ -30,6 +30,11 @@
 			"type": "number",
 			"default": 0.000004,
 			"minimum": 0
+		},
+		"brakingPower": {
+			"type": "number",
+			"default": 0.000004,
+			"minimum": 0
 		}
 	},
 	"required": [
