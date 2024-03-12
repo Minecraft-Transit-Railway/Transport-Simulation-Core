@@ -7,14 +7,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@main
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Setup Node packages
-        run: npm ci --prefix buildSrc/src/main/resources/website
-      - name: Build Angular
-        run: npm run build --prefix buildSrc/src/main/resources/website
       - name: Validate gradle wrapper
         uses: gradle/wrapper-validation-action@main
       - name: Setup JDK 17
@@ -25,6 +17,16 @@ jobs:
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: Setup files
+        run: ./gradlew setupFiles
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Setup Node packages
+        run: npm ci --prefix buildSrc/src/main/resources/website
+      - name: Build Angular
+        run: npm run build --prefix buildSrc/src/main/resources/website
+      - name: Setup files again
         run: ./gradlew setupFiles
       - name: Build
         run: ./gradlew build buildSrc:build
