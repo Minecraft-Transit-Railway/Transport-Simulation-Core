@@ -16,8 +16,8 @@ jobs:
           distribution: 'zulu'
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
-      - name: Setup files
-        run: ./gradlew setupFiles
+      - name: Download webserver files
+        run: ./gradlew downloadWebserverFiles
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -26,8 +26,8 @@ jobs:
         run: npm ci --prefix buildSrc/src/main/resources/website
       - name: Build Angular
         run: npm run build --prefix buildSrc/src/main/resources/website
-      - name: Setup files again
-        run: ./gradlew setupFiles
+      - name: Generate schema classes
+        run: ./gradlew generateSchemaClasses
       - name: Build
         run: ./gradlew build buildSrc:build
       - name: Run JUnits

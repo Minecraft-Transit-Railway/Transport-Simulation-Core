@@ -57,7 +57,11 @@ test {
 	testLogging { showStandardStreams = true }
 }
 
-tasks.register("setupFiles") {
+tasks.register("downloadWebserverFiles") {
+	WebserverSetup.download(project.rootDir)
+}
+
+tasks.register("generateSchemaClasses") {
 	Generator.generate(project, "schema/data", "core/generated/data", true, "core.data", "core.simulation")
 	Generator.generate(project, "schema/legacy", "legacy/generated/data", false, "core.data", "legacy.data")
 	Generator.generate(project, "schema/integration", "core/generated/integration", false, "core.data", "core.integration")
