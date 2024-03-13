@@ -5,6 +5,7 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
+import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
@@ -173,10 +174,11 @@ public class Vehicle extends VehicleSchema {
 			checkRailProgress += (reversed ? 1 : -1) * vehicleCar.getCouplingPadding1(i == 0);
 			final double halfLength = vehicleCar.getLength() / 2;
 			final ObjectArrayList<ObjectObjectImmutablePair<Vector, Vector>> bogiePositionsList = new ObjectArrayList<>();
-			bogiePositionsList.add(getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie1Position())));
+			final DoubleArrayList overrideY = new DoubleArrayList(); // For airplanes, don't nosedive when descending
+			bogiePositionsList.add(getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie1Position()), overrideY));
 
 			if (!vehicleCar.hasOneBogie) {
-				bogiePositionsList.add(getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie2Position())));
+				bogiePositionsList.add(getBogiePositions(checkRailProgress + (reversed ? 1 : -1) * (halfLength + vehicleCar.getBogie2Position()), overrideY));
 			}
 
 			vehicleCarsAndPositions.add(new ObjectObjectImmutablePair<>(vehicleCar, bogiePositionsList));
@@ -457,12 +459,26 @@ public class Vehicle extends VehicleSchema {
 	}
 
 	@Nullable
-	private Vector getPosition(double value) {
+	private Vector getPosition(double value, DoubleArrayList overrideY) {
 		final PathData pathData = Utilities.getElement(vehicleExtraData.immutablePath, Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, value));
-		return pathData == null ? null : pathData.getPosition(value - pathData.getStartDistance());
+		if (pathData == null) {
+			return null;
+		} else {
+			final Vector vector = pathData.getPosition(value - pathData.getStartDistance());
+			if (transportMode == TransportMode.AIRPLANE && pathData.getSpeedLimitKilometersPerHour() == 900 && pathData.isDescending()) {
+				if (overrideY.isEmpty()) {
+					overrideY.add(vector.y);
+					return vector;
+				} else {
+					return new Vector(vector.x, overrideY.getDouble(0), vector.z);
+				}
+			} else {
+				return vector;
+			}
+		}
 	}
 
-	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {
+	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value, DoubleArrayList overrideY) {
 		final double lowerBound = railProgress - vehicleExtraData.getTotalVehicleLength();
 		final double clampedValue = Utilities.clamp(value, lowerBound, railProgress);
 		final double value1;
@@ -470,8 +486,8 @@ public class Vehicle extends VehicleSchema {
 		final double clamp = Utilities.clamp(Math.min(Math.abs(clampedValue - lowerBound), Math.abs(clampedValue - railProgress)), 0.1, 1);
 		value1 = Utilities.clamp(clampedValue + (reversed ? -clamp : clamp), lowerBound, railProgress);
 		value2 = Utilities.clamp(clampedValue - (reversed ? -clamp : clamp), lowerBound, railProgress);
-		final Vector position1 = getPosition(value1);
-		final Vector position2 = getPosition(value2);
+		final Vector position1 = getPosition(value1, overrideY);
+		final Vector position2 = getPosition(value2, overrideY);
 		return position1 == null || position2 == null ? new ObjectObjectImmutablePair<>(new Vector(value1, 0, 0), new Vector(value2, 0, 0)) : new ObjectObjectImmutablePair<>(position1, position2);
 	}
 

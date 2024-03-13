@@ -103,6 +103,10 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return rail == null ? endDistance - startDistance : rail.railMath.getLength();
 	}
 
+	public boolean isDescending() {
+		return endPosition.getY() < startPosition.getY();
+	}
+
 	public Vector getPosition(double rawValue) {
 		if (rail != null && rail.railMath.isValid()) {
 			return rail.railMath.getPosition(rawValue, reversePositions);
