@@ -175,7 +175,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	public void tick() {
-		SidingPathFinder.findPathTick(path, sidingPathFinders, () -> {
+		SidingPathFinder.findPathTick(path, sidingPathFinders, cruisingAltitude, () -> {
 			if (!platformsInRoute.isEmpty()) {
 				savedRails.forEach(siding -> {
 					siding.generateRoute(Utilities.getElement(platformsInRoute, 0).left(), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1).left(), platformsInRoute.size(), cruisingAltitude);

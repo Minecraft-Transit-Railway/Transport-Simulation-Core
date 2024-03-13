@@ -459,12 +459,17 @@ public class Vehicle extends VehicleSchema {
 	@Nullable
 	private Vector getPosition(double value) {
 		final PathData pathData = Utilities.getElement(vehicleExtraData.immutablePath, Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, value));
-		return pathData == null ? null : pathData.getPosition(value - pathData.getStartDistance());
+		return pathData == null ? null : pathData.getPosition(value - pathData.getStartDistance(), transportMode);
 	}
 
 	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {
-		final double value1 = value + (reversed ? -1 : 1);
-		final double value2 = value - (reversed ? -1 : 1);
+		final double lowerBound = railProgress - vehicleExtraData.getTotalVehicleLength();
+		final double clampedValue = Utilities.clamp(value, lowerBound, railProgress);
+		final double value1;
+		final double value2;
+		final double clamp = Utilities.clamp(Math.min(Math.abs(clampedValue - lowerBound), Math.abs(clampedValue - railProgress)), 0.1, 1);
+		value1 = Utilities.clamp(clampedValue + (reversed ? -clamp : clamp), lowerBound, railProgress);
+		value2 = Utilities.clamp(clampedValue - (reversed ? -clamp : clamp), lowerBound, railProgress);
 		final Vector position1 = getPosition(value1);
 		final Vector position2 = getPosition(value2);
 		return position1 == null || position2 == null ? new ObjectObjectImmutablePair<>(new Vector(value1, 0, 0), new Vector(value2, 0, 0)) : new ObjectObjectImmutablePair<>(position1, position2);

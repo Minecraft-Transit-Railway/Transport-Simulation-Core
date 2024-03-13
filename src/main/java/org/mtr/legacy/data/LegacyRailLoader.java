@@ -56,7 +56,7 @@ public final class LegacyRailLoader {
 									startPosition, startAngle,
 									endPosition, endAngle,
 									shape, Math.max(verticalRadius, 0), modelKey, railType.speedLimitKilometersPerHour, oldRailType.speedLimitKilometersPerHour,
-									false, false, true, true, transportMode
+									false, false, true, railType == DataFixer.RailType.RUNWAY, true, transportMode
 							);
 							break;
 					}

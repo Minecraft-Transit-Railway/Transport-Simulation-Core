@@ -23,12 +23,12 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	private final Long2LongAVLTreeMap blockedVehicleIdsOld = new Long2LongAVLTreeMap();
 	private final boolean reversePositions;
 
-	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canHaveSignal, TransportMode transportMode) {
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canHaveSignal, transportMode);
+	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode) {
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canConnectRemotely, canHaveSignal, transportMode);
 	}
 
 	public static Rail newTurnBackRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, 80, 80, false, false, false, true, false, transportMode);
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, 80, 80, false, false, false, true, false, false, transportMode);
 	}
 
 	public static Rail newPlatformRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
@@ -41,7 +41,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 
 	private static Rail newPlatformOrSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, boolean isPlatform, TransportMode transportMode) {
 		final long speedLimit = isPlatform ? 80 : 40;
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit, speedLimit, isPlatform, !isPlatform, false, false, true, transportMode);
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit, speedLimit, isPlatform, !isPlatform, false, false, false, true, transportMode);
 	}
 
 	public static Rail copy(Rail rail, Shape newShape, double newVerticalRadius) {
@@ -49,7 +49,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 				rail.position1, rail.angle1,
 				rail.position2, rail.angle2,
 				newShape, newVerticalRadius, rail.style, rail.speedLimit1, rail.speedLimit2,
-				rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canHaveSignal, rail.transportMode
+				rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canConnectRemotely, rail.canHaveSignal, rail.transportMode
 		);
 	}
 
@@ -57,9 +57,9 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 			Position position1, Angle angle1,
 			Position position2, Angle angle2,
 			Rail.Shape shape, double verticalRadius, String style, long speedLimit1, long speedLimit2,
-			boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canTurnBack, boolean canHaveSignal, TransportMode transportMode
+			boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canTurnBack, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode
 	) {
-		super(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, canTurnBack, canHaveSignal, transportMode);
+		super(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, canTurnBack, canConnectRemotely, canHaveSignal, transportMode);
 		reversePositions = position1.compareTo(position2) > 0;
 		railMath = reversePositions ? new RailMath(position2, angle2, position1, angle1, shape, verticalRadius) : new RailMath(position1, angle1, position2, angle2, shape, verticalRadius);
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
@@ -138,6 +138,10 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 
 	public boolean canTurnBack() {
 		return canTurnBack;
+	}
+
+	public boolean canConnectRemotely() {
+		return canConnectRemotely;
 	}
 
 	public boolean closeTo(Position position, double radius) {

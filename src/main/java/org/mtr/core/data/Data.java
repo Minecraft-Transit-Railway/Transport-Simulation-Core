@@ -5,10 +5,7 @@ import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import java.util.Collection;
 import java.util.Map;
@@ -34,6 +31,8 @@ public abstract class Data {
 	public final Object2ObjectOpenHashMap<String, Rail> railIdMap = new Object2ObjectOpenHashMap<>();
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail = new Object2ObjectOpenHashMap<>();
+	public final Object2ObjectOpenHashMap<Position, Rail> runwaysInbound = new Object2ObjectOpenHashMap<>();
+	public final ObjectOpenHashSet<Position> runwaysOutbound = new ObjectOpenHashSet<>();
 	public final Long2ObjectOpenHashMap<Position> platformIdToPosition = new Long2ObjectOpenHashMap<>();
 
 	public void sync() {
@@ -43,6 +42,33 @@ public abstract class Data {
 			positionsToRail.clear();
 			rails.forEach(rail -> rail.writePositionsToRailCache(positionsToRail));
 			rails.forEach(rail -> rail.writeConnectedRailsCacheFromMap(positionsToRail));
+
+			// clear runways
+			// write runways
+			runwaysInbound.clear();
+			runwaysOutbound.clear();
+			rails.forEach(rail -> {
+				if (rail.canConnectRemotely()) {
+					final Position position1 = rail.getPosition1();
+					final Position position2 = rail.getPosition2();
+					if (rail.speedLimit1MetersPerMillisecond > 0) {
+						if (positionsToRail.get(position1).size() == 1) {
+							runwaysInbound.put(position1, rail);
+						}
+						if (positionsToRail.get(position2).size() == 1) {
+							runwaysOutbound.add(position2);
+						}
+					}
+					if (rail.speedLimit2MetersPerMillisecond > 0) {
+						if (positionsToRail.get(position2).size() == 1) {
+							runwaysInbound.put(position2, rail);
+						}
+						if (positionsToRail.get(position1).size() == 1) {
+							runwaysOutbound.add(position1);
+						}
+					}
+				}
+			});
 
 			if (this instanceof Simulator) {
 				platforms.removeIf(platform -> platform.isInvalidSavedRail(this));

@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import org.mtr.core.generated.data.PathDataSchema;
+import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.MessagePackReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Angle;
@@ -18,16 +19,16 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	private Rail rail;
 	public final boolean reversePositions;
 
-	public PathData(Rail rail, long savedRailBaseId, long dwellTime, int stopIndex, Position startPosition, Position endPosition) {
-		this(rail, savedRailBaseId, dwellTime, stopIndex, 0, 0, startPosition, endPosition);
+	public PathData(Rail rail, long savedRailBaseId, long dwellTime, int stopIndex, Position startPosition, @Nullable Angle startAngle, Position endPosition, @Nullable Angle endAngle) {
+		this(rail, savedRailBaseId, dwellTime, stopIndex, 0, 0, startPosition, startAngle == null ? Angle.E : startAngle, endPosition, endAngle == null ? Angle.E : endAngle);
 	}
 
 	public PathData(PathData oldPathData, double startDistance, double endDistance) {
-		this(oldPathData.rail, oldPathData.savedRailBaseId, oldPathData.dwellTime, oldPathData.stopIndex, startDistance, endDistance, oldPathData.startPosition, oldPathData.endPosition);
+		this(oldPathData.rail, oldPathData.savedRailBaseId, oldPathData.dwellTime, oldPathData.stopIndex, startDistance, endDistance, oldPathData.startPosition, oldPathData.startAngle, oldPathData.endPosition, oldPathData.endAngle);
 	}
 
-	public PathData(@Nullable Rail rail, long savedRailBaseId, long dwellTime, long stopIndex, double startDistance, double endDistance, Position startPosition, Position endPosition) {
-		super(savedRailBaseId, dwellTime, stopIndex, startDistance, endDistance, startPosition, endPosition);
+	public PathData(@Nullable Rail rail, long savedRailBaseId, long dwellTime, long stopIndex, double startDistance, double endDistance, Position startPosition, @Nullable Angle startAngle, Position endPosition, @Nullable Angle endAngle) {
+		super(savedRailBaseId, dwellTime, stopIndex, startDistance, endDistance, startPosition, startAngle == null ? Angle.E : startAngle, endPosition, endAngle == null ? Angle.E : endAngle);
 		this.rail = rail;
 		reversePositions = startPosition.compareTo(endPosition) > 0;
 	}
@@ -102,8 +103,14 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return rail == null ? endDistance - startDistance : rail.railMath.getLength();
 	}
 
-	public Vector getPosition(double rawValue) {
+	public Vector getPosition(double rawValue, TransportMode transportMode) {
 		if (rail == null) {
+			rail = Rail.newRail(startPosition, startAngle, endPosition, endAngle, Rail.Shape.QUADRATIC, 0, "", SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
+		}
+
+		if (rail.railMath.isValid()) {
+			return rail.railMath.getPosition(rawValue, reversePositions);
+		} else {
 			// TODO better positioning when vehicle is moving too quickly
 			final double ratio = Utilities.clamp(rawValue / getRailLength(), 0, 1);
 			return new Vector(
@@ -111,8 +118,6 @@ public class PathData extends PathDataSchema implements ConditionalList {
 					startPosition.getY() + ratio * (endPosition.getY() - startPosition.getY()),
 					startPosition.getZ() + ratio * (endPosition.getZ() - startPosition.getZ()) + 0.5
 			);
-		} else {
-			return rail.railMath.getPosition(rawValue, reversePositions);
 		}
 	}
 

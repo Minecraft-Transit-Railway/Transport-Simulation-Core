@@ -24,8 +24,14 @@
 		"startPosition": {
 			"$ref": "position.json"
 		},
+		"startAngle": {
+			"$ref": "Angle"
+		},
 		"endPosition": {
 			"$ref": "position.json"
+		},
+		"endAngle": {
+			"$ref": "Angle"
 		}
 	},
 	"required": [
@@ -35,6 +41,8 @@
 		"startDistance",
 		"endDistance",
 		"startPosition",
-		"endPosition"
+		"startAngle",
+		"endPosition",
+		"endAngle"
 	]
 }

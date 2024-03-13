@@ -80,6 +80,12 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	@Override
+	public void updateData(ReaderBase readerBase) {
+		super.updateData(readerBase);
+		vehicles.removeIf(vehicle -> !vehicle.getIsOnRoute());
+	}
+
+	@Override
 	public void serializeFullData(WriterBase writerBase) {
 		super.serializeFullData(writerBase);
 		writerBase.writeDataset(pathSidingToMainRoute, KEY_PATH_SIDING_TO_MAIN_ROUTE);
@@ -176,11 +182,11 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public boolean tick() {
 		// Generate any pending paths
-		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, this::finishGeneratingPath, (startSavedRail, endSavedRail) -> {
+		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, area == null ? 0 : area.getCruisingAltitude(), this::finishGeneratingPath, (startSavedRail, endSavedRail) -> {
 			Main.LOGGER.info(String.format("Path not found from %s siding %s to main route", getDepotName(), name));
 			finishGeneratingPath();
 		});
-		SidingPathFinder.findPathTick(pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, () -> {
+		SidingPathFinder.findPathTick(pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, area == null ? 0 : area.getCruisingAltitude(), () -> {
 			if (area != null) {
 				if (SidingPathFinder.overlappingPaths(area.getPath(), pathMainRouteToSiding)) {
 					pathMainRouteToSiding.remove(0);
@@ -196,7 +202,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		if (defaultPathData == null) {
 			final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
 			if (rail != null) {
-				defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, position2);
+				defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, null, position2, null);
 			}
 			return defaultPathData == null;
 		} else {

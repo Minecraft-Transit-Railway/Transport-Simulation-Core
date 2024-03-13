@@ -44,6 +44,9 @@
 		"canTurnBack": {
 			"type": "boolean"
 		},
+		"canConnectRemotely": {
+			"type": "boolean"
+		},
 		"canHaveSignal": {
 			"type": "boolean"
 		},
@@ -71,6 +74,7 @@
 		"isSiding",
 		"canAccelerate",
 		"canTurnBack",
+		"canConnectRemotely",
 		"canHaveSignal",
 		"transportMode"
 	]
