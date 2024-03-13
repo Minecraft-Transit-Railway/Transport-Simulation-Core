@@ -73,14 +73,14 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	public void init() {
-		writePathCache(true);
+		writePathCache();
 		savedRails.forEach(Siding::init); // Sidings not under a depot will be ignored, but it doesn't matter
 		generatePlatformDirectionsAndWriteDeparturesToSidings();
 	}
 
-	public void writePathCache(boolean removePathIfInvalid) {
-		PathData.writePathCache(path, data, removePathIfInvalid);
-		savedRails.forEach(siding -> siding.writePathCache(removePathIfInvalid));
+	public void writePathCache() {
+		PathData.writePathCache(path, data, transportMode);
+		savedRails.forEach(Siding::writePathCache);
 	}
 
 	public void setUseRealTime(boolean useRealTime) {

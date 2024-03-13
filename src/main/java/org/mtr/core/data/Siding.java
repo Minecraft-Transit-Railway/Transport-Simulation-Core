@@ -418,9 +418,9 @@ public final class Siding extends SidingSchema implements Utilities {
 		return transportMode.continuousMovement ? new Frequency(currentMillis) : null;
 	}
 
-	void writePathCache(boolean removePathIfInvalid) {
-		PathData.writePathCache(pathSidingToMainRoute, data, removePathIfInvalid);
-		PathData.writePathCache(pathMainRouteToSiding, data, removePathIfInvalid);
+	void writePathCache() {
+		PathData.writePathCache(pathSidingToMainRoute, data, transportMode);
+		PathData.writePathCache(pathMainRouteToSiding, data, transportMode);
 	}
 
 	private String getDepotName() {

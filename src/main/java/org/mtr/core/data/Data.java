@@ -115,7 +115,7 @@ public abstract class Data {
 			// write path data cache
 			depots.forEach(depot -> {
 				depot.writeRouteCache(routeIdMap);
-				depot.writePathCache(false);
+				depot.writePathCache();
 			});
 
 			// clear station connections

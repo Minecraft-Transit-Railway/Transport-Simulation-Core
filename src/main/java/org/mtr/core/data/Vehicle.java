@@ -459,7 +459,7 @@ public class Vehicle extends VehicleSchema {
 	@Nullable
 	private Vector getPosition(double value) {
 		final PathData pathData = Utilities.getElement(vehicleExtraData.immutablePath, Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, value));
-		return pathData == null ? null : pathData.getPosition(value - pathData.getStartDistance(), transportMode);
+		return pathData == null ? null : pathData.getPosition(value - pathData.getStartDistance());
 	}
 
 	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value) {

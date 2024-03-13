@@ -103,12 +103,8 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return rail == null ? endDistance - startDistance : rail.railMath.getLength();
 	}
 
-	public Vector getPosition(double rawValue, TransportMode transportMode) {
-		if (rail == null) {
-			rail = Rail.newRail(startPosition, startAngle, endPosition, endAngle, Rail.Shape.QUADRATIC, 0, "", SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
-		}
-
-		if (rail.railMath.isValid()) {
+	public Vector getPosition(double rawValue) {
+		if (rail != null && rail.railMath.isValid()) {
 			return rail.railMath.getPosition(rawValue, reversePositions);
 		} else {
 			// TODO better positioning when vehicle is moving too quickly
@@ -129,18 +125,14 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return getRail().getSignalColors();
 	}
 
-	public boolean writePathCache(Data data) {
+	public void writePathCache(Data data, TransportMode transportMode) {
 		rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
-		return rail == null;
+		if (rail == null) {
+			rail = Rail.newRail(startPosition, startAngle, endPosition, endAngle, Rail.Shape.QUADRATIC, 0, "", SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
+		}
 	}
 
-	public static void writePathCache(ObjectArrayList<PathData> path, Data data, boolean removePathIfInvalid) {
-		final ObjectArrayList<PathData> pathDataToRemove = new ObjectArrayList<>();
-		path.forEach(pathData -> {
-			if (pathData.writePathCache(data) && removePathIfInvalid) {
-				pathDataToRemove.add(pathData);
-			}
-		});
-		pathDataToRemove.forEach(path::remove);
+	public static void writePathCache(ObjectArrayList<PathData> path, Data data, TransportMode transportMode) {
+		path.forEach(pathData -> pathData.writePathCache(data, transportMode));
 	}
 }
