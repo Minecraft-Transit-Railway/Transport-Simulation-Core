@@ -77,6 +77,10 @@ public final class ArrivalResponse extends ArrivalResponseSchema implements Comp
 		return platformName;
 	}
 
+	public int getCarCount() {
+		return cars.size();
+	}
+
 	public void iterateCarDetails(Consumer<CarDetails> consumer) {
 		cars.forEach(consumer);
 	}

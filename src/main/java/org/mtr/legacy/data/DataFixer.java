@@ -114,6 +114,8 @@ public final class DataFixer {
 						}
 					} else if (transportMode == TransportMode.CABLE_CAR) {
 						vehicleId = trainId + (trainId.endsWith("_rht") ? "" : "_lht");
+					} else if (transportMode == TransportMode.BOAT) {
+						vehicleId = trainId + "_small";
 					} else {
 						vehicleId = trainId;
 					}
