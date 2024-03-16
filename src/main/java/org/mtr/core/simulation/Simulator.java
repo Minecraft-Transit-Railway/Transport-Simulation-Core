@@ -6,11 +6,11 @@ import org.mtr.core.integration.Response;
 import org.mtr.core.path.DirectionsPathFinder;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
+import org.mtr.core.servlet.HttpResponseStatus;
 import org.mtr.core.tool.RequestHelper;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.LegacyRailLoader;
 import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.io.netty.handler.codec.http.HttpResponseStatus;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
@@ -210,6 +210,6 @@ public class Simulator extends Data implements Utilities {
 	}
 
 	public void sendHttpRequest(String endpoint, SerializedDataBase data, @Nullable Consumer<JsonObject> consumer) {
-		REQUEST_HELPER.sendPostRequest(String.format("http://localhost:%s/%s", clientWebserverPort, endpoint), new Response(HttpResponseStatus.OK.code(), System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(data)).getJson(), consumer);
+		REQUEST_HELPER.sendPostRequest(String.format("http://localhost:%s/%s", clientWebserverPort, endpoint), new Response(HttpResponseStatus.OK.code, System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(data)).getJson(), consumer);
 	}
 }

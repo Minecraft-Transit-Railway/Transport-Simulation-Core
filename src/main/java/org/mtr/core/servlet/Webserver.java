@@ -1,12 +1,12 @@
 package org.mtr.core.servlet;
 
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.mtr.core.Main;
+import org.mtr.libraries.org.eclipse.jetty.server.Connector;
+import org.mtr.libraries.org.eclipse.jetty.server.Server;
+import org.mtr.libraries.org.eclipse.jetty.server.ServerConnector;
+import org.mtr.libraries.org.eclipse.jetty.servlet.ServletContextHandler;
+import org.mtr.libraries.org.eclipse.jetty.servlet.ServletHolder;
+import org.mtr.libraries.org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 public final class Webserver {
 

@@ -17,12 +17,7 @@ repositories {
 dependencies {
 	implementation "com.github.jonafanho:Shadow-Libraries:master-SNAPSHOT"
 	implementation "commons-io:commons-io:+"
-	implementation "com.squareup.okhttp3:okhttp:+"
 	implementation "org.apache.logging.log4j:log4j-core:2.+"
-	implementation "org.eclipse.jetty:jetty-server:9.+"
-	implementation "org.eclipse.jetty:jetty-servlet:9.+"
-	implementation "org.eclipse.jetty:jetty-util:9.+"
-	implementation "javax.servlet:javax.servlet-api:+"
 	compileOnly "com.google.code.findbugs:jsr305:+"
 	testImplementation "org.junit.jupiter:junit-jupiter-api:+"
 	testImplementation "org.apache.httpcomponents:httpclient:+"

@@ -1,12 +1,10 @@
 package org.mtr.core.servlet;
 
 import org.mtr.core.generated.WebserverResources;
-import org.mtr.libraries.io.netty.handler.codec.http.HttpResponseStatus;
-
-import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.mtr.libraries.javax.servlet.AsyncContext;
+import org.mtr.libraries.javax.servlet.http.HttpServlet;
+import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
+import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
 
 public final class WebServlet extends HttpServlet {
 

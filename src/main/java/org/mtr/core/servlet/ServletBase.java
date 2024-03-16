@@ -7,17 +7,16 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonElement;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.com.google.gson.JsonParser;
-import org.mtr.libraries.io.netty.handler.codec.http.HttpResponseStatus;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.javax.servlet.AsyncContext;
+import org.mtr.libraries.javax.servlet.ServletOutputStream;
+import org.mtr.libraries.javax.servlet.WriteListener;
+import org.mtr.libraries.javax.servlet.http.HttpServlet;
+import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
+import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
 
 import javax.annotation.Nullable;
-import javax.servlet.AsyncContext;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -103,7 +102,7 @@ public abstract class ServletBase extends HttpServlet {
 				public void onWritePossible() throws IOException {
 					while (servletOutputStream.isReady()) {
 						if (!byteBuffer.hasRemaining()) {
-							httpServletResponse.setStatus(httpResponseStatus.code());
+							httpServletResponse.setStatus(httpResponseStatus.code);
 							asyncContext.complete();
 							return;
 						}
@@ -146,12 +145,12 @@ public abstract class ServletBase extends HttpServlet {
 	}
 
 	private static void buildResponseObject(HttpServletResponse httpServletResponse, AsyncContext asyncContext, long currentMillis, @Nullable JsonObject data, HttpResponseStatus httpResponseStatus, String... parameters) {
-		final StringBuilder reasonPhrase = new StringBuilder(httpResponseStatus.reasonPhrase());
+		final StringBuilder reasonPhrase = new StringBuilder(httpResponseStatus.description);
 		final String trimmedParameters = Arrays.stream(parameters).filter(parameter -> !parameter.isEmpty()).collect(Collectors.joining(", "));
 		if (!trimmedParameters.isEmpty()) {
 			reasonPhrase.append(" - ").append(trimmedParameters);
 		}
-		sendResponse(httpServletResponse, asyncContext, new Response(httpResponseStatus.code(), currentMillis, reasonPhrase.toString(), data).getJson().toString(), getMimeType("json"), httpResponseStatus);
+		sendResponse(httpServletResponse, asyncContext, new Response(httpResponseStatus.code, currentMillis, reasonPhrase.toString(), data).getJson().toString(), getMimeType("json"), httpResponseStatus);
 	}
 
 	private static String tryGetParameter(HttpServletRequest httpServletRequest, String parameter) {

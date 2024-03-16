@@ -1,8 +1,8 @@
 package org.mtr.core.tool;
 
-import okhttp3.*;
 import org.mtr.core.Main;
 import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.okhttp3.*;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
