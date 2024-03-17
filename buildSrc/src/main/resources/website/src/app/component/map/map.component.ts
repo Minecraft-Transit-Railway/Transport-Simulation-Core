@@ -8,6 +8,7 @@ import {NgForOf, NgIf} from "@angular/common";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {DataService} from "../../service/data.service";
 import {MatIcon} from "@angular/material/icon";
+import {DrawData, MainData, Message, ResizeData, SetupData} from "./offscreen";
 
 @Component({
 	selector: "app-map",
@@ -35,31 +36,33 @@ export class MapComponent implements AfterViewInit {
 		const canvasElement = this.canvas.nativeElement;
 		const offscreen = canvasElement.transferControlToOffscreen();
 		const worker = new Worker(new URL("./offscreen.ts", import.meta.url), {type: "module"});
-		worker.postMessage({type: "setup", canvas: offscreen}, [offscreen]);
+		worker.postMessage(new Message("setup", new SetupData(offscreen)), [offscreen]);
 		worker.onmessage = () => this.loading = false;
 		const callback = new Callback<[number, number, number], undefined>();
-		const mouse = new Mouse(canvasElement, this.wrapper.nativeElement, (zoom, centerX, centerY, blackAndWhite) => {
-			worker.postMessage({
-				type: "draw",
+		const mouse = new Mouse(canvasElement, this.wrapper.nativeElement, (zoom, centerX, centerY) => {
+			worker.postMessage(new Message("draw", new DrawData(
 				zoom,
 				centerX,
 				centerY,
-				canvasWidth: canvasElement.clientWidth * devicePixelRatio,
-				canvasHeight: canvasElement.clientHeight * devicePixelRatio,
-				blackAndWhite,
-			});
+				canvasElement.clientWidth * devicePixelRatio,
+				canvasElement.clientHeight * devicePixelRatio,
+				"0",
+				"0",
+				0
+			)));
 			callback.update([zoom, centerX, centerY]);
-		}, (zoom, centerX, centerY, blackAndWhite) => {
-			worker.postMessage({
-				type: "resize",
+		}, (zoom, centerX, centerY) => {
+			worker.postMessage(new Message("resize", new ResizeData(
 				zoom,
 				centerX,
 				centerY,
-				canvasWidth: canvasElement.clientWidth * devicePixelRatio,
-				canvasHeight: canvasElement.clientHeight * devicePixelRatio,
-				blackAndWhite,
-				devicePixelRatio,
-			});
+				canvasElement.clientWidth * devicePixelRatio,
+				canvasElement.clientHeight * devicePixelRatio,
+				"0",
+				"0",
+				0,
+				devicePixelRatio
+			)));
 			callback.update([zoom, centerX, centerY]);
 		});
 
@@ -93,26 +96,26 @@ export class MapComponent implements AfterViewInit {
 			});
 
 			mouse.setCenterOnFirstDraw(this.dataService.getCenterX(), this.dataService.getCenterY());
-			const [zoom, centerX, centerY, blackAndWhite] = mouse.getCurrentWindowValues();
+			const [zoom, centerX, centerY] = mouse.getCurrentWindowValues();
 			const backgroundColorComponents = getComputedStyle(document.body).backgroundColor.match(/\d+/g)!.map(value => parseInt(value));
-			worker.postMessage({
-				type: "main",
-				stations: this.dataService.getStations(),
-				lineConnections: this.dataService.getLineConnections(),
-				maxLineConnectionLength: this.dataService.getMaxLineConnectionLength(),
-				stationConnections: this.dataService.getStationConnections(),
+			worker.postMessage(new Message("main", new MainData(
 				zoom,
 				centerX,
 				centerY,
-				blackAndWhite,
-				routeTypesSettings: this.dataService.getRouteTypes(),
-				interchangeStyle: SETTINGS.interchangeStyle,
-				canvasWidth: canvasElement.clientWidth * devicePixelRatio,
-				canvasHeight: canvasElement.clientHeight * devicePixelRatio,
+				canvasElement.clientWidth * devicePixelRatio,
+				canvasElement.clientHeight * devicePixelRatio,
+				"0",
+				"0",
+				this.dataService.getMaxLineConnectionLength(),
 				devicePixelRatio,
-				backgroundColor: (backgroundColorComponents[0] << 16) + (backgroundColorComponents[1] << 8) + backgroundColorComponents[2],
-				darkMode: backgroundColorComponents[0] <= 0x7F,
-			});
+				this.dataService.getStations(),
+				this.dataService.getLineConnections(),
+				this.dataService.getStationConnections(),
+				(backgroundColorComponents[0] << 16) + (backgroundColorComponents[1] << 8) + backgroundColorComponents[2],
+				backgroundColorComponents[0] <= 0x7F,
+				this.dataService.getRouteTypes(),
+				SETTINGS.interchangeStyle
+			)));
 			callback.update([zoom, centerX, centerY]);
 		};
 

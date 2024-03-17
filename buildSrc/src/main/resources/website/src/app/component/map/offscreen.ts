@@ -21,10 +21,10 @@ let renderer: THREE.WebGLRenderer;
 let scene: THREE.Scene;
 let camera: THREE.OrthographicCamera;
 
-onmessage = ({data}) => {
-	const handler = handlers[data.type as "setup" | "resize" | "draw" | "main"];
+onmessage = (event: MessageEvent<Message>) => {
+	const handler = handlers[event.data.type] as (data: SetupData | DrawData) => void;
 	if (handler !== undefined) {
-		handler(data);
+		handler(event.data.content);
 	}
 };
 
@@ -38,7 +38,7 @@ function setup(data: SetupData) {
 
 function resize(data: ResizeData) {
 	const {canvasWidth, canvasHeight, devicePixelRatio} = data;
-	camera.aspect = canvasWidth / canvasHeight;
+	(camera as any).aspect = canvasWidth / canvasHeight;
 	camera.left = -canvasWidth / 2;
 	camera.right = canvasWidth / 2;
 	camera.top = canvasHeight / 2;
@@ -62,13 +62,12 @@ function main(data: MainData) {
 		stationConnections,
 		backgroundColor,
 		darkMode,
-		blackAndWhite,
 		routeTypesSettings,
 		interchangeStyle,
 	} = data;
 	scene.background = new THREE.Color(backgroundColor).convertLinearToSRGB();
 	scene.clear();
-	callback.reset()
+	callback.reset();
 
 	stations.forEach(station => {
 		const {x, z, rotate, width, height} = station;
@@ -100,7 +99,7 @@ function main(data: MainData) {
 			geometry.translate(0, 0, offset);
 			geometry.rotateZ(rotation);
 			for (let i = 0; i < colorArray.length / 3; i++) {
-				setColorByIndex(colorArray, color, i, blackAndWhite);
+				setColorByIndex(colorArray, color, i);
 			}
 		}
 
@@ -113,8 +112,8 @@ function main(data: MainData) {
 		callback.add(([zoom, centerX, centerY]) => {
 			const canvasX = x * zoom + centerX;
 			const canvasY = z * zoom + centerY;
-			blob.position.x = canvasX;
-			blob.position.y = -canvasY;
+			(blob as any).position.x = canvasX;
+			(blob as any).position.y = -canvasY;
 		});
 	});
 
@@ -131,8 +130,8 @@ function main(data: MainData) {
 		const {x1, z1, x2, z2} = stationConnection;
 
 		callback.add(([zoom, centerX, centerY]) => {
-			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 === darkMode ? whiteColor : blackColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 1 : 0, 4);
-			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? backgroundColor : darkMode ? whiteColor : blackColor, blackAndWhite, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 2 : 1, 8);
+			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 === darkMode ? whiteColor : blackColor, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 1 : 0, 4);
+			tempIndex = drawLine(positionAttribute, colorAttribute.array, interchangeStyle === 0 ? backgroundColor : darkMode ? whiteColor : blackColor, tempIndex, x1 * zoom + centerX, z1 * zoom + centerY, x2 * zoom + centerX, z2 * zoom + centerY, interchangeStyle === 0 ? 2 : 1, 8);
 		});
 	});
 
@@ -161,7 +160,6 @@ function main(data: MainData) {
 					parseInt(color, 16),
 					backgroundColor,
 					darkMode ? whiteColor : blackColor,
-					blackAndWhite,
 					tempIndex,
 					x1 * zoom + centerX,
 					z1 * zoom + centerY,
@@ -195,34 +193,38 @@ function main(data: MainData) {
 	resize(data);
 }
 
-class SetupData {
-	constructor(readonly canvas: HTMLCanvasElement) {
+export class Message {
+	constructor(readonly type: "setup" | "resize" | "draw" | "main", readonly content: SetupData | DrawData) {
 	}
 }
 
-class DrawData {
-	constructor(readonly zoom: number, readonly centerX: number, readonly centerY: number, readonly canvasWidth: number, readonly canvasHeight: number, readonly maxLineConnectionLength: number) {
+export class SetupData {
+	constructor(readonly canvas: OffscreenCanvas) {
 	}
 }
 
-class ResizeData extends DrawData {
-	constructor(zoom: number, centerX: number, centerY: number, canvasWidth: number, canvasHeight: number, maxLineConnectionLength: number, readonly devicePixelRatio: number) {
-		super(zoom, centerX, centerY, canvasWidth, canvasHeight, maxLineConnectionLength);
+export class DrawData {
+	constructor(readonly zoom: number, readonly centerX: number, readonly centerY: number, readonly canvasWidth: number, readonly canvasHeight: number, readonly mouseStationId: string, readonly mouseRouteId: string, readonly maxLineConnectionLength: number) {
 	}
 }
 
-class MainData extends ResizeData {
+export class ResizeData extends DrawData {
+	constructor(zoom: number, centerX: number, centerY: number, canvasWidth: number, canvasHeight: number, mouseStationId: string, mouseRouteId: string, maxLineConnectionLength: number, readonly devicePixelRatio: number) {
+		super(zoom, centerX, centerY, canvasWidth, canvasHeight, mouseStationId, mouseRouteId, maxLineConnectionLength);
+	}
+}
+
+export class MainData extends ResizeData {
 	constructor(
-		zoom: number, centerX: number, centerY: number, canvasWidth: number, canvasHeight: number, maxLineConnectionLength: number, devicePixelRatio: number,
+		zoom: number, centerX: number, centerY: number, canvasWidth: number, canvasHeight: number, mouseStationId: string, mouseRouteId: string, maxLineConnectionLength: number, devicePixelRatio: number,
 		readonly stations: StationWithPosition[],
 		readonly lineConnections: LineConnection[],
 		readonly stationConnections: StationConnection[],
 		readonly backgroundColor: number,
 		readonly darkMode: boolean,
-		readonly blackAndWhite: boolean,
 		readonly routeTypesSettings: { [key: string]: number },
 		readonly interchangeStyle: number
 	) {
-		super(zoom, centerX, centerY, canvasWidth, canvasHeight, maxLineConnectionLength, devicePixelRatio);
+		super(zoom, centerX, centerY, canvasWidth, canvasHeight, mouseStationId, mouseRouteId, maxLineConnectionLength, devicePixelRatio);
 	}
 }

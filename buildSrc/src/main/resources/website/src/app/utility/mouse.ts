@@ -14,8 +14,8 @@ export class Mouse {
 	constructor(
 		private canvasElement: HTMLCanvasElement,
 		wrapperElement: HTMLDivElement,
-		mouseCallback: (zoom: number, centerX: number, centerY: number, clientWidth: number, clientHeight: number) => void,
-		resizeCallback: (zoom: number, centerX: number, centerY: number, clientWidth: number, clientHeight: number) => void
+		mouseCallback: (zoom: number, centerX: number, centerY: number) => void,
+		resizeCallback: (zoom: number, centerX: number, centerY: number) => void
 	) {
 		wrapperElement.addEventListener("wheel", (event: WheelEvent) => {
 			const {clientX, clientY, deltaY} = event;
@@ -77,8 +77,8 @@ export class Mouse {
 			this.animateTarget = undefined;
 		});
 
-		this.mouseCallback = () => mouseCallback(this.zoom, this.centerX, this.centerY, this.canvasElement.clientWidth, this.canvasElement.clientHeight);
-		window.onresize = () => resizeCallback(this.zoom, this.centerX, this.centerY, this.canvasElement.clientWidth, this.canvasElement.clientHeight);
+		this.mouseCallback = () => mouseCallback(this.zoom, this.centerX, this.centerY);
+		window.onresize = () => resizeCallback(this.zoom, this.centerX, this.centerY);
 	}
 
 	private zoomCanvas(clientX: number, clientY: number, deltaY: number) {

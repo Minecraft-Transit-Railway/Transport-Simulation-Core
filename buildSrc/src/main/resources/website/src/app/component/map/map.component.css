@@ -18,6 +18,7 @@ canvas, .wrapper {
 .labels > div {
 	position: absolute;
 	text-align: center;
+	will-change: transform;
 }
 
 .station-name {

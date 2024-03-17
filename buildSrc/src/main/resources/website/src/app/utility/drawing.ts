@@ -7,7 +7,7 @@ const arrowSpacing = 80;
 
 export function connectStations(
 	positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array,
-	color: number, backgroundColor: number, textColor: number, blackAndWhite: boolean,
+	color: number, backgroundColor: number, textColor: number,
 	index: number,
 	canvasX1: number, canvasY1: number, canvasX2: number, canvasY2: number,
 	direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3,
@@ -84,7 +84,7 @@ export function connectStations(
 	if (points.length === 0) {
 		console.assert(retry, "Line not drawn", quadrant, direction);
 		if (retry) {
-			return connectStations(positionAttribute, colorArray, color, backgroundColor, textColor, blackAndWhite, index, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, lineZ, arrowZ, hollowZ, canvasWidth, canvasHeight, oneWay, hollow, false);
+			return connectStations(positionAttribute, colorArray, color, backgroundColor, textColor, index, canvasX2, canvasY2, canvasX1, canvasY1, direction2, direction1, offset2, offset1, colorOffset, lineZ, arrowZ, hollowZ, canvasWidth, canvasHeight, oneWay, hollow, false);
 		} else {
 			return index;
 		}
@@ -104,9 +104,9 @@ export function connectStations(
 			const [point2X, point2Y] = newPoints[i];
 
 			if (inBounds1(point1X, point1Y, canvasWidth, canvasHeight) || inBounds1(point2X, point2Y, canvasWidth, canvasHeight) || inBounds2(point1X, point1Y, point2X, point2Y, canvasWidth, canvasHeight)) {
-				index = drawLine(positionAttribute, colorArray, color, blackAndWhite, index, point1X, point1Y, point2X, point2Y, lineZ, 6);
+				index = drawLine(positionAttribute, colorArray, color, index, point1X, point1Y, point2X, point2Y, lineZ, 6);
 				if (hollow) {
-					index = drawLine(positionAttribute, colorArray, backgroundColor, blackAndWhite, index, point1X, point1Y, point2X, point2Y, hollowZ, 3);
+					index = drawLine(positionAttribute, colorArray, backgroundColor, index, point1X, point1Y, point2X, point2Y, hollowZ, 3);
 				}
 
 				if (oneWay !== 0) {
@@ -122,7 +122,7 @@ export function connectStations(
 						const arrowX = point1X + differenceX * offsetFactor;
 						const arrowY = point1Y + differenceY * offsetFactor;
 						if (inBounds1(arrowX, arrowY, canvasWidth, canvasHeight)) {
-							index = drawArrow(positionAttribute, colorArray, hollow ? color : backgroundColor, blackAndWhite, index, arrowAngle, arrowX, arrowY, arrowZ);
+							index = drawArrow(positionAttribute, colorArray, hollow ? color : backgroundColor, index, arrowAngle, arrowX, arrowY, arrowZ);
 						}
 					}
 				}
@@ -145,7 +145,7 @@ function connectWith45(points: [number, number][], x1: number, y1: number, x2: n
 	points.push([x2, y2]);
 }
 
-export function drawLine(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, blackAndWhite: boolean, index: number, x1: number, y1: number, x2: number, y2: number, z: number, width: number) {
+export function drawLine(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, index: number, x1: number, y1: number, x2: number, y2: number, z: number, width: number) {
 	const angle = atan45(y2 - y1, x2 - x1);
 	const [endOffsetX1, endOffsetY1] = trig45(angle + 2, width / 2 * SETTINGS.scale);
 	const [endOffsetX2, endOffsetY2] = trig45(angle, tan225 * width / 2 * SETTINGS.scale);
@@ -156,12 +156,12 @@ export function drawLine(positionAttribute: THREE.BufferAttribute, colorArray: U
 	positionAttribute.setXYZ(index + 4, x1 - endOffsetX1 - endOffsetX2, -(y1 - endOffsetY1 - endOffsetY2), -z);
 	positionAttribute.setXYZ(index + 5, x1 + endOffsetX1 - endOffsetX2, -(y1 + endOffsetY1 - endOffsetY2), -z);
 	for (let i = 0; i < 6; i++) {
-		setColorByIndex(colorArray, color, index + i, blackAndWhite);
+		setColorByIndex(colorArray, color, index + i);
 	}
 	return index + 6;
 }
 
-function drawArrow(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, blackAndWhite: boolean, index: number, angle: number, x: number, y: number, z: number) {
+function drawArrow(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Array, color: number, index: number, angle: number, x: number, y: number, z: number) {
 	const [offset1X, offset1Y] = rotate(3 * SETTINGS.scale, 0, angle);
 	const [offset2X, offset2Y] = rotate(0, 3 * SETTINGS.scale, angle);
 	positionAttribute.setXYZ(index + 0, x - offset1X, -(y - offset1Y), -z);
@@ -174,18 +174,18 @@ function drawArrow(positionAttribute: THREE.BufferAttribute, colorArray: Uint8Ar
 	positionAttribute.setXYZ(index + 7, x - offset1X, -(y - offset1Y), -z);
 	positionAttribute.setXYZ(index + 8, x, -y, -z);
 	for (let i = 0; i < 9; i++) {
-		setColorByIndex(colorArray, color, index + i, blackAndWhite);
+		setColorByIndex(colorArray, color, index + i);
 	}
 	return index + 9;
 }
 
-export function setColorByIndex(colorArray: Uint8Array, color: number, index: number, blackAndWhite: boolean) {
+export function setColorByIndex(colorArray: Uint8Array, color: number, index: number) {
 	const r = (color >> 16) & 0xFF;
 	const g = (color >> 8) & 0xFF;
 	const b = color & 0xFF;
 	const colorComponents = [r, g, b];
 	for (let i = 0; i < 3; i++) {
-		colorArray[index * 3 + i] = blackAndWhite ? (r + g + b) / 3 : colorComponents[i];
+		colorArray[index * 3 + i] = colorComponents[i];
 	}
 }
 
