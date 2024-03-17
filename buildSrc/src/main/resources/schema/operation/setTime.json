@@ -12,10 +12,14 @@
 		"millisPerDay": {
 			"type": "integer",
 			"minimum": 0
+		},
+		"isTimeMoving": {
+			"type": "boolean"
 		}
 	},
 	"required": [
 		"gameMillis",
-		"millisPerDay"
+		"millisPerDay",
+		"isTimeMoving"
 	]
 }

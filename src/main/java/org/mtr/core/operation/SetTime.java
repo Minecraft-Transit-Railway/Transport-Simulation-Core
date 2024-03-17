@@ -7,8 +7,8 @@ import org.mtr.libraries.com.google.gson.JsonObject;
 
 public final class SetTime extends SetTimeSchema {
 
-	public SetTime(long gameMillis, long millisPerDay) {
-		super(gameMillis, millisPerDay);
+	public SetTime(long gameMillis, long millisPerDay, boolean isTimeMoving) {
+		super(gameMillis, millisPerDay, isTimeMoving);
 	}
 
 	public SetTime(ReaderBase readerBase) {
@@ -17,7 +17,7 @@ public final class SetTime extends SetTimeSchema {
 	}
 
 	public JsonObject setGameTime(Simulator simulator) {
-		simulator.setGameTime(gameMillis, millisPerDay);
+		simulator.setGameTime(gameMillis, millisPerDay, isTimeMoving);
 		return new JsonObject();
 	}
 }

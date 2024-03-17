@@ -110,9 +110,8 @@ public class Vehicle extends VehicleSchema {
 			if (vehicleExtraData.getRepeatIndex2() == 0 && railProgress >= vehicleExtraData.getTotalDistance() - (vehicleExtraData.getRailLength() - vehicleExtraData.getTotalVehicleLength()) / 2) {
 				// if not repeat infinitely and the vehicle is reaching the end
 				currentIndex = 0;
-				railProgress = vehicleExtraData.getDefaultPosition();
 				manualNotch = 0;
-				vehicleExtraData.closeDoors();
+				simulateInDepot();
 			} else {
 				// if vehicle is on route normally
 				currentIndex = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress);

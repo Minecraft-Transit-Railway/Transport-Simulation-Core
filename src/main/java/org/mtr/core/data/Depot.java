@@ -258,31 +258,32 @@ public final class Depot extends DepotSchema implements Utilities {
 		final LongArrayList departures = new LongArrayList();
 
 		if (transportMode.continuousMovement) {
-			for (int i = 0; i < savedRails.size(); i += CONTINUOUS_MOVEMENT_FREQUENCY) {
-				departures.add(i);
+			for (int i = 0; i < savedRails.size(); i++) {
+				departures.add((long) i * CONTINUOUS_MOVEMENT_FREQUENCY);
 			}
 		} else {
 			if (useRealTime) {
 				departures.addAll(realTimeDepartures);
-			} else if (data instanceof Simulator && ((Simulator) data).getGameMillisPerDay() > 0) {
+			} else if (data instanceof Simulator) {
 				final Simulator simulator = (Simulator) data;
 				final long offsetMillis = simulator.getMillisOfGameMidnight();
-				final LongArrayList gameDepartures = new LongArrayList();
+				long lastDeparture = Long.MIN_VALUE;
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
-					if (getFrequency(i) == 0) {
+					final long frequency = getFrequency(((Simulator) data).isTimeMoving() ? i : ((Simulator) data).getHour());
+					if (frequency == 0) {
 						continue;
 					}
 
-					final long intervalMillis = 14400000 / getFrequency(i);
+					final long intervalMillis = 14400000 / frequency;
 					final long hourMinMillis = MILLIS_PER_HOUR * i;
 					final long hourMaxMillis = MILLIS_PER_HOUR * (i + 1);
 
 					while (true) {
-						final long newDeparture = Math.max(hourMinMillis, Utilities.getElement(gameDepartures, -1, Long.MIN_VALUE) + intervalMillis);
+						final long newDeparture = Math.max(hourMinMillis, lastDeparture + intervalMillis);
 						if (newDeparture < hourMaxMillis) {
 							departures.add(offsetMillis + newDeparture * simulator.getGameMillisPerDay() / MILLIS_PER_DAY);
-							gameDepartures.add(newDeparture);
+							lastDeparture = newDeparture;
 						} else {
 							break;
 						}

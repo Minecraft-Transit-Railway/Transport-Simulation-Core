@@ -26,7 +26,8 @@ public class Simulator extends Data implements Utilities {
 	private boolean autoSave = false;
 	private long gameMillis;
 	private long gameMillisPerDay;
-	private long lastSetGameMillis;
+	private boolean isTimeMoving;
+	private long lastSetGameMillisMidnight;
 
 	public final Object2ObjectOpenHashMap<String, Client> clients = new Object2ObjectOpenHashMap<>();
 
@@ -44,7 +45,7 @@ public class Simulator extends Data implements Utilities {
 	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
 	private final ObjectOpenHashSet<DirectionsPathFinder> directionsPathFinders = new ObjectOpenHashSet<>();
 
-	private static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
+	public static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
 
 	public Simulator(String dimension, Path rootPath, int clientWebserverPort) {
 		this.dimension = dimension;
@@ -152,11 +153,13 @@ public class Simulator extends Data implements Utilities {
 	/**
 	 * @param gameMillis       the number of real-time milliseconds since midnight of the in-game time
 	 * @param gameMillisPerDay the total number of real-time milliseconds of one in-game day
+	 * @param isTimeMoving     whether the daylight cycle is on
 	 */
-	public void setGameTime(long gameMillis, long gameMillisPerDay) {
-		this.gameMillis = gameMillis % gameMillisPerDay;
+	public void setGameTime(long gameMillis, long gameMillisPerDay, boolean isTimeMoving) {
+		this.gameMillis = gameMillisPerDay > 0 ? gameMillis % gameMillisPerDay : gameMillis;
 		this.gameMillisPerDay = gameMillisPerDay;
-		lastSetGameMillis = currentMillis;
+		this.isTimeMoving = isTimeMoving;
+		lastSetGameMillisMidnight = currentMillis - gameMillis;
 		depots.forEach(Depot::generatePlatformDirectionsAndWriteDeparturesToSidings);
 	}
 
@@ -164,11 +167,22 @@ public class Simulator extends Data implements Utilities {
 		return gameMillisPerDay;
 	}
 
+	public boolean isTimeMoving() {
+		return isTimeMoving;
+	}
+
 	/**
 	 * @return milliseconds after epoch of the first midnight in-game
 	 */
 	public long getMillisOfGameMidnight() {
-		return Math.max(0, lastSetGameMillis - lastSetGameMillis / gameMillisPerDay * gameMillisPerDay - gameMillis);
+		return gameMillisPerDay > 0 && isTimeMoving ? Math.max(0, lastSetGameMillisMidnight - lastSetGameMillisMidnight / gameMillisPerDay * gameMillisPerDay) : 0;
+	}
+
+	/**
+	 * @return the game hour (0-23)
+	 */
+	public int getHour() {
+		return gameMillisPerDay > 0 ? (int) (gameMillis * HOURS_PER_DAY / gameMillisPerDay) : 0;
 	}
 
 	public void run(Runnable runnable) {

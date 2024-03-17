@@ -253,7 +253,11 @@ public final class Siding extends SidingSchema implements Utilities {
 				} else if (!pathSidingToMainRoute.isEmpty() && !getIsManual()) {
 					final int departureIndex = matchDeparture();
 					if (departureIndex >= 0 && departureIndex < departures.size()) {
-						vehicle.startUp(departureIndex);
+						if (vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
+							Main.LOGGER.info(String.format("Already deployed vehicle from %s for departure index %s", getDepotName(), departureIndex));
+						} else {
+							vehicle.startUp(departureIndex);
+						}
 					}
 				}
 			}
@@ -454,7 +458,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		if (area == null) {
 			return defaultAmount;
 		} else {
-			return transportMode.continuousMovement ? Depot.CONTINUOUS_MOVEMENT_FREQUENCY : area.getRepeatInfinitely() ? Math.round(timeOffsetForRepeating) : data instanceof Simulator && !area.getUseRealTime() ? ((Simulator) data).getGameMillisPerDay() : defaultAmount;
+			return transportMode.continuousMovement ? (long) Depot.CONTINUOUS_MOVEMENT_FREQUENCY * area.savedRails.size() : area.getRepeatInfinitely() ? Math.round(timeOffsetForRepeating) : data instanceof Simulator && !area.getUseRealTime() ? ((Simulator) data).getGameMillisPerDay() : defaultAmount;
 		}
 	}
 
@@ -594,6 +598,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 			path.addAll(pathSidingToMainRoute);
 			path.addAll(pathMainRoute);
+			path.addAll(pathMainRouteToSiding);
 
 			final double totalDistance = Utilities.getElement(path, -1).getEndDistance();
 			final DoubleArrayList stoppingDistances = new DoubleArrayList();
@@ -764,7 +769,8 @@ public final class Siding extends SidingSchema implements Utilities {
 				return startTime + distance / startSpeed;
 			} else {
 				final double totalAcceleration = speedChange * acceleration;
-				return startTime + (distance == 0 ? 0 : (Math.sqrt(2 * totalAcceleration * distance + startSpeed * startSpeed) - startSpeed) / totalAcceleration);
+				final double endSpeedSquared = 2 * totalAcceleration * distance + startSpeed * startSpeed;
+				return endSpeedSquared < 0 ? -1 : startTime + (distance == 0 ? 0 : (Math.sqrt(endSpeedSquared) - startSpeed) / totalAcceleration);
 			}
 		}
 	}
