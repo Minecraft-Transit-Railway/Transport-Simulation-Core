@@ -5,6 +5,8 @@
 }
 
 canvas, .wrapper {
+	position: absolute;
+	transition: opacity 0.2s;
 	width: 100%;
 	height: 100%;
 }
@@ -15,10 +17,15 @@ canvas, .wrapper {
 	position: absolute;
 }
 
-.labels > div {
+.label {
 	position: absolute;
-	text-align: center;
+	transition: color 0.2s;
 	will-change: transform;
+}
+
+.label:hover {
+	color: #777777;
+	cursor: pointer;
 }
 
 .station-name {
@@ -47,17 +54,13 @@ canvas, .wrapper {
 
 .station-name.icon {
 	font-size: 1.2em;
+	width: unset;
 }
 
 .loading-background {
-	align-items: center;
 	background-color: var(--mat-app-background-color);
-	display: flex;
 	justify-content: center;
-	left: 0;
-	top: 0;
 	position: absolute;
-	transition: opacity 0.2s;
 	width: 100%;
 	height: 100%;
 }

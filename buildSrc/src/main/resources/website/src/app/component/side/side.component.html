@@ -1,0 +1,18 @@
+<mat-sidenav-container [hasBackdrop]="false">
+	<mat-sidenav position="end">
+		<div class="column-reverse">
+			<ng-content select="[sidenav]"/>
+			<mat-toolbar>
+				<div>&nbsp;</div>
+				<ng-content select="[title]"/>
+				<div class="spacing"></div>
+				<button mat-icon-button aria-label="Close Menu" (click)="onClose()">
+					<mat-icon>close</mat-icon>
+				</button>
+			</mat-toolbar>
+		</div>
+	</mat-sidenav>
+	<mat-sidenav-content>
+		<ng-content/>
+	</mat-sidenav-content>
+</mat-sidenav-container>

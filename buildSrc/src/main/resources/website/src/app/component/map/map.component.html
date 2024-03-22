@@ -1,18 +1,19 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans&family=Noto+Serif+JP&family=Noto+Serif+KR&family=Noto+Serif+SC&family=Noto+Serif+TC&display=swap">
 
-<div #wrapper class="wrapper">
+<div class="column center loading-background">
+	<mat-spinner class="spinner" color="accent"/>
+</div>
+<div #wrapper class="wrapper" [style.opacity]="loading ? 0 : 1">
 	<canvas #canvas></canvas>
 	<div class="labels">
-		<div *ngFor="let textLabel of textLabels" style="{{'transform:translate(-50%,0)translate('+textLabel.x+'px,'+textLabel.z+'px)'}}">
-			<div *ngFor="let textLabelText of textLabel.text" class="station-name text {{textLabelText.isCjk?'cjk':''}}">{{ textLabelText.name }}</div>
-			<div class="row">
-				<div class="spacing"></div>
-				<mat-icon class="station-name icon" *ngFor="let icon of textLabel.icons">{{ icon }}</mat-icon>
-				<div class="spacing"></div>
+		<div class="column center label" *ngFor="let textLabel of textLabels" [style.transform]="'translate(-50%,0)translate('+textLabel.x+'px,'+textLabel.y+'px)'" (click)="onClickStation.emit(textLabel.id)">
+			<div [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'"></div>
+			<div class="column center" *ngIf="textLabel.shouldRenderText">
+				<div *ngFor="let textLabelText of textLabel.text" class="station-name text {{textLabelText.isCjk?'cjk':''}}">{{ textLabelText.name }}</div>
+				<div class="row">
+					<mat-icon class="station-name icon" *ngFor="let icon of textLabel.icons">{{ icon }}</mat-icon>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div class="loading-background" style="{{'opacity:'+(loading?1:0)}}">
-		<mat-spinner class="spinner" color="accent"/>
 	</div>
 </div>

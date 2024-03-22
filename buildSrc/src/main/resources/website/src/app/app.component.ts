@@ -1,11 +1,15 @@
 import {Component} from "@angular/core";
 import {MapComponent} from "./component/map/map.component";
 import {PanelComponent} from "./component/panel/panel.component";
-import {MatSidenav, MatSidenavContainer, MatSidenavContent} from "@angular/material/sidenav";
 import {MatIcon} from "@angular/material/icon";
 import {MatFabButton, MatIconButton} from "@angular/material/button";
-import {MatToolbar} from "@angular/material/toolbar";
 import {SearchComponent} from "./component/search/search.component";
+import {StationComponent} from "./component/station/station.component";
+import {StationService} from "./service/station.service";
+import {NgIf} from "@angular/common";
+import {FormatNamePipe} from "./pipe/formatNamePipe";
+import {SideComponent} from "./component/side/side.component";
+import {DataService} from "./service/data.service";
 
 @Component({
 	selector: "app-root",
@@ -13,21 +17,41 @@ import {SearchComponent} from "./component/search/search.component";
 	imports: [
 		MapComponent,
 		PanelComponent,
-		MatSidenavContainer,
-		MatSidenav,
-		MatSidenavContent,
 		MatIcon,
 		MatIconButton,
 		MatFabButton,
 		SearchComponent,
-		MatToolbar,
+		StationComponent,
+		NgIf,
+		SideComponent,
 	],
 	templateUrl: "./app.component.html",
 	styleUrls: ["./app.component.css"],
 })
 export class AppComponent {
 
+	constructor(private readonly dataService: DataService, private readonly stationService: StationService, private readonly formatNamePipe: FormatNamePipe) {
+	}
+
 	getTitle() {
 		return document.title;
+	}
+
+	getSelectedStationName() {
+		const station = this.stationService.getSelectedStation();
+		return station == undefined ? "" : this.formatNamePipe.transform(station.name);
+	}
+
+	onClickStation(stationId: string, sideStation: SideComponent) {
+		this.stationService.setStation(stationId);
+		sideStation.open();
+		const station = this.dataService.getAllStations().filter(station => station.id === stationId)[0];
+		if (station) {
+			if (station.types.every(routeType => this.dataService.getRouteTypes()[routeType] === 0)) {
+				station.types.forEach(routeType => this.dataService.getRouteTypes()[routeType] = 1);
+				this.dataService.updateData();
+			}
+			this.dataService.animateCenter(station.x, station.z);
+		}
 	}
 }

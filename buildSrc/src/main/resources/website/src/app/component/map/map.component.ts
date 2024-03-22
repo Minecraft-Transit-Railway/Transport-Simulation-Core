@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, ViewChild} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, EventEmitter, Output, ViewChild} from "@angular/core";
 import {Mouse} from "../../utility/mouse";
 import {Callback} from "../../utility/callback";
 import SETTINGS from "../../utility/settings";
@@ -9,6 +9,7 @@ import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {DataService} from "../../service/data.service";
 import {MatIcon} from "@angular/material/icon";
 import {DrawData, MainData, Message, ResizeData, SetupData} from "./offscreen";
+import {StationService} from "../../service/station.service";
 
 @Component({
 	selector: "app-map",
@@ -23,13 +24,13 @@ import {DrawData, MainData, Message, ResizeData, SetupData} from "./offscreen";
 	styleUrls: ["./map.component.css"],
 })
 export class MapComponent implements AfterViewInit {
-
+	@Output() onClickStation = new EventEmitter<string>;
 	@ViewChild("canvas") private readonly canvas!: ElementRef<HTMLCanvasElement>;
 	@ViewChild("wrapper") private readonly wrapper!: ElementRef<HTMLDivElement>;
 	loading: boolean = true;
 	textLabels: TextLabel[] = [];
 
-	constructor(private readonly dataService: DataService) {
+	constructor(private readonly dataService: DataService, private readonly stationService: StationService) {
 	}
 
 	ngAfterViewInit() {
@@ -46,8 +47,8 @@ export class MapComponent implements AfterViewInit {
 				centerY,
 				canvasElement.clientWidth * devicePixelRatio,
 				canvasElement.clientHeight * devicePixelRatio,
-				"0",
-				"0",
+				"",
+				"",
 				0
 			)));
 			callback.update([zoom, centerX, centerY]);
@@ -58,8 +59,8 @@ export class MapComponent implements AfterViewInit {
 				centerY,
 				canvasElement.clientWidth * devicePixelRatio,
 				canvasElement.clientHeight * devicePixelRatio,
-				"0",
-				"0",
+				"",
+				"",
 				0,
 				devicePixelRatio
 			)));
@@ -76,10 +77,11 @@ export class MapComponent implements AfterViewInit {
 			});
 
 			this.dataService.getStations().forEach(station => {
-				const {name, types, x, z, rotate, width, height} = station;
+				const {id, name, types, x, z, rotate, width, height} = station;
 				const newWidth = width * 3 * SETTINGS.scale;
 				const newHeight = height * 3 * SETTINGS.scale;
-				const textOffset = (rotate ? Math.max(newHeight, newWidth) * Math.SQRT1_2 : newHeight) + 9 * SETTINGS.scale;
+				const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
+				const textOffset = (rotate ? rotatedSize : newHeight) + 9 * SETTINGS.scale;
 				const textLabelTexts: TextLabelText[] = name.split("|").map(namePart => new TextLabelText(namePart, isCJK(namePart)));
 				const icons = types.filter(type => this.dataService.getRouteTypes()[type] === 0).map(type => ROUTE_TYPES[type].icon);
 
@@ -88,8 +90,17 @@ export class MapComponent implements AfterViewInit {
 					const canvasY = z * zoom + centerY;
 					const halfCanvasWidth = canvasElement.clientWidth / 2;
 					const halfCanvasHeight = canvasElement.clientHeight / 2;
-					if (renderedTextCount < SETTINGS.maxText && Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight) {
-						this.textLabels.push(new TextLabel(textLabelTexts, icons, canvasX + halfCanvasWidth, canvasY + halfCanvasHeight + textOffset));
+					if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight) {
+						this.textLabels.push(new TextLabel(
+							id,
+							textLabelTexts,
+							icons,
+							renderedTextCount < SETTINGS.maxText,
+							canvasX + halfCanvasWidth,
+							canvasY + halfCanvasHeight - textOffset,
+							(rotate ? rotatedSize : newWidth) * 2 + 18 * SETTINGS.scale,
+							(rotate ? rotatedSize : newHeight) * 2 + 18 * SETTINGS.scale
+						));
 						renderedTextCount++;
 					}
 				});
@@ -104,8 +115,8 @@ export class MapComponent implements AfterViewInit {
 				centerY,
 				canvasElement.clientWidth * devicePixelRatio,
 				canvasElement.clientHeight * devicePixelRatio,
-				"0",
-				"0",
+				"",
+				"",
 				this.dataService.getMaxLineConnectionLength(),
 				devicePixelRatio,
 				this.dataService.getStations(),
@@ -124,7 +135,16 @@ export class MapComponent implements AfterViewInit {
 }
 
 class TextLabel {
-	constructor(public readonly text: TextLabelText[], public readonly icons: string[], public readonly x: number, public readonly z: number) {
+	constructor(
+		public readonly id: string,
+		public readonly text: TextLabelText[],
+		public readonly icons: string[],
+		public readonly shouldRenderText: boolean,
+		public readonly x: number,
+		public readonly y: number,
+		public readonly stationWidth: number,
+		public readonly stationHeight: number
+	) {
 	}
 }
 

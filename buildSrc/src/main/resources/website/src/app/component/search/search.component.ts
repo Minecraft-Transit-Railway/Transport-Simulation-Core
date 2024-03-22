@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from "@angular/core";
+import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
 import {AsyncPipe, NgForOf, NgIf} from "@angular/common";
 import {MatAutocomplete, MatAutocompleteTrigger, MatOption} from "@angular/material/autocomplete";
 import {MatDivider} from "@angular/material/divider";
@@ -9,6 +9,8 @@ import {map, Observable} from "rxjs";
 import {DataService} from "../../service/data.service";
 import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {FormatNamePipe} from "../../pipe/formatNamePipe";
+import {StationService} from "../../service/station.service";
 
 @Component({
 	selector: "app-search",
@@ -25,11 +27,14 @@ import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 		MatInput,
 		MatLabel,
 		ReactiveFormsModule,
+		FormatNamePipe,
 	],
 	templateUrl: "./search.component.html",
 	styleUrl: "./search.component.css"
 })
 export class SearchComponent implements OnInit {
+	@Output() onClickStation = new EventEmitter<string>();
+	@Output() onClickRoute = new EventEmitter<string>();
 	@Input() label!: string;
 	@Input() includeRoutes!: boolean;
 	searchBox = new FormControl("");
@@ -38,7 +43,7 @@ export class SearchComponent implements OnInit {
 	hasStations = false;
 	hasRoutes = false;
 
-	constructor(private readonly dataService: DataService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
+	constructor(private readonly dataService: DataService, private readonly stationService: StationService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
 	}
 
 	ngOnInit() {
@@ -64,16 +69,5 @@ export class SearchComponent implements OnInit {
 
 		this.searchedStations$ = filter(() => this.simplifyStationsPipe.transform(this.dataService.getAllStations()), value => this.hasStations = value);
 		this.searchedRoutes$ = filter(() => this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.getAllRoutes()) : [], value => this.hasRoutes = value);
-	}
-
-	zoomToStation(id: string) {
-		const station = this.dataService.getAllStations().filter(station => station.id === id)[0];
-		if (station) {
-			if (station.types.every(routeType => this.dataService.getRouteTypes()[routeType] === 0)) {
-				station.types.forEach(routeType => this.dataService.getRouteTypes()[routeType] = 1);
-				this.dataService.updateData();
-			}
-			this.dataService.animateCenter(station.x, station.z);
-		}
 	}
 }
