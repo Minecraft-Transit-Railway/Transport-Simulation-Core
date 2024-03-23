@@ -1,6 +1,37 @@
 <div class="column gap margin">
+	<div class="column">
+		<div *ngFor="let stationNamePart of getStation()?.name | splitName" class="station-name {{stationNamePart.isCjk ? 'cjk' : ''}}">{{ stationNamePart.text }}</div>
+	</div>
+	<div class="station-color-bar" [style.background-color]="'#' + getStation()?.color"></div>
 	<div class="row gap center">
 		<mat-icon>my_location</mat-icon>
 		<div>({{ getCoordinatesText() }})</div>
 	</div>
+	<div class="row gap center">
+		<mat-icon>sell</mat-icon>
+		<div>({{ getZoneText() }})</div>
+	</div>
+
+	<mat-expansion-panel expanded>
+		<mat-expansion-panel-header>
+			<mat-panel-title>Arrivals</mat-panel-title>
+		</mat-expansion-panel-header>
+
+		<div class="column gap">
+			<div class="column gap" *ngFor="let arrivalGroup of getArrivals()">
+				<mat-divider/>
+				<div class="row center gap">
+					<div class="route-color-bar" [style.background-color]="'#' + arrivalGroup.routeColor"></div>
+					<div class="route-name">{{ arrivalGroup.routeName | formatName }}</div>
+				</div>
+				<div class="column">
+					<div class="row gap" *ngFor="let arrival of arrivalGroup.arrivals">
+						<div>{{ arrival.destination | formatName }}</div>
+						<div class="spacing"></div>
+						<div>{{ arrival.getArrivalTime() | formatTime }}</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</mat-expansion-panel>
 </div>

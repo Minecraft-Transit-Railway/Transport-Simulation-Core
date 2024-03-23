@@ -1,15 +1,15 @@
 <app-side #sideStation>
 	<app-side #sideMain>
-		<app-map (onClickStation)="onClickStation($event, sideStation)"/>
+		<app-map (onClickStation)="onClickStation($event, sideStation, false)"/>
 		<button mat-fab class="button-corner" color="" aria-label="Menu" (click)="sideMain.open()">
 			<mat-icon>menu</mat-icon>
 		</button>
 		<div sidenav class="column margin">
-			<app-search label="Search for anything..." [includeRoutes]="true" (onClickStation)="onClickStation($event, sideStation)"/>
+			<app-search label="Search for anything..." [includeRoutes]="true" (onClickStation)="onClickStation($event, sideStation, true)"/>
 			<app-panel/>
 		</div>
 		<div title>{{ getTitle() }}</div>
 	</app-side>
 	<app-station sidenav/>
-	<div title>{{ getSelectedStationName() }}</div>
+	<div title>Station Details</div>
 </app-side>

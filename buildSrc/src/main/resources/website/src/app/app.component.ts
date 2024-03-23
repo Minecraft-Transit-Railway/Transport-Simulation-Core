@@ -42,7 +42,7 @@ export class AppComponent {
 		return station == undefined ? "" : this.formatNamePipe.transform(station.name);
 	}
 
-	onClickStation(stationId: string, sideStation: SideComponent) {
+	onClickStation(stationId: string, sideStation: SideComponent, zoomToStation: boolean) {
 		this.stationService.setStation(stationId);
 		sideStation.open();
 		const station = this.dataService.getAllStations().filter(station => station.id === stationId)[0];
@@ -51,7 +51,9 @@ export class AppComponent {
 				station.types.forEach(routeType => this.dataService.getRouteTypes()[routeType] = 1);
 				this.dataService.updateData();
 			}
-			this.dataService.animateCenter(station.x, station.z);
+			if (zoomToStation) {
+				this.dataService.animateCenter(station.x, station.z);
+			}
 		}
 	}
 }

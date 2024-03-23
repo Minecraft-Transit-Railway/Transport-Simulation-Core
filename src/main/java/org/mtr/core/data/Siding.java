@@ -253,7 +253,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				} else if (!pathSidingToMainRoute.isEmpty() && !getIsManual()) {
 					final int departureIndex = matchDeparture();
 					if (departureIndex >= 0 && departureIndex < departures.size()) {
-						if (vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
+						if (!transportMode.continuousMovement && vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
 							Main.LOGGER.info(String.format("Already deployed vehicle from %s for departure index %s", getDepotName(), departureIndex));
 						} else {
 							vehicle.startUp(departureIndex);

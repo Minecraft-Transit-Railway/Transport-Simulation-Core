@@ -4,7 +4,7 @@
 			<mat-panel-title>Layers</mat-panel-title>
 		</mat-expansion-panel-header>
 
-		<div class="column gap_small">
+		<div class="column gap-small">
 			<div class="row-reverse gap center" *ngFor="let routeType of routeTypes">
 				<mat-button-toggle-group #group="matButtonToggleGroup" [value]="getSelected(routeType[0])?.toString()" (change)="onSelect(routeType[0], group.value)">
 					<mat-button-toggle value="0">

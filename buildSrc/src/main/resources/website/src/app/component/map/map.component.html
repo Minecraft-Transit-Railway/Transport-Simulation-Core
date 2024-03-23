@@ -6,10 +6,10 @@
 <div #wrapper class="wrapper" [style.opacity]="loading ? 0 : 1">
 	<canvas #canvas></canvas>
 	<div class="labels">
-		<div class="column center label" *ngFor="let textLabel of textLabels" [style.transform]="'translate(-50%,0)translate('+textLabel.x+'px,'+textLabel.y+'px)'" (click)="onClickStation.emit(textLabel.id)">
+		<div class="column center label" *ngFor="let textLabel of textLabels" [style.transform]="'translate(-50%,0)translate('+textLabel.x+'px,'+textLabel.y+'px)'" (mouseup)="onClickStation.emit(textLabel.id)">
 			<div [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'"></div>
 			<div class="column center" *ngIf="textLabel.shouldRenderText">
-				<div *ngFor="let textLabelText of textLabel.text" class="station-name text {{textLabelText.isCjk?'cjk':''}}">{{ textLabelText.name }}</div>
+				<div *ngFor="let textLabelPart of textLabel.text | splitName" class="station-name text {{textLabelPart.isCjk?'cjk':''}}">{{ textLabelPart.text }}</div>
 				<div class="row">
 					<mat-icon class="station-name icon" *ngFor="let icon of textLabel.icons">{{ icon }}</mat-icon>
 				</div>

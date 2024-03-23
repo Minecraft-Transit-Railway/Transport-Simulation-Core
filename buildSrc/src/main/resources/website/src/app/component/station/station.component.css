@@ -1,0 +1,24 @@
+.station-name {
+	font-size: 1.5em;
+	font-weight: bold;
+	text-align: center;
+}
+
+.station-name.cjk {
+	font-size: 3em;
+}
+
+.route-name {
+	font-size: 1.2em;
+}
+
+.station-color-bar {
+	border-radius: 0.2em;
+	height: 0.4em;
+}
+
+.route-color-bar {
+	border-radius: 0.25em;
+	min-width: 3em;
+	height: 0.5em;
+}

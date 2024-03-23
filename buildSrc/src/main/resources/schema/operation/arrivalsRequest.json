@@ -11,11 +11,29 @@
 				"type": "integer"
 			}
 		},
-		"count": {
+		"platformIdsHex": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"stationIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"stationIdsHex": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"maxCountPerPlatform": {
 			"type": "integer",
 			"minimum": 1
 		},
-		"page": {
+		"maxCountTotal": {
 			"type": "integer",
 			"minimum": 0
 		},
@@ -24,8 +42,8 @@
 		}
 	},
 	"required": [
-		"count",
-		"page",
+		"maxCountPerPlatform",
+		"maxCountTotal",
 		"realtimeOnly"
 	]
 }

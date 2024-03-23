@@ -27,10 +27,6 @@ export function arrayAverage(array: number[]) {
 	return array.reduce((previousTotal, currentValue) => previousTotal + currentValue, 0) / array.length;
 }
 
-export function isCJK(text: string) {
-	return text.match(/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFF9F\u4E00-\u9FAF\u3400-\u4DBF]/) != null;
-}
-
 export function atan45(y: number, x: number) {
 	const absX = Math.abs(x);
 	const absY = Math.abs(y);

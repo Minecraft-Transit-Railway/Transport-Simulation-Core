@@ -29,5 +29,6 @@ bin/
 *.DS_Store
 
 generated/
+**/website/src/assets/
 three.module.min.js
 BufferGeometryUtils.js

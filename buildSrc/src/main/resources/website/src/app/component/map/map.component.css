@@ -18,6 +18,7 @@ canvas, .wrapper {
 }
 
 .label {
+	cursor: pointer;
 	position: absolute;
 	transition: color 0.2s;
 	will-change: transform;
@@ -25,7 +26,6 @@ canvas, .wrapper {
 
 .label:hover {
 	color: #777777;
-	cursor: pointer;
 }
 
 .station-name {

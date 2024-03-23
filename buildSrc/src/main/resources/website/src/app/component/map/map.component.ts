@@ -2,7 +2,6 @@ import {AfterViewInit, Component, ElementRef, EventEmitter, Output, ViewChild} f
 import {Mouse} from "../../utility/mouse";
 import {Callback} from "../../utility/callback";
 import SETTINGS from "../../utility/settings";
-import {isCJK} from "../../data/utilities";
 import {ROUTE_TYPES} from "../../data/routeType";
 import {NgForOf, NgIf} from "@angular/common";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
@@ -10,6 +9,7 @@ import {DataService} from "../../service/data.service";
 import {MatIcon} from "@angular/material/icon";
 import {DrawData, MainData, Message, ResizeData, SetupData} from "./offscreen";
 import {StationService} from "../../service/station.service";
+import {SplitNamePipe} from "../../pipe/splitNamePipe";
 
 @Component({
 	selector: "app-map",
@@ -19,6 +19,7 @@ import {StationService} from "../../service/station.service";
 		MatProgressSpinner,
 		NgIf,
 		MatIcon,
+		SplitNamePipe,
 	],
 	templateUrl: "./map.component.html",
 	styleUrls: ["./map.component.css"],
@@ -82,7 +83,6 @@ export class MapComponent implements AfterViewInit {
 				const newHeight = height * 3 * SETTINGS.scale;
 				const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
 				const textOffset = (rotate ? rotatedSize : newHeight) + 9 * SETTINGS.scale;
-				const textLabelTexts: TextLabelText[] = name.split("|").map(namePart => new TextLabelText(namePart, isCJK(namePart)));
 				const icons = types.filter(type => this.dataService.getRouteTypes()[type] === 0).map(type => ROUTE_TYPES[type].icon);
 
 				callback.add(([zoom, centerX, centerY]) => {
@@ -93,7 +93,7 @@ export class MapComponent implements AfterViewInit {
 					if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight) {
 						this.textLabels.push(new TextLabel(
 							id,
-							textLabelTexts,
+							name,
 							icons,
 							renderedTextCount < SETTINGS.maxText,
 							canvasX + halfCanvasWidth,
@@ -137,7 +137,7 @@ export class MapComponent implements AfterViewInit {
 class TextLabel {
 	constructor(
 		public readonly id: string,
-		public readonly text: TextLabelText[],
+		public readonly text: string,
 		public readonly icons: string[],
 		public readonly shouldRenderText: boolean,
 		public readonly x: number,
@@ -145,10 +145,5 @@ class TextLabel {
 		public readonly stationWidth: number,
 		public readonly stationHeight: number
 	) {
-	}
-}
-
-class TextLabelText {
-	constructor(public readonly name: string, public readonly isCjk: boolean) {
 	}
 }
