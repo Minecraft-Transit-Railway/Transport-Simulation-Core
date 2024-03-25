@@ -289,11 +289,11 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (!timeSegments.isEmpty() && area != null) {
-			final TimeSegment lastTimeSegment = Utilities.getElement(timeSegments, -1);
+			final long journeyTime = getJourneyTime();
 			for (int i = 0; i < tempReturnTimes.size(); i++) {
 				if (departure >= tempReturnTimes.getLong(i)) {
 					departures.add(departure);
-					tempReturnTimes.set(i, area.getRepeatInfinitely() ? Integer.MAX_VALUE : departure + (int) Math.ceil(lastTimeSegment.startTime + lastTimeSegment.startSpeed / lastTimeSegment.acceleration));
+					tempReturnTimes.set(i, area.getRepeatInfinitely() ? Long.MAX_VALUE : departure + journeyTime);
 					return true;
 				}
 			}
@@ -422,6 +422,11 @@ public final class Siding extends SidingSchema implements Utilities {
 		return transportMode.continuousMovement ? new Frequency(currentMillis) : null;
 	}
 
+	long getJourneyTime() {
+		final TimeSegment lastTimeSegment = Utilities.getElement(timeSegments, -1);
+		return lastTimeSegment == null ? 0 : (long) Math.ceil(lastTimeSegment.startTime + lastTimeSegment.startSpeed / lastTimeSegment.acceleration);
+	}
+
 	void writePathCache() {
 		PathData.writePathCache(pathSidingToMainRoute, data, transportMode);
 		PathData.writePathCache(pathMainRouteToSiding, data, transportMode);
@@ -457,8 +462,14 @@ public final class Siding extends SidingSchema implements Utilities {
 	private long getRepeatInterval(long defaultAmount) {
 		if (area == null) {
 			return defaultAmount;
+		} else if (transportMode.continuousMovement) {
+			return (long) Depot.CONTINUOUS_MOVEMENT_FREQUENCY * area.savedRails.size();
+		} else if (area.getRepeatInfinitely()) {
+			return Math.round(timeOffsetForRepeating);
+		} else if (data instanceof Simulator && !area.getUseRealTime()) {
+			return ((Simulator) data).getGameMillisPerDay() * area.getRepeatDepartures();
 		} else {
-			return transportMode.continuousMovement ? (long) Depot.CONTINUOUS_MOVEMENT_FREQUENCY * area.savedRails.size() : area.getRepeatInfinitely() ? Math.round(timeOffsetForRepeating) : data instanceof Simulator && !area.getUseRealTime() ? ((Simulator) data).getGameMillisPerDay() : defaultAmount;
+			return defaultAmount;
 		}
 	}
 
@@ -517,8 +528,8 @@ public final class Siding extends SidingSchema implements Utilities {
 					final long scheduledDepartureTime;
 
 					if (transportMode.continuousMovement) {
-						scheduledArrivalTime = currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY;
-						scheduledDepartureTime = currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY;
+						scheduledArrivalTime = 0;
+						scheduledDepartureTime = 0;
 					} else {
 						final long offsetMillis = repeatInterval * departureOffset;
 						scheduledArrivalTime = stopTime.startTime + offsetMillis + departure;

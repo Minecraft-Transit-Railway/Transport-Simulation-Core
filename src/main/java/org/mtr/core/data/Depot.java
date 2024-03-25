@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 public final class Depot extends DepotSchema implements Utilities {
 
 	private OnGenerationComplete onGenerationComplete;
+	private long repeatDepartures;
 
 	public final ObjectArrayList<Route> routes = new ObjectArrayList<>();
 
@@ -256,6 +257,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		});
 
 		final LongArrayList departures = new LongArrayList();
+		final long gameMillisPerDay = data instanceof Simulator ? ((Simulator) data).getGameMillisPerDay() : 0;
 
 		if (transportMode.continuousMovement) {
 			for (int i = 0; i < savedRails.size(); i++) {
@@ -268,6 +270,11 @@ public final class Depot extends DepotSchema implements Utilities {
 				final Simulator simulator = (Simulator) data;
 				final long offsetMillis = simulator.getMillisOfGameMidnight();
 				long lastDeparture = Long.MIN_VALUE;
+
+				if (gameMillisPerDay > 0 && !repeatInfinitely) {
+					final long highestJourneyTime = savedRails.stream().mapToLong(Siding::getJourneyTime).reduce(0, Math::max);
+					repeatDepartures = highestJourneyTime == 0 ? 1 : (long) Math.ceil((double) highestJourneyTime / gameMillisPerDay);
+				}
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
 					final long frequency = getFrequency(((Simulator) data).isTimeMoving() ? i : ((Simulator) data).getHour());
@@ -282,7 +289,7 @@ public final class Depot extends DepotSchema implements Utilities {
 					while (true) {
 						final long newDeparture = Math.max(hourMinMillis, lastDeparture + intervalMillis);
 						if (newDeparture < hourMaxMillis) {
-							departures.add(offsetMillis + newDeparture * simulator.getGameMillisPerDay() / MILLIS_PER_DAY);
+							departures.add(offsetMillis + newDeparture * gameMillisPerDay / MILLIS_PER_DAY);
 							lastDeparture = newDeparture;
 						} else {
 							break;
@@ -298,11 +305,13 @@ public final class Depot extends DepotSchema implements Utilities {
 			Collections.sort(sidingsInDepot);
 			sidingsInDepot.forEach(Siding::startGeneratingDepartures);
 			int sidingIndex = 0;
-			for (final long departure : departures) {
-				for (int i = 0; i < sidingsInDepot.size(); i++) {
-					if (sidingsInDepot.get((sidingIndex + i) % sidingsInDepot.size()).addDeparture(departure)) {
-						sidingIndex++;
-						break;
+			for (int i = 0; i < repeatDepartures; i++) {
+				for (final long departure : departures) {
+					for (int j = 0; j < sidingsInDepot.size(); j++) {
+						if (sidingsInDepot.get((sidingIndex + j) % sidingsInDepot.size()).addDeparture(departure + gameMillisPerDay * i)) {
+							sidingIndex++;
+							break;
+						}
 					}
 				}
 			}
@@ -314,6 +323,10 @@ public final class Depot extends DepotSchema implements Utilities {
 		this.lastGeneratedStatus = lastGeneratedStatus;
 		this.lastGeneratedFailedStartId = lastGeneratedFailedStartId;
 		this.lastGeneratedFailedEndId = lastGeneratedFailedEndId;
+	}
+
+	long getRepeatDepartures() {
+		return repeatDepartures;
 	}
 
 	private void generateMainRoute(OnGenerationComplete newOnGenerationComplete) {
