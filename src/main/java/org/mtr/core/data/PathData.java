@@ -10,6 +10,7 @@ import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 
 import javax.annotation.Nullable;
 
@@ -132,7 +133,8 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	public void writePathCache(Data data, TransportMode transportMode) {
 		rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
 		if (rail == null) {
-			rail = Rail.newRail(startPosition, startAngle, endPosition, endAngle, Rail.Shape.QUADRATIC, 0, "", SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
+			final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
+			rail = Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), Rail.Shape.QUADRATIC, 0, "", SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
 		}
 	}
 

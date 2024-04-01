@@ -9,6 +9,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 public final class Rail extends RailSchema implements SerializedDataBaseWithId {
@@ -212,6 +213,19 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 				connectedRails.add(rail);
 			}
 		});
+	}
+
+	/**
+	 * A helper method that can be used for finding appropriate angles when creating rails.
+	 *
+	 * @return angles that make sense for the two supplied positions
+	 */
+	public static ObjectObjectImmutablePair<Angle, Angle> getAngles(Position positionStart, float angle1, Position positionEnd, float angle2) {
+		final float angleDifference = (float) Math.toDegrees(Math.atan2(positionEnd.getZ() - positionStart.getZ(), positionEnd.getX() - positionStart.getX()));
+		return new ObjectObjectImmutablePair<>(
+				Angle.fromAngle(angle1 + (Angle.similarFacing(angleDifference, angle1) ? 0 : 180)),
+				Angle.fromAngle(angle2 + (Angle.similarFacing(angleDifference, angle2) ? 180 : 0))
+		);
 	}
 
 	private static void reserveRail(long vehicleId, long color, ObjectOpenHashSet<Rail> visitedRails, Rail rail) {
