@@ -78,11 +78,12 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 			for (int i = 1; i < connectionDetailsList.size(); i++) {
 				final Position position1 = connectionDetailsList.get(i - 1).node.position;
 				final Position position2 = connectionDetailsList.get(i).node.position;
-				final Angle angle1 = connectionDetailsList.get(i - 1).node.angle;
-				final Angle angle2 = connectionDetailsList.get(i).node.angle;
 				final Rail rail = Data.tryGet(positionsToRail, position1, position2);
 
 				if (rail == null) {
+					final Angle angle1 = connectionDetailsList.get(i - 1).node.angle;
+					final Angle angle2 = connectionDetailsList.get(i).node.angle;
+
 					if (transportMode == TransportMode.AIRPLANE && angle1 != null && angle2 != null) {
 						final long heightDifference1 = cruisingAltitude - position1.getY();
 						final long heightDifference2 = cruisingAltitude - position2.getY();
@@ -106,11 +107,11 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 					}
 				} else {
 					if (i == connectionDetailsList.size() - 1) {
-						path.add(new PathData(rail, endSavedRail.getId(), endSavedRail instanceof Platform ? ((Platform) endSavedRail).getDwellTime() : 1, stopIndex + 1, position1, angle1, position2, angle2 == null ? null : angle2.getOpposite()));
+						path.add(new PathData(rail, endSavedRail.getId(), endSavedRail instanceof Platform ? ((Platform) endSavedRail).getDwellTime() : 1, stopIndex + 1, position1, position2));
 					} else if (rail.canTurnBack() && connectionDetailsList.get(i + 1).node.position.equals(position1)) {
-						path.add(new PathData(rail, 0, 1, stopIndex, position1, angle1, position2, angle2 == null ? null : angle2.getOpposite()));
+						path.add(new PathData(rail, 0, 1, stopIndex, position1, position2));
 					} else {
-						path.add(new PathData(rail, 0, 0, stopIndex, position1, angle1, position2, angle2 == null ? null : angle2.getOpposite()));
+						path.add(new PathData(rail, 0, 0, stopIndex, position1, position2));
 					}
 				}
 			}
@@ -207,7 +208,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 				position1, angle1, position2, angle2,
 				Rail.Shape.QUADRATIC, 0, "", AIRPLANE_SPEED, 0,
 				false, false, true, false, false, TransportMode.AIRPLANE
-		), 0, 0, stopIndex, position1, angle1, position2, angle2);
+		), 0, 0, stopIndex, position1, position2);
 	}
 
 	protected static class PositionAndAngle {

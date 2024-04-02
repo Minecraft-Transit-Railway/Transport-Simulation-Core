@@ -202,7 +202,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		if (defaultPathData == null) {
 			final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
 			if (rail != null) {
-				defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, null, position2, null);
+				defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, rail.getStartAngle(position1), position2, rail.getStartAngle(position2));
 			}
 			return defaultPathData == null;
 		} else {
