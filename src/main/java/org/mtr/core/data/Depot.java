@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 
 public final class Depot extends DepotSchema implements Utilities {
 
+	@Nullable
 	private OnGenerationComplete onGenerationComplete;
 	private long repeatDepartures;
 
@@ -353,7 +354,9 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	private void updateGenerationStatus(GeneratedStatus lastGeneratedStatus, long lastGeneratedFailedStartId, long lastGeneratedFailedEndId, String message) {
 		updateGenerationStatus(System.currentTimeMillis(), lastGeneratedStatus, lastGeneratedFailedStartId, lastGeneratedFailedEndId);
-		onGenerationComplete.accept(false);
+		if (onGenerationComplete != null) {
+			onGenerationComplete.accept(false);
+		}
 		onGenerationComplete = null;
 		Main.LOGGER.info(String.format(message, name));
 	}

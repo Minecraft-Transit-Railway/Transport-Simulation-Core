@@ -6,6 +6,7 @@ import org.mtr.libraries.okhttp3.*;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -13,7 +14,7 @@ public final class RequestHelper {
 
 	private Call call;
 	private final boolean canInterrupt;
-	private final OkHttpClient okHttpClient = new OkHttpClient.Builder().readTimeout(20, TimeUnit.SECONDS).build();
+	private final OkHttpClient okHttpClient = new OkHttpClient.Builder().connectTimeout(2, TimeUnit.SECONDS).callTimeout(2, TimeUnit.SECONDS).writeTimeout(2, TimeUnit.SECONDS).readTimeout(2, TimeUnit.SECONDS).build();
 
 	public RequestHelper(boolean canInterrupt) {
 		this.canInterrupt = canInterrupt;
@@ -34,7 +35,9 @@ public final class RequestHelper {
 		call.enqueue(new Callback() {
 			@Override
 			public void onFailure(Call call, IOException e) {
-				Main.LOGGER.error(call.request().url(), e);
+				if (!(e instanceof InterruptedIOException)) {
+					Main.LOGGER.error(call.request().url(), e);
+				}
 			}
 
 			@Override
@@ -44,7 +47,9 @@ public final class RequestHelper {
 						consumer.accept(responseBody.string());
 					}
 				} catch (IOException e) {
-					Main.LOGGER.error(call.request().url(), e);
+					if (!(e instanceof InterruptedIOException)) {
+						Main.LOGGER.error(call.request().url(), e);
+					}
 				}
 			}
 		});

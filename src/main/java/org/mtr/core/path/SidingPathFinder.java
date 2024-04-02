@@ -169,9 +169,15 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 		}
 	}
 
-	private static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void padConnectionDetailsList(ObjectArrayList<ConnectionDetails<PositionAndAngle>> connectionDetailsList, SavedRailBase<U, T> savedRail, boolean isEnd) {
-		if (!savedRail.containsPos(Utilities.getElement(connectionDetailsList, isEnd ? -2 : 1).node.position)) {
-			connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(Utilities.getElement(connectionDetailsList, isEnd ? -1 : 0).node.position), null), 0, 0, 0));
+	private <X extends AreaBase<X, Y>, Y extends SavedRailBase<Y, X>> void padConnectionDetailsList(ObjectArrayList<ConnectionDetails<PositionAndAngle>> connectionDetailsList, SavedRailBase<Y, X> savedRail, boolean isEnd) {
+		final Position lastPosition = Utilities.getElement(connectionDetailsList, isEnd ? -1 : 0).node.position;
+		if (!savedRail.containsPos(lastPosition)) {
+			positionsToRail.get(lastPosition).keySet().stream().filter(savedRail::containsPos).findFirst().ifPresent(newPosition -> {
+				connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(newPosition, null), 0, 0, 0));
+				connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(newPosition), null), 0, 0, 0));
+			});
+		} else if (!savedRail.containsPos(Utilities.getElement(connectionDetailsList, isEnd ? -2 : 1).node.position)) {
+			connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(lastPosition), null), 0, 0, 0));
 		}
 	}
 
