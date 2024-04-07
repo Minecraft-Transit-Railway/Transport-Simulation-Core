@@ -120,7 +120,7 @@ public final class DataFixer {
 						vehicleId = trainId;
 					}
 					vehicleCars.add(new VehicleCar(
-							vehicleId,
+							vehicleId.toLowerCase(Locale.ENGLISH),
 							trainLength, trainWidth,
 							-bogiePosition, bogiePosition,
 							(type & 0b01) == 0 ? 0 : 1, (type & 0b10) == 0 ? 0 : 1

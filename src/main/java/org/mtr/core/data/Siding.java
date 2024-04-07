@@ -141,7 +141,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				break;
 			}
 			vehicleCars.add(vehicleCar);
-			tempVehicleLength += vehicleCar.getTotalLength(i == 0, i == newVehicleCars.size() - 1);
+			tempVehicleLength += vehicleCar.getTotalLength(i == 0, false);
 			if (vehicleCars.size() >= transportMode.maxLength) {
 				break;
 			}

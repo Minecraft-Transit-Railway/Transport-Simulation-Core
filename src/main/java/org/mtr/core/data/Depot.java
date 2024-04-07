@@ -259,6 +259,7 @@ public final class Depot extends DepotSchema implements Utilities {
 
 		final LongArrayList departures = new LongArrayList();
 		final long gameMillisPerDay = data instanceof Simulator ? ((Simulator) data).getGameMillisPerDay() : 0;
+		repeatDepartures = 1;
 
 		if (transportMode.continuousMovement) {
 			for (int i = 0; i < savedRails.size(); i++) {
