@@ -26,7 +26,6 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	private PathData defaultPathData;
 	private double timeOffsetForRepeating;
-	private int departureSearchIndex;
 
 	private final ObjectArrayList<SidingPathFinder<Depot, Siding, Station, Platform>> sidingPathFinderSidingToMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Depot, Siding>> sidingPathFinderMainRouteToSiding = new ObjectArrayList<>();
@@ -441,18 +440,8 @@ public final class Siding extends SidingSchema implements Utilities {
 		final long offset = departures.isEmpty() || repeatInterval == 0 ? 0 : (System.currentTimeMillis() - departures.getLong(0)) / repeatInterval * repeatInterval;
 
 		for (int i = 0; i < departures.size(); i++) {
-			if (departureSearchIndex >= departures.size()) {
-				departureSearchIndex = 0;
-			}
-
-			final int match = data instanceof Simulator ? ((Simulator) data).matchMillis(departures.getLong(departureSearchIndex) + offset) : 0;
-
-			if (match == 0) {
-				return departureSearchIndex;
-			} else if (match < 0) {
-				departureSearchIndex++;
-			} else {
-				departureSearchIndex = 0;
+			if ((data instanceof Simulator ? ((Simulator) data).matchMillis(departures.getLong(i) + offset) : 0) == 0) {
+				return i;
 			}
 		}
 
