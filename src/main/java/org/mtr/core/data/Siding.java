@@ -59,9 +59,6 @@ public final class Siding extends SidingSchema implements Utilities {
 	public static final double ACCELERATION_DEFAULT = 1D / 250000;
 	public static final double MAX_ACCELERATION = 1D / 50000;
 	public static final double MIN_ACCELERATION = 1D / 2500000;
-	public static final double BRAKING_POWER_DEFAULT = 1D / 250000;
-	public static final double MAX_BRAKING_POWER = 1D / 50000;
-	public static final double MIN_BRAKING_POWER = 1D / 2500000;
 	private static final String KEY_PATH_SIDING_TO_MAIN_ROUTE = "pathSidingToMainRoute";
 	private static final String KEY_PATH_MAIN_ROUTE_TO_SIDING = "pathMainRouteToSiding";
 	private static final String KEY_VEHICLES = "vehicles";
@@ -171,7 +168,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void setDeceleration(double newDeceleration) {
-		deceleration = transportMode.continuousMovement ? MAX_BRAKING_POWER : roundAcceleration(newDeceleration);
+		deceleration = transportMode.continuousMovement ? MAX_ACCELERATION : roundAcceleration(newDeceleration);
 	}
 
 	public void clearVehicles() {
@@ -781,7 +778,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			if (speedChange == 0) {
 				return startTime + distance / startSpeed;
 			} else {
-				final double totalAcceleration = speedChange * acceleration;
+				final double totalAcceleration = speedChange * (speedChange > 0 ? acceleration : deceleration);
 				final double endSpeedSquared = 2 * totalAcceleration * distance + startSpeed * startSpeed;
 				return endSpeedSquared < 0 ? -1 : startTime + (distance == 0 ? 0 : (Math.sqrt(endSpeedSquared) - startSpeed) / totalAcceleration);
 			}

@@ -206,7 +206,7 @@ public interface TestUtilities {
 	}
 
 	static VehicleExtraData randomVehicleExtraData() {
-		return VehicleExtraData.create(RANDOM.nextLong(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong(), RANDOM.nextDouble());
+		return VehicleExtraData.create(RANDOM.nextLong(), RANDOM.nextDouble(), randomList(TestUtilities::randomVehicleCar), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomList(TestUtilities::randomPathData), randomPathData(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextDouble(), RANDOM.nextLong());
 	}
 
 	static VehicleRidingEntity randomVehicleRidingEntity() {

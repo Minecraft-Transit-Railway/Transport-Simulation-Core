@@ -300,7 +300,7 @@ public class Vehicle extends VehicleSchema {
 		final double stoppingDistance = stoppingPoint - railProgress;
 
 		if (stoppingDistance < safeStoppingDistance) {
-			speed = stoppingDistance <= 0 ? Siding.BRAKING_POWER_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Siding.BRAKING_POWER_DEFAULT);
+			speed = stoppingDistance <= 0 ? Siding.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Siding.ACCELERATION_DEFAULT);
 		} else {
 			final double railSpeed = getRailSpeed(currentIndex);
 			if (speed < railSpeed) {
