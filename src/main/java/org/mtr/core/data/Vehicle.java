@@ -270,8 +270,8 @@ public class Vehicle extends VehicleSchema {
 
 	private void simulateAutomaticMoving(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, int currentIndex) {
 		final double newAcceleration = vehicleExtraData.getAcceleration() * millisElapsed;
-		final double newBrakingPower = vehicleExtraData.getBrakingPower() * millisElapsed;
-		final double safeStoppingDistance = 0.5 * speed * speed / vehicleExtraData.getBrakingPower();
+		final double newDeceleration = vehicleExtraData.getDeceleration() * millisElapsed;
+		final double safeStoppingDistance = 0.5 * speed * speed / vehicleExtraData.getDeceleration();
 		final double railBlockedDistance = railBlockedDistance(currentIndex, railProgress, safeStoppingDistance, vehiclePositions, true, false);
 		final double stoppingPoint;
 
@@ -305,7 +305,7 @@ public class Vehicle extends VehicleSchema {
 			if (speed < railSpeed) {
 				speed = Math.min(speed + newAcceleration, railSpeed);
 			} else if (speed > railSpeed) {
-				speed = Math.max(speed - newBrakingPower, railSpeed);
+				speed = Math.max(speed - newDeceleration, railSpeed);
 			}
 		}
 

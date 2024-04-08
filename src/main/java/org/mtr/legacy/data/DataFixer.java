@@ -80,9 +80,11 @@ public final class DataFixer {
 		packExtra(readerBase, messagePackWriter -> {
 			readerBase.unpackInt("dwell_time", value -> messagePackWriter.writeLong("manualToAutomaticTime", value * 500L));
 			// meters/tick^2 to meters/millisecond^2
-			readerBase.unpackDouble("acceleration_constant", value -> messagePackWriter.writeDouble("acceleration", value / 50D / 50D));
-			readerBase.unpackDouble("braking_power_constant", value -> messagePackWriter.writeDouble("brakingPower", value / 50D / 50D));
-      readerBase.unpackInt("max_manual_speed", value -> {
+			readerBase.unpackDouble("acceleration_constant", value -> {
+				messagePackWriter.writeDouble("acceleration", value / 50D / 50D);
+				messagePackWriter.writeDouble("deceleration", value / 50D / 50D);
+			});
+			readerBase.unpackInt("max_manual_speed", value -> {
 				if (value >= 0 && value <= RailType.DIAMOND.ordinal()) {
 					messagePackWriter.writeDouble("maxManualSpeed", RailType.values()[value].speedLimitMetersPerMillisecond);
 				}

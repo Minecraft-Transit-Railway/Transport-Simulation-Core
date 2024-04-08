@@ -31,7 +31,7 @@
 			"default": 0.000004,
 			"minimum": 0
 		},
-		"brakingPower": {
+		"deceleration": {
 			"type": "number",
 			"default": 0.000004,
 			"minimum": 0

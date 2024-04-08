@@ -133,6 +133,10 @@
 			"type": "number",
 			"minimum": 0
 		},
+		"deceleration": {
+			"type": "number",
+			"minimum": 0
+		},
 		"isManualAllowed": {
 			"type": "boolean"
 		},
@@ -169,10 +173,6 @@
 			"items": {
 				"$ref": "vehicleRidingEntity.json"
 			}
-		},
-		"brakingPower": {
-			"type": "number",
-			"minimum": 0
 		}
 	},
 	"required": [
@@ -182,11 +182,11 @@
 		"repeatIndex1",
 		"repeatIndex2",
 		"acceleration",
+		"deceleration",
 		"isManualAllowed",
 		"maxManualSpeed",
 		"manualToAutomaticTime",
 		"totalDistance",
-		"defaultPosition",
-		"brakingPower"
+		"defaultPosition"
 	]
 }
