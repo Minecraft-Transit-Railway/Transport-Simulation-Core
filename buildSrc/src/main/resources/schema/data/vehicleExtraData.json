@@ -133,6 +133,10 @@
 			"type": "number",
 			"minimum": 0
 		},
+		"deceleration": {
+			"type": "number",
+			"minimum": 0
+		},
 		"isManualAllowed": {
 			"type": "boolean"
 		},
@@ -178,6 +182,7 @@
 		"repeatIndex1",
 		"repeatIndex2",
 		"acceleration",
+		"deceleration",
 		"isManualAllowed",
 		"maxManualSpeed",
 		"manualToAutomaticTime",
