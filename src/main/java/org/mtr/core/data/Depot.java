@@ -305,6 +305,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		if (!sidingsInDepot.isEmpty()) {
 			Collections.shuffle(sidingsInDepot);
 			Collections.sort(sidingsInDepot);
+			Collections.sort(departures);
 			sidingsInDepot.forEach(Siding::startGeneratingDepartures);
 			int sidingIndex = 0;
 			for (int i = 0; i < repeatDepartures; i++) {
