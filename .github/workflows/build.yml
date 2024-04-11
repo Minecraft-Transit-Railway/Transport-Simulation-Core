@@ -16,8 +16,6 @@ jobs:
           distribution: 'zulu'
       - name: Make gradle wrapper executable
         run: chmod +x ./gradlew
-      - name: Download webserver files
-        run: ./gradlew downloadWebserverFiles
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

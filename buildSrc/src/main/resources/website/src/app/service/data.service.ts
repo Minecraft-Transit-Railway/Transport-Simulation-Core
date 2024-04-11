@@ -18,7 +18,6 @@ export class DataService {
 	private allRoutes: Route[] = [];
 	private stationConnections: StationConnection[] = [];
 	private lineConnections: LineConnection[] = [];
-	private maxLineConnectionLength = 0;
 	private centerX = 0;
 	private centerY = 0;
 	public drawMap: () => void = () => {
@@ -92,10 +91,6 @@ export class DataService {
 
 	public getLineConnections() {
 		return this.lineConnections;
-	}
-
-	public getMaxLineConnectionLength() {
-		return this.maxLineConnectionLength;
 	}
 
 	public getCenterX() {
@@ -245,8 +240,9 @@ export class DataService {
 		});
 
 		const lineConnections: { [key: string]: { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: number, direction2: number, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, length: number } } = {};
-		const stationConnections: { [key: string]: { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined } } = {};
+		const stationConnections: { [key: string]: { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, sizeRatio: number, start45: boolean } } = {};
 		let closestDistance: number;
+		let maxLineConnectionLength = 1;
 
 		stationsPhase1.forEach(station => {
 			const combinedGroups: string[][] = [];
@@ -304,7 +300,7 @@ export class DataService {
 
 			Object.entries(stationGroups[station.id]).forEach(groupEntry => {
 				const [stationId, routeColors] = groupEntry;
-				const [key, reverse] = getKeyAndReverseFromStationIds(station.id, stationId)
+				const [key, reverse] = getKeyAndReverseFromStationIds(station.id, stationId);
 				routeColors.sort();
 				setIfUndefined(lineConnections, key, () => ({lineConnectionParts: routeColors.map(() => Object.create(null)), direction1: 0, direction2: 0, x1: undefined, x2: undefined, z1: undefined, z2: undefined, length: 0}));
 				const index = reverse ? 2 : 1;
@@ -327,7 +323,7 @@ export class DataService {
 				if (lineConnection.x1 != undefined && lineConnection.z1 != undefined && lineConnection.x2 != undefined && lineConnection.z2 != undefined) {
 					const lineConnectionLength = Math.abs(lineConnection.x2 - lineConnection.x1) + Math.abs(lineConnection.z2 - lineConnection.z1);
 					lineConnection.length = lineConnectionLength;
-					this.maxLineConnectionLength = Math.max(this.maxLineConnectionLength, lineConnectionLength);
+					maxLineConnectionLength = Math.max(maxLineConnectionLength, lineConnectionLength);
 				}
 			});
 
@@ -340,9 +336,14 @@ export class DataService {
 
 			station.connections.forEach(stationId => {
 				const [key, reverse] = getKeyAndReverseFromStationIds(station.id, stationId);
-				setIfUndefined(stationConnections, key, () => ({x1: undefined, x2: undefined, z1: undefined, z2: undefined}));
+				setIfUndefined(stationConnections, key, () => ({x1: undefined, x2: undefined, z1: undefined, z2: undefined, sizeRatio: 0, start45: false}));
 				stationConnections[key][`x${reverse ? 2 : 1}`] = station.x;
 				stationConnections[key][`z${reverse ? 2 : 1}`] = station.z;
+				const sizeRatio = (Math.max(station.width, station.height) + 1) / (Math.min(station.width, station.height) + 1);
+				if (sizeRatio > stationConnections[key].sizeRatio) {
+					stationConnections[key].sizeRatio = sizeRatio;
+					stationConnections[key].start45 = reverse !== station.rotate;
+				}
 			});
 		});
 
@@ -355,7 +356,10 @@ export class DataService {
 		});
 
 		this.stations = stationsPhase1.map(station => plainToInstance(StationWithPosition, station));
-		this.lineConnections = Object.values(lineConnections).sort((lineConnection1, lineConnection2) => lineConnection2.length - lineConnection1.length).map(lineConnection => plainToInstance(LineConnection, lineConnection));
+		this.lineConnections = Object.values(lineConnections).sort((lineConnection1, lineConnection2) => lineConnection2.length - lineConnection1.length).map(lineConnection => {
+			lineConnection.length = lineConnection.length / (maxLineConnectionLength + 1);
+			return plainToInstance(LineConnection, lineConnection);
+		});
 		this.stationConnections = Object.values(stationConnections).filter(stationConnection => stationConnection.x1 != undefined && stationConnection.x2 != undefined && stationConnection.z1 != undefined && stationConnection.z2 != undefined).map(stationConnection => plainToInstance(StationConnection, stationConnection));
 		this.drawMap();
 	}
@@ -403,7 +407,7 @@ export class Station {
 		public readonly connections: string[],
 		public readonly x: number,
 		public readonly y: number,
-		public readonly z: number
+		public readonly z: number,
 	) {
 	}
 
@@ -418,7 +422,7 @@ export class Station {
 			dataResponseStation.connections,
 			dataResponseRouteStation.x,
 			dataResponseRouteStation.y,
-			dataResponseRouteStation.z
+			dataResponseRouteStation.z,
 		);
 	}
 }

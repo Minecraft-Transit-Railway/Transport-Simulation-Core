@@ -3,12 +3,15 @@
 <div class="column center loading-background">
 	<mat-spinner class="spinner" color="accent"/>
 </div>
-<div #wrapper class="wrapper" [style.opacity]="loading ? 0 : 1">
+<div class="wrapper" #wrapper [style.opacity]="loading ? 0 : 1">
 	<canvas #canvas></canvas>
-	<div class="labels">
-		<div class="column center label" *ngFor="let textLabel of textLabels" [style.transform]="'translate(-50%,0)translate('+textLabel.x+'px,'+textLabel.y+'px)'" (mouseup)="onClickStation.emit(textLabel.id)">
+	<div>
+		<div class="column center label" *ngFor="let textLabel of textLabels" [style.transform]="'translate(-50%,0) translate(' + textLabel.x + 'px, ' + textLabel.y + 'px)'"
+			 (mousedown)="onClickStation.emit(textLabel.id)"
+			 (mouseenter)="textLabel.hoverOverride = true"
+			 (mouseleave)="textLabel.hoverOverride = false">
 			<div [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'"></div>
-			<div class="column center" *ngIf="textLabel.shouldRenderText">
+			<div class="column center" *ngIf="textLabel.shouldRenderText || textLabel.hoverOverride">
 				<div *ngFor="let textLabelPart of textLabel.text | splitName" class="station-name text {{textLabelPart.isCjk?'cjk':''}}">{{ textLabelPart.text }}</div>
 				<div class="row">
 					<mat-icon class="station-name icon" *ngFor="let icon of textLabel.icons">{{ icon }}</mat-icon>
@@ -17,3 +20,4 @@
 		</div>
 	</div>
 </div>
+<div #stats></div>

@@ -30,5 +30,3 @@ bin/
 
 generated/
 **/website/src/assets/
-three.module.min.js
-BufferGeometryUtils.js

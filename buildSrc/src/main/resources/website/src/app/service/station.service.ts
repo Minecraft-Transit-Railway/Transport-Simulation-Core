@@ -45,6 +45,7 @@ export class StationService {
 
 	public setStation(stationId: string) {
 		this.selectedStation = this.dataService.getAllStations().find(station => station.id === stationId);
+		this.arrivals.length = 0;
 		clearTimeout(this.timeoutId);
 		StationService.getData(this);
 	}
@@ -63,9 +64,9 @@ class DataResponse {
 	readonly arrival: number = 0;
 	readonly departure: number = 0;
 	readonly deviation: number = 0;
-	readonly realtime: boolean = false
+	readonly realtime: boolean = false;
 	readonly departureIndex: number = 0;
-	readonly isTerminating: boolean = false
+	readonly isTerminating: boolean = false;
 	readonly routeName: string = "";
 	readonly routeNumber: string = "";
 	readonly routeColor: number = 0;
@@ -81,7 +82,7 @@ class DataResponseCar {
 export class Arrival {
 	readonly destination: string = "";
 	readonly deviation: number = 0;
-	readonly realtime: boolean = false
+	readonly realtime: boolean = false;
 	readonly departureIndex: number = 0;
 	readonly routeName: string = "";
 	readonly routeColor: string = "";
