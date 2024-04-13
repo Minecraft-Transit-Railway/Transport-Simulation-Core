@@ -63,7 +63,7 @@ public class Simulator extends Data implements Utilities {
 		fileLoaderRails = new FileLoader<>(rails, Rail::new, savePath, "rails");
 
 		currentMillis = System.currentTimeMillis();
-		Main.LOGGER.info(String.format("Data loading complete for %s in %s second(s)", dimension, (float) (currentMillis - startMillis) / MILLIS_PER_SECOND));
+		Main.LOGGER.info("Data loading complete for {} in {} second(s)", dimension, (float) (currentMillis - startMillis) / MILLIS_PER_SECOND);
 
 		sync();
 		depots.forEach(Depot::init);
@@ -121,8 +121,7 @@ public class Simulator extends Data implements Utilities {
 				}
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
-			throw e;
+			Main.LOGGER.fatal("", e);
 		}
 	}
 
@@ -210,16 +209,16 @@ public class Simulator extends Data implements Utilities {
 		save(fileLoaderDepots, useReducedHash);
 		save(fileLoaderLifts, useReducedHash);
 		save(fileLoaderRails, useReducedHash);
-		Main.LOGGER.info(String.format("Save complete for %s in %s second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F));
+		Main.LOGGER.info("Save complete for {} in {} second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F);
 	}
 
 	private <T extends SerializedDataBaseWithId> void save(FileLoader<T> fileLoader, boolean useReducedHash) {
 		final IntIntImmutablePair saveCounts = fileLoader.save(useReducedHash);
 		if (saveCounts.leftInt() > 0) {
-			Main.LOGGER.info(String.format("- Changed %s: %s", fileLoader.key, saveCounts.leftInt()));
+			Main.LOGGER.info("- Changed {}: {}", fileLoader.key, saveCounts.leftInt());
 		}
 		if (saveCounts.rightInt() > 0) {
-			Main.LOGGER.info(String.format("- Deleted %s: %s", fileLoader.key, saveCounts.rightInt()));
+			Main.LOGGER.info("- Deleted {}: {}", fileLoader.key, saveCounts.rightInt());
 		}
 	}
 

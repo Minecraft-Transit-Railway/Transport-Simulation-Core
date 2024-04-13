@@ -187,6 +187,10 @@ public class Vehicle extends VehicleSchema {
 		return vehicleCarsAndPositions;
 	}
 
+	public Vector getHeadPosition() {
+		return getPosition(railProgress, new DoubleArrayList());
+	}
+
 	void updateRidingEntities(ObjectArrayList<VehicleRidingEntity> vehicleRidingEntities) {
 		if (!isClientside && data instanceof Simulator) {
 			final ObjectOpenHashSet<UUID> uuidToRemove = new ObjectOpenHashSet<>();

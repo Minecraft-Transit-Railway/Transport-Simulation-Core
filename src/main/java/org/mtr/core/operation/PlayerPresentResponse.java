@@ -20,7 +20,7 @@ public class PlayerPresentResponse extends PlayerPresentResponseSchema {
 		if (!playerPresent) {
 			simulator.run(() -> {
 				simulator.clients.remove(clientId);
-				Main.LOGGER.info(String.format("Removing player %s", clientId));
+				Main.LOGGER.info("Removing player {}", clientId);
 			});
 		}
 	}

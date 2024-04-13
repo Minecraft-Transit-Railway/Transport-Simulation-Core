@@ -190,7 +190,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	public boolean tick() {
 		// Generate any pending paths
 		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, area == null ? 0 : area.getCruisingAltitude(), this::finishGeneratingPath, (startSavedRail, endSavedRail) -> {
-			Main.LOGGER.info(String.format("Path not found from %s siding %s to main route", getDepotName(), name));
+			Main.LOGGER.info("Path not found from {} siding {} to main route", getDepotName(), name);
 			finishGeneratingPath();
 		});
 		SidingPathFinder.findPathTick(pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, area == null ? 0 : area.getCruisingAltitude(), () -> {
@@ -201,7 +201,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			}
 			finishGeneratingPath();
 		}, (startSavedRail, endSavedRail) -> {
-			Main.LOGGER.info(String.format("Path not found from main route to %s siding %s", getDepotName(), name));
+			Main.LOGGER.info("Path not found from main route to {} siding {}", getDepotName(), name);
 			finishGeneratingPath();
 		});
 
@@ -261,7 +261,7 @@ public final class Siding extends SidingSchema implements Utilities {
 					final int departureIndex = matchDeparture();
 					if (departureIndex >= 0 && departureIndex < departures.size()) {
 						if (!transportMode.continuousMovement && vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
-							Main.LOGGER.info(String.format("Already deployed vehicle from %s for departure index %s", getDepotName(), departureIndex));
+							Main.LOGGER.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
 						} else {
 							vehicle.startUp(departureIndex);
 						}

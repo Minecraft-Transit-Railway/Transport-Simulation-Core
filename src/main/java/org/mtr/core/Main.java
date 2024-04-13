@@ -64,7 +64,7 @@ public class Main {
 		webserver.start();
 		scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
 		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));
-		LOGGER.info("Server started with dimensions " + Arrays.toString(dimensions));
+		LOGGER.info("Server started with dimensions {}", Arrays.toString(dimensions));
 	}
 
 	public void save() {

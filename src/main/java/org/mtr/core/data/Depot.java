@@ -341,7 +341,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		if (savedRails.isEmpty()) {
 			updateGenerationStatus(GeneratedStatus.NO_SIDINGS, 0, 0, "No sidings in %s");
 		} else {
-			Main.LOGGER.info(String.format("Starting path generation for %s...", name));
+			Main.LOGGER.info("Starting path generation for {}...", name);
 			path.clear();
 			sidingPathFinders.clear();
 			generatingSidingIds.clear();

@@ -87,7 +87,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 
 				try {
 					Files.deleteIfExists(idFolder);
-					Main.LOGGER.info(String.format("Deleted empty folder: %s", idFolder));
+					Main.LOGGER.debug("Deleted empty folder: {}", idFolder);
 				} catch (DirectoryNotEmptyException ignored) {
 				} catch (Exception e) {
 					Main.LOGGER.error("", e);
@@ -104,7 +104,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 					if (data.isValid()) {
 						dataSet.add(data);
 					} else {
-						Main.LOGGER.info(String.format("Skipping invalid data: %s", data));
+						Main.LOGGER.warn("Skipping invalid data: {}", data);
 					}
 					fileHashes.put(fileName, getHash(data, true));
 				}
