@@ -5,11 +5,11 @@
 		"SerializedDataBase"
 	],
 	"properties": {
-		"playerPresent": {
-			"type": "boolean"
+		"playerDimension": {
+			"type": "string"
 		}
 	},
 	"required": [
-		"playerPresent"
+		"playerDimension"
 	]
 }

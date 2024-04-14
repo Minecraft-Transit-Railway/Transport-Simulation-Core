@@ -30,8 +30,8 @@ public class Simulator extends Data implements Utilities {
 	private long lastSetGameMillisMidnight;
 
 	public final Object2ObjectOpenHashMap<String, Client> clients = new Object2ObjectOpenHashMap<>();
+	public final String dimension;
 
-	private final String dimension;
 	private final int clientWebserverPort;
 	private final FileLoader<Station> fileLoaderStations;
 	private final FileLoader<Platform> fileLoaderPlatforms;

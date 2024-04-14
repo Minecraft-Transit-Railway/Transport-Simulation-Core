@@ -60,9 +60,7 @@ public class Client extends ClientSchema {
 			final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
 
 			if (hasUpdate1 || hasUpdate2) {
-				simulator.sendHttpRequest("vehicles-lifts", vehicleLiftResponse, responseObject -> {
-					new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId);
-				});
+				simulator.sendHttpRequest("vehicles-lifts", vehicleLiftResponse, responseObject -> new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId));
 			}
 		}
 	}
