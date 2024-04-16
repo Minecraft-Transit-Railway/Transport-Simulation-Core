@@ -14,7 +14,7 @@ public final class RequestHelper {
 
 	private Call call;
 	private final boolean canInterrupt;
-	private final OkHttpClient okHttpClient = new OkHttpClient.Builder().connectTimeout(2, TimeUnit.SECONDS).callTimeout(2, TimeUnit.SECONDS).writeTimeout(2, TimeUnit.SECONDS).readTimeout(2, TimeUnit.SECONDS).build();
+	private final OkHttpClient okHttpClient = new OkHttpClient.Builder().connectTimeout(2, TimeUnit.SECONDS).writeTimeout(2, TimeUnit.SECONDS).readTimeout(2, TimeUnit.SECONDS).build();
 
 	public RequestHelper(boolean canInterrupt) {
 		this.canInterrupt = canInterrupt;

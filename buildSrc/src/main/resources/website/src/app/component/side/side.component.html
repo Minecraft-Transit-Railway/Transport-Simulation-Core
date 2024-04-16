@@ -1,7 +1,10 @@
 <mat-sidenav-container [hasBackdrop]="false">
 	<mat-sidenav position="end">
-		<div class="column-reverse">
-			<ng-content select="[sidenav]"/>
+		<div class="column-reverse wrapper">
+			<div class="spacing"></div>
+			<div class="content">
+				<ng-content select="[sidenav]"/>
+			</div>
 			<mat-toolbar>
 				<div>&nbsp;</div>
 				<ng-content select="[title]"/>

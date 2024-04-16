@@ -1,13 +1,16 @@
 import {Component} from "@angular/core";
-import {StationService} from "../../service/station.service";
+import {Arrival, StationService} from "../../service/station.service";
 import {MatIcon} from "@angular/material/icon";
-import {NgFor} from "@angular/common";
+import {NgFor, NgIf, NgStyle} from "@angular/common";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
 import {MatButtonToggle, MatButtonToggleGroup} from "@angular/material/button-toggle";
 import {MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle} from "@angular/material/expansion";
-import {FormatTimePipe} from "../../pipe/formatDatePipe";
+import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {MatDivider} from "@angular/material/divider";
+import {MatChipListbox, MatChipOption} from "@angular/material/chips";
+import {FormatColorPipe} from "../../pipe/formatColorPipe";
+import {FormatDatePipe} from "../../pipe/formatDatePipe";
 
 @Component({
 	selector: "app-station",
@@ -23,10 +26,16 @@ import {MatDivider} from "@angular/material/divider";
 		MatExpansionPanelTitle,
 		FormatTimePipe,
 		FormatNamePipe,
-		MatDivider
+		MatDivider,
+		MatChipListbox,
+		MatChipOption,
+		NgStyle,
+		FormatColorPipe,
+		FormatDatePipe,
+		NgIf,
 	],
 	templateUrl: "./station.component.html",
-	styleUrl: "./station.component.css"
+	styleUrl: "./station.component.css",
 })
 export class StationComponent {
 
@@ -47,7 +56,22 @@ export class StationComponent {
 		return station == undefined ? "" : `${station.zone1}, ${station.zone2}, ${station.zone3}`;
 	}
 
-	getArrivals() {
-		return this.stationService.getArrivals();
+	getActiveRoutes() {
+		return this.stationService.routes;
+	}
+
+	getArrivals(chipList: MatChipListbox) {
+		try {
+			const selected = (chipList.selected as MatChipOption[]).map(option => option.id);
+			const newArrivals: Arrival[] = [];
+			this.stationService.arrivals.forEach(arrival => {
+				if (newArrivals.length < 10 && (selected.length == 0 || selected.includes(arrival.key))) {
+					newArrivals.push(arrival);
+				}
+			});
+			return newArrivals;
+		} catch (e) {
+			return [];
+		}
 	}
 }

@@ -12,26 +12,35 @@
 		<div>({{ getZoneText() }})</div>
 	</div>
 
-	<mat-expansion-panel expanded>
-		<mat-expansion-panel-header>
-			<mat-panel-title>Arrivals</mat-panel-title>
-		</mat-expansion-panel-header>
+	<div class="column gap-small">
+		<mat-divider/>
+		<div class="chip-wrapper">
+			<mat-chip-listbox #chipList aria-label="Routes" multiple>
+				<mat-chip-option #chip *ngFor="let route of getActiveRoutes()" [style.border-color]="route.color | formatColor" [style.background-color]="chip.selected ? (route.color | formatColor) : ''" [id]="route.key">
+					<div class="chip-text">{{ route.name | formatName }} {{ route.number | formatName }}</div>
+				</mat-chip-option>
+			</mat-chip-listbox>
+		</div>
 
-		<div class="column gap">
-			<div class="column gap" *ngFor="let arrivalGroup of getArrivals()">
-				<mat-divider/>
-				<div class="row center gap">
-					<div class="route-color-bar" [style.background-color]="'#' + arrivalGroup.routeColor"></div>
-					<div class="route-name">{{ arrivalGroup.routeName | formatName }}</div>
+		<div class="column gap-small" *ngFor="let arrival of getArrivals(chipList)">
+			<mat-divider/>
+			<div class="column">
+				<div class="row gap title">
+					<div>{{ arrival.destination | formatName }}</div>
+					<div class="spacing"></div>
+					<div class="align-right">{{ arrival.getArrivalTime() | formatTime : "Arrived" }}</div>
 				</div>
-				<div class="column">
-					<div class="row gap" *ngFor="let arrival of arrivalGroup.arrivals">
-						<div>{{ arrival.destination | formatName }}</div>
-						<div class="spacing"></div>
-						<div>{{ arrival.getArrivalTime() | formatTime }}</div>
-					</div>
+				<div class="row gap subtitle">
+					<div>{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
+					<div class="spacing"></div>
+					<div class="align-right">{{ arrival.arrival | formatDate }}</div>
+				</div>
+				<div class="row gap subtitle">
+					<div>Platform {{ arrival.platformName }}</div>
+					<div class="spacing"></div>
+					<div class="align-right">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
 				</div>
 			</div>
 		</div>
-	</mat-expansion-panel>
+	</div>
 </div>

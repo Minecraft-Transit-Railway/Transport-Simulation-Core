@@ -17,7 +17,6 @@ import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
 import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -33,33 +32,37 @@ public abstract class ServletBase extends HttpServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException {
+	protected void doGet(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
 		doPost(httpServletRequest, httpServletResponse);
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException {
-		final AsyncContext asyncContext = httpServletRequest.startAsync();
-		asyncContext.setTimeout(0);
-		final long currentMillis = System.currentTimeMillis();
-		final JsonElement jsonElement = JsonParser.parseReader(httpServletRequest.getReader());
-		final JsonReader jsonReader = new JsonReader(jsonElement.isJsonNull() ? new JsonObject() : jsonElement);
+	protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+		try {
+			final AsyncContext asyncContext = httpServletRequest.startAsync();
+			asyncContext.setTimeout(0);
+			final long currentMillis = System.currentTimeMillis();
+			final JsonElement jsonElement = JsonParser.parseReader(httpServletRequest.getReader());
+			final JsonReader jsonReader = new JsonReader(jsonElement.isJsonNull() ? new JsonObject() : jsonElement);
 
-		if (tryGetParameter(httpServletRequest, "dimensions").equals("all")) {
-			simulators.forEach(simulator -> run(httpServletRequest, null, null, jsonReader, currentMillis, simulator));
-			buildResponseObject(httpServletResponse, asyncContext, currentMillis, null, HttpResponseStatus.OK);
-		} else {
-			int dimension = 0;
-			try {
-				dimension = Integer.parseInt(tryGetParameter(httpServletRequest, "dimension"));
-			} catch (Exception ignored) {
-			}
-
-			if (dimension < 0 || dimension >= simulators.size()) {
-				buildResponseObject(httpServletResponse, asyncContext, currentMillis, null, HttpResponseStatus.BAD_REQUEST, "Invalid Dimension");
+			if (tryGetParameter(httpServletRequest, "dimensions").equals("all")) {
+				simulators.forEach(simulator -> run(httpServletRequest, null, null, jsonReader, currentMillis, simulator));
+				buildResponseObject(httpServletResponse, asyncContext, currentMillis, null, HttpResponseStatus.OK);
 			} else {
-				run(httpServletRequest, httpServletResponse, asyncContext, jsonReader, currentMillis, simulators.get(dimension));
+				int dimension = 0;
+				try {
+					dimension = Integer.parseInt(tryGetParameter(httpServletRequest, "dimension"));
+				} catch (Exception ignored) {
+				}
+
+				if (dimension < 0 || dimension >= simulators.size()) {
+					buildResponseObject(httpServletResponse, asyncContext, currentMillis, null, HttpResponseStatus.BAD_REQUEST, "Invalid Dimension");
+				} else {
+					run(httpServletRequest, httpServletResponse, asyncContext, jsonReader, currentMillis, simulators.get(dimension));
+				}
 			}
+		} catch (Exception e) {
+			Main.LOGGER.error("", e);
 		}
 	}
 
@@ -97,16 +100,21 @@ public abstract class ServletBase extends HttpServlet {
 			final ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
 			final ByteBuffer byteBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
 			httpServletResponse.addHeader("Content-Type", contentType);
+			httpServletResponse.addHeader("Access-Control-Allow-Origin", "*");
 			servletOutputStream.setWriteListener(new WriteListener() {
 				@Override
-				public void onWritePossible() throws IOException {
-					while (servletOutputStream.isReady()) {
-						if (!byteBuffer.hasRemaining()) {
-							httpServletResponse.setStatus(httpResponseStatus.code);
-							asyncContext.complete();
-							return;
+				public void onWritePossible() {
+					try {
+						while (servletOutputStream.isReady()) {
+							if (!byteBuffer.hasRemaining()) {
+								httpServletResponse.setStatus(httpResponseStatus.code);
+								asyncContext.complete();
+								return;
+							}
+							servletOutputStream.write(byteBuffer.get());
 						}
-						servletOutputStream.write(byteBuffer.get());
+					} catch (Exception e) {
+						Main.LOGGER.error("", e);
 					}
 				}
 
@@ -115,7 +123,6 @@ public abstract class ServletBase extends HttpServlet {
 					asyncContext.complete();
 				}
 			});
-		} catch (IllegalStateException ignored) {
 		} catch (Exception e) {
 			Main.LOGGER.error("", e);
 		}

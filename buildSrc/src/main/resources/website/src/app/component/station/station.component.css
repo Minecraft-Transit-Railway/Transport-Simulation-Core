@@ -1,3 +1,8 @@
+mat-chip-option {
+	border: 2px solid;
+	box-sizing: border-box;
+}
+
 .station-name {
 	font-size: 1.5em;
 	font-weight: bold;
@@ -6,10 +11,6 @@
 
 .station-name.cjk {
 	font-size: 3em;
-}
-
-.route-name {
-	font-size: 1.2em;
 }
 
 .station-color-bar {
@@ -21,4 +22,24 @@
 	border-radius: 0.25em;
 	min-width: 3em;
 	height: 0.5em;
+}
+
+.chip-wrapper {
+	overflow: hidden;
+}
+
+.chip-text {
+	font-size: 0.8em;
+}
+
+.title {
+	font-weight: bold;
+}
+
+.subtitle {
+	font-size: 0.6em;
+}
+
+.align-right {
+	text-align: right;
 }
