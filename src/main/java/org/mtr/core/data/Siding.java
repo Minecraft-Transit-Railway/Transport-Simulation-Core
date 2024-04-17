@@ -363,8 +363,8 @@ public final class Siding extends SidingSchema implements Utilities {
 					tripId,
 					platform,
 					stopTime,
-					scheduledArrivalTime,
-					scheduledDepartureTime,
+					transportMode.continuousMovement ? currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY : scheduledArrivalTime,
+					transportMode.continuousMovement ? currentMillis + Depot.CONTINUOUS_MOVEMENT_FREQUENCY : scheduledDepartureTime,
 					predicted,
 					deviation,
 					getOBAOccupancyStatus(predicted),
@@ -537,7 +537,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 					if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
 						break;
-					} else if (scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter) {
+					} else if (!transportMode.continuousMovement && (scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter)) {
 						continue;
 					}
 

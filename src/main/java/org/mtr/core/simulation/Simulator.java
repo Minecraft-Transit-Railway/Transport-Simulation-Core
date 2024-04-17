@@ -114,13 +114,13 @@ public class Simulator extends Data implements Utilities {
 				directionsPathFinders.removeIf(DirectionsPathFinder::tick);
 			}
 
-			if (!queuedRuns.isEmpty()) {
+			while (!queuedRuns.isEmpty()) {
 				final Runnable runnable = queuedRuns.remove(0);
 				if (runnable != null) {
 					runnable.run();
 				}
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			Main.LOGGER.fatal("", e);
 		}
 	}

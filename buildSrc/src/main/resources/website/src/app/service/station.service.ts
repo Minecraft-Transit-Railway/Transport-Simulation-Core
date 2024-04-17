@@ -23,14 +23,13 @@ export class StationService {
 
 	private static getData(instance: StationService) {
 		if (instance.selectedStation) {
-			instance.httpClient.post<{ currentTime: number, data: { arrivals: DataResponse[] } }>(URL, `{"stationIdsHex":["${instance.selectedStation.id}"],"maxCountPerPlatform":${MAX_ARRIVALS}}`).subscribe(({currentTime, data: {arrivals}}) => {
-				const timeOffset = new Date().getTime() - currentTime;
+			instance.httpClient.post<{ data: { arrivals: DataResponse[] } }>(URL, `{"stationIdsHex":["${instance.selectedStation.id}"],"maxCountPerPlatform":${MAX_ARRIVALS}}`).subscribe(({data: {arrivals}}) => {
 				instance.arrivals.length = 0;
 				const routes: { [key: string]: { key: string, name: string, number: string, color: number, lineCount: number, typeIcon: string } } = {};
 				instance.hasTerminating = false;
 
 				arrivals.forEach(arrival => {
-					const newArrival = new Arrival(instance.dataService, arrival, timeOffset);
+					const newArrival = new Arrival(instance.dataService, arrival);
 					instance.arrivals.push(newArrival);
 					routes[newArrival.key] = {
 						key: newArrival.key,
@@ -119,7 +118,7 @@ class DataResponseCar {
 export class Arrival {
 	readonly destination: string;
 	private readonly deviation: number;
-	private readonly realtime: boolean;
+	readonly realtime: boolean;
 	readonly departureIndex: number;
 	readonly isTerminating: boolean;
 	readonly routeName: string;
@@ -131,11 +130,12 @@ export class Arrival {
 	readonly cars: string[];
 	readonly arrival: number;
 	readonly departure: number;
+	readonly isContinuous: boolean;
 	readonly key: string;
 	private arrivalDifference: number = 0;
 	private departureDifference: number = 0;
 
-	constructor(dataService: DataService, dataResponse: DataResponse, timeOffset: number) {
+	constructor(dataService: DataService, dataResponse: DataResponse) {
 		this.destination = dataResponse.destination;
 		this.deviation = dataResponse.deviation;
 		this.realtime = dataResponse.realtime;
@@ -149,8 +149,9 @@ export class Arrival {
 		this.circularState = dataResponse.circularState;
 		this.platformName = dataResponse.platformName;
 		this.cars = dataResponse.cars.map(car => car.vehicleId);
-		this.arrival = dataResponse.arrival + timeOffset;
-		this.departure = dataResponse.departure + timeOffset;
+		this.arrival = dataResponse.arrival === 0 ? 0 : dataResponse.arrival + dataService.getTimeOffset();
+		this.departure = dataResponse.departure === 0 ? 0 : dataResponse.departure + dataService.getTimeOffset();
+		this.isContinuous = this.arrival === 0;
 		this.key = `${this.routeName} ${this.routeNumber} ${this.routeColor}`;
 		this.calculateValues();
 	}

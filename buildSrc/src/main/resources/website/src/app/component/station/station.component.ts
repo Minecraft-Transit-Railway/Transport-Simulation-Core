@@ -68,12 +68,12 @@ export class StationComponent {
 		return this.stationService.routes;
 	}
 
-	getArrivals(chipList: MatChipListbox, showTerminatingCheckbox: MatCheckbox) {
+	getArrivals(chipList: MatChipListbox, showTerminatingCheckbox: MatCheckbox): Arrival[] {
 		try {
 			const selected = (chipList.selected as MatChipOption[]).map(option => option.id);
 			const newArrivals: Arrival[] = [];
 			this.stationService.arrivals.forEach(arrival => {
-				if (newArrivals.length < 10 && (selected.length == 0 || selected.includes(arrival.key)) && (showTerminatingCheckbox.checked || !arrival.isTerminating)) {
+				if (newArrivals.length < 10 && (arrival.isContinuous || arrival.getDepartureTime() >= 0) && (selected.length == 0 || selected.includes(arrival.key)) && (showTerminatingCheckbox.checked || !arrival.isTerminating)) {
 					newArrivals.push(arrival);
 				}
 			});

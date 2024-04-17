@@ -20,13 +20,20 @@ export class DataService {
 	private lineConnections: LineConnection[] = [];
 	private centerX = 0;
 	private centerY = 0;
+	private timeOffset = 0;
+	private canSetTimeOffset = true;
 	public drawMap: () => void = () => {
 	};
 	public animateCenter: (x: number, z: number) => void = () => {
 	};
 
 	constructor(private readonly httpClient: HttpClient) {
-		const getData = () => this.httpClient.get<{ data: DataResponse }>(URL).subscribe(({data}) => {
+		const getData = () => this.httpClient.get<{ currentTime: number, data: DataResponse }>(URL).subscribe(({currentTime, data}) => {
+			if (this.canSetTimeOffset) {
+				this.timeOffset = Date.now() - currentTime;
+				this.canSetTimeOffset = false;
+			}
+
 			this.tempRoutes = [];
 			const availableRouteTypes: string[] = [];
 
@@ -99,6 +106,10 @@ export class DataService {
 
 	public getCenterY() {
 		return this.centerY;
+	}
+
+	public getTimeOffset() {
+		return this.timeOffset;
 	}
 
 	public updateData() {

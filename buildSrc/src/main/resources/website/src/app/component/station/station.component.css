@@ -3,6 +3,10 @@ mat-chip-option {
 	box-sizing: border-box;
 }
 
+mat-icon {
+	min-width: 1em;
+}
+
 .station-name {
 	font-size: 1.5em;
 	font-weight: bold;
@@ -49,6 +53,10 @@ mat-chip-option {
 
 .subtitle {
 	font-size: 0.6em;
+}
+
+.scheduled {
+	color: rgba(127, 127, 127, 50%);
 }
 
 .arrival-color {

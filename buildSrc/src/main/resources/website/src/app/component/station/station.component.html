@@ -44,7 +44,7 @@
 		<div class="column arrivals">
 			<div class="column" *ngFor="let arrival of getArrivals(chipList, showTerminatingCheckbox)">
 				<mat-divider/>
-				<div matRipple class="column arrival" (click)="showDetails(arrival)">
+				<div matRipple class="column arrival {{arrival.realtime ? '' : 'scheduled'}}" (click)="showDetails(arrival)">
 					<div class="row gap center title">
 						<div class="row center arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
 							<mat-icon>{{ arrival.routeTypeIcon }}</mat-icon>
@@ -57,12 +57,12 @@
 					<div class="row gap center subtitle">
 						<div class="arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
 						<div class="spacing"></div>
-						<div class="align-right">{{ arrival.arrival | formatDate }}</div>
+						<div class="align-right">{{ arrival.isContinuous ? "Every 8 Seconds" : arrival.arrival | formatDate }}</div>
 					</div>
 					<div class="row gap center subtitle">
 						<div class="arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">Platform {{ arrival.platformName }}</div>
 						<div class="spacing"></div>
-						<div class="align-right">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
+						<div class="align-right" *ngIf="!arrival.isContinuous">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
 					</div>
 				</div>
 			</div>
