@@ -7,5 +7,6 @@ import {SimplifyRoutesPipe} from "./app/pipe/simplifyRoutesPipe";
 import {SimplifyStationsPipe} from "./app/pipe/simplifyStationsPipe";
 import {FormatNamePipe} from "./app/pipe/formatNamePipe";
 import {FormatTimePipe} from "./app/pipe/formatTimePipe";
+import {SplitNamePipe} from "./app/pipe/splitNamePipe";
 
-bootstrapApplication(AppComponent, {providers: [provideAnimationsAsync(), provideHttpClient(), SimplifyStationsPipe, SimplifyRoutesPipe, FormatNamePipe, FormatTimePipe]}).catch(err => console.error(err));
+bootstrapApplication(AppComponent, {providers: [provideAnimationsAsync(), provideHttpClient(), SimplifyStationsPipe, SimplifyRoutesPipe, SplitNamePipe, FormatNamePipe, FormatTimePipe]}).catch(err => console.error(err));

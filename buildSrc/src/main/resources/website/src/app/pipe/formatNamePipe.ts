@@ -8,6 +8,6 @@ import {Pipe, PipeTransform} from "@angular/core";
 export class FormatNamePipe implements PipeTransform {
 
 	transform(name: string): string {
-		return name.split("||")[0].replaceAll("|", " ");
+		return name.replaceAll("|", " ");
 	}
 }

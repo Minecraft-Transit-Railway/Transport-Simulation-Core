@@ -30,6 +30,17 @@ mat-chip-option {
 
 .chip-text {
 	font-size: 0.8em;
+	line-height: 1.2em;
+}
+
+.arrival {
+	cursor: pointer;
+	padding: 0.4em 0;
+	transition: background-color 0.2s;
+}
+
+.arrival:hover {
+	background-color: rgba(127, 127, 127, 10%);
 }
 
 .title {
@@ -38,6 +49,11 @@ mat-chip-option {
 
 .subtitle {
 	font-size: 0.6em;
+}
+
+.arrival-color {
+	border-left: 4px solid;
+	padding-left: 4px;
 }
 
 .align-right {

@@ -11,34 +11,59 @@
 		<mat-icon>sell</mat-icon>
 		<div>({{ getZoneText() }})</div>
 	</div>
+	<mat-divider/>
 
+	<div class="column center" *ngIf="getLoading()">
+		<br/>
+		<mat-spinner/>
+	</div>
 	<div class="column gap-small">
-		<mat-divider/>
 		<div class="chip-wrapper">
 			<mat-chip-listbox #chipList aria-label="Routes" multiple>
-				<mat-chip-option #chip *ngFor="let route of getActiveRoutes()" [style.border-color]="route.color | formatColor" [style.background-color]="chip.selected ? (route.color | formatColor) : ''" [id]="route.key">
-					<div class="chip-text">{{ route.name | formatName }} {{ route.number | formatName }}</div>
+				<mat-chip-option
+					#chip *ngFor="let route of getActiveRoutes()"
+					[style.border-color]="route.color | formatColor"
+					[style.background-color]="chip.selected ? (route.color | formatColor) : ''"
+					[style.height]="(route.lineCount + 1) + 'em'"
+					[id]="route.key">
+					<div class="row gap-small center">
+						<mat-icon>{{ route.typeIcon }}</mat-icon>
+						<div class="column chip-text">
+							<div *ngFor="let name of route.name | splitName">{{ name.text }}</div>
+						</div>
+						<mat-divider *ngIf="route.number !== ''" vertical [style.height]="route.lineCount + 'em'"/>
+						<div class="column chip-text" *ngIf="route.number !== ''">
+							<div *ngFor="let number of route.number | splitName">{{ number.text }}</div>
+						</div>
+					</div>
 				</mat-chip-option>
 			</mat-chip-listbox>
 		</div>
+		<mat-checkbox #showTerminatingCheckbox [style.display]="getHasTerminating() ? '' : 'none'">Show Terminating</mat-checkbox>
 
-		<div class="column gap-small" *ngFor="let arrival of getArrivals(chipList)">
-			<mat-divider/>
-			<div class="column">
-				<div class="row gap title">
-					<div>{{ arrival.destination | formatName }}</div>
-					<div class="spacing"></div>
-					<div class="align-right">{{ arrival.getArrivalTime() | formatTime : "Arrived" }}</div>
-				</div>
-				<div class="row gap subtitle">
-					<div>{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
-					<div class="spacing"></div>
-					<div class="align-right">{{ arrival.arrival | formatDate }}</div>
-				</div>
-				<div class="row gap subtitle">
-					<div>Platform {{ arrival.platformName }}</div>
-					<div class="spacing"></div>
-					<div class="align-right">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
+		<div class="column arrivals">
+			<div class="column" *ngFor="let arrival of getArrivals(chipList, showTerminatingCheckbox)">
+				<mat-divider/>
+				<div matRipple class="column arrival" (click)="showDetails(arrival)">
+					<div class="row gap center title">
+						<div class="row center arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+							<mat-icon>{{ arrival.routeTypeIcon }}</mat-icon>
+							<mat-icon *ngIf="arrival.circularState !== 'NONE'">{{ arrival.circularState === "CLOCKWISE" ? "rotate_right" : "rotate_left" }}</mat-icon>
+							<div>{{ arrival.destination | formatName }}</div>
+						</div>
+						<div class="spacing"></div>
+						<div class="align-right">{{ arrival.getArrivalTime() | formatTime : "Arrived" }}</div>
+					</div>
+					<div class="row gap center subtitle">
+						<div class="arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
+						<div class="spacing"></div>
+						<div class="align-right">{{ arrival.arrival | formatDate }}</div>
+					</div>
+					<div class="row gap center subtitle">
+						<div class="arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">Platform {{ arrival.platformName }}</div>
+						<div class="spacing"></div>
+						<div class="align-right">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -1,7 +1,7 @@
-import {Component} from "@angular/core";
+import {Component, Inject} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {MatIcon} from "@angular/material/icon";
-import {NgFor, NgIf, NgStyle} from "@angular/common";
+import {NgFor, NgForOf, NgIf, NgStyle} from "@angular/common";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
 import {MatButtonToggle, MatButtonToggleGroup} from "@angular/material/button-toggle";
 import {MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle} from "@angular/material/expansion";
@@ -11,6 +11,11 @@ import {MatDivider} from "@angular/material/divider";
 import {MatChipListbox, MatChipOption} from "@angular/material/chips";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {FormatDatePipe} from "../../pipe/formatDatePipe";
+import {MatCheckbox} from "@angular/material/checkbox";
+import {MatRipple} from "@angular/material/core";
+import {MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle} from "@angular/material/dialog";
+import {MatButtonModule} from "@angular/material/button";
+import {MatProgressSpinner} from "@angular/material/progress-spinner";
 
 @Component({
 	selector: "app-station",
@@ -33,13 +38,16 @@ import {FormatDatePipe} from "../../pipe/formatDatePipe";
 		FormatColorPipe,
 		FormatDatePipe,
 		NgIf,
+		MatCheckbox,
+		MatRipple,
+		MatProgressSpinner,
 	],
 	templateUrl: "./station.component.html",
 	styleUrl: "./station.component.css",
 })
 export class StationComponent {
 
-	constructor(private readonly stationService: StationService) {
+	constructor(private readonly stationService: StationService, private readonly dialog: MatDialog) {
 	}
 
 	getStation() {
@@ -60,12 +68,12 @@ export class StationComponent {
 		return this.stationService.routes;
 	}
 
-	getArrivals(chipList: MatChipListbox) {
+	getArrivals(chipList: MatChipListbox, showTerminatingCheckbox: MatCheckbox) {
 		try {
 			const selected = (chipList.selected as MatChipOption[]).map(option => option.id);
 			const newArrivals: Arrival[] = [];
 			this.stationService.arrivals.forEach(arrival => {
-				if (newArrivals.length < 10 && (selected.length == 0 || selected.includes(arrival.key))) {
+				if (newArrivals.length < 10 && (selected.length == 0 || selected.includes(arrival.key)) && (showTerminatingCheckbox.checked || !arrival.isTerminating)) {
 					newArrivals.push(arrival);
 				}
 			});
@@ -73,5 +81,46 @@ export class StationComponent {
 		} catch (e) {
 			return [];
 		}
+	}
+
+	public getHasTerminating() {
+		return this.stationService.getHasTerminating();
+	}
+
+	public getLoading() {
+		return this.stationService.getLoading();
+	}
+
+	showDetails(arrival: Arrival) {
+		this.dialog.open(DialogOverviewExampleDialog, {data: arrival});
+	}
+
+	protected readonly localStorage = localStorage;
+}
+
+@Component({
+	selector: "dialog-arrival-dialog",
+	standalone: true,
+	imports: [
+		MatButtonModule,
+		MatDialogTitle,
+		MatDialogContent,
+		MatDialogActions,
+		FormatTimePipe,
+		FormatNamePipe,
+		NgForOf,
+	],
+	templateUrl: "arrival-dialog.html",
+	styleUrl: "./station.component.css",
+})
+export class DialogOverviewExampleDialog {
+	constructor(
+		public dialogRef: MatDialogRef<DialogOverviewExampleDialog>,
+		@Inject(MAT_DIALOG_DATA) public data: Arrival,
+	) {
+	}
+
+	onClose(): void {
+		this.dialogRef.close();
 	}
 }

@@ -1,0 +1,16 @@
+<h2 mat-dialog-title>Arrival Details</h2>
+<mat-dialog-content>
+	<div class="column gap">
+		<div class="column">
+			<div class="title">Departure Index</div>
+			<div>{{ data.departureIndex }}</div>
+		</div>
+		<div class="column">
+			<div class="title">{{ data.cars.length }}-Car Vehicle</div>
+			<div *ngFor="let car of data.cars">{{ car }}</div>
+		</div>
+	</div>
+</mat-dialog-content>
+<mat-dialog-actions>
+	<button mat-button (click)="onClose()">Close</button>
+</mat-dialog-actions>

@@ -16,6 +16,10 @@ html, body {
 	height: 100%;
 }
 
+mat-spinner, mat-checkbox {
+	filter: grayscale(1);
+}
+
 .column {
 	display: flex;
 	flex-flow: column nowrap;
