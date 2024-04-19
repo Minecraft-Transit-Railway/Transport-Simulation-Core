@@ -21,11 +21,17 @@ public final class RequestHelper {
 	}
 
 	public void sendPostRequest(String url, JsonObject contentObject, @Nullable Consumer<JsonObject> consumer) {
-		sendPostRequest(url, contentObject.toString(), consumer == null ? null : response -> consumer.accept(Utilities.parseJson(response)));
+		sendRequest(url, contentObject.toString(), consumer == null ? null : response -> consumer.accept(Utilities.parseJson(response)));
 	}
 
-	public void sendPostRequest(String url, String content, @Nullable Consumer<String> consumer) {
-		final Request request = new Request.Builder().url(url).post(RequestBody.create(content, MediaType.get("application/json"))).build();
+	public void sendRequest(String url, @Nullable String content, @Nullable Consumer<String> consumer) {
+		final Request.Builder requestBuilder = new Request.Builder().url(url);
+		final Request request;
+		if (content == null) {
+			request = requestBuilder.get().build();
+		} else {
+			request = requestBuilder.post(RequestBody.create(content, MediaType.get("application/json"))).build();
+		}
 
 		if (canInterrupt && call != null) {
 			call.cancel();
