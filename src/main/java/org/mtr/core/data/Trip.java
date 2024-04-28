@@ -4,11 +4,10 @@ import org.mtr.core.oba.Schedule;
 import org.mtr.core.oba.SingleElement;
 import org.mtr.core.oba.TripDetails;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nullable;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class Trip implements Utilities {
 
@@ -37,14 +36,13 @@ public class Trip implements Utilities {
 		return Utilities.concat(tripIdPrefix, "_", departureIndex, "_", departureOffset);
 	}
 
-	public void getUpcomingStopTimes(int tripStopIndex, ObjectArrayList<Trip> trips, boolean repeatIndefinitely, BiConsumer<LongArrayList, StopTime> consumer) {
+	public void getUpcomingStopTimes(int tripStopIndex, ObjectArrayList<Trip> trips, boolean repeatIndefinitely, Consumer<StopTime> consumer) {
 		final StopTime stopTime1 = Utilities.getElement(stopTimes, tripStopIndex);
 		if (stopTime1 == null) {
 			return;
 		}
 
 		final int tripsCount = trips.size();
-		final LongArrayList routeIds = new LongArrayList();
 		int tempTripIndex = tripIndexInBlock;
 		int tempTripStopIndex = tripStopIndex + 1;
 
@@ -54,15 +52,13 @@ public class Trip implements Utilities {
 			if (tempTripStopIndex < trip.stopTimes.size()) {
 				final StopTime stopTime2 = trip.stopTimes.get(tempTripStopIndex);
 				if (stopTime1.platformId != stopTime2.platformId) {
-					final LongArrayList newRouteIds = new LongArrayList(routeIds);
-					newRouteIds.add(trip.route.getId());
-					consumer.accept(newRouteIds, stopTime2);
+					consumer.accept(stopTime2);
+					break;
 				}
 				tempTripStopIndex++;
 			} else {
 				tempTripIndex++;
 				tempTripStopIndex = 0;
-				routeIds.add(trip.route.getId());
 			}
 
 			final boolean shouldBreak1 = !repeatIndefinitely && tempTripIndex >= tripsCount;

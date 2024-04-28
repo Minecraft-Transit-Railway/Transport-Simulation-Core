@@ -1,0 +1,31 @@
+.subtitle {
+	color: rgba(127, 127, 127, 50%);
+	font-size: 0.8em;
+}
+
+.mat-icon {
+	color: rgba(127, 127, 127, 50%);
+	font-size: 1em;
+	width: 1em;
+	height: 1em;
+}
+
+.station {
+	border: 2px solid var(--mat-app-text-color);
+	border-radius: 7px;
+	box-sizing: border-box;
+	min-width: 14px;
+	height: 14px;
+}
+
+.line {
+	margin: 0 4px;
+	min-width: 6px;
+	height: 1.5em;
+}
+
+.line.thin {
+	background-color: rgba(127, 127, 127, 50%);
+	margin: 0 6px;
+	min-width: 2px;
+}

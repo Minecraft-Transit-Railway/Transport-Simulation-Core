@@ -1,10 +1,11 @@
-import {Component, ViewChild} from "@angular/core";
+import {Component, Input, ViewChild} from "@angular/core";
 import {MapComponent} from "../map/map.component";
 import {MatIconButton} from "@angular/material/button";
 import {MatIcon} from "@angular/material/icon";
 import {MatSidenav, MatSidenavContainer, MatSidenavContent} from "@angular/material/sidenav";
 import {MatToolbar} from "@angular/material/toolbar";
 import {StationService} from "../../service/station.service";
+import {DirectionsService} from "../../service/directions.service";
 
 @Component({
 	selector: "app-side",
@@ -19,20 +20,26 @@ import {StationService} from "../../service/station.service";
 		MatToolbar,
 	],
 	templateUrl: "./side.component.html",
-	styleUrl: "./side.component.css"
+	styleUrl: "./side.component.css",
 })
 export class SideComponent {
 	@ViewChild(MatSidenav) private readonly sidenav!: MatSidenav;
+	@Input() onClose: () => void = () => {
+	};
 
-	constructor(private readonly stationService: StationService) {
+	constructor(private readonly stationService: StationService, private readonly directionsService: DirectionsService) {
 	}
 
 	open() {
 		this.sidenav.open().then();
 	}
 
-	onClose() {
+	close() {
 		this.sidenav.close().then();
-		this.stationService.clear();
+	}
+
+	onCloseMenu() {
+		this.sidenav.close().then();
+		this.onClose();
 	}
 }

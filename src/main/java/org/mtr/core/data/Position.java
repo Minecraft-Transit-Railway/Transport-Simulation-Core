@@ -5,7 +5,6 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Vector;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 
 public class Position extends PositionSchema implements Comparable<Position> {
 
@@ -79,7 +78,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(x, y, z);
+		return (int) (((x & 0xFFF) << 20) + ((y & 0xFF) << 12) + (z & 0xFFF));
 	}
 
 	@Override

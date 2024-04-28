@@ -323,10 +323,10 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 	}
 
-	public void getArrivals(long currentMillis, Platform platform, boolean realtimeOnly, long count, ObjectArrayList<ArrivalResponse> arrivalResponseList) {
+	public void getArrivals(long currentMillis, Platform platform, long count, ObjectArrayList<ArrivalResponse> arrivalResponseList) {
 		final long[] maxArrivalAndCount = {0, 0};
-		iterateArrivals(currentMillis, platform.getId(), 0, MILLIS_PER_DAY, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
-			if ((!realtimeOnly || predicted) && (scheduledArrivalTime + deviation < maxArrivalAndCount[0] || maxArrivalAndCount[1] < count)) {
+		iterateArrivals(currentMillis, platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
+			if (scheduledArrivalTime + deviation < maxArrivalAndCount[0] || maxArrivalAndCount[1] < count) {
 				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, stopTime.tripStopIndex, trip.route, platform);
 				arrivalResponse.setCarDetails(getVehicleCars());
 				arrivalResponseList.add(arrivalResponse);
@@ -336,18 +336,18 @@ public final class Siding extends SidingSchema implements Utilities {
 		});
 	}
 
-	public void getArrivals(long currentMillis, long platformId, ArrivalPathFindingConsumer consumer) {
+	public void getArrivals(long startMillis, long platformId, ArrivalPathFindingConsumer consumer) {
 		if (area != null) {
 			final Long2ObjectAVLTreeMap<LongObjectImmutablePair<Runnable>> stopTimesForPlatform = new Long2ObjectAVLTreeMap<>();
-			iterateArrivals(currentMillis, platformId, 0, MILLIS_PER_DAY, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> trip.getUpcomingStopTimes(
+			iterateArrivals(startMillis, platformId, 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> trip.getUpcomingStopTimes(
 					tripStopIndex,
 					trips,
 					area.getRepeatInfinitely(),
-					(routeIds, newStopTime) -> {
+					newStopTime -> {
 						final long departureTime = scheduledDepartureTime + deviation;
 						final LongObjectImmutablePair<Runnable> existingStopTime = stopTimesForPlatform.get(newStopTime.platformId);
 						if (existingStopTime == null || departureTime < existingStopTime.leftLong()) {
-							stopTimesForPlatform.put(newStopTime.platformId, new LongObjectImmutablePair<>(departureTime, () -> consumer.accept(newStopTime.platformId, routeIds, departureTime, newStopTime.startTime - stopTime.endTime)));
+							stopTimesForPlatform.put(newStopTime.platformId, new LongObjectImmutablePair<>(departureTime, () -> consumer.accept(newStopTime.platformId, newStopTime.trip.route.getId(), departureTime, newStopTime.startTime - stopTime.endTime)));
 						}
 					}
 			));
@@ -357,7 +357,8 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(SingleElement<StopWithArrivalsAndDepartures> singleElement, StopWithArrivalsAndDepartures stopWithArrivalsAndDepartures, long currentMillis, Platform platform, int millsBefore, int millisAfter) {
 		final ObjectAVLTreeSet<String> addedTripIds = new ObjectAVLTreeSet<>();
-		iterateArrivals(currentMillis, platform.getId(), millsBefore, millisAfter, (trip, tripId, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex) -> {
+		iterateArrivals(currentMillis, platform.getId(), millsBefore, millisAfter, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
+			final String tripId = trip.getTripId(departureIndex, departureOffset);
 			stopWithArrivalsAndDepartures.add(ArrivalAndDeparture.create(
 					trip,
 					tripId,
@@ -498,7 +499,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		return new BooleanLongImmutablePair(predicted, deviation);
 	}
 
-	private void iterateArrivals(long currentMillis, long platformId, int millsBefore, int millisAfter, ArrivalConsumer arrivalConsumer) {
+	private void iterateArrivals(long currentMillis, long platformId, long millsBefore, long millisAfter, ArrivalConsumer arrivalConsumer) {
 		if (area == null || departures.isEmpty()) {
 			return;
 		}
@@ -520,7 +521,6 @@ public final class Siding extends SidingSchema implements Utilities {
 				final Trip trip = stopTime.trip;
 
 				while (true) {
-					final String tripId = trip.getTripId(departureIndex, departureOffset);
 					final long scheduledArrivalTime;
 					final long scheduledDepartureTime;
 
@@ -537,11 +537,15 @@ public final class Siding extends SidingSchema implements Utilities {
 
 					if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
 						break;
-					} else if (!transportMode.continuousMovement && (scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter)) {
-						continue;
+					} else if (!transportMode.continuousMovement) {
+						final boolean outOfRange = scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter;
+						final boolean missedDeparture = !predicted && scheduledArrivalTime - stopTime.startTime + MILLIS_PER_SECOND < currentMillis;
+						if (outOfRange || missedDeparture) {
+							continue;
+						}
 					}
 
-					arrivalConsumer.accept(trip, tripId, stopTime.tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex);
+					arrivalConsumer.accept(trip, stopTime.tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset - 1);
 
 					if (transportMode.continuousMovement) {
 						break;
@@ -787,11 +791,11 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	@FunctionalInterface
 	public interface ArrivalPathFindingConsumer {
-		void accept(long platformId, LongArrayList routeIds, long departureTime, long duration);
+		void accept(long platformId, long routeId, long departureTime, long duration);
 	}
 
 	@FunctionalInterface
 	private interface ArrivalConsumer {
-		void accept(Trip trip, String tripId, int tripStopIndex, Trip.StopTime stopTime, long scheduledArrivalTime, long scheduledDepartureTime, boolean predicted, long deviation, int departureIndex);
+		void accept(Trip trip, int tripStopIndex, Trip.StopTime stopTime, long scheduledArrivalTime, long scheduledDepartureTime, boolean predicted, long deviation, int departureIndex, long departureOffset);
 	}
 }

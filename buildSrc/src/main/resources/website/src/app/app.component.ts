@@ -10,6 +10,8 @@ import {NgIf} from "@angular/common";
 import {FormatNamePipe} from "./pipe/formatNamePipe";
 import {SideComponent} from "./component/side/side.component";
 import {DataService} from "./service/data.service";
+import {DirectionsComponent} from "./component/directions/directions.component";
+import {DirectionsService} from "./service/directions.service";
 
 @Component({
 	selector: "app-root",
@@ -24,13 +26,14 @@ import {DataService} from "./service/data.service";
 		StationComponent,
 		NgIf,
 		SideComponent,
+		DirectionsComponent,
 	],
 	templateUrl: "./app.component.html",
 	styleUrls: ["./app.component.css"],
 })
 export class AppComponent {
 
-	constructor(private readonly dataService: DataService, private readonly stationService: StationService, private readonly formatNamePipe: FormatNamePipe) {
+	constructor(private readonly dataService: DataService, private readonly stationService: StationService, private readonly directionsService: DirectionsService, private readonly formatNamePipe: FormatNamePipe) {
 	}
 
 	getTitle() {
@@ -42,9 +45,10 @@ export class AppComponent {
 		return station == undefined ? "" : this.formatNamePipe.transform(station.name);
 	}
 
-	onClickStation(stationId: string, sideStation: SideComponent, zoomToStation: boolean) {
+	onClickStation(stationId: string, sideStation: SideComponent, sideDirections: SideComponent, zoomToStation: boolean) {
 		this.stationService.setStation(stationId);
 		sideStation.open();
+		sideDirections.close();
 		const station = this.dataService.getAllStations().filter(station => station.id === stationId)[0];
 		if (station) {
 			if (station.types.every(routeType => this.dataService.getRouteTypes()[routeType] === 0)) {
@@ -55,5 +59,14 @@ export class AppComponent {
 				this.dataService.animateCenter(station.x, station.z);
 			}
 		}
+	}
+
+	onCloseStation() {
+		this.stationService.clear();
+	}
+
+	onCloseDirections() {
+		console.log(this);
+		this.directionsService.clear();
 	}
 }

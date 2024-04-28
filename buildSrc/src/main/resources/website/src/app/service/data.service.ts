@@ -5,12 +5,13 @@ import {LineConnection} from "../data/lineConnection";
 import {StationConnection} from "../data/stationConnection";
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
+import {ServiceBase} from "./service";
 
 const REFRESH_INTERVAL = 30000;
 const URL = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/map/stations-and-routes`;
 
 @Injectable({providedIn: "root"})
-export class DataService {
+export class DataService extends ServiceBase<{ currentTime: number, data: DataResponse }> {
 	private routeTypes: { [key: string]: number } = {};
 	private tempRoutes: Route[] = [];
 	private stations: StationWithPosition[] = [];
@@ -28,52 +29,52 @@ export class DataService {
 	};
 
 	constructor(private readonly httpClient: HttpClient) {
-		const getData = () => this.httpClient.get<{ currentTime: number, data: DataResponse }>(URL).subscribe(({currentTime, data}) => {
-			if (this.canSetTimeOffset) {
-				this.timeOffset = Date.now() - currentTime;
-				this.canSetTimeOffset = false;
-			}
+		super(() => this.httpClient.get<{ currentTime: number, data: DataResponse }>(URL), REFRESH_INTERVAL);
+		this.getData("");
+	}
 
-			this.tempRoutes = [];
-			const availableRouteTypes: string[] = [];
+	protected override processData(data: { currentTime: number; data: DataResponse }) {
+		if (this.canSetTimeOffset) {
+			this.timeOffset = Date.now() - data.currentTime;
+			this.canSetTimeOffset = false;
+		}
 
-			data.routes.forEach(dataResponseRoute => {
-				const stationIds: string [] = [];
-				const routeStationsInfo: Station[] = [];
-				pushIfNotExists(availableRouteTypes, dataResponseRoute.type);
+		this.tempRoutes = [];
+		const availableRouteTypes: string[] = [];
 
-				dataResponseRoute.stations.forEach(dateResponseRouteStation => {
-					const dataResponseStation = data.stations.find(dataResponseStation => dataResponseStation.id === dateResponseRouteStation.id);
-					if (dataResponseStation !== undefined) {
-						pushIfNotExists(stationIds, dateResponseRouteStation.id);
-						routeStationsInfo.push(Station.create(dataResponseStation, dateResponseRouteStation));
-					}
-				});
+		data.data.routes.forEach(dataResponseRoute => {
+			const stationIds: string [] = [];
+			const routeStationsInfo: Station[] = [];
+			pushIfNotExists(availableRouteTypes, dataResponseRoute.type);
 
-				if (stationIds.length > 1) {
-					this.tempRoutes.push(new Route(dataResponseRoute, routeStationsInfo));
+			dataResponseRoute.stations.forEach(dateResponseRouteStation => {
+				const dataResponseStation = data.data.stations.find(dataResponseStation => dataResponseStation.id === dateResponseRouteStation.id);
+				if (dataResponseStation !== undefined) {
+					pushIfNotExists(stationIds, dateResponseRouteStation.id);
+					routeStationsInfo.push(Station.create(dataResponseStation, dateResponseRouteStation));
 				}
 			});
 
-			const allRouteTypes = Object.keys(ROUTE_TYPES);
-			for (let i = 0; i < allRouteTypes.length; i++) {
-				const routeType = allRouteTypes[i];
-				if (availableRouteTypes.includes(routeType)) {
-					setIfUndefined(this.routeTypes, routeType, () => 0);
-				} else {
-					delete this.routeTypes[routeType];
-				}
+			if (stationIds.length > 1) {
+				this.tempRoutes.push(new Route(dataResponseRoute, routeStationsInfo));
 			}
-
-			if (availableRouteTypes.length > 0 && Object.values(this.routeTypes).every(visibility => visibility === 0)) {
-				this.routeTypes[availableRouteTypes[0]] = 1;
-			}
-
-			this.updateData();
-			setTimeout(getData, REFRESH_INTERVAL);
 		});
 
-		getData();
+		const allRouteTypes = Object.keys(ROUTE_TYPES);
+		for (let i = 0; i < allRouteTypes.length; i++) {
+			const routeType = allRouteTypes[i];
+			if (availableRouteTypes.includes(routeType)) {
+				setIfUndefined(this.routeTypes, routeType, () => 0);
+			} else {
+				delete this.routeTypes[routeType];
+			}
+		}
+
+		if (availableRouteTypes.length > 0 && Object.values(this.routeTypes).every(visibility => visibility === 0)) {
+			this.routeTypes[Object.keys(this.routeTypes)[0]] = 1;
+		}
+
+		this.updateData();
 	}
 
 	public getRouteTypes() {

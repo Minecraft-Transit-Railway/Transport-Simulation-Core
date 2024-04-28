@@ -1,15 +1,19 @@
-<app-side #sideStation>
-	<app-side #sideMain>
-		<app-map (onClickStation)="onClickStation($event, sideStation, false)"/>
-		<button mat-fab class="button-corner" color="" aria-label="Menu" (click)="sideMain.open()">
-			<mat-icon>menu</mat-icon>
-		</button>
-		<div sidenav class="column margin">
-			<app-search label="Search for anything..." [includeRoutes]="true" (onClickStation)="onClickStation($event, sideStation, true)"/>
-			<app-panel/>
-		</div>
-		<div title>{{ getTitle() }}</div>
+<app-side #sideDirections [onClose]="onCloseDirections">
+	<app-side #sideStation [onClose]="onCloseStation">
+		<app-side #sideMain>
+			<app-map (onClickStation)="onClickStation($event, sideStation, sideDirections, false)"/>
+			<button mat-fab class="button-corner" color="" aria-label="Menu" (click)="sideMain.open()">
+				<mat-icon>menu</mat-icon>
+			</button>
+			<div sidenav class="column margin">
+				<app-search label="Search for anything..." [includeRoutes]="true" (onClickStation)="onClickStation($event, sideStation, sideDirections, true)"/>
+				<app-panel/>
+			</div>
+			<div title>{{ getTitle() }}</div>
+		</app-side>
+		<app-station sidenav (onOpenDirections)="sideDirections.open()"/>
+		<div title>Station Details</div>
 	</app-side>
-	<app-station sidenav/>
-	<div title>Station Details</div>
+	<app-directions sidenav/>
+	<div title>Directions</div>
 </app-side>

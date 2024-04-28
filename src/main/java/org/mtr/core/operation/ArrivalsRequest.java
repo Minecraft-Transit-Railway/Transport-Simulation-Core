@@ -17,8 +17,8 @@ import java.util.Collections;
 
 public final class ArrivalsRequest extends ArrivalsRequestSchema {
 
-	public ArrivalsRequest(LongImmutableList platformIds, int maxCountPerPlatform, int maxCountTotal, boolean realtimeOnly) {
-		super(maxCountPerPlatform, maxCountTotal, realtimeOnly);
+	public ArrivalsRequest(LongImmutableList platformIds, int maxCountPerPlatform, int maxCountTotal) {
+		super(maxCountPerPlatform, maxCountTotal);
 		this.platformIds.addAll(platformIds);
 	}
 
@@ -44,7 +44,7 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 					final String key = String.format("%s_%s", platformId, siding.getId());
 					if (!visitedKeys.contains(key)) {
 						visitedKeys.add(key);
-						siding.getArrivals(currentMillis, platform, realtimeOnly, maxCountPerPlatform, arrivalResponseList);
+						siding.getArrivals(currentMillis, platform, maxCountPerPlatform, arrivalResponseList);
 					}
 				})));
 			}

@@ -7,6 +7,19 @@ mat-icon {
 	min-width: 1em;
 }
 
+.clickable {
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.clickable:hover {
+	background-color: rgba(127, 127, 127, 10%);
+}
+
+.padding {
+	padding: 0.5em;
+}
+
 .station-name {
 	font-size: 1.5em;
 	font-weight: bold;
@@ -38,13 +51,7 @@ mat-icon {
 }
 
 .arrival {
-	cursor: pointer;
 	padding: 0.4em 0;
-	transition: background-color 0.2s;
-}
-
-.arrival:hover {
-	background-color: rgba(127, 127, 127, 10%);
 }
 
 .title {

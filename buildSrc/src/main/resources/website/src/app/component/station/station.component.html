@@ -5,15 +5,26 @@
 	<div class="station-color-bar" [style.background-color]="'#' + getStation()?.color"></div>
 	<div class="row gap center">
 		<mat-icon>my_location</mat-icon>
-		<div>({{ getCoordinatesText() }})</div>
+		<div class="row center">
+			<div>({{ getCoordinatesText() }})</div>
+			<button mat-icon-button (click)="copyLocation(copyIconButton)">
+				<mat-icon #copyIconButton>content_copy</mat-icon>
+			</button>
+		</div>
 	</div>
 	<div class="row gap center">
 		<mat-icon>sell</mat-icon>
 		<div>({{ getZoneText() }})</div>
 	</div>
 	<mat-divider/>
+	<div class="row gap-small center">
+		<mat-icon>directions</mat-icon>
+		<div matRipple class="clickable padding" (click)="setDirectionsOrigin()">Set as Origin</div>
+		<div matRipple class="clickable padding" (click)="setDirectionsDestination()">Set as Destination</div>
+	</div>
+	<mat-divider/>
 
-	<div class="column center" *ngIf="getLoading()">
+	<div class="column center" *ngIf="isLoading()">
 		<br/>
 		<mat-spinner/>
 	</div>
@@ -44,9 +55,9 @@
 		<div class="column arrivals">
 			<div class="column" *ngFor="let arrival of getArrivals(chipList, showTerminatingCheckbox)">
 				<mat-divider/>
-				<div matRipple class="column arrival {{arrival.realtime ? '' : 'scheduled'}}" (click)="showDetails(arrival)">
-					<div class="row gap center title">
-						<div class="row center arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+				<div matRipple class="column arrival clickable {{arrival.realtime ? '' : 'scheduled'}}" (click)="showDetails(arrival)">
+					<div class="row gap center title arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+						<div class="row center">
 							<mat-icon>{{ arrival.routeTypeIcon }}</mat-icon>
 							<mat-icon *ngIf="arrival.circularState !== 'NONE'">{{ arrival.circularState === "CLOCKWISE" ? "rotate_right" : "rotate_left" }}</mat-icon>
 							<div>{{ arrival.destination | formatName }}</div>
@@ -54,13 +65,13 @@
 						<div class="spacing"></div>
 						<div class="align-right">{{ arrival.getArrivalTime() | formatTime : "Arrived" }}</div>
 					</div>
-					<div class="row gap center subtitle">
-						<div class="arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
+					<div class="row gap center subtitle arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+						<div>{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
 						<div class="spacing"></div>
 						<div class="align-right">{{ arrival.isContinuous ? "Every 8 Seconds" : arrival.arrival | formatDate }}</div>
 					</div>
-					<div class="row gap center subtitle">
-						<div class="arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">Platform {{ arrival.platformName }}</div>
+					<div class="row gap center subtitle arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+						<div>Platform {{ arrival.platformName }}</div>
 						<div class="spacing"></div>
 						<div class="align-right" *ngIf="!arrival.isContinuous">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
 					</div>

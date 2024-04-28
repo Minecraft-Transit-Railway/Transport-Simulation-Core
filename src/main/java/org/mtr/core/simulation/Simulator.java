@@ -25,7 +25,7 @@ public class Simulator extends Data implements Utilities {
 	private long currentMillis;
 	private boolean autoSave = false;
 	private long gameMillis;
-	private long gameMillisPerDay;
+	private long gameMillisPerDay = 20 * 60 * MILLIS_PER_SECOND; // default value
 	private boolean isTimeMoving;
 	private long lastSetGameMillisMidnight;
 
@@ -110,7 +110,7 @@ public class Simulator extends Data implements Utilities {
 
 			// Process directions requests
 			final long startMillis = System.currentTimeMillis();
-			while (!directionsPathFinders.isEmpty() && System.currentTimeMillis() - startMillis < 200) {
+			while (!directionsPathFinders.isEmpty() && System.currentTimeMillis() - startMillis < 400) {
 				directionsPathFinders.removeIf(DirectionsPathFinder::tick);
 			}
 
@@ -133,8 +133,8 @@ public class Simulator extends Data implements Utilities {
 		save(false);
 	}
 
-	public void addDirectionsPathFinder(Position position1, Position position2, Consumer<JsonObject> sendResponse) {
-		directionsPathFinders.add(new DirectionsPathFinder(this, position1, position2, sendResponse));
+	public void addDirectionsPathFinder(Position position1, Position position2, long maxWalkingDistance, Consumer<JsonObject> sendResponse) {
+		directionsPathFinders.add(new DirectionsPathFinder(this, position1, position2, maxWalkingDistance, sendResponse));
 	}
 
 	/**

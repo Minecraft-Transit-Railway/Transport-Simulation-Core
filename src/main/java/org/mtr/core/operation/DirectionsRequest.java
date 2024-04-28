@@ -1,5 +1,6 @@
 package org.mtr.core.operation;
 
+import org.mtr.core.Main;
 import org.mtr.core.data.NameColorDataBase;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Station;
@@ -35,19 +36,26 @@ public final class DirectionsRequest extends DirectionsRequestSchema {
 	}
 
 	public JsonObject find(Simulator simulator, Consumer<JsonObject> sendResponse) {
-		if (!startStation.isEmpty()) {
-			final ObjectArrayList<Station> stations = NameColorDataBase.getDataByName(simulator.stations, startStation);
-			if (!stations.isEmpty()) {
-				startPosition = stations.get(0).getCenter();
-			}
-		}
-		if (!endStation.isEmpty()) {
-			final ObjectArrayList<Station> stations = NameColorDataBase.getDataByName(simulator.stations, endStation);
-			if (!stations.isEmpty()) {
-				endPosition = stations.get(0).getCenter();
-			}
-		}
-		simulator.addDirectionsPathFinder(startPosition, endPosition, sendResponse);
+		final String startStationName = findStationName(simulator, startStation, position -> startPosition = position);
+		final String endStationName = findStationName(simulator, endStation, position -> endPosition = position);
+		Main.LOGGER.info(
+				"Finding directions between ({}, {}, {}){} and ({}, {}, {}){}",
+				startPosition.getX(), startPosition.getY(), startPosition.getZ(), startStationName,
+				endPosition.getX(), endPosition.getY(), endPosition.getZ(), endStationName
+		);
+		simulator.addDirectionsPathFinder(startPosition, endPosition, maxWalkingDistance, sendResponse);
 		return new JsonObject();
+	}
+
+	private static String findStationName(Simulator simulator, String stationName, Consumer<Position> callback) {
+		if (!stationName.isEmpty()) {
+			final ObjectArrayList<Station> stations = NameColorDataBase.getDataByName(simulator.stations, stationName);
+			if (!stations.isEmpty()) {
+				final Station station = stations.get(0);
+				callback.accept(station.getCenter());
+				return String.format(" (%s)", station.getName());
+			}
+		}
+		return "";
 	}
 }

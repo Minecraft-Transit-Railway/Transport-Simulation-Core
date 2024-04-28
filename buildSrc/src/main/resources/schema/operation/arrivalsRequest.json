@@ -36,14 +36,10 @@
 		"maxCountTotal": {
 			"type": "integer",
 			"minimum": 0
-		},
-		"realtimeOnly": {
-			"type": "boolean"
 		}
 	},
 	"required": [
 		"maxCountPerPlatform",
-		"maxCountTotal",
-		"realtimeOnly"
+		"maxCountTotal"
 	]
 }

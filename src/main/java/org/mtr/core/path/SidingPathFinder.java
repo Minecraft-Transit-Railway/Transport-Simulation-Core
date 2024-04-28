@@ -9,7 +9,6 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> extends PathFinder<SidingPathFinder.PositionAndAngle> {
@@ -37,8 +36,8 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 	}
 
 	@Override
-	protected ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> getConnections(long elapsedTime, PositionAndAngle node) {
-		final ObjectOpenHashSet<ConnectionDetails<PositionAndAngle>> connections = new ObjectOpenHashSet<>();
+	protected ObjectArrayList<ConnectionDetails<PositionAndAngle>> getConnections(long elapsedTime, PositionAndAngle node, @Nullable Long previousRouteId) {
+		final ObjectArrayList<ConnectionDetails<PositionAndAngle>> connections = new ObjectArrayList<>();
 		final Object2ObjectOpenHashMap<Position, Rail> railConnections = positionsToRail.get(node.position);
 
 		if (railConnections != null) {
@@ -239,7 +238,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(position, angle);
+			return position.hashCode() ^ ((angle == null ? 0 : angle.ordinal() + 1) << 8);
 		}
 	}
 }

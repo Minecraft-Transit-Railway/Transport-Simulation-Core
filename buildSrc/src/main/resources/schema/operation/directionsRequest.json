@@ -16,6 +16,11 @@
 		},
 		"endStation": {
 			"type": "string"
+		},
+		"maxWalkingDistance": {
+			"type": "integer",
+			"minimum": 0,
+			"default": 500
 		}
 	}
 }

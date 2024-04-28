@@ -7,57 +7,60 @@ import org.mtr.core.operation.DirectionsResponse;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
-import java.util.Objects;
+import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public final class DirectionsPathFinder extends PathFinder<DirectionsPathFinder.PositionAndPlatform> {
 
 	private final Simulator simulator;
 	private final long startMillis;
+	private final long maxWalkingDistance;
 	private final Consumer<JsonObject> sendResponse;
 	private static final int WALKING_MULTIPLIER = 1000; // milliseconds per meter
 
-	public DirectionsPathFinder(Simulator simulator, Position startPosition, Position endPosition, Consumer<JsonObject> sendResponse) {
+	public DirectionsPathFinder(Simulator simulator, Position startPosition, Position endPosition, long maxWalkingDistance, Consumer<JsonObject> sendResponse) {
 		super(new PositionAndPlatform(startPosition, 0), new PositionAndPlatform(endPosition, 0));
 		this.simulator = simulator;
 		startMillis = System.currentTimeMillis();
+		this.maxWalkingDistance = maxWalkingDistance;
 		this.sendResponse = sendResponse;
 	}
 
 	@Override
-	protected ObjectOpenHashSet<ConnectionDetails<PositionAndPlatform>> getConnections(long elapsedTime, PositionAndPlatform data) {
-		final ObjectOpenHashSet<ConnectionDetails<PositionAndPlatform>> connections = new ObjectOpenHashSet<>();
+	protected ObjectArrayList<ConnectionDetails<PositionAndPlatform>> getConnections(long elapsedTime, PositionAndPlatform data, @Nullable Long previousRouteId) {
+		final ObjectArrayList<ConnectionDetails<PositionAndPlatform>> connections = new ObjectArrayList<>();
 		final Platform platform = data.platformId == 0 ? null : simulator.platformIdMap.get(data.platformId);
-		final LongAVLTreeSet visitedPlatformIds = new LongAVLTreeSet();
-		visitedPlatformIds.add(data.platformId);
 
 		if (platform != null) {
-			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> siding.getArrivals(startMillis + elapsedTime, data.platformId, (newPlatformId, routeIds, departureTime, duration) -> {
-				final Position position = simulator.platformIdToPosition.get(newPlatformId);
-				if (position != null && !visitedPlatformIds.contains(newPlatformId)) {
-					visitedPlatformIds.add(newPlatformId);
-					final long waitingTime = departureTime - startMillis - elapsedTime;
-					final long walkingTime = data.position.manhattanDistance(position) * WALKING_MULTIPLIER;
-					if (walkingTime < waitingTime + duration) {
-						connections.add(new ConnectionDetails<>(new PositionAndPlatform(position, newPlatformId), walkingTime, 0, 0));
-					} else {
-						connections.add(new ConnectionDetails<>(new PositionAndPlatform(position, newPlatformId), duration, waitingTime, routeIds.getLong(0)));
+			final Long2LongAVLTreeMap visitedPlatformTimes = new Long2LongAVLTreeMap();
+			platform.routes.forEach(route -> route.depots.forEach(depot -> depot.savedRails.forEach(siding -> siding.getArrivals(startMillis, data.platformId, (newPlatformId, routeId, departureTime, duration) -> {
+				if (departureTime > startMillis + elapsedTime && departureTime < visitedPlatformTimes.getOrDefault(newPlatformId, Long.MAX_VALUE)) {
+					final Position position = simulator.platformIdToPosition.get(newPlatformId);
+					if (position != null) {
+						connections.add(new ConnectionDetails<>(new PositionAndPlatform(position, newPlatformId), duration, departureTime - startMillis - elapsedTime, routeId));
 					}
+					visitedPlatformTimes.put(newPlatformId, departureTime);
 				}
 			}))));
 		}
 
-		simulator.platformIdToPosition.forEach((newPlatformId, platformPosition) -> {
-			if (!visitedPlatformIds.contains(newPlatformId.longValue())) {
-				connections.add(new ConnectionDetails<>(new PositionAndPlatform(platformPosition, newPlatformId), data.position.manhattanDistance(platformPosition) * WALKING_MULTIPLIER, 0, 0));
-			}
-		});
+		if (previousRouteId == null || previousRouteId != 0) {
+			simulator.platformIdToPosition.forEach((newPlatformId, platformPosition) -> {
+				final long distance = data.position.manhattanDistance(platformPosition);
+				if (distance <= maxWalkingDistance) {
+					connections.add(new ConnectionDetails<>(new PositionAndPlatform(platformPosition, newPlatformId), distance * WALKING_MULTIPLIER, 0, 0));
+				}
+			});
 
-		connections.add(new ConnectionDetails<>(endNode, data.position.manhattanDistance(endNode.position) * WALKING_MULTIPLIER, 0, 0));
+			final long distance = data.position.manhattanDistance(endNode.position);
+			if (distance <= maxWalkingDistance) {
+				connections.add(new ConnectionDetails<>(endNode, distance * WALKING_MULTIPLIER, 0, 0));
+			}
+		}
+
 		return connections;
 	}
 
@@ -71,7 +74,7 @@ public final class DirectionsPathFinder extends PathFinder<DirectionsPathFinder.
 
 		if (connectionDetailsList == null) {
 			return false;
-		} else if (connectionDetailsList.size() < 2) {
+		} else if (connectionDetailsList.isEmpty()) {
 			sendResponse.accept(Utilities.getJsonObjectFromData(new DirectionsResponse(startMillis)));
 			return true;
 		} else {
@@ -121,7 +124,7 @@ public final class DirectionsPathFinder extends PathFinder<DirectionsPathFinder.
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(position, platformId);
+			return (int) (position.hashCode() ^ platformId);
 		}
 	}
 }

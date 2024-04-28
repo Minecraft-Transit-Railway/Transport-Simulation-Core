@@ -1,4 +1,4 @@
-import {Component, Inject} from "@angular/core";
+import {Component, EventEmitter, Inject, Output} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {MatIcon} from "@angular/material/icon";
 import {NgFor, NgForOf, NgIf, NgStyle} from "@angular/common";
@@ -14,8 +14,9 @@ import {FormatDatePipe} from "../../pipe/formatDatePipe";
 import {MatCheckbox} from "@angular/material/checkbox";
 import {MatRipple} from "@angular/material/core";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle} from "@angular/material/dialog";
-import {MatButtonModule} from "@angular/material/button";
+import {MatButton, MatButtonModule, MatIconButton} from "@angular/material/button";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
+import {DirectionsService} from "../../service/directions.service";
 
 @Component({
 	selector: "app-station",
@@ -41,13 +42,16 @@ import {MatProgressSpinner} from "@angular/material/progress-spinner";
 		MatCheckbox,
 		MatRipple,
 		MatProgressSpinner,
+		MatIconButton,
+		MatButton,
 	],
 	templateUrl: "./station.component.html",
 	styleUrl: "./station.component.css",
 })
 export class StationComponent {
+	@Output() onOpenDirections = new EventEmitter<void>;
 
-	constructor(private readonly stationService: StationService, private readonly dialog: MatDialog) {
+	constructor(private readonly stationService: StationService, private readonly directionsService: DirectionsService, private readonly dialog: MatDialog) {
 	}
 
 	getStation() {
@@ -83,19 +87,40 @@ export class StationComponent {
 		}
 	}
 
-	public getHasTerminating() {
+	getHasTerminating() {
 		return this.stationService.getHasTerminating();
 	}
 
-	public getLoading() {
-		return this.stationService.getLoading();
+	isLoading() {
+		return this.stationService.isLoading();
+	}
+
+	copyLocation(copyIconButton: MatIcon) {
+		copyIconButton.fontIcon = "check";
+		const station = this.stationService.getSelectedStation();
+		navigator.clipboard.writeText(station == undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();
+		setTimeout(() => copyIconButton.fontIcon = "content_copy", 1000);
+	}
+
+	setDirectionsOrigin() {
+		const station = this.stationService.getSelectedStation();
+		if (station != undefined) {
+			this.directionsService.setOriginStation(station);
+			this.onOpenDirections.emit();
+		}
+	}
+
+	setDirectionsDestination() {
+		const station = this.stationService.getSelectedStation();
+		if (station != undefined) {
+			this.directionsService.setDestinationStation(station);
+			this.onOpenDirections.emit();
+		}
 	}
 
 	showDetails(arrival: Arrival) {
 		this.dialog.open(DialogOverviewExampleDialog, {data: arrival});
 	}
-
-	protected readonly localStorage = localStorage;
 }
 
 @Component({

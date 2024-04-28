@@ -3,68 +3,70 @@ import {HttpClient} from "@angular/common/http";
 import {DataService, StationWithPosition} from "./data.service";
 import {SplitNamePipe} from "../pipe/splitNamePipe";
 import {ROUTE_TYPES} from "../data/routeType";
+import {ServiceBase} from "./service";
 
 const REFRESH_INTERVAL = 3000;
 const URL = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/operation/arrivals`;
 const MAX_ARRIVALS = 5;
 
 @Injectable({providedIn: "root"})
-export class StationService {
+export class StationService extends ServiceBase<{ data: { arrivals: DataResponse[] } }> {
 	public readonly arrivals: Arrival[] = [];
 	public readonly routes: { key: string, name: string, number: string, color: number, lineCount: number, typeIcon: string }[] = [];
 	private selectedStation?: StationWithPosition;
 	private hasTerminating = false;
-	private loading = true;
-	private timeoutId = 0;
 
 	constructor(private readonly httpClient: HttpClient, private readonly dataService: DataService, private readonly splitNamePipe: SplitNamePipe) {
+		super(() => {
+			if (this.selectedStation) {
+				return this.httpClient.post<{ data: { arrivals: DataResponse[] } }>(URL, JSON.stringify({
+					stationIdsHex: [this.selectedStation.id],
+					maxCountPerPlatform: MAX_ARRIVALS,
+				}));
+			} else {
+				return;
+			}
+		}, REFRESH_INTERVAL);
 		setInterval(() => this.arrivals.forEach(arrival => arrival.calculateValues()), 100);
 	}
 
-	private static getData(instance: StationService) {
-		if (instance.selectedStation) {
-			instance.httpClient.post<{ data: { arrivals: DataResponse[] } }>(URL, `{"stationIdsHex":["${instance.selectedStation.id}"],"maxCountPerPlatform":${MAX_ARRIVALS}}`).subscribe(({data: {arrivals}}) => {
-				instance.arrivals.length = 0;
-				const routes: { [key: string]: { key: string, name: string, number: string, color: number, lineCount: number, typeIcon: string } } = {};
-				instance.hasTerminating = false;
+	protected override processData(data: { data: { arrivals: DataResponse[] } }) {
+		this.arrivals.length = 0;
+		const routes: { [key: string]: { key: string, name: string, number: string, color: number, lineCount: number, typeIcon: string } } = {};
+		this.hasTerminating = false;
 
-				arrivals.forEach(arrival => {
-					const newArrival = new Arrival(instance.dataService, arrival);
-					instance.arrivals.push(newArrival);
-					routes[newArrival.key] = {
-						key: newArrival.key,
-						name: newArrival.routeName,
-						number: newArrival.routeNumber,
-						color: newArrival.routeColor,
-						lineCount: Math.max(instance.splitNamePipe.transform(newArrival.routeName).length, instance.splitNamePipe.transform(newArrival.routeNumber).length),
-						typeIcon: newArrival.routeTypeIcon,
-					};
-					if (newArrival.isTerminating) {
-						instance.hasTerminating = true;
-					}
-				});
+		data.data.arrivals.forEach(arrival => {
+			const newArrival = new Arrival(this.dataService, arrival);
+			this.arrivals.push(newArrival);
+			routes[newArrival.key] = {
+				key: newArrival.key,
+				name: newArrival.routeName,
+				number: newArrival.routeNumber,
+				color: newArrival.routeColor,
+				lineCount: Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length),
+				typeIcon: newArrival.routeTypeIcon,
+			};
+			if (newArrival.isTerminating) {
+				this.hasTerminating = true;
+			}
+		});
 
-				instance.arrivals.sort((arrival1, arrival2) => arrival1.arrival - arrival2.arrival);
+		this.arrivals.sort((arrival1, arrival2) => arrival1.arrival - arrival2.arrival);
 
-				const newRoutes = Object.values(routes);
-				newRoutes.sort((route1, route2) => {
-					const linesCompare = route1.lineCount - route2.lineCount;
-					if (linesCompare == 0) {
-						const numberCompare = route1.number.localeCompare(route2.number);
-						return numberCompare == 0 ? `${route1.color} ${route1.name}`.localeCompare(`${route2.color} ${route2.name}`) : numberCompare;
-					} else {
-						return linesCompare;
-					}
-				});
+		const newRoutes = Object.values(routes);
+		newRoutes.sort((route1, route2) => {
+			const linesCompare = route1.lineCount - route2.lineCount;
+			if (linesCompare == 0) {
+				const numberCompare = route1.number.localeCompare(route2.number);
+				return numberCompare == 0 ? `${route1.color} ${route1.name}`.localeCompare(`${route2.color} ${route2.name}`) : numberCompare;
+			} else {
+				return linesCompare;
+			}
+		});
 
-				if (JSON.stringify(newRoutes) !== JSON.stringify(instance.routes)) {
-					instance.routes.length = 0;
-					newRoutes.forEach(route => instance.routes.push(route));
-				}
-
-				instance.loading = false;
-				instance.timeoutId = setTimeout(() => this.getData(instance), REFRESH_INTERVAL);
-			});
+		if (JSON.stringify(newRoutes) !== JSON.stringify(this.routes)) {
+			this.routes.length = 0;
+			newRoutes.forEach(route => this.routes.push(route));
 		}
 	}
 
@@ -77,17 +79,11 @@ export class StationService {
 		this.arrivals.length = 0;
 		this.routes.length = 0;
 		this.hasTerminating = false;
-		this.loading = true;
-		clearTimeout(this.timeoutId);
-		StationService.getData(this);
+		this.getData(stationId);
 	}
 
 	public getHasTerminating() {
 		return this.hasTerminating;
-	}
-
-	public getLoading() {
-		return this.loading;
 	}
 
 	public clear() {
