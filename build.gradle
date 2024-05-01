@@ -61,3 +61,8 @@ tasks.register("generateSchemaClasses") {
 	Generator.generate(project, "schema/operation", "core/generated/operation", false, "core.data", "core.operation")
 	WebserverSetup.setup(project.rootDir)
 }
+
+tasks.withType(AbstractArchiveTask).configureEach {
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}
