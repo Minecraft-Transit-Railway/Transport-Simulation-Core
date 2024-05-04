@@ -134,7 +134,7 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
 		if (rail == null) {
 			final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
-			rail = Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), Rail.Shape.QUADRATIC, 0, "", SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
+			rail = Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), Rail.Shape.QUADRATIC, 0, new ObjectArrayList<>(), SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
 		}
 	}
 

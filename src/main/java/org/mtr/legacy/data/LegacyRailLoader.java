@@ -7,6 +7,7 @@ import org.mtr.core.data.TransportMode;
 import org.mtr.core.simulation.FileLoader;
 import org.mtr.core.tool.Angle;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import java.nio.file.Path;
@@ -33,7 +34,7 @@ public final class LegacyRailLoader {
 				final Angle endAngle = railNodeConnection.getEndAngle();
 				final TransportMode transportMode = railNodeConnection.getTransportMode();
 				final String modelKey = railNodeConnection.getModelKey();
-				final boolean isSecondaryDirection = railNodeConnection.getIsSecondaryDirection();
+				final ObjectArrayList<String> styles = modelKey.isEmpty() ? new ObjectArrayList<>() : ObjectArrayList.of(String.format("%s_%s", modelKey, railNodeConnection.getIsSecondaryDirection() ? 1 : 2));
 				final double verticalRadius = railNodeConnection.getVerticalRadius();
 				final UUID uuid = getUuid(startPositionLong, endPositionLong);
 				final DataFixer.RailType oldRailType = railCache.get(uuid);
@@ -42,20 +43,20 @@ public final class LegacyRailLoader {
 					final Rail rail;
 					switch (railType) {
 						case PLATFORM:
-							rail = Rail.newPlatformRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), modelKey, transportMode);
+							rail = Rail.newPlatformRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), styles, transportMode);
 							break;
 						case SIDING:
-							rail = Rail.newSidingRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), modelKey, transportMode);
+							rail = Rail.newSidingRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), styles, transportMode);
 							break;
 						case TURN_BACK:
-							rail = Rail.newTurnBackRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), modelKey, transportMode);
+							rail = Rail.newTurnBackRail(startPosition, startAngle, endPosition, endAngle, verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII, Math.max(verticalRadius, 0), styles, transportMode);
 							break;
 						default:
 							final Rail.Shape shape = railType == DataFixer.RailType.CABLE_CAR || oldRailType == DataFixer.RailType.CABLE_CAR ? Rail.Shape.CABLE : verticalRadius == 0 ? Rail.Shape.QUADRATIC : Rail.Shape.TWO_RADII;
 							rail = Rail.newRail(
 									startPosition, startAngle,
 									endPosition, endAngle,
-									shape, Math.max(verticalRadius, 0), modelKey, railType.speedLimitKilometersPerHour, oldRailType.speedLimitKilometersPerHour,
+									shape, Math.max(verticalRadius, 0), styles, railType.speedLimitKilometersPerHour, oldRailType.speedLimitKilometersPerHour,
 									false, false, true, railType == DataFixer.RailType.RUNWAY, true, transportMode
 							);
 							break;

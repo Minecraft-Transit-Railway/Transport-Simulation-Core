@@ -211,7 +211,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 	private static PathData getAirplanePathData(Position position1, Angle angle1, Position position2, Angle angle2, int stopIndex) {
 		return new PathData(Rail.newRail(
 				position1, angle1, position2, angle2,
-				Rail.Shape.QUADRATIC, 0, "", AIRPLANE_SPEED, 0,
+				Rail.Shape.QUADRATIC, 0, new ObjectArrayList<>(), AIRPLANE_SPEED, 0,
 				false, false, true, false, false, TransportMode.AIRPLANE
 		), 0, 0, stopIndex, position1, position2);
 	}

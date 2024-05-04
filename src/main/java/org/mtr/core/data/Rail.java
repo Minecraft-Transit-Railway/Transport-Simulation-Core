@@ -7,10 +7,7 @@ import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 
@@ -24,32 +21,32 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	private final Long2LongAVLTreeMap blockedVehicleIdsOld = new Long2LongAVLTreeMap();
 	private final boolean reversePositions;
 
-	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode) {
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canConnectRemotely, canHaveSignal, transportMode);
+	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, ObjectArrayList<String> styles, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode) {
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, styles, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canConnectRemotely, canHaveSignal, transportMode);
 	}
 
-	public static Rail newTurnBackRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, 80, 80, false, false, false, true, false, false, transportMode);
+	public static Rail newTurnBackRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, ObjectArrayList<String> styles, TransportMode transportMode) {
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, styles, 80, 80, false, false, false, true, false, false, transportMode);
 	}
 
-	public static Rail newPlatformRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
-		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, style, true, transportMode);
+	public static Rail newPlatformRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, ObjectArrayList<String> styles, TransportMode transportMode) {
+		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, styles, true, transportMode);
 	}
 
-	public static Rail newSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, TransportMode transportMode) {
-		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, style, false, transportMode);
+	public static Rail newSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, ObjectArrayList<String> styles, TransportMode transportMode) {
+		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, styles, false, transportMode);
 	}
 
-	private static Rail newPlatformOrSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, String style, boolean isPlatform, TransportMode transportMode) {
+	private static Rail newPlatformOrSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, ObjectArrayList<String> styles, boolean isPlatform, TransportMode transportMode) {
 		final long speedLimit = isPlatform ? 80 : 40;
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit, speedLimit, isPlatform, !isPlatform, false, false, false, true, transportMode);
+		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, styles, speedLimit, speedLimit, isPlatform, !isPlatform, false, false, false, true, transportMode);
 	}
 
 	public static Rail copy(Rail rail, Shape newShape, double newVerticalRadius) {
 		return new Rail(
 				rail.position1, rail.angle1,
 				rail.position2, rail.angle2,
-				newShape, newVerticalRadius, rail.style, rail.speedLimit1, rail.speedLimit2,
+				newShape, newVerticalRadius, rail.styles, rail.speedLimit1, rail.speedLimit2,
 				rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canConnectRemotely, rail.canHaveSignal, rail.transportMode
 		);
 	}
@@ -57,14 +54,15 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 	private Rail(
 			Position position1, Angle angle1,
 			Position position2, Angle angle2,
-			Rail.Shape shape, double verticalRadius, String style, long speedLimit1, long speedLimit2,
+			Rail.Shape shape, double verticalRadius, ObjectArrayList<String> styles, long speedLimit1, long speedLimit2,
 			boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canTurnBack, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode
 	) {
-		super(position1, angle1, position2, angle2, shape, verticalRadius, style, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, canTurnBack, canConnectRemotely, canHaveSignal, transportMode);
+		super(position1, angle1, position2, angle2, shape, verticalRadius, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, canTurnBack, canConnectRemotely, canHaveSignal, transportMode);
 		reversePositions = position1.compareTo(position2) > 0;
 		railMath = reversePositions ? new RailMath(position2, angle2, position1, angle1, shape, verticalRadius) : new RailMath(position1, angle1, position2, angle2, shape, verticalRadius);
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
 		speedLimit2MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit2);
+		this.styles.addAll(styles);
 	}
 
 	public Rail(ReaderBase readerBase) {
@@ -166,6 +164,10 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 			data.sidings.add(siding);
 			sidingsToAdd.add(siding);
 		}
+	}
+
+	public ObjectImmutableList<String> getStyles() {
+		return new ObjectImmutableList<>(styles);
 	}
 
 	public IntAVLTreeSet getSignalColors() {

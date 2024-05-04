@@ -60,7 +60,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 			rail.railMath.render((x1, z1, x2, z2, x3, z3, x4, z4, y1, y2) -> {
 				iterateAndCheckDistance(x1, y1, z1, previousPosition, position, closestDistance);
 				iterateAndCheckDistance(x3, y2, z3, previousPosition, position, closestDistance);
-			}, 0, 0);
+			}, 1, 0, 0);
 
 			return closestDistance[0];
 		}

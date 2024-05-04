@@ -166,7 +166,7 @@ public interface TestUtilities {
 	}
 
 	static Rail randomRail() {
-		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomPosition(), randomEnum(Angle.values()), randomEnum(Rail.Shape.values()), RANDOM.nextDouble(), randomString(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
+		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomPosition(), randomEnum(Angle.values()), randomEnum(Rail.Shape.values()), RANDOM.nextDouble(), randomList(TestUtilities::randomString), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
 	}
 
 	static Route randomRoute() {

@@ -23,8 +23,11 @@
 		"verticalRadius": {
 			"type": "number"
 		},
-		"style": {
-			"type": "string"
+		"styles": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
 		},
 		"speedLimit1": {
 			"type": "integer"
@@ -67,7 +70,6 @@
 		"angle2",
 		"shape",
 		"verticalRadius",
-		"style",
 		"speedLimit1",
 		"speedLimit2",
 		"isPlatform",
