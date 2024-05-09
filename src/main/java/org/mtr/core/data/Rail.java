@@ -51,6 +51,15 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		);
 	}
 
+	public static Rail copy(Rail rail, ObjectArrayList<String> newStyles) {
+		return new Rail(
+				rail.position1, rail.angle1,
+				rail.position2, rail.angle2,
+				rail.shape, rail.verticalRadius, newStyles, rail.speedLimit1, rail.speedLimit2,
+				rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canConnectRemotely, rail.canHaveSignal, rail.transportMode
+		);
+	}
+
 	private Rail(
 			Position position1, Angle angle1,
 			Position position2, Angle angle2,

@@ -225,18 +225,18 @@ public class RailMath {
 		return Math.floor((length * length + height * height) * 100 / Math.abs(4 * height)) / 100;
 	}
 
-	public void render(RenderRail callback, int resolution, float offsetRadius1, float offsetRadius2) {
-		renderSegment(h1, k1, r1, tStart1, tEnd1, 0, resolution, offsetRadius1, offsetRadius2, reverseT1, isStraight1, callback);
-		renderSegment(h2, k2, r2, tStart2, tEnd2, Math.abs(tEnd1 - tStart1), resolution, offsetRadius1, offsetRadius2, reverseT2, isStraight2, callback);
+	public void render(RenderRail callback, double interval, float offsetRadius1, float offsetRadius2) {
+		renderSegment(h1, k1, r1, tStart1, tEnd1, 0, interval, offsetRadius1, offsetRadius2, reverseT1, isStraight1, callback);
+		renderSegment(h2, k2, r2, tStart2, tEnd2, Math.abs(tEnd1 - tStart1), interval, offsetRadius1, offsetRadius2, reverseT2, isStraight2, callback);
 	}
 
 	boolean isValid() {
 		return h1 != 0 || k1 != 0 || h2 != 0 || k2 != 0 || r1 != 0 || r2 != 0 || tStart1 != 0 || tStart2 != 0 || tEnd1 != 0 || tEnd2 != 0;
 	}
 
-	private void renderSegment(double h, double k, double r, double tStart, double tEnd, double rawValueOffset, int resolution, float offsetRadius1, float offsetRadius2, boolean reverseT, boolean isStraight, RenderRail callback) {
+	private void renderSegment(double h, double k, double r, double tStart, double tEnd, double rawValueOffset, double interval, float offsetRadius1, float offsetRadius2, boolean reverseT, boolean isStraight, RenderRail callback) {
 		final double count = Math.abs(tEnd - tStart);
-		final double increment = count / Math.round(count) / resolution;
+		final double increment = count < 0.5 || interval <= 0 ? 0.5 : count / Math.round(count) * interval;
 		Vector previousCorner1 = null;
 		Vector previousCorner2 = null;
 		double previousY = 0;
