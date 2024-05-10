@@ -72,6 +72,7 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
 		speedLimit2MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit2);
 		this.styles.addAll(styles);
+		stylesMigratedLegacy = true;
 	}
 
 	public Rail(ReaderBase readerBase) {
@@ -193,6 +194,16 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 				signalColors.removeIf(signalModification.getSignalColorsRemove()::contains);
 			}
 			signalModification.getSignalColorsAdd().forEach(signalColors::add);
+		}
+	}
+
+	/**
+	 * If the rail hasn't been migrated yet, add the default style (to prevent it from not rendering)
+	 */
+	public void checkMigrationStatus() {
+		if (!stylesMigratedLegacy && styles.isEmpty()) {
+			styles.add("default");
+			stylesMigratedLegacy = true;
 		}
 	}
 

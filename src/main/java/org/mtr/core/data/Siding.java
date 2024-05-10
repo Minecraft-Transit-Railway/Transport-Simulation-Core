@@ -101,6 +101,9 @@ public final class Siding extends SidingSchema implements Utilities {
 		if (area != null && defaultPathData != null) {
 			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
 		}
+		// Automatically clamp acceleration and deceleration values
+		setAcceleration(acceleration);
+		setDeceleration(deceleration);
 	}
 
 	public double getRailLength() {

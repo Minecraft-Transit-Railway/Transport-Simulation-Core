@@ -67,6 +67,7 @@ public class Simulator extends Data implements Utilities {
 
 		sync();
 		depots.forEach(Depot::init);
+		rails.forEach(Rail::checkMigrationStatus);
 
 		final ObjectArrayList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> tempVehiclePositions = new ObjectArrayList<>();
 		for (int i = 0; i < TransportMode.values().length; i++) {

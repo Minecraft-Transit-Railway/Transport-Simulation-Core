@@ -63,8 +63,7 @@
 			"$ref": "TransportMode"
 		},
 		"model_key": {
-			"type": "string",
-			"default": "default"
+			"type": "string"
 		},
 		"is_secondary_dir": {
 			"type": "boolean"

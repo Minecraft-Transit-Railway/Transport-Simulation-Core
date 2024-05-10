@@ -35,9 +35,9 @@ public final class LegacyRailLoader {
 				final TransportMode transportMode = railNodeConnection.getTransportMode();
 				final String modelKey = railNodeConnection.getModelKey();
 				final ObjectArrayList<String> styles;
-				if (modelKey.equals("default")) {
+				if (modelKey.isEmpty()) {
 					styles = transportMode == TransportMode.BOAT ? new ObjectArrayList<>() : ObjectArrayList.of("default");
-				} else if (modelKey.isEmpty()) {
+				} else if (modelKey.equals("null")) {
 					styles = new ObjectArrayList<>();
 				} else {
 					styles = ObjectArrayList.of(String.format("%s_%s", modelKey, railNodeConnection.getIsSecondaryDirection() ? 1 : 2));

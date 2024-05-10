@@ -329,7 +329,7 @@ public class Vehicle extends VehicleSchema {
 			railSpeed = thisPathData.getSpeedLimitMetersPerMillisecond();
 		} else {
 			// TODO maybe use previous rail speed as the speed limit
-			railSpeed = Math.max(transportMode.defaultSpeedMetersPerMillisecond, speed);
+			railSpeed = transportMode.continuousMovement ? transportMode.defaultSpeedMetersPerMillisecond : Math.max(transportMode.defaultSpeedMetersPerMillisecond, speed);
 		}
 
 		return railSpeed;

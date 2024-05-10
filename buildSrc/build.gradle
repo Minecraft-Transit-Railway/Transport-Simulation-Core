@@ -17,3 +17,8 @@ java {
 jar {
 	archiveBaseName = "Transport-Simulation-Core-Build-Tools"
 }
+
+tasks.withType(AbstractArchiveTask).configureEach {
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}

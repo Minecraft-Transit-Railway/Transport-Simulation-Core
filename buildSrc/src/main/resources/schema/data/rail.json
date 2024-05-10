@@ -61,6 +61,9 @@
 		},
 		"transportMode": {
 			"$ref": "TransportMode"
+		},
+		"stylesMigratedLegacy": {
+			"type": "boolean"
 		}
 	},
 	"required": [
