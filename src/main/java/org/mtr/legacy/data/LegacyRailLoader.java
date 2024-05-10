@@ -34,7 +34,14 @@ public final class LegacyRailLoader {
 				final Angle endAngle = railNodeConnection.getEndAngle();
 				final TransportMode transportMode = railNodeConnection.getTransportMode();
 				final String modelKey = railNodeConnection.getModelKey();
-				final ObjectArrayList<String> styles = modelKey.isEmpty() ? new ObjectArrayList<>() : ObjectArrayList.of(String.format("%s_%s", modelKey, railNodeConnection.getIsSecondaryDirection() ? 1 : 2));
+				final ObjectArrayList<String> styles;
+				if (modelKey.equals("default")) {
+					styles = transportMode == TransportMode.BOAT ? new ObjectArrayList<>() : ObjectArrayList.of("default");
+				} else if (modelKey.isEmpty()) {
+					styles = new ObjectArrayList<>();
+				} else {
+					styles = ObjectArrayList.of(String.format("%s_%s", modelKey, railNodeConnection.getIsSecondaryDirection() ? 1 : 2));
+				}
 				final double verticalRadius = railNodeConnection.getVerticalRadius();
 				final UUID uuid = getUuid(startPositionLong, endPositionLong);
 				final DataFixer.RailType oldRailType = railCache.get(uuid);
