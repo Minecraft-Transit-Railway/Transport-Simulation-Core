@@ -11,6 +11,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public class Lift extends LiftSchema {
@@ -195,14 +196,18 @@ public class Lift extends LiftSchema {
 		return angle;
 	}
 
-	public Vector getPosition() {
+	public Vector getPosition(BiFunction<Position, Position, ObjectArrayList<Vector>> trackProvider) {
 		return currentFloorCallback((percentage, index) -> {
-			final Position position1 = floors.get(index - 1).getPosition();
-			final Position position2 = floors.get(index).getPosition();
+			final ObjectArrayList<Vector> trackPositions = trackProvider.apply(floors.get(index - 1).getPosition(), floors.get(index).getPosition());
+			final double progress = percentage * (trackPositions.size() - 1);
+			final int trackIndex = (int) Math.floor(progress);
+			final double trackPercentage = progress - trackIndex;
+			final Vector position1 = Utilities.getElement(trackPositions, trackIndex, new Vector(0, 0, 0));
+			final Vector position2 = Utilities.getElement(trackPositions, trackIndex + 1, new Vector(0, 0, 0));
 			return new Vector(
-					getValueFromPercentage(percentage, position1.getX(), position2.getX()),
-					getValueFromPercentage(percentage, position1.getY(), position2.getY()),
-					getValueFromPercentage(percentage, position1.getZ(), position2.getZ())
+					getValueFromPercentage(trackPercentage, position1.x, position2.x),
+					getValueFromPercentage(trackPercentage, position1.y, position2.y),
+					getValueFromPercentage(trackPercentage, position1.z, position2.z)
 			);
 		}, new Vector(0, 0, 0));
 	}
