@@ -67,7 +67,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 
 		if (connectionDetailsList == null) {
 			return null;
-		} else if (connectionDetailsList.size() < 2) {
+		} else if (connectionDetailsList.isEmpty()) {
 			return new ObjectArrayList<>();
 		} else {
 			padConnectionDetailsList(connectionDetailsList, startSavedRail, false);

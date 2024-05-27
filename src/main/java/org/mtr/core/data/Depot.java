@@ -20,6 +20,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 public final class Depot extends DepotSchema implements Utilities {
 
@@ -59,12 +60,14 @@ public final class Depot extends DepotSchema implements Utilities {
 		final GeneratedStatus tempLastGeneratedStatus = lastGeneratedStatus;
 		final long tempLastGeneratedFailedStartId = lastGeneratedFailedStartId;
 		final long tempLastGeneratedFailedEndId = lastGeneratedFailedEndId;
+		final long tempLastGeneratedFailedSidingCount = lastGeneratedFailedSidingCount;
 		super.updateData(readerBase);
 		if (data instanceof Simulator) {
 			lastGeneratedMillis = tempLastGeneratedMillis;
 			lastGeneratedStatus = tempLastGeneratedStatus;
 			lastGeneratedFailedStartId = tempLastGeneratedFailedStartId;
 			lastGeneratedFailedEndId = tempLastGeneratedFailedEndId;
+			lastGeneratedFailedSidingCount = tempLastGeneratedFailedSidingCount;
 		}
 	}
 
@@ -119,11 +122,15 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	/**
-	 * @param generationStatusConsumer if path generation failed between two saved rails, this consumer will be called with the saved rail IDs that path generation failed at
+	 * @param generationStatusConsumer               if path generation failed between two saved rails, this consumer will be called with the saved rail IDs that path generation failed at
+	 * @param lastGeneratedFailedSidingCountConsumer if path generation failed between the siding and the main path, this consumer will be called with the number of sidings that couldn't connect to the main path
 	 */
-	public void getFailedPlatformIds(GenerationStatusConsumer generationStatusConsumer) {
+	public void getFailedPlatformIds(GenerationStatusConsumer generationStatusConsumer, IntConsumer lastGeneratedFailedSidingCountConsumer) {
 		if (lastGeneratedFailedStartId != 0 && lastGeneratedFailedEndId != 0) {
 			generationStatusConsumer.accept(lastGeneratedFailedStartId, lastGeneratedFailedEndId);
+		}
+		if (lastGeneratedFailedSidingCount > 0) {
+			lastGeneratedFailedSidingCountConsumer.accept((int) lastGeneratedFailedSidingCount);
 		}
 	}
 
@@ -179,6 +186,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	public void tick() {
 		SidingPathFinder.findPathTick(path, sidingPathFinders, cruisingAltitude, () -> {
 			if (!platformsInRoute.isEmpty()) {
+				lastGeneratedFailedSidingCount = 0;
 				savedRails.forEach(siding -> {
 					siding.generateRoute(Utilities.getElement(platformsInRoute, 0).left(), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1).left(), platformsInRoute.size(), cruisingAltitude);
 					generatingSidingIds.add(siding.getId());
@@ -330,6 +338,10 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	long getRepeatDepartures() {
 		return repeatDepartures;
+	}
+
+	void sidingPathGenerationFailed() {
+		lastGeneratedFailedSidingCount++;
 	}
 
 	private void generateMainRoute(OnGenerationComplete newOnGenerationComplete) {

@@ -25,6 +25,9 @@
 		"lastGeneratedFailedEndId": {
 			"type": "integer"
 		},
+		"lastGeneratedFailedSidingCount": {
+			"type": "integer"
+		},
 		"useRealTime": {
 			"type": "boolean"
 		},

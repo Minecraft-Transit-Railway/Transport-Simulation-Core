@@ -192,9 +192,9 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public boolean tick() {
 		// Generate any pending paths
-		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, area == null ? 0 : area.getCruisingAltitude(), this::finishGeneratingPath, (startSavedRail, endSavedRail) -> {
+		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, area == null ? 0 : area.getCruisingAltitude(), () -> finishGeneratingPath(false), (startSavedRail, endSavedRail) -> {
 			Main.LOGGER.info("Path not found from {} siding {} to main route", getDepotName(), name);
-			finishGeneratingPath();
+			finishGeneratingPath(true);
 		});
 		SidingPathFinder.findPathTick(pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, area == null ? 0 : area.getCruisingAltitude(), () -> {
 			if (area != null) {
@@ -202,10 +202,10 @@ public final class Siding extends SidingSchema implements Utilities {
 					pathMainRouteToSiding.remove(0);
 				}
 			}
-			finishGeneratingPath();
+			finishGeneratingPath(false);
 		}, (startSavedRail, endSavedRail) -> {
 			Main.LOGGER.info("Path not found from main route to {} siding {}", getDepotName(), name);
-			finishGeneratingPath();
+			finishGeneratingPath(true);
 		});
 
 		// Attempt to find a corresponding rail for this siding and return true if failed
@@ -477,7 +477,10 @@ public final class Siding extends SidingSchema implements Utilities {
 	/**
 	 * Should only be called after a path is generated, whether successful or not.
 	 */
-	private void finishGeneratingPath() {
+	private void finishGeneratingPath(boolean failed) {
+		if (failed && area != null) {
+			area.sidingPathGenerationFailed();
+		}
 		if (sidingPathFinderSidingToMainRoute.isEmpty() && sidingPathFinderMainRouteToSiding.isEmpty()) {
 			generatePathDistancesAndTimeSegments();
 			if (area != null) {
