@@ -11,11 +11,12 @@ version rootProject.properties.version
 
 repositories {
 	mavenCentral()
-	maven { url "https://jitpack.io" }
+	flatDir { dirs "libs" }
 }
 
 dependencies {
-	implementation "com.github.jonafanho:Shadow-Libraries:master-SNAPSHOT"
+	implementation "org.mtr:Shadow-Libraries-net:0.0.1"
+	implementation "org.mtr:Shadow-Libraries-util:0.0.1"
 	implementation "commons-io:commons-io:+"
 	implementation "org.apache.logging.log4j:log4j-core:2.+"
 	compileOnly "com.google.code.findbugs:jsr305:+"
