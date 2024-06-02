@@ -1,11 +1,12 @@
 import {catchError, EMPTY, Observable} from "rxjs";
+import {DimensionService} from "./dimension.service";
 
 export abstract class ServiceBase<T> {
 	private loading = false;
 	private id = "";
 	private timeoutId = 0;
 
-	protected constructor(private readonly sendData: () => Observable<T> | void, private readonly refreshInterval: number) {
+	protected constructor(private readonly sendData: () => Observable<T> | void, private readonly refreshInterval: number, protected readonly dimensionService: DimensionService) {
 	}
 
 	protected abstract processData(data: T): void;
@@ -15,6 +16,10 @@ export abstract class ServiceBase<T> {
 		this.id = id;
 		clearTimeout(this.timeoutId);
 		this.getDataInternal();
+	}
+
+	protected getUrl(endpoint: string) {
+		return `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/${endpoint}?dimension=${this.dimensionService.getDimensionIndex()}`;
 	}
 
 	public isLoading() {

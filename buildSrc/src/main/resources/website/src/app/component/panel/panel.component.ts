@@ -6,6 +6,9 @@ import {MatButtonToggle, MatButtonToggleGroup} from "@angular/material/button-to
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {ReactiveFormsModule} from "@angular/forms";
 import {MatIcon} from "@angular/material/icon";
+import {MatFormField, MatLabel} from "@angular/material/form-field";
+import {MatOption, MatSelect} from "@angular/material/select";
+import {DimensionService} from "../../service/dimension.service";
 
 @Component({
 	selector: "app-panel",
@@ -20,16 +23,20 @@ import {MatIcon} from "@angular/material/icon";
 		MatButtonToggle,
 		ReactiveFormsModule,
 		NgIf,
-		MatIcon
+		MatIcon,
+		MatLabel,
+		MatFormField,
+		MatSelect,
+		MatOption,
 	],
 	templateUrl: "./panel.component.html",
-	styleUrl: "./panel.component.css"
+	styleUrl: "./panel.component.css",
 })
 export class PanelComponent {
 
 	readonly routeTypes: [string, RouteType][] = Object.entries(ROUTE_TYPES).map(([routeTypeKey, routeType]) => [routeTypeKey, routeType]);
 
-	constructor(private readonly dataService: DataService) {
+	constructor(private readonly dataService: DataService, private readonly dimensionService: DimensionService) {
 	}
 
 	onSelect(routeTypeKey: string, value: string) {
@@ -39,5 +46,13 @@ export class PanelComponent {
 
 	getSelected(routeTypeKey: string): number | undefined {
 		return this.dataService.getRouteTypes()[routeTypeKey];
+	}
+
+	getDimensions() {
+		return this.dimensionService.getDimensions();
+	}
+
+	setDimension(dimension: string) {
+		this.dataService.setDimension(dimension);
 	}
 }

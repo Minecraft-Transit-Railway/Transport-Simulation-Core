@@ -18,7 +18,7 @@ public final class SystemMapServlet extends ServletBase {
 
 	@Override
 	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator, Consumer<JsonObject> sendResponse) {
-		final StationAndRoutes stationAndRoutes = new StationAndRoutes();
+		final StationAndRoutes stationAndRoutes = new StationAndRoutes(simulator.dimensions);
 		simulator.stations.forEach(stationAndRoutes::addStation);
 		simulator.routes.forEach(stationAndRoutes::addRoute);
 		sendResponse.accept(Utilities.getJsonObjectFromData(stationAndRoutes));

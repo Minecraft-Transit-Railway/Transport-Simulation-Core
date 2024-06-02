@@ -4,9 +4,9 @@ import {DataService, StationWithPosition} from "./data.service";
 import {SplitNamePipe} from "../pipe/splitNamePipe";
 import {ROUTE_TYPES} from "../data/routeType";
 import {ServiceBase} from "./service";
+import {DimensionService} from "./dimension.service";
 
 const REFRESH_INTERVAL = 3000;
-const URL = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/operation/arrivals`;
 const MAX_ARRIVALS = 5;
 
 @Injectable({providedIn: "root"})
@@ -16,17 +16,17 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 	private selectedStation?: StationWithPosition;
 	private hasTerminating = false;
 
-	constructor(private readonly httpClient: HttpClient, private readonly dataService: DataService, private readonly splitNamePipe: SplitNamePipe) {
+	constructor(private readonly httpClient: HttpClient, private readonly dataService: DataService, private readonly splitNamePipe: SplitNamePipe, dimensionService: DimensionService) {
 		super(() => {
 			if (this.selectedStation) {
-				return this.httpClient.post<{ data: { arrivals: DataResponse[] } }>(URL, JSON.stringify({
+				return this.httpClient.post<{ data: { arrivals: DataResponse[] } }>(this.getUrl("operation/arrivals"), JSON.stringify({
 					stationIdsHex: [this.selectedStation.id],
 					maxCountPerPlatform: MAX_ARRIVALS,
 				}));
 			} else {
 				return;
 			}
-		}, REFRESH_INTERVAL);
+		}, REFRESH_INTERVAL, dimensionService);
 		setInterval(() => this.arrivals.forEach(arrival => arrival.calculateValues()), 100);
 	}
 

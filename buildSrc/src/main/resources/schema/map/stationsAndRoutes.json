@@ -16,6 +16,12 @@
 			"items": {
 				"$ref": "route.json"
 			}
+		},
+		"dimensions": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
 		}
 	}
 }

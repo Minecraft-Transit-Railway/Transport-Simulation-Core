@@ -117,6 +117,7 @@ export class MapComponent implements AfterViewInit {
 		this.controls.addEventListener("change", () => draw());
 		window.addEventListener("resize", () => draw());
 
+		this.dataService.setLoading = () => this.loading = true;
 		this.dataService.drawMap = () => {
 			this.loading = true;
 			this.scene.background = new THREE.Color(MapComponent.getBackgroundColor()).convertLinearToSRGB();

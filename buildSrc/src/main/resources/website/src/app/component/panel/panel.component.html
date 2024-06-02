@@ -1,4 +1,12 @@
 <div class="column gap-small">
+	<mat-form-field>
+		<mat-label>Dimension</mat-label>
+		<mat-select #dropdown (selectionChange)="setDimension(dropdown.value)">
+			@for (dimension of getDimensions(); track dimension) {
+				<mat-option [value]="dimension">{{ dimension }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
 	<div class="row-reverse gap center" *ngFor="let routeType of routeTypes">
 		<mat-button-toggle-group hideSingleSelectionIndicator #group="matButtonToggleGroup" [value]="getSelected(routeType[0])?.toString()" (change)="onSelect(routeType[0], group.value)">
 			<mat-button-toggle value="0">

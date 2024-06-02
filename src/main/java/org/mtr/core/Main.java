@@ -52,7 +52,7 @@ public class Main {
 
 		LOGGER.info("Loading files...");
 		for (final String dimension : dimensions) {
-			tempSimulators.add(new Simulator(dimension, rootPath, clientWebserverPort));
+			tempSimulators.add(new Simulator(dimension, dimensions, rootPath, clientWebserverPort));
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);

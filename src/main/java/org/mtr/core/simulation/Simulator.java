@@ -31,6 +31,7 @@ public class Simulator extends Data implements Utilities {
 
 	public final Object2ObjectOpenHashMap<String, Client> clients = new Object2ObjectOpenHashMap<>();
 	public final String dimension;
+	public final String[] dimensions;
 
 	private final int clientWebserverPort;
 	private final FileLoader<Station> fileLoaderStations;
@@ -47,8 +48,9 @@ public class Simulator extends Data implements Utilities {
 
 	public static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
 
-	public Simulator(String dimension, Path rootPath, int clientWebserverPort) {
+	public Simulator(String dimension, String[] dimensions, Path rootPath, int clientWebserverPort) {
 		this.dimension = dimension;
+		this.dimensions = dimensions;
 		this.clientWebserverPort = clientWebserverPort;
 		final long startMillis = System.currentTimeMillis();
 

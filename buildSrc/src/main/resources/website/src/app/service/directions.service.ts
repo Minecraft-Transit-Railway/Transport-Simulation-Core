@@ -2,9 +2,9 @@ import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {Station} from "./data.service";
 import {ServiceBase} from "./service";
+import {DimensionService} from "./dimension.service";
 
 const REFRESH_INTERVAL = 10000;
-const URL = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/operation/directions`;
 
 @Injectable({providedIn: "root"})
 export class DirectionsService extends ServiceBase<{ data: { responseTime: number, directionsSegments: DataResponse[] } }> {
@@ -12,10 +12,10 @@ export class DirectionsService extends ServiceBase<{ data: { responseTime: numbe
 	private destinationStation?: Station;
 	readonly directions: DirectionsSegment[] = [];
 
-	constructor(private readonly httpClient: HttpClient) {
+	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
 		super(() => {
 			if (this.originStation && this.destinationStation) {
-				return this.httpClient.post<{ data: { responseTime: number, directionsSegments: DataResponse[] } }>(URL, JSON.stringify({
+				return this.httpClient.post<{ data: { responseTime: number, directionsSegments: DataResponse[] } }>(this.getUrl("operation/directions"), JSON.stringify({
 					startPosition: DirectionsService.stationPositionToObject(this.originStation),
 					endPosition: DirectionsService.stationPositionToObject(this.destinationStation),
 					maxWalkingDistance: 10000,
@@ -23,7 +23,7 @@ export class DirectionsService extends ServiceBase<{ data: { responseTime: numbe
 			} else {
 				return;
 			}
-		}, REFRESH_INTERVAL);
+		}, REFRESH_INTERVAL, dimensionService);
 	}
 
 	protected override processData(data: { data: { responseTime: number; directionsSegments: DataResponse[] } }) {

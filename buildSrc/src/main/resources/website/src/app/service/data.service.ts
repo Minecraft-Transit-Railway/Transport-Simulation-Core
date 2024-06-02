@@ -6,9 +6,9 @@ import {StationConnection} from "../data/stationConnection";
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {ServiceBase} from "./service";
+import {DimensionService} from "./dimension.service";
 
 const REFRESH_INTERVAL = 30000;
-const URL = `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/map/stations-and-routes`;
 
 @Injectable({providedIn: "root"})
 export class DataService extends ServiceBase<{ currentTime: number, data: DataResponse }> {
@@ -23,13 +23,15 @@ export class DataService extends ServiceBase<{ currentTime: number, data: DataRe
 	private centerY = 0;
 	private timeOffset = 0;
 	private canSetTimeOffset = true;
+	public setLoading: () => void = () => {
+	};
 	public drawMap: () => void = () => {
 	};
 	public animateCenter: (x: number, z: number) => void = () => {
 	};
 
-	constructor(private readonly httpClient: HttpClient) {
-		super(() => this.httpClient.get<{ currentTime: number, data: DataResponse }>(URL), REFRESH_INTERVAL);
+	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
+		super(() => this.httpClient.get<{ currentTime: number, data: DataResponse }>(this.getUrl("map/stations-and-routes")), REFRESH_INTERVAL, dimensionService);
 		this.getData("");
 	}
 
@@ -74,7 +76,14 @@ export class DataService extends ServiceBase<{ currentTime: number, data: DataRe
 			this.routeTypes[Object.keys(this.routeTypes)[0]] = 1;
 		}
 
+		this.dimensionService.setDimensions(data.data.dimensions);
 		this.updateData();
+	}
+
+	public setDimension(dimension: string) {
+		this.setLoading();
+		this.dimensionService.setDimension(dimension);
+		this.getData("");
 	}
 
 	public getRouteTypes() {
@@ -380,6 +389,7 @@ export class DataService extends ServiceBase<{ currentTime: number, data: DataRe
 class DataResponse {
 	readonly stations: DataResponseStation[] = [];
 	readonly routes: DataResponseRoute[] = [];
+	readonly dimensions: string[] = [];
 }
 
 class DataResponseStation {
