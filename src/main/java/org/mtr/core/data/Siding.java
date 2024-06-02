@@ -20,6 +20,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Random;
 
 public final class Siding extends SidingSchema implements Utilities {
@@ -328,15 +329,22 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public void getArrivals(long currentMillis, Platform platform, long count, ObjectArrayList<ArrivalResponse> arrivalResponseList) {
 		final long[] maxArrivalAndCount = {0, 0};
+		final ObjectArrayList<ArrivalResponse> tempArrivalResponseList = new ObjectArrayList<>();
+
 		iterateArrivals(currentMillis, platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
 			if (scheduledArrivalTime + deviation < maxArrivalAndCount[0] || maxArrivalAndCount[1] < count) {
 				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, stopTime.tripStopIndex, trip.route, platform);
 				arrivalResponse.setCarDetails(getVehicleCars());
-				arrivalResponseList.add(arrivalResponse);
+				tempArrivalResponseList.add(arrivalResponse);
 				maxArrivalAndCount[0] = Math.max(maxArrivalAndCount[0], scheduledArrivalTime + deviation);
 				maxArrivalAndCount[1]++;
 			}
 		});
+
+		Collections.sort(tempArrivalResponseList);
+		for (int i = 0; i < Math.min(tempArrivalResponseList.size(), count); i++) {
+			arrivalResponseList.add(tempArrivalResponseList.get(i));
+		}
 	}
 
 	public void getArrivals(long startMillis, long platformId, ArrivalPathFindingConsumer consumer) {
