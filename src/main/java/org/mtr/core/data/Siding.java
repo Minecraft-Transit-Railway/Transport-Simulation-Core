@@ -617,6 +617,10 @@ public final class Siding extends SidingSchema implements Utilities {
 				}
 			}
 
+			if (SidingPathFinder.overlappingPaths(pathMainRoute, pathMainRouteToSiding)) {
+				pathMainRouteToSiding.remove(0);
+			}
+
 			SidingPathFinder.generatePathDataDistances(pathSidingToMainRoute, 0);
 			SidingPathFinder.generatePathDataDistances(pathMainRoute, Utilities.getElement(pathSidingToMainRoute, -1).getEndDistance());
 			SidingPathFinder.generatePathDataDistances(pathMainRouteToSiding, Utilities.getElement(pathMainRoute, -1).getEndDistance());

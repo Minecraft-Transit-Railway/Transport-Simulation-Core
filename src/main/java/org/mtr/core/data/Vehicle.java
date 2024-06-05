@@ -291,7 +291,7 @@ public class Vehicle extends VehicleSchema {
 			stoppingPoint = vehicleExtraData.getStoppingPoint();
 		} else if (railBlockedDistance < 0) {
 			if (nextStoppingIndex >= vehicleExtraData.immutablePath.size() - 1) {
-				stoppingPoint = vehicleExtraData.getTotalDistance() - (vehicleExtraData.getRailLength() - vehicleExtraData.getTotalVehicleLength()) / 2;
+				stoppingPoint = vehicleExtraData.getTotalDistance() - (vehicleExtraData.getRepeatIndex2() > 0 ? 0 : (vehicleExtraData.getRailLength() - vehicleExtraData.getTotalVehicleLength()) / 2);
 			} else {
 				stoppingPoint = vehicleExtraData.immutablePath.get((int) nextStoppingIndex).getEndDistance();
 			}
@@ -318,6 +318,8 @@ public class Vehicle extends VehicleSchema {
 		if (railProgress >= stoppingPoint) {
 			railProgress = stoppingPoint;
 			speed = 0;
+		} else if (vehicleExtraData.getRepeatIndex2() > 0 && railProgress >= vehicleExtraData.getTotalDistance()) {
+			railProgress = vehicleExtraData.immutablePath.get(vehicleExtraData.getRepeatIndex1()).getStartDistance() + railProgress - vehicleExtraData.getTotalDistance();
 		}
 	}
 

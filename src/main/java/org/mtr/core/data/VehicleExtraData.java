@@ -4,6 +4,7 @@ import org.mtr.core.generated.data.VehicleExtraDataSchema;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
+import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -395,7 +396,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		final long repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 		final double newAcceleration = Siding.roundAcceleration(acceleration);
 		final double newDeceleration = Siding.roundAcceleration(deceleration);
-		final double totalDistance = path.isEmpty() ? 0 : Utilities.getElement(path, -1).getEndDistance();
+		final double totalDistance = path.isEmpty() ? 0 : repeatInfinitely && repeatIndex2 < path.size() ? Utilities.getElement(path, (int) repeatIndex2).getStartDistance() : Utilities.getElement(path, -1).getEndDistance();
 		final double defaultPosition = (newRailLength + newTotalVehicleLength) / 2;
 		return new VehicleExtraData(sidingId, newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, newDeceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path);
 	}
@@ -408,9 +409,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			tempPath.addAll(pathSidingToMainRoute);
 			tempPath.addAll(pathMainRoute);
 			if (repeatInfinitely) {
-				final PathData firstPathData = pathMainRoute.get(0);
-				final PathData lastPathData = Utilities.getElement(pathMainRoute, -1);
-				tempPath.add(new PathData(firstPathData, lastPathData.getStartDistance(), lastPathData.getStartDistance() + firstPathData.getEndDistance() - firstPathData.getStartDistance()));
+				tempPath.add(new PathData(new PathData(new JsonReader(new JsonObject())), Utilities.getElement(pathMainRoute, -1).getEndDistance(), Double.MAX_VALUE));
 			} else {
 				tempPath.addAll(pathMainRouteToSiding);
 			}
