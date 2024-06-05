@@ -267,7 +267,7 @@ public final class Siding extends SidingSchema implements Utilities {
 						if (!transportMode.continuousMovement && vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
 							Main.LOGGER.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
 						} else {
-							vehicle.startUp(departureIndex);
+							vehicle.startUp(departureIndex, departures.getLong(departureIndex));
 						}
 					}
 				}
@@ -451,6 +451,20 @@ public final class Siding extends SidingSchema implements Utilities {
 		PathData.writePathCache(pathMainRouteToSiding, data, transportMode);
 	}
 
+	long getRepeatInterval(long defaultAmount) {
+		if (area == null) {
+			return defaultAmount;
+		} else if (transportMode.continuousMovement) {
+			return (long) Depot.CONTINUOUS_MOVEMENT_FREQUENCY * area.savedRails.size();
+		} else if (area.getRepeatInfinitely()) {
+			return Math.round(timeOffsetForRepeating);
+		} else if (data instanceof Simulator && !area.getUseRealTime()) {
+			return ((Simulator) data).getGameMillisPerDay() * area.getRepeatDepartures();
+		} else {
+			return defaultAmount;
+		}
+	}
+
 	private String getDepotName() {
 		return area == null ? "" : area.getName();
 	}
@@ -466,20 +480,6 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		return -1;
-	}
-
-	private long getRepeatInterval(long defaultAmount) {
-		if (area == null) {
-			return defaultAmount;
-		} else if (transportMode.continuousMovement) {
-			return (long) Depot.CONTINUOUS_MOVEMENT_FREQUENCY * area.savedRails.size();
-		} else if (area.getRepeatInfinitely()) {
-			return Math.round(timeOffsetForRepeating);
-		} else if (data instanceof Simulator && !area.getUseRealTime()) {
-			return ((Simulator) data).getGameMillisPerDay() * area.getRepeatDepartures();
-		} else {
-			return defaultAmount;
-		}
 	}
 
 	/**
@@ -507,7 +507,8 @@ public final class Siding extends SidingSchema implements Utilities {
 		} else {
 			final long timeAlongRoute = vehicleTimesAlongRoute.getOrDefault(departureIndex, -1);
 			predicted = timeAlongRoute >= 0;
-			deviation = predicted ? Utilities.circularDifference(currentMillis - getRepeatInterval(MILLIS_PER_DAY) * departureOffset - departures.getLong(departureIndex), timeAlongRoute, getRepeatInterval(MILLIS_PER_DAY)) : 0;
+			final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
+			deviation = predicted ? Utilities.circularDifference(currentMillis - repeatInterval * departureOffset - departures.getLong(departureIndex), timeAlongRoute, repeatInterval) : 0;
 		}
 
 		return new BooleanLongImmutablePair(predicted, deviation);

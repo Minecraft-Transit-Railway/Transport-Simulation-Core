@@ -1,5 +1,6 @@
 package org.mtr.core.serializer;
 
+import org.mtr.core.Main;
 import org.mtr.libraries.it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntConsumer;
@@ -51,7 +52,11 @@ public abstract class ReaderBase {
 
 	protected final <U> void unpackValue(@Nullable U value, Consumer<U> consumer) {
 		if (value != null) {
-			consumer.accept(value);
+			try {
+				consumer.accept(value);
+			} catch (Exception e) {
+				Main.LOGGER.error("", e);
+			}
 		}
 	}
 

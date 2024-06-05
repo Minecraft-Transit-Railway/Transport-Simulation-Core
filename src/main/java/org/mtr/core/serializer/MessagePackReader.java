@@ -141,7 +141,10 @@ public final class MessagePackReader extends ReaderBase {
 	 */
 	@Deprecated
 	public void iterateMap(String key, BiConsumer<String, Value> consumer) {
-		unpack(key, value -> iterateMap(value, consumer));
+		final Value value = map.get(key);
+		if (value != null) {
+			iterateMap(value, consumer);
+		}
 	}
 
 	private void unpack(String key, Consumer<Value> consumer) {

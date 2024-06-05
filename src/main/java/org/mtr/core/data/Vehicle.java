@@ -17,12 +17,14 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class Vehicle extends VehicleSchema {
+public class Vehicle extends VehicleSchema implements Utilities {
 
 	/**
 	 * The amount of time to start up a vehicle again if blocked by a signal or another vehicle in front.
 	 */
 	private long stoppingCoolDown;
+	private long leaveSidingTime = -1;
+	private long deviation;
 	private int manualNotch;
 
 	public final VehicleExtraData vehicleExtraData;
@@ -105,6 +107,7 @@ public class Vehicle extends VehicleSchema {
 
 	public void simulate(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, @Nullable Long2LongAVLTreeMap vehicleTimesAlongRoute) {
 		final int currentIndex;
+		final double oldElapsedDwellTime = elapsedDwellTime;
 
 		if (getIsOnRoute()) {
 			if (vehicleExtraData.getRepeatIndex2() == 0 && railProgress >= vehicleExtraData.getTotalDistance() - (vehicleExtraData.getRailLength() - vehicleExtraData.getTotalVehicleLength()) / 2) {
@@ -137,7 +140,11 @@ public class Vehicle extends VehicleSchema {
 
 		if (siding != null && vehicleTimesAlongRoute != null) {
 			// Subtract 1 from railProgress for rounding errors
-			vehicleTimesAlongRoute.put(departureIndex, (long) Math.floor(siding.getTimeAlongRoute(railProgress - 1) + elapsedDwellTime));
+			final long timeAlongRoute = (long) Math.floor(siding.getTimeAlongRoute(railProgress - 1) + elapsedDwellTime);
+			vehicleTimesAlongRoute.put(departureIndex, timeAlongRoute);
+			if (oldElapsedDwellTime == 0 && elapsedDwellTime > 0) {
+				deviation = Utilities.circularDifference(System.currentTimeMillis() - leaveSidingTime, timeAlongRoute, siding.getRepeatInterval(MILLIS_PER_DAY));
+			}
 		}
 
 		if (!isClientside && data instanceof Simulator) {
@@ -145,8 +152,9 @@ public class Vehicle extends VehicleSchema {
 		}
 	}
 
-	public void startUp(long newDepartureIndex) {
+	public void startUp(long newDepartureIndex, long newLeaveSidingTime) {
 		departureIndex = newDepartureIndex;
+		leaveSidingTime = newLeaveSidingTime;
 		railProgress += Siding.ACCELERATION_DEFAULT;
 		elapsedDwellTime = 0;
 		speed = Siding.ACCELERATION_DEFAULT;
@@ -215,10 +223,11 @@ public class Vehicle extends VehicleSchema {
 		speed = 0;
 		nextStoppingIndex = 0;
 		departureIndex = -1;
+		leaveSidingTime = -1;
 		vehicleExtraData.closeDoors();
 
 		if (isCurrentlyManual && manualNotch > 0) {
-			startUp(-1);
+			startUp(-1, -1);
 		}
 	}
 
@@ -251,8 +260,20 @@ public class Vehicle extends VehicleSchema {
 				vehicleExtraData.closeDoors();
 			}
 
+			final long deviationAdjustment;
+			if (elapsedDwellTime > DOOR_DELAY + DOOR_MOVE_TIME) {
+				if (deviation > 0) {
+					deviationAdjustment = Math.min(deviation, Math.max(0, doorCloseTime - elapsedDwellTime));
+				} else {
+					deviationAdjustment = Math.max(deviation, -millisElapsed);
+				}
+				deviation -= deviationAdjustment;
+			} else {
+				deviationAdjustment = 0;
+			}
+
 			if (elapsedDwellTime + millisElapsed < doorCloseTime || railClear) {
-				elapsedDwellTime += millisElapsed;
+				elapsedDwellTime += millisElapsed + deviationAdjustment;
 			}
 
 			if (elapsedDwellTime >= totalDwellMillis && railClear) {
@@ -263,12 +284,12 @@ public class Vehicle extends VehicleSchema {
 						reversed = !reversed;
 					}
 				}
-				startUp(departureIndex);
+				startUp(departureIndex, leaveSidingTime);
 			}
 		} else {
 			// Stopped anywhere else
 			if (railBlockedDistance(currentIndex, railProgress, 0, vehiclePositions, true, false) < 0) {
-				startUp(departureIndex);
+				startUp(departureIndex, leaveSidingTime);
 			}
 		}
 	}
