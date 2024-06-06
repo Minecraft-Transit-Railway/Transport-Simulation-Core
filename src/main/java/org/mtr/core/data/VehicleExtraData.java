@@ -19,6 +19,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	private int stopIndex = -1;
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
+	private boolean oldHasDeviationSpeedAdjustment;
 	private boolean hasRidingEntityUpdate;
 
 	public final ObjectImmutableList<PathData> immutablePath;
@@ -217,6 +218,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return totalVehicleLength;
 	}
 
+	public boolean getHasDeviationSpeedAdjustment() {
+		return hasDeviationSpeedAdjustment;
+	}
+
 	protected double getStoppingPoint() {
 		return stoppingPoint;
 	}
@@ -257,6 +262,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		this.stoppingPoint = stoppingPoint;
 	}
 
+	protected void setHasDeviationSpeedAdjustment(boolean hasDeviationSpeedAdjustment) {
+		this.hasDeviationSpeedAdjustment = hasDeviationSpeedAdjustment;
+	}
+
 	protected void toggleDoors() {
 		doorTarget = !doorTarget;
 	}
@@ -270,9 +279,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	}
 
 	protected boolean checkForUpdate() {
-		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || hasRidingEntityUpdate;
+		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || oldHasDeviationSpeedAdjustment != hasDeviationSpeedAdjustment || hasRidingEntityUpdate;
 		oldStoppingPoint = stoppingPoint;
 		oldDoorTarget = doorTarget;
+		oldHasDeviationSpeedAdjustment = hasDeviationSpeedAdjustment;
 		hasRidingEntityUpdate = false;
 		return needsUpdate;
 	}

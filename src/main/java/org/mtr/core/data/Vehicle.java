@@ -23,7 +23,6 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	 * The amount of time to start up a vehicle again if blocked by a signal or another vehicle in front.
 	 */
 	private long stoppingCoolDown;
-	private long leaveSidingTime = -1;
 	private long deviation;
 	private int manualNotch;
 
@@ -36,6 +35,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 	public static final int DOOR_MOVE_TIME = 3200;
 	private static final int DOOR_DELAY = 1000;
+	private static final float DEVIATION_SPEED_MULTIPLIER = 0.25F;
 
 	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, TransportMode transportMode, Data data) {
 		super(transportMode, data);
@@ -69,6 +69,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 	public boolean isMoving() {
 		return speed != 0;
+	}
+
+	public double getAdjustedSpeed() {
+		return speed * (vehicleExtraData.getHasDeviationSpeedAdjustment() ? 1 + DEVIATION_SPEED_MULTIPLIER : 1);
 	}
 
 	public boolean getIsOnRoute() {
@@ -108,6 +112,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	public void simulate(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, @Nullable Long2LongAVLTreeMap vehicleTimesAlongRoute) {
 		final int currentIndex;
 		final double oldElapsedDwellTime = elapsedDwellTime;
+		final double oldSpeed = speed;
 
 		if (getIsOnRoute()) {
 			if (vehicleExtraData.getRepeatIndex2() == 0 && railProgress >= vehicleExtraData.getTotalDistance() - (vehicleExtraData.getRailLength() - vehicleExtraData.getTotalVehicleLength()) / 2) {
@@ -140,10 +145,11 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 		if (siding != null && vehicleTimesAlongRoute != null) {
 			// Subtract 1 from railProgress for rounding errors
-			final long timeAlongRoute = (long) Math.floor(siding.getTimeAlongRoute(railProgress - 1) + elapsedDwellTime);
+			final long timeAlongRoute = (long) Math.floor(siding.getTimeAlongRoute(railProgress - (speed == 0 ? 1 : 0)) + elapsedDwellTime);
 			vehicleTimesAlongRoute.put(departureIndex, timeAlongRoute);
-			if (oldElapsedDwellTime == 0 && elapsedDwellTime > 0) {
-				deviation = Utilities.circularDifference(System.currentTimeMillis() - leaveSidingTime, timeAlongRoute, siding.getRepeatInterval(MILLIS_PER_DAY));
+			// Calculate deviation every time the vehicle dwells at a platform and when it starts moving
+			if (oldElapsedDwellTime == 0 && elapsedDwellTime > 0 || oldSpeed == 0 && speed > 0) {
+				deviation = transportMode.continuousMovement ? 0 : Utilities.circularDifference(System.currentTimeMillis() - sidingDepartureTime, timeAlongRoute, siding.getRepeatInterval(MILLIS_PER_DAY));
 			}
 		}
 
@@ -152,9 +158,9 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		}
 	}
 
-	public void startUp(long newDepartureIndex, long newLeaveSidingTime) {
+	public void startUp(long newDepartureIndex, long newSidingDepartureTime) {
 		departureIndex = newDepartureIndex;
-		leaveSidingTime = newLeaveSidingTime;
+		sidingDepartureTime = newSidingDepartureTime;
 		railProgress += Siding.ACCELERATION_DEFAULT;
 		elapsedDwellTime = 0;
 		speed = Siding.ACCELERATION_DEFAULT;
@@ -223,7 +229,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		speed = 0;
 		nextStoppingIndex = 0;
 		departureIndex = -1;
-		leaveSidingTime = -1;
+		sidingDepartureTime = -1;
 		vehicleExtraData.closeDoors();
 
 		if (isCurrentlyManual && manualNotch > 0) {
@@ -284,12 +290,12 @@ public class Vehicle extends VehicleSchema implements Utilities {
 						reversed = !reversed;
 					}
 				}
-				startUp(departureIndex, leaveSidingTime);
+				startUp(departureIndex, sidingDepartureTime);
 			}
 		} else {
 			// Stopped anywhere else
 			if (railBlockedDistance(currentIndex, railProgress, 0, vehiclePositions, true, false) < 0) {
-				startUp(departureIndex, leaveSidingTime);
+				startUp(departureIndex, sidingDepartureTime);
 			}
 		}
 	}
@@ -324,6 +330,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		vehicleExtraData.setStoppingPoint(stoppingPoint);
 		final double stoppingDistance = stoppingPoint - railProgress;
 
+		if (!isClientside) {
+			vehicleExtraData.setHasDeviationSpeedAdjustment(false);
+		}
+
 		if (stoppingDistance < safeStoppingDistance) {
 			speed = stoppingDistance <= 0 ? Siding.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Siding.ACCELERATION_DEFAULT);
 		} else {
@@ -333,9 +343,14 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			} else if (speed > railSpeed) {
 				speed = Math.max(speed - newDeceleration, railSpeed);
 			}
+
+			if (deviation > 0) {
+				deviation -= (long) (DEVIATION_SPEED_MULTIPLIER * millisElapsed);
+				vehicleExtraData.setHasDeviationSpeedAdjustment(true);
+			}
 		}
 
-		railProgress += speed * millisElapsed;
+		railProgress += getAdjustedSpeed() * millisElapsed;
 		if (railProgress >= stoppingPoint) {
 			railProgress = stoppingPoint;
 			speed = 0;

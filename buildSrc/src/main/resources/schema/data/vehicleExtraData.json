@@ -137,6 +137,9 @@
 			"type": "number",
 			"minimum": 0
 		},
+		"hasDeviationSpeedAdjustment": {
+			"type": "boolean"
+		},
 		"isManualAllowed": {
 			"type": "boolean"
 		},

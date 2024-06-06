@@ -31,6 +31,10 @@
 		"departureIndex": {
 			"type": "integer",
 			"default": -1
+		},
+		"sidingDepartureTime": {
+			"type": "integer",
+			"default": -1
 		}
 	}
 }
