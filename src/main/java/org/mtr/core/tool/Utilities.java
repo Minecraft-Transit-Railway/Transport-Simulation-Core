@@ -10,6 +10,7 @@ import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.com.google.gson.JsonParser;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -193,6 +194,10 @@ public interface Utilities {
 			final int result = value1.compareTo(value2);
 			return result == 0 ? ifZero.getAsInt() : result;
 		}
+	}
+
+	static <T> boolean sameItems(Collection<T> collection1, Collection<T> collection2) {
+		return collection1.containsAll(collection2) && collection2.containsAll(collection1);
 	}
 
 	static void awaitTermination(ExecutorService executorService) {

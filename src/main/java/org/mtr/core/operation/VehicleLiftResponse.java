@@ -2,6 +2,7 @@ package org.mtr.core.operation;
 
 import org.mtr.core.data.Data;
 import org.mtr.core.data.Lift;
+import org.mtr.core.data.Rail;
 import org.mtr.core.generated.operation.VehicleLiftResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
@@ -55,6 +56,10 @@ public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 		liftsToKeep.forEach(consumer);
 	}
 
+	public void iterateSignalBlockUpdates(Consumer<SignalBlockUpdate> consumer) {
+		signalBlockUpdates.forEach(consumer);
+	}
+
 	public void addVehicleToUpdate(VehicleUpdate vehicleUpdate) {
 		vehiclesToUpdate.add(vehicleUpdate);
 	}
@@ -69,5 +74,9 @@ public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 
 	public void addLiftToKeep(long liftId) {
 		liftsToKeep.add(liftId);
+	}
+
+	public void addSignalBlockUpdate(Rail rail) {
+		signalBlockUpdates.add(new SignalBlockUpdate(rail));
 	}
 }

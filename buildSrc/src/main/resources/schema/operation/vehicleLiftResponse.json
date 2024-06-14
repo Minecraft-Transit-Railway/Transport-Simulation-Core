@@ -37,6 +37,12 @@
 			"items": {
 				"type": "integer"
 			}
+		},
+		"signalBlockUpdates": {
+			"type": "array",
+			"items": {
+				"$ref": "signalBlockUpdate.json"
+			}
 		}
 	},
 	"required": [

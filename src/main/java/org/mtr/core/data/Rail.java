@@ -2,14 +2,15 @@ package org.mtr.core.data;
 
 import org.mtr.core.generated.data.RailSchema;
 import org.mtr.core.serializer.ReaderBase;
-import org.mtr.core.serializer.SerializedDataBaseWithId;
+import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
-public final class Rail extends RailSchema implements SerializedDataBaseWithId {
+public final class Rail extends RailSchema {
 
 	public final double speedLimit1MetersPerMillisecond;
 	public final double speedLimit2MetersPerMillisecond;
@@ -157,7 +158,14 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		return Utilities.isBetween(position, position1, position2, radius);
 	}
 
-	public void tick() {
+	public void tick(Simulator simulator) {
+		final boolean needsUpdate = !Utilities.sameItems(blockedVehicleIds.keySet(), blockedVehicleIdsOld.keySet());
+		simulator.clients.values().forEach(client -> {
+			if (closeTo(client.getPosition(), client.getUpdateRadius())) {
+				client.update(this, needsUpdate);
+			}
+		});
+
 		blockedVehicleIdsOld.clear();
 		blockedVehicleIdsOld.putAll(blockedVehicleIds);
 		blockedVehicleIds.clear();
@@ -184,6 +192,10 @@ public final class Rail extends RailSchema implements SerializedDataBaseWithId {
 		final IntAVLTreeSet returnSet = new IntAVLTreeSet();
 		signalColors.forEach(color -> returnSet.add((int) color));
 		return returnSet;
+	}
+
+	public void iterateBlockedSignalColors(LongConsumer consumer) {
+		blockedVehicleIds.keySet().forEach(consumer);
 	}
 
 	public void applyModification(SignalModification signalModification) {

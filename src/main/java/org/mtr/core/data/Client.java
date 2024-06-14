@@ -10,19 +10,28 @@ import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.LongConsumer;
 
 public class Client extends ClientSchema {
 
 	private long nextSendTime;
+
 	private final LongAVLTreeSet existingVehicleIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepVehicleIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<VehicleUpdate> vehicleUpdates = new Long2ObjectAVLTreeMap<>();
+
 	private final LongAVLTreeSet existingLiftIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepLiftIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<Lift> liftUpdates = new Long2ObjectAVLTreeMap<>();
+
+	private final ObjectAVLTreeSet<String> existingRailIds = new ObjectAVLTreeSet<>();
+	private final ObjectAVLTreeSet<String> keepRailIds = new ObjectAVLTreeSet<>();
+	private final Object2ObjectAVLTreeMap<String, Rail> signalBlockUpdates = new Object2ObjectAVLTreeMap<>();
 
 	public Client(String id) {
 		super(id);
@@ -58,8 +67,10 @@ public class Client extends ClientSchema {
 			final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
 			final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep);
 			final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
+			final boolean hasUpdate3 = process(signalBlockUpdates, existingRailIds, keepRailIds, vehicleLiftResponse::addSignalBlockUpdate, railId -> {
+			});
 
-			if (hasUpdate1 || hasUpdate2) {
+			if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
 				simulator.sendHttpRequest("vehicles-lifts", vehicleLiftResponse, responseObject -> new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId));
 			}
 		}
@@ -85,10 +96,20 @@ public class Client extends ClientSchema {
 		}
 	}
 
-	private static <T extends SerializedDataBase> boolean process(Long2ObjectAVLTreeMap<T> dataUpdates, LongAVLTreeSet existingIds, LongAVLTreeSet keepIds, Consumer<T> addDataToUpdate, LongConsumer addDataToKeep) {
+	public void update(Rail rail, boolean needsUpdate) {
+		final String railId = rail.getHexId();
+		if (needsUpdate || !existingRailIds.contains(railId)) {
+			signalBlockUpdates.put(railId, rail);
+			keepRailIds.remove(railId);
+		} else if (!signalBlockUpdates.containsKey(railId)) {
+			keepRailIds.add(railId);
+		}
+	}
+
+	private static <T, U extends SerializedDataBase> boolean process(Map<T, U> dataUpdates, Set<T> existingIds, Set<T> keepIds, Consumer<U> addDataToUpdate, Consumer<T> addDataToKeep) {
 		dataUpdates.forEach((id, data) -> {
 			addDataToUpdate.accept(data);
-			existingIds.remove(id.longValue());
+			existingIds.remove(id);
 		});
 
 		keepIds.forEach(id -> {
