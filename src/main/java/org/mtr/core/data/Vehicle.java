@@ -35,7 +35,6 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 	public static final int DOOR_MOVE_TIME = 3200;
 	private static final int DOOR_DELAY = 1000;
-	private static final float DEVIATION_SPEED_MULTIPLIER = 0.25F;
 
 	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, TransportMode transportMode, Data data) {
 		super(transportMode, data);
@@ -72,7 +71,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	}
 
 	public double getAdjustedSpeed() {
-		return speed * (vehicleExtraData.getHasDeviationSpeedAdjustment() ? 1 + DEVIATION_SPEED_MULTIPLIER : 1);
+		return speed * (vehicleExtraData.getHasDeviationSpeedAdjustment() && siding != null ? 1 + siding.getDelayedVehicleSpeedIncreasePercentage() / 100F : 1);
 	}
 
 	public boolean getIsOnRoute() {
@@ -267,11 +266,11 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			}
 
 			final long deviationAdjustment;
-			if (elapsedDwellTime > DOOR_DELAY + DOOR_MOVE_TIME) {
+			if (siding != null && elapsedDwellTime > DOOR_DELAY + DOOR_MOVE_TIME) {
 				if (deviation > 0) {
-					deviationAdjustment = Math.min(deviation, Math.max(0, doorCloseTime - elapsedDwellTime));
+					deviationAdjustment = Math.min(deviation, Math.max(0, doorCloseTime - elapsedDwellTime) * siding.getDelayedVehicleReduceDwellTimePercentage() / 100);
 				} else {
-					deviationAdjustment = Math.max(deviation, -millisElapsed);
+					deviationAdjustment = Math.max(deviation, -millisElapsed * siding.getDelayedVehicleReduceDwellTimePercentage() / 100);
 				}
 				deviation -= deviationAdjustment;
 			} else {
@@ -344,8 +343,8 @@ public class Vehicle extends VehicleSchema implements Utilities {
 				speed = Math.max(speed - newDeceleration, railSpeed);
 			}
 
-			if (deviation > 0) {
-				deviation -= (long) (DEVIATION_SPEED_MULTIPLIER * millisElapsed);
+			if (deviation > 0 && siding != null) {
+				deviation -= siding.getDelayedVehicleSpeedIncreasePercentage() * millisElapsed / 100;
 				vehicleExtraData.setHasDeviationSpeedAdjustment(true);
 			}
 		}

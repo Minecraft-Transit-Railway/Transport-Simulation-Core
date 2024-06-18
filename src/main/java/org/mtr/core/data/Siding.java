@@ -127,6 +127,14 @@ public final class Siding extends SidingSchema implements Utilities {
 		return getIsManual() ? 1 : maxVehicles;
 	}
 
+	public int getDelayedVehicleSpeedIncreasePercentage() {
+		return (int) delayedVehicleSpeedIncreasePercentage;
+	}
+
+	public int getDelayedVehicleReduceDwellTimePercentage() {
+		return (int) delayedVehicleReduceDwellTimePercentage;
+	}
+
 	public int getTransportModeOrdinal() {
 		return transportMode.ordinal();
 	}
@@ -165,6 +173,14 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public void setMaxVehicles(int newMaxVehicles) {
 		maxVehicles = transportMode.continuousMovement ? 0 : Math.max(1, newMaxVehicles);
+	}
+
+	public void setDelayedVehicleSpeedIncreasePercentage(int delayedVehicleSpeedIncreasePercentage) {
+		this.delayedVehicleSpeedIncreasePercentage = Utilities.clamp(delayedVehicleSpeedIncreasePercentage, 0, 100);
+	}
+
+	public void setDelayedVehicleReduceDwellTimePercentage(int delayedVehicleReduceDwellTimePercentage) {
+		this.delayedVehicleReduceDwellTimePercentage = Utilities.clamp(delayedVehicleReduceDwellTimePercentage, 0, 100);
 	}
 
 	public void setAcceleration(double newAcceleration) {

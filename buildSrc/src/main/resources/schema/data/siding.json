@@ -19,6 +19,14 @@
 		"maxVehicles": {
 			"type": "integer"
 		},
+		"delayedVehicleSpeedIncreasePercentage": {
+			"type": "integer",
+			"default": 25
+		},
+		"delayedVehicleReduceDwellTimePercentage": {
+			"type": "integer",
+			"default": 100
+		},
 		"maxManualSpeed": {
 			"type": "number"
 		},
