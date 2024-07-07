@@ -71,7 +71,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	}
 
 	public double getAdjustedSpeed() {
-		return speed * (vehicleExtraData.getHasDeviationSpeedAdjustment() && siding != null ? 1 + siding.getDelayedVehicleSpeedIncreasePercentage() / 100F : 1);
+		return speed * (1 + vehicleExtraData.getDelayedVehicleSpeedIncreasePercentage() / 100F);
 	}
 
 	public boolean getIsOnRoute() {
@@ -330,7 +330,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		final double stoppingDistance = stoppingPoint - railProgress;
 
 		if (!isClientside) {
-			vehicleExtraData.setHasDeviationSpeedAdjustment(false);
+			vehicleExtraData.setDelayedVehicleSpeedIncreasePercentage(0);
 		}
 
 		if (stoppingDistance < safeStoppingDistance) {
@@ -345,7 +345,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 			if (deviation > 0 && siding != null) {
 				deviation -= siding.getDelayedVehicleSpeedIncreasePercentage() * millisElapsed / 100;
-				vehicleExtraData.setHasDeviationSpeedAdjustment(true);
+				vehicleExtraData.setDelayedVehicleSpeedIncreasePercentage(siding.getDelayedVehicleSpeedIncreasePercentage());
 			}
 		}
 

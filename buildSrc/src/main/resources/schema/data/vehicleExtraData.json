@@ -137,8 +137,8 @@
 			"type": "number",
 			"minimum": 0
 		},
-		"hasDeviationSpeedAdjustment": {
-			"type": "boolean"
+		"delayedVehicleSpeedIncreasePercentage": {
+			"type": "number"
 		},
 		"isManualAllowed": {
 			"type": "boolean"

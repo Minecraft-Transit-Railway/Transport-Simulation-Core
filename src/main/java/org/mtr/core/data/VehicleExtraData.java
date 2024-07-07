@@ -19,7 +19,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	private int stopIndex = -1;
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
-	private boolean oldHasDeviationSpeedAdjustment;
+	private double oldDelayedVehicleSpeedIncreasePercentage;
 	private boolean hasRidingEntityUpdate;
 
 	public final ObjectImmutableList<PathData> immutablePath;
@@ -218,8 +218,8 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return totalVehicleLength;
 	}
 
-	public boolean getHasDeviationSpeedAdjustment() {
-		return hasDeviationSpeedAdjustment;
+	public double getDelayedVehicleSpeedIncreasePercentage() {
+		return delayedVehicleSpeedIncreasePercentage;
 	}
 
 	protected double getStoppingPoint() {
@@ -262,8 +262,8 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		this.stoppingPoint = stoppingPoint;
 	}
 
-	protected void setHasDeviationSpeedAdjustment(boolean hasDeviationSpeedAdjustment) {
-		this.hasDeviationSpeedAdjustment = hasDeviationSpeedAdjustment;
+	protected void setDelayedVehicleSpeedIncreasePercentage(double delayedVehicleSpeedIncreasePercentage) {
+		this.delayedVehicleSpeedIncreasePercentage = delayedVehicleSpeedIncreasePercentage;
 	}
 
 	protected void toggleDoors() {
@@ -279,10 +279,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	}
 
 	protected boolean checkForUpdate() {
-		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || oldHasDeviationSpeedAdjustment != hasDeviationSpeedAdjustment || hasRidingEntityUpdate;
+		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || oldDelayedVehicleSpeedIncreasePercentage != delayedVehicleSpeedIncreasePercentage || hasRidingEntityUpdate;
 		oldStoppingPoint = stoppingPoint;
 		oldDoorTarget = doorTarget;
-		oldHasDeviationSpeedAdjustment = hasDeviationSpeedAdjustment;
+		oldDelayedVehicleSpeedIncreasePercentage = delayedVehicleSpeedIncreasePercentage;
 		hasRidingEntityUpdate = false;
 		return needsUpdate;
 	}
