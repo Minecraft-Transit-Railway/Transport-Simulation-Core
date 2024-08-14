@@ -10,6 +10,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.org.eclipse.jetty.servlet.ServletHolder;
 
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -26,6 +27,7 @@ public class Main {
 
 	private final ObjectImmutableList<Simulator> simulators;
 	private final Webserver webserver;
+	@Nullable
 	private final ScheduledExecutorService scheduledExecutorService;
 
 	public static final Logger LOGGER = LogManager.getLogger("TransportSimulationCore");
@@ -37,9 +39,10 @@ public class Main {
 			final Path rootPath = Paths.get(args[i++]);
 			final int webserverPort = Integer.parseInt(args[i++]);
 			final int clientWebserverPort = Integer.parseInt(args[i++]);
+			final boolean threadedSimulation = Boolean.parseBoolean(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(rootPath, webserverPort, clientWebserverPort, dimensions);
+			final Main main = new Main(rootPath, webserverPort, clientWebserverPort, threadedSimulation, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -47,7 +50,7 @@ public class Main {
 		}
 	}
 
-	public Main(Path rootPath, int webserverPort, int clientWebserverPort, String... dimensions) {
+	public Main(Path rootPath, int webserverPort, int clientWebserverPort, boolean threadedSimulation, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
@@ -62,9 +65,19 @@ public class Main {
 		webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/stations-and-routes");
 		webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
 		webserver.start();
-		scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
-		simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));
+
+		if (threadedSimulation) {
+			scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
+			simulators.forEach(simulator -> scheduledExecutorService.scheduleAtFixedRate(simulator::tick, 0, MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS));
+		} else {
+			scheduledExecutorService = null;
+		}
+
 		LOGGER.info("Server started with dimensions {}", Arrays.toString(dimensions));
+	}
+
+	public void manualTick() {
+		simulators.forEach(Simulator::tick);
 	}
 
 	public void save() {
@@ -75,8 +88,12 @@ public class Main {
 	public void stop() {
 		LOGGER.info("Stopping...");
 		webserver.stop();
-		scheduledExecutorService.shutdown();
-		Utilities.awaitTermination(scheduledExecutorService);
+
+		if (scheduledExecutorService != null) {
+			scheduledExecutorService.shutdown();
+			Utilities.awaitTermination(scheduledExecutorService);
+		}
+
 		LOGGER.info("Starting full save...");
 		simulators.forEach(Simulator::stop);
 		LOGGER.info("Stopped");
@@ -105,7 +122,7 @@ public class Main {
 						simulators.forEach(simulator -> Depot.generateDepotsByName(simulator, generateKey.toString(), null));
 						break;
 					default:
-						LOGGER.info(String.format("Unknown command \"%s\"", input[0]));
+						LOGGER.info("Unknown command \"{}\"", input[0]);
 						break;
 				}
 			} catch (Exception e) {
