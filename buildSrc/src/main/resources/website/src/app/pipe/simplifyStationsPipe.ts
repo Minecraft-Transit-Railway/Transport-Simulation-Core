@@ -4,7 +4,7 @@ import {Station} from "../service/data.service";
 @Pipe({
 	name: "simplifyStations",
 	pure: true,
-	standalone: true
+	standalone: true,
 })
 export class SimplifyStationsPipe implements PipeTransform {
 

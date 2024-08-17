@@ -30,7 +30,7 @@ import {StationService} from "../../service/station.service";
 		FormatNamePipe,
 	],
 	templateUrl: "./search.component.html",
-	styleUrl: "./search.component.css"
+	styleUrl: "./search.component.css",
 })
 export class SearchComponent implements OnInit {
 	@Output() onClickStation = new EventEmitter<string>();

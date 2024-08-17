@@ -4,7 +4,7 @@ import {Route} from "../service/data.service";
 @Pipe({
 	name: "simplifyRoutes",
 	pure: true,
-	standalone: true
+	standalone: true,
 })
 export class SimplifyRoutesPipe implements PipeTransform {
 
