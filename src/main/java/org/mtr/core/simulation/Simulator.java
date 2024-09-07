@@ -205,24 +205,29 @@ public class Simulator extends Data implements Utilities {
 
 	private void save(boolean useReducedHash) {
 		final long startMillis = System.currentTimeMillis();
-		save(fileLoaderStations, useReducedHash);
-		save(fileLoaderPlatforms, useReducedHash);
-		save(fileLoaderSidings, useReducedHash);
-		save(fileLoaderRoutes, useReducedHash);
-		save(fileLoaderDepots, useReducedHash);
-		save(fileLoaderLifts, useReducedHash);
-		save(fileLoaderRails, useReducedHash);
-		Main.LOGGER.info("Save complete for {} in {} second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F);
+		final boolean changed1 = save(fileLoaderStations, useReducedHash);
+		final boolean changed2 = save(fileLoaderPlatforms, useReducedHash);
+		final boolean changed3 = save(fileLoaderSidings, useReducedHash);
+		final boolean changed4 = save(fileLoaderRoutes, useReducedHash);
+		final boolean changed5 = save(fileLoaderDepots, useReducedHash);
+		final boolean changed6 = save(fileLoaderLifts, useReducedHash);
+		final boolean changed7 = save(fileLoaderRails, useReducedHash);
+		if (changed1 || changed2 || changed3 || changed4 || changed5 || changed6 || changed7 || !useReducedHash) {
+			Main.LOGGER.info("Save complete for {} in {} second(s)", dimension, (System.currentTimeMillis() - startMillis) / 1000F);
+		}
 	}
 
-	private <T extends SerializedDataBaseWithId> void save(FileLoader<T> fileLoader, boolean useReducedHash) {
+	private <T extends SerializedDataBaseWithId> boolean save(FileLoader<T> fileLoader, boolean useReducedHash) {
 		final IntIntImmutablePair saveCounts = fileLoader.save(useReducedHash);
-		if (saveCounts.leftInt() > 0) {
-			Main.LOGGER.info("- Changed {}: {}", fileLoader.key, saveCounts.leftInt());
+		final int changedCount = saveCounts.leftInt();
+		if (changedCount > 0) {
+			Main.LOGGER.info("- Changed {}: {}", fileLoader.key, changedCount);
 		}
-		if (saveCounts.rightInt() > 0) {
-			Main.LOGGER.info("- Deleted {}: {}", fileLoader.key, saveCounts.rightInt());
+		final int deletedCount = saveCounts.rightInt();
+		if (deletedCount > 0) {
+			Main.LOGGER.info("- Deleted {}: {}", fileLoader.key, deletedCount);
 		}
+		return changedCount > 0 || deletedCount > 0;
 	}
 
 	public void sendHttpRequest(String endpoint, SerializedDataBase data, @Nullable Consumer<JsonObject> consumer) {

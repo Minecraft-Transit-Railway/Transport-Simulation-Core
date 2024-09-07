@@ -134,7 +134,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 						Main.LOGGER.error("", e);
 					}
 
-					fileHashes.put(fileName, hash);
+					fileHashes.put(parentAndFileName, hash);
 					filesWritten++;
 				}
 

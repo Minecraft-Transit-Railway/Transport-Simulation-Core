@@ -81,7 +81,6 @@ public class Main {
 	}
 
 	public void save() {
-		LOGGER.info("Starting quick save...");
 		simulators.forEach(Simulator::save);
 	}
 
