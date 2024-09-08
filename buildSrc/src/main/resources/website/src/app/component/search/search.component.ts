@@ -24,6 +24,7 @@ import {StationService} from "../../service/station.service";
 		NgIf,
 		MatAutocompleteTrigger,
 		MatFormField,
+		SearchComponent,
 		MatInput,
 		MatLabel,
 		ReactiveFormsModule,
@@ -37,6 +38,7 @@ export class SearchComponent implements OnInit {
 	@Output() onClickRoute = new EventEmitter<string>();
 	@Input() label!: string;
 	@Input() includeRoutes!: boolean;
+	@Input() selected: string = "";
 	searchBox = new FormControl("");
 	searchedStations$ = new Observable<{ id: string, color: string, name: string }[]>();
 	searchedRoutes$ = new Observable<{ id: string, color: string, name: string }[]>();

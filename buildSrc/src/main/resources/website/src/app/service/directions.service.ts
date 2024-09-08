@@ -48,6 +48,14 @@ export class DirectionsService extends ServiceBase<{ data: { responseTime: numbe
 		});
 	}
 
+	public getOriginStation() {
+		return this.originStation;
+	}
+
+	public getDestinationStation() {
+		return this.destinationStation;
+	}
+
 	public setOriginStation(originStation: Station) {
 		this.originStation = originStation;
 		this.directions.length = 0;
