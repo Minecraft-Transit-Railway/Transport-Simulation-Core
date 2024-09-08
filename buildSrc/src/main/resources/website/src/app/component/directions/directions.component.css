@@ -29,3 +29,8 @@
 	margin: 0 6px;
 	min-width: 2px;
 }
+
+.note {
+	color: rgba(127, 127, 127, 75%);
+	text-align: center;
+}

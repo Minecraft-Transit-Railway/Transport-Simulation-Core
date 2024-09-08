@@ -1,6 +1,6 @@
 <mat-form-field>
 	<mat-label>{{ label }}</mat-label>
-	<input matInput type="search" aria-label="Search" [formControl]="searchBox" [matAutocomplete]="auto"/>
+	<input matInput type="search" aria-label="Search" [formControl]="searchBox" [matAutocomplete]="auto" [value]="selected"/>
 </mat-form-field>
 
 <mat-autocomplete #auto="matAutocomplete">
