@@ -30,3 +30,4 @@ bin/
 
 generated/
 **/website/src/assets/
+buildSrc/src/main/resources/website/
