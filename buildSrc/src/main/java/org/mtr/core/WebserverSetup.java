@@ -20,7 +20,7 @@ public class WebserverSetup {
 	private static final Logger LOGGER = LogManager.getLogger("WebserverSetup");
 
 	public static void setup(File projectPath) {
-		final Path websitePath = projectPath.toPath().resolve("buildSrc/src/main/resources/website/dist/website/browser");
+		final Path websitePath = projectPath.toPath().resolve("buildSrc/src/main/resources/website");
 		final StringBuilder stringBuilder = new StringBuilder("package org.mtr.core.generated;@javax.annotation.Nullable public final class WebserverResources{public static String get(String resource){switch(resource.startsWith(\"/\")?resource.substring(1):resource){");
 		try (final Stream<Path> stream = Files.list(websitePath)) {
 			stream.forEach(websiteFilePath -> {
