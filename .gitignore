@@ -30,3 +30,7 @@ bin/
 
 generated/
 **/website/src/assets/
+
+# angular
+.angular/cache/
+node_modules/
