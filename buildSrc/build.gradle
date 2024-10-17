@@ -21,4 +21,5 @@ jar {
 tasks.withType(AbstractArchiveTask).configureEach {
 	preserveFileTimestamps = false
 	reproducibleFileOrder = true
+	excludes = ["website"]
 }
