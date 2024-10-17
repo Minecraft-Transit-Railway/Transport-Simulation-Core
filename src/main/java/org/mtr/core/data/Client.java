@@ -71,7 +71,7 @@ public class Client extends ClientSchema {
 			});
 
 			if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
-				simulator.sendHttpRequest("vehicles-lifts", vehicleLiftResponse, responseObject -> new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId));
+				simulator.sendMessageS2C("vehicles-lifts", vehicleLiftResponse, responseObject -> new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId));
 			}
 		}
 	}

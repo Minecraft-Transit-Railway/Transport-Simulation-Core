@@ -11,6 +11,7 @@ import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
+import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 
 public final class OperationServlet extends ServletBase {
@@ -21,61 +22,46 @@ public final class OperationServlet extends ServletBase {
 
 	@Override
 	protected void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator, Consumer<JsonObject> sendResponse) {
-		switch (endpoint) {
+		sendResponse.accept(process(endpoint, jsonReader, currentMillis, simulator));
+	}
+
+	@Nonnull
+	public static JsonObject process(String key, JsonReader jsonReader, long currentMillis, Simulator simulator) {
+		switch (key) {
 			case "get-data":
-				sendResponse.accept(new DataRequest(jsonReader).getData(simulator));
-				break;
+				return new DataRequest(jsonReader).getData(simulator);
 			case "update-data":
-				sendResponse.accept(new UpdateDataRequest(jsonReader, simulator).update());
-				break;
+				return new UpdateDataRequest(jsonReader, simulator).update();
 			case "delete-data":
-				sendResponse.accept(new DeleteDataRequest(jsonReader).delete(simulator));
-				break;
+				return new DeleteDataRequest(jsonReader).delete(simulator);
 			case "list-data":
-				sendResponse.accept(new ListDataResponse(jsonReader, simulator).list());
-				break;
+				return new ListDataResponse(jsonReader, simulator).list();
 			case "arrivals":
-				sendResponse.accept(new ArrivalsRequest(jsonReader).getArrivals(simulator, currentMillis));
-				break;
+				return new ArrivalsRequest(jsonReader).getArrivals(simulator, currentMillis);
 			case "set-time":
-				sendResponse.accept(new SetTime(jsonReader).setGameTime(simulator));
-				break;
+				return new SetTime(jsonReader).setGameTime(simulator);
 			case "update-riding-entities":
-				sendResponse.accept(new UpdateVehicleRidingEntities(jsonReader).update(simulator));
-				break;
+				return new UpdateVehicleRidingEntities(jsonReader).update(simulator);
 			case "press-lift":
-				sendResponse.accept(new PressLift(jsonReader).pressLift(simulator));
-				break;
+				return new PressLift(jsonReader).pressLift(simulator);
 			case "nearby-stations":
-				sendResponse.accept(new NearbyAreasRequest<Station, Platform>(jsonReader).query(simulator, simulator.stations));
-				break;
+				return new NearbyAreasRequest<Station, Platform>(jsonReader).query(simulator, simulator.stations);
 			case "nearby-depots":
-				sendResponse.accept(new NearbyAreasRequest<Depot, Siding>(jsonReader).query(simulator, simulator.depots));
-				break;
+				return new NearbyAreasRequest<Depot, Siding>(jsonReader).query(simulator, simulator.depots);
 			case "rails":
-				sendResponse.accept(new RailsRequest(jsonReader).query(simulator));
-				break;
+				return new RailsRequest(jsonReader).query(simulator);
 			case "generate-by-depot-ids":
-				new GenerateOrClearByDepotIds(jsonReader).generate(simulator, sendResponse);
-				break;
+				return new GenerateOrClearByDepotIds(jsonReader).generate(simulator);
 			case "generate-by-depot-name":
-				new GenerateOrClearByDepotName(jsonReader).generate(simulator, sendResponse);
-				break;
+				return new GenerateOrClearByDepotName(jsonReader).generate(simulator);
 			case "generate-by-lift":
-				sendResponse.accept(new GenerateByLift(jsonReader, simulator).generate());
-				break;
+				return new GenerateByLift(jsonReader, simulator).generate();
 			case "clear-by-depot-ids":
-				new GenerateOrClearByDepotIds(jsonReader).clear(simulator);
-				break;
+				return new GenerateOrClearByDepotIds(jsonReader).clear(simulator);
 			case "clear-by-depot-name":
-				new GenerateOrClearByDepotName(jsonReader).clear(simulator);
-				break;
-			case "directions":
-				new DirectionsRequest(jsonReader).find(simulator, sendResponse);
-				break;
+				return new GenerateOrClearByDepotName(jsonReader).clear(simulator);
 			default:
-				sendResponse.accept(null);
-				break;
+				return new JsonObject();
 		}
 	}
 }

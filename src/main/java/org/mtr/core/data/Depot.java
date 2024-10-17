@@ -10,7 +10,6 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
-import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -19,7 +18,6 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair
 
 import javax.annotation.Nullable;
 import java.util.Collections;
-import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 public final class Depot extends DepotSchema implements Utilities {
@@ -375,11 +373,11 @@ public final class Depot extends DepotSchema implements Utilities {
 		Main.LOGGER.info(String.format(message, name));
 	}
 
-	public static void generateDepotsByName(Simulator simulator, String filter, @Nullable Consumer<JsonObject> sendResponse) {
-		generateDepots(simulator, getDataByName(simulator.depots, filter), sendResponse);
+	public static void generateDepotsByName(Simulator simulator, String filter) {
+		generateDepots(simulator, getDataByName(simulator.depots, filter));
 	}
 
-	public static void generateDepots(Simulator simulator, ObjectArrayList<Depot> depotsToGenerate, @Nullable Consumer<JsonObject> sendResponse) {
+	public static void generateDepots(Simulator simulator, ObjectArrayList<Depot> depotsToGenerate) {
 		final LongAVLTreeSet idsToGenerate = new LongAVLTreeSet();
 		final UpdateDataResponse updateDataResponse = new UpdateDataResponse(simulator);
 
@@ -388,8 +386,8 @@ public final class Depot extends DepotSchema implements Utilities {
 			depot.generateMainRoute(forceComplete -> {
 				idsToGenerate.remove(depot.getId());
 				updateDataResponse.addDepot(depot);
-				if (sendResponse != null && (forceComplete || idsToGenerate.isEmpty())) {
-					sendResponse.accept(Utilities.getJsonObjectFromData(updateDataResponse));
+				if (forceComplete || idsToGenerate.isEmpty()) {
+					simulator.sendMessageS2C("refresh-depot", updateDataResponse, null);
 				}
 			});
 		});

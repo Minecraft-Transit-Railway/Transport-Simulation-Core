@@ -5,7 +5,6 @@ import org.mtr.core.data.Lift;
 import org.mtr.core.data.Rail;
 import org.mtr.core.generated.operation.VehicleLiftResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 
 import javax.annotation.Nonnull;
 import java.util.function.Consumer;
@@ -16,7 +15,7 @@ public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 	private final Data data;
 
 	public VehicleLiftResponse(String clientId, Data data) {
-		super(clientId, data instanceof Simulator ? ((Simulator) data).dimension : "");
+		super(clientId);
 		this.data = data;
 	}
 
@@ -34,10 +33,6 @@ public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 
 	public String getClientId() {
 		return clientId;
-	}
-
-	public String getDimension() {
-		return dimension;
 	}
 
 	public void iterateVehiclesToUpdate(Consumer<VehicleUpdate> consumer) {
