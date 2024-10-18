@@ -5,8 +5,8 @@ import org.mtr.core.data.VehicleRidingEntity;
 import org.mtr.core.generated.operation.UpdateVehicleRidingEntitiesSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
+
+import javax.annotation.Nullable;
 
 public final class UpdateVehicleRidingEntities extends UpdateVehicleRidingEntitiesSchema {
 
@@ -23,13 +23,14 @@ public final class UpdateVehicleRidingEntities extends UpdateVehicleRidingEntiti
 		ridingEntities.add(vehicleRidingEntity);
 	}
 
-	public JsonObject update(Simulator simulator) {
+	@Nullable
+	public UpdateVehicleRidingEntities update(Simulator simulator) {
 		final Siding siding = simulator.sidingIdMap.get(sidingId);
 		if (siding == null) {
-			return new JsonObject();
+			return null;
 		} else {
 			siding.updateVehicleRidingEntities(vehicleId, ridingEntities);
-			return Utilities.getJsonObjectFromData(this);
+			return this;
 		}
 	}
 }

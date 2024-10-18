@@ -3,8 +3,6 @@ package org.mtr.core.operation;
 import org.mtr.core.data.Data;
 import org.mtr.core.generated.operation.ListDataResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
-import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
 
 import javax.annotation.Nonnull;
 
@@ -52,13 +50,13 @@ public final class ListDataResponse extends ListDataResponseSchema {
 		return data;
 	}
 
-	public JsonObject list() {
+	public ListDataResponse list() {
 		stations.addAll(data.stations);
 		platforms.addAll(data.platforms);
 		sidings.addAll(data.sidings);
 		routes.addAll(data.routes);
 		depots.addAll(data.depots);
-		return Utilities.getJsonObjectFromData(this);
+		return this;
 	}
 
 	public void write() {

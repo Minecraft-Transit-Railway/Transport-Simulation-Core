@@ -4,9 +4,9 @@ import org.mtr.core.generated.data.ClientSchema;
 import org.mtr.core.operation.PlayerPresentResponse;
 import org.mtr.core.operation.VehicleLiftResponse;
 import org.mtr.core.operation.VehicleUpdate;
-import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
+import org.mtr.core.servlet.Operation;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
@@ -71,7 +71,7 @@ public class Client extends ClientSchema {
 			});
 
 			if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
-				simulator.sendMessageS2C("vehicles-lifts", vehicleLiftResponse, responseObject -> new PlayerPresentResponse(new JsonReader(responseObject)).verify(simulator, clientId));
+				simulator.sendMessageS2C(Operation.VEHICLES_LIFTS, vehicleLiftResponse, playerPresentResponse -> playerPresentResponse.verify(simulator, clientId), PlayerPresentResponse.class);
 			}
 		}
 	}

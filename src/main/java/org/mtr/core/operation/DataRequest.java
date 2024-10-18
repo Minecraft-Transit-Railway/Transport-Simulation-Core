@@ -4,8 +4,6 @@ import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.DataRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -20,7 +18,7 @@ public final class DataRequest extends DataRequestSchema {
 		updateData(readerBase);
 	}
 
-	public JsonObject getData(Simulator simulator) {
+	public DataResponse getData(Simulator simulator) {
 		final DataResponse dataResponse = new DataResponse(simulator);
 		final LongAVLTreeSet addedStationIds = new LongAVLTreeSet();
 		final LongAVLTreeSet addedPlatformIds = new LongAVLTreeSet();
@@ -82,7 +80,7 @@ public final class DataRequest extends DataRequestSchema {
 		});
 
 		simulator.clients.computeIfAbsent(clientId, key -> new Client(clientId)).setPositionAndUpdateRadius(clientPosition, requestRadius);
-		return Utilities.getJsonObjectFromData(dataResponse);
+		return dataResponse;
 	}
 
 	public void writeExistingIds(ClientData clientData) {

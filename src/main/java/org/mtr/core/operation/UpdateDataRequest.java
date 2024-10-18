@@ -6,7 +6,6 @@ import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectSet;
 
@@ -103,7 +102,7 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		return this;
 	}
 
-	public JsonObject update() {
+	public UpdateDataResponse update() {
 		final UpdateDataResponse updateDataResponse = new UpdateDataResponse(data);
 
 		stations.forEach(station -> update(station, true, data.stationIdMap.get(station.getId()), data.stations, updateDataResponse.getStations()));
@@ -128,7 +127,7 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		updateDataResponse.getPlatforms().forEach(platform -> platform.routes.forEach(route -> SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), route)));
 		updateDataResponse.getRoutes().forEach(route -> SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), route));
 
-		return Utilities.getJsonObjectFromData(updateDataResponse);
+		return updateDataResponse;
 	}
 
 	public static ObjectArrayList<Lift> getAndRemoveMatchingLifts(Data data, Lift lift) {

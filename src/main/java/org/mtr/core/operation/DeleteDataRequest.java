@@ -6,8 +6,6 @@ import org.mtr.core.data.Rail;
 import org.mtr.core.generated.operation.DeleteDataRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -65,7 +63,7 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 		return this;
 	}
 
-	public JsonObject delete(Simulator simulator) {
+	public DeleteDataResponse delete(Simulator simulator) {
 		final DeleteDataResponse deleteDataResponse = new DeleteDataResponse();
 		final ObjectArraySet<Position> railNodePositionsToUpdate = new ObjectArraySet<>();
 
@@ -92,7 +90,7 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 			}
 		});
 
-		return Utilities.getJsonObjectFromData(deleteDataResponse);
+		return deleteDataResponse;
 	}
 
 	private static <T extends NameColorDataBase> void delete(long id, ObjectArraySet<T> dataSet, LongArrayList dataToUpdate) {

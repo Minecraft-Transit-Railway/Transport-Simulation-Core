@@ -61,7 +61,6 @@ public class Main {
 		simulators = new ObjectImmutableList<>(tempSimulators);
 		webserver = new Webserver(webserverPort);
 		webserver.addServlet(new ServletHolder(new WebServlet()), "/");
-		webserver.addServlet(new ServletHolder(new OperationServlet(simulators)), "/mtr/api/operation/*");
 		webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/stations-and-routes");
 		webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
 		webserver.start();

@@ -2,13 +2,12 @@ package org.mtr.core.simulation;
 
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
-import org.mtr.core.integration.Response;
 import org.mtr.core.path.DirectionsPathFinder;
-import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.servlet.MessageQueue;
-import org.mtr.core.servlet.OperationServlet;
+import org.mtr.core.servlet.Operation;
+import org.mtr.core.servlet.OperationProcessor;
 import org.mtr.core.servlet.QueueObject;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.LegacyRailLoader;
@@ -121,7 +120,7 @@ public class Simulator extends Data implements Utilities {
 			queuedRuns.process(Runnable::run);
 
 			// Process messages
-			messageQueueC2S.process(queueObject -> queueObject.runCallback(new Response(200, currentMillis, "", OperationServlet.process(queueObject.key, new JsonReader(Utilities.getJsonObjectFromData(queueObject.data)), currentMillis, this)).getJson()));
+			messageQueueC2S.process(queueObject -> queueObject.runCallback(OperationProcessor.process(queueObject.operation, queueObject.data, currentMillis, this)));
 		} catch (Throwable e) {
 			Main.LOGGER.fatal("", e);
 		}
@@ -194,8 +193,8 @@ public class Simulator extends Data implements Utilities {
 		messageQueueC2S.put(queueObject);
 	}
 
-	public void sendMessageS2C(String key, SerializedDataBase data, @Nullable Consumer<JsonObject> consumer) {
-		messageQueueS2C.put(new QueueObject(key, data, consumer == null ? null : jsonObject -> run(() -> consumer.accept(jsonObject))));
+	public <T extends SerializedDataBase> void sendMessageS2C(Operation operation, SerializedDataBase data, @Nullable Consumer<T> consumer, @Nullable Class<T> responseDataClass) {
+		messageQueueS2C.put(new QueueObject(operation, data, consumer == null ? null : responseData -> run(() -> consumer.accept(responseData)), responseDataClass));
 	}
 
 	public void processMessagesS2C(Consumer<QueueObject> callback) {

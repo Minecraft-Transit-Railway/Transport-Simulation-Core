@@ -6,6 +6,7 @@ import org.mtr.core.operation.UpdateDataResponse;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.WriterBase;
+import org.mtr.core.servlet.Operation;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
@@ -387,7 +388,7 @@ public final class Depot extends DepotSchema implements Utilities {
 				idsToGenerate.remove(depot.getId());
 				updateDataResponse.addDepot(depot);
 				if (forceComplete || idsToGenerate.isEmpty()) {
-					simulator.sendMessageS2C("refresh-depot", updateDataResponse, null);
+					simulator.sendMessageS2C(Operation.GENERATION_STATUS_UPDATE, updateDataResponse, null, null);
 				}
 			});
 		});
