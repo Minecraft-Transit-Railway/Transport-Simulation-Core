@@ -6,7 +6,6 @@ import org.mtr.core.path.DirectionsPathFinder;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.servlet.MessageQueue;
-import org.mtr.core.servlet.Operation;
 import org.mtr.core.servlet.OperationProcessor;
 import org.mtr.core.servlet.QueueObject;
 import org.mtr.core.tool.Utilities;
@@ -120,7 +119,7 @@ public class Simulator extends Data implements Utilities {
 			queuedRuns.process(Runnable::run);
 
 			// Process messages
-			messageQueueC2S.process(queueObject -> queueObject.runCallback(OperationProcessor.process(queueObject.operation, queueObject.data, currentMillis, this)));
+			messageQueueC2S.process(queueObject -> queueObject.runCallback(OperationProcessor.process(queueObject.key, queueObject.data, currentMillis, this)));
 		} catch (Throwable e) {
 			Main.LOGGER.fatal("", e);
 		}
@@ -193,8 +192,8 @@ public class Simulator extends Data implements Utilities {
 		messageQueueC2S.put(queueObject);
 	}
 
-	public <T extends SerializedDataBase> void sendMessageS2C(Operation operation, SerializedDataBase data, @Nullable Consumer<T> consumer, @Nullable Class<T> responseDataClass) {
-		messageQueueS2C.put(new QueueObject(operation, data, consumer == null ? null : responseData -> run(() -> consumer.accept(responseData)), responseDataClass));
+	public <T extends SerializedDataBase> void sendMessageS2C(String key, SerializedDataBase data, @Nullable Consumer<T> consumer, @Nullable Class<T> responseDataClass) {
+		messageQueueS2C.put(new QueueObject(key, data, consumer == null ? null : responseData -> run(() -> consumer.accept(responseData)), responseDataClass));
 	}
 
 	public void processMessagesS2C(Consumer<QueueObject> callback) {

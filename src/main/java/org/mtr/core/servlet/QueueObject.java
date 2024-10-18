@@ -9,13 +9,13 @@ import java.util.function.Consumer;
 
 public final class QueueObject {
 
-	public final Operation operation;
+	public final String key;
 	public final SerializedDataBase data;
 	@Nullable
 	private final Consumer<SerializedDataBase> callback;
 
-	public <T extends SerializedDataBase> QueueObject(Operation operation, SerializedDataBase data, @Nullable Consumer<T> callback, @Nullable Class<T> reaponseDataClass) {
-		this.operation = operation;
+	public <T extends SerializedDataBase> QueueObject(String key, SerializedDataBase data, @Nullable Consumer<T> callback, @Nullable Class<T> reaponseDataClass) {
+		this.key = key;
 		this.data = data;
 		this.callback = callback == null || reaponseDataClass == null ? null : serializedDataBase -> {
 			if (reaponseDataClass.isInstance(serializedDataBase)) {
