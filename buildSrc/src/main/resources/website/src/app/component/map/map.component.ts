@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import {AfterViewInit, Component, ElementRef, EventEmitter, Output, ViewChild} from "@angular/core";
 import SETTINGS from "../../utility/settings";
-import {NgForOf, NgIf} from "@angular/common";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {DataService} from "../../service/data.service";
 import {MatIcon} from "@angular/material/icon";
@@ -29,9 +28,7 @@ const lineMaterialThin = new LineMaterial({color: 0xFFFFFF, linewidth: 3 * SETTI
 	selector: "app-map",
 	standalone: true,
 	imports: [
-		NgForOf,
 		MatProgressSpinner,
-		NgIf,
 		MatIcon,
 		SplitNamePipe,
 	],

@@ -1,7 +1,6 @@
 import {Component, EventEmitter, Inject, Output} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {MatIcon} from "@angular/material/icon";
-import {NgFor, NgForOf, NgIf, NgStyle} from "@angular/common";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
 import {MatButtonToggle, MatButtonToggleGroup} from "@angular/material/button-toggle";
 import {MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle} from "@angular/material/expansion";
@@ -16,14 +15,12 @@ import {MatRipple} from "@angular/material/core";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle} from "@angular/material/dialog";
 import {MatButton, MatButtonModule, MatIconButton} from "@angular/material/button";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
-import {DirectionsService} from "../../service/directions.service";
 
 @Component({
 	selector: "app-station",
 	standalone: true,
 	imports: [
 		MatIcon,
-		NgFor,
 		SplitNamePipe,
 		MatButtonToggle,
 		MatButtonToggleGroup,
@@ -35,10 +32,8 @@ import {DirectionsService} from "../../service/directions.service";
 		MatDivider,
 		MatChipListbox,
 		MatChipOption,
-		NgStyle,
 		FormatColorPipe,
 		FormatDatePipe,
-		NgIf,
 		MatCheckbox,
 		MatRipple,
 		MatProgressSpinner,
@@ -51,7 +46,7 @@ import {DirectionsService} from "../../service/directions.service";
 export class StationComponent {
 	@Output() onOpenDirections = new EventEmitter<void>;
 
-	constructor(private readonly stationService: StationService, private readonly directionsService: DirectionsService, private readonly dialog: MatDialog) {
+	constructor(private readonly stationService: StationService, private readonly dialog: MatDialog) {
 	}
 
 	getStation() {
@@ -103,19 +98,11 @@ export class StationComponent {
 	}
 
 	setDirectionsOrigin() {
-		const station = this.stationService.getSelectedStation();
-		if (station != undefined) {
-			this.directionsService.setOriginStation(station);
-			this.onOpenDirections.emit();
-		}
+		// TODO
 	}
 
 	setDirectionsDestination() {
-		const station = this.stationService.getSelectedStation();
-		if (station != undefined) {
-			this.directionsService.setDestinationStation(station);
-			this.onOpenDirections.emit();
-		}
+		// TODO
 	}
 
 	showDetails(arrival: Arrival) {
@@ -133,7 +120,6 @@ export class StationComponent {
 		MatDialogActions,
 		FormatTimePipe,
 		FormatNamePipe,
-		NgForOf,
 	],
 	templateUrl: "arrival-dialog.html",
 	styleUrl: "./station.component.css",

@@ -1,7 +1,6 @@
 import {Component} from "@angular/core";
 import {MatExpansionPanel, MatExpansionPanelDescription, MatExpansionPanelHeader, MatExpansionPanelTitle} from "@angular/material/expansion";
 import {DataService} from "../../service/data.service";
-import {NgForOf, NgIf} from "@angular/common";
 import {MatButtonToggle, MatButtonToggleGroup} from "@angular/material/button-toggle";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {ReactiveFormsModule} from "@angular/forms";
@@ -18,11 +17,9 @@ import {DimensionService} from "../../service/dimension.service";
 		MatExpansionPanelTitle,
 		MatExpansionPanelHeader,
 		MatExpansionPanelDescription,
-		NgForOf,
 		MatButtonToggleGroup,
 		MatButtonToggle,
 		ReactiveFormsModule,
-		NgIf,
 		MatIcon,
 		MatLabel,
 		MatFormField,

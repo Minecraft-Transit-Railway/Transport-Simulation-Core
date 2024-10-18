@@ -7,7 +7,9 @@
 		</div>
 		<div class="column">
 			<div class="title">{{ data.cars.length }}-Car Vehicle</div>
-			<div *ngFor="let car of data.cars">{{ car }}</div>
+			@for (car of data.cars; track $index) {
+				<div>{{ car }}</div>
+			}
 		</div>
 	</div>
 </mat-dialog-content>

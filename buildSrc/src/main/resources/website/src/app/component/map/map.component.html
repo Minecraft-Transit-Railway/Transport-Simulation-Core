@@ -1,23 +1,31 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans&family=Noto+Serif+JP&family=Noto+Serif+KR&family=Noto+Serif+SC&family=Noto+Serif+TC&display=swap">
 
 <div class="column center loading-background">
-	<mat-spinner class="spinner" color="accent"/>
+	<mat-spinner/>
 </div>
 <div class="wrapper" #wrapper [style.opacity]="loading ? 0 : 1">
 	<canvas #canvas></canvas>
 	<div>
-		<div class="column center label" *ngFor="let textLabel of textLabels" [style.transform]="'translate(-50%,0) translate(' + textLabel.x + 'px, ' + textLabel.y + 'px)'"
-			 (mousedown)="onClickStation.emit(textLabel.id)"
-			 (mouseenter)="textLabel.hoverOverride = true"
-			 (mouseleave)="textLabel.hoverOverride = false">
-			<div [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'"></div>
-			<div class="column center" *ngIf="textLabel.shouldRenderText || textLabel.hoverOverride">
-				<div *ngFor="let textLabelPart of textLabel.text | splitName" class="station-name text {{textLabelPart.isCjk?'cjk':''}}">{{ textLabelPart.text }}</div>
-				<div class="row">
-					<mat-icon class="station-name icon" *ngFor="let icon of textLabel.icons">{{ icon }}</mat-icon>
-				</div>
+		@for (textLabel of textLabels; track $index) {
+			<div class="column center label" [style.transform]="'translate(-50%,0) translate(' + textLabel.x + 'px, ' + textLabel.y + 'px)'"
+				 (mousedown)="onClickStation.emit(textLabel.id)"
+				 (mouseenter)="textLabel.hoverOverride = true"
+				 (mouseleave)="textLabel.hoverOverride = false">
+				<div [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'"></div>
+				@if (textLabel.shouldRenderText || textLabel.hoverOverride) {
+					<div class="column center">
+						@for (textLabelPart of textLabel.text | splitName; track $index) {
+							<div class="station-name text {{textLabelPart.isCjk?'cjk':''}}">{{ textLabelPart.text }}</div>
+						}
+						<div class="row">
+							@for (icon of textLabel.icons; track $index) {
+								<mat-icon class="station-name icon">{{ icon }}</mat-icon>
+							}
+						</div>
+					</div>
+				}
 			</div>
-		</div>
+		}
 	</div>
 </div>
 <div #stats></div>

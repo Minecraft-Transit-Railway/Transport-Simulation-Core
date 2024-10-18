@@ -1,6 +1,8 @@
 <div class="column gap margin">
 	<div class="column">
-		<div *ngFor="let stationNamePart of getStation()?.name | splitName" class="station-name {{stationNamePart.isCjk ? 'cjk' : ''}}">{{ stationNamePart.text }}</div>
+		@for (stationNamePart of getStation()?.name | splitName; track $index) {
+			<div class="station-name {{stationNamePart.isCjk ? 'cjk' : ''}}">{{ stationNamePart.text }}</div>
+		}
 	</div>
 	<div class="station-color-bar" [style.background-color]="'#' + getStation()?.color"></div>
 	<div class="row gap center">
@@ -24,59 +26,72 @@
 	</div>
 	<mat-divider/>
 
-	<div class="column center" *ngIf="isLoading()">
-		<br/>
-		<mat-spinner/>
-	</div>
+	@if (isLoading()) {
+		<div class="column center">
+			<br/>
+			<mat-spinner/>
+		</div>
+	}
 	<div class="column gap-small">
 		<div class="chip-wrapper">
 			<mat-chip-listbox #chipList aria-label="Routes" multiple>
-				<mat-chip-option
-					#chip *ngFor="let route of getActiveRoutes()"
-					[style.border-color]="route.color | formatColor"
-					[style.background-color]="chip.selected ? (route.color | formatColor) : ''"
-					[style.height]="(route.lineCount + 1) + 'em'"
-					[id]="route.key">
-					<div class="row gap-small center">
-						<mat-icon>{{ route.typeIcon }}</mat-icon>
-						<div class="column chip-text">
-							<div *ngFor="let name of route.name | splitName">{{ name.text }}</div>
+				@for (route of getActiveRoutes(); track $index) {
+					<mat-chip-option #chip [style.border-color]="route.color | formatColor" [style.height]="(route.lineCount + 1) + 'em'" [id]="route.key">
+						<div class="row gap-small center">
+							<mat-icon>{{ route.typeIcon }}</mat-icon>
+							<div class="column chip-text">
+								@for (name of route.name | splitName; track $index) {
+									<div>{{ name.text }}</div>
+								}
+							</div>
+							@if (route.number !== '') {
+								<mat-divider vertical [style.height]="route.lineCount + 'em'"/>
+							}
+							@if (route.number !== '') {
+								<div class="column chip-text">
+									@for (number of route.number | splitName; track $index) {
+										<div>{{ number.text }}</div>
+									}
+								</div>
+							}
 						</div>
-						<mat-divider *ngIf="route.number !== ''" vertical [style.height]="route.lineCount + 'em'"/>
-						<div class="column chip-text" *ngIf="route.number !== ''">
-							<div *ngFor="let number of route.number | splitName">{{ number.text }}</div>
-						</div>
-					</div>
-				</mat-chip-option>
+					</mat-chip-option>
+				}
 			</mat-chip-listbox>
 		</div>
 		<mat-checkbox #showTerminatingCheckbox [style.display]="getHasTerminating() ? '' : 'none'">Show Terminating</mat-checkbox>
 
 		<div class="column arrivals">
-			<div class="column" *ngFor="let arrival of getArrivals(chipList, showTerminatingCheckbox)">
-				<mat-divider/>
-				<div matRipple class="column arrival clickable {{arrival.realtime ? '' : 'scheduled'}}" (click)="showDetails(arrival)">
-					<div class="row gap center title arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
-						<div class="row center">
-							<mat-icon>{{ arrival.routeTypeIcon }}</mat-icon>
-							<mat-icon *ngIf="arrival.circularState !== 'NONE'">{{ arrival.circularState === "CLOCKWISE" ? "rotate_right" : "rotate_left" }}</mat-icon>
-							<div>{{ arrival.destination | formatName }}</div>
+			@for (arrival of getArrivals(chipList, showTerminatingCheckbox); track $index) {
+				<div class="column">
+					<mat-divider/>
+					<div matRipple class="column arrival clickable {{arrival.realtime ? '' : 'scheduled'}}" (click)="showDetails(arrival)">
+						<div class="row gap center title arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+							<div class="row center">
+								<mat-icon>{{ arrival.routeTypeIcon }}</mat-icon>
+								@if (arrival.circularState !== 'NONE') {
+									<mat-icon>{{ arrival.circularState === "CLOCKWISE" ? "rotate_right" : "rotate_left" }}</mat-icon>
+								}
+								<div>{{ arrival.destination | formatName }}</div>
+							</div>
+							<div class="spacing"></div>
+							<div class="align-right">{{ arrival.getArrivalTime() | formatTime : "Arrived" }}</div>
 						</div>
-						<div class="spacing"></div>
-						<div class="align-right">{{ arrival.getArrivalTime() | formatTime : "Arrived" }}</div>
-					</div>
-					<div class="row gap center subtitle arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
-						<div>{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
-						<div class="spacing"></div>
-						<div class="align-right">{{ arrival.isContinuous ? "Every 8 Seconds" : arrival.arrival | formatDate }}</div>
-					</div>
-					<div class="row gap center subtitle arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
-						<div>Platform {{ arrival.platformName }}</div>
-						<div class="spacing"></div>
-						<div class="align-right" *ngIf="!arrival.isContinuous">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
+						<div class="row gap center subtitle arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+							<div>{{ arrival.routeName | formatName }} {{ arrival.routeNumber | formatName }}</div>
+							<div class="spacing"></div>
+							<div class="align-right">{{ arrival.isContinuous ? "Every 8 Seconds" : arrival.arrival | formatDate }}</div>
+						</div>
+						<div class="row gap center subtitle arrival-color" [style.border-left-color]="arrival.routeColor | formatColor">
+							<div>Platform {{ arrival.platformName }}</div>
+							<div class="spacing"></div>
+							@if (!arrival.isContinuous) {
+								<div class="align-right">{{ arrival.getDeviation() | formatTime :"" }} {{ arrival.getDeviationString() }}</div>
+							}
+						</div>
 					</div>
 				</div>
-			</div>
+			}
 		</div>
 	</div>
 </div>
