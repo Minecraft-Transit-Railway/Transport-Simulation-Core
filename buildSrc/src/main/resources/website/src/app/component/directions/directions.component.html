@@ -1,4 +1,8 @@
 <div class="column margin">
+	<div>
+		<app-search label="Set Origin Station..." (onClickStation)="setOrigin($event)" [selected]="directionsService.getOriginStation()?.name ?? '' | formatName" />
+		<app-search label="Set Destination Station..." (onClickStation)="setDestination($event)" [selected]="directionsService.getDestinationStation()?.name ?? '' | formatName" />
+	</div>
 	<div class="column center" *ngIf="isLoading()">
 		<mat-spinner/>
 	</div>
@@ -18,5 +22,8 @@
 			<div class="line {{ directionsSegment.routeId === 0 ? 'thin' : '' }}" [style.background-color]="directionsSegment.routeId === 0 ? '' : directionsSegment.routeColor | formatColor"></div>
 			<div class="subtitle">{{ intermediateStation | formatName }}</div>
 		</div>
+	</div>
+	<div *ngIf="getDirections().length == 0 && !isLoading()">
+		<p class="note">No direction found.</p>
 	</div>
 </div>

@@ -7,6 +7,8 @@ import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {MatIcon} from "@angular/material/icon";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {FormatDatePipe} from "../../pipe/formatDatePipe";
+import {SearchComponent} from "../search/search.component";
+import {DataService} from "../../service/data.service";
 
 @Component({
 	selector: "app-directions",
@@ -20,13 +22,14 @@ import {FormatDatePipe} from "../../pipe/formatDatePipe";
 		MatIcon,
 		FormatColorPipe,
 		FormatDatePipe,
+		SearchComponent
 	],
 	templateUrl: "./directions.component.html",
 	styleUrl: "./directions.component.css",
 })
 export class DirectionsComponent {
 
-	constructor(protected directionsService: DirectionsService) {
+	constructor(protected directionsService: DirectionsService, private readonly dataService: DataService) {
 	}
 
 	isLoading() {
@@ -35,5 +38,13 @@ export class DirectionsComponent {
 
 	getDirections(): DirectionsSegment[] {
 		return this.directionsService.directions;
+	}
+
+	setOrigin(id: string) {
+		this.directionsService.setOriginStation(this.dataService.getAllStations().filter(station => station.id === id)[0]);
+	}
+
+	setDestination(id: string) {
+		this.directionsService.setDestinationStation(this.dataService.getAllStations().filter(station => station.id === id)[0]);
 	}
 }
