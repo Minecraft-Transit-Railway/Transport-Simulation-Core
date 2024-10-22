@@ -5,8 +5,6 @@ import org.mtr.core.data.Station;
 import org.mtr.core.generated.operation.ArrivalsRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongConsumer;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongImmutableList;
@@ -27,7 +25,7 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 		updateData(readerBase);
 	}
 
-	public JsonObject getArrivals(Simulator simulator, long currentMillis) {
+	public ArrivalsResponse getArrivals(Simulator simulator, long currentMillis) {
 		final ObjectArrayList<ArrivalResponse> arrivalResponseList = new ObjectArrayList<>();
 		final ObjectAVLTreeSet<String> visitedKeys = new ObjectAVLTreeSet<>();
 		final LongAVLTreeSet allPlatformIds = new LongAVLTreeSet();
@@ -51,13 +49,13 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 		});
 
 		Collections.sort(arrivalResponseList);
-		final ArrivalsResponse arrivalsResponse = new ArrivalsResponse();
+		final ArrivalsResponse arrivalsResponse = new ArrivalsResponse(currentMillis);
 
 		for (int i = 0; i < (maxCountTotal <= 0 ? arrivalResponseList.size() : Math.min(arrivalResponseList.size(), maxCountTotal)); i++) {
 			arrivalsResponse.add(arrivalResponseList.get(i));
 		}
 
-		return Utilities.getJsonObjectFromData(arrivalsResponse);
+		return arrivalsResponse;
 	}
 
 	private static long parseHexId(String id) {

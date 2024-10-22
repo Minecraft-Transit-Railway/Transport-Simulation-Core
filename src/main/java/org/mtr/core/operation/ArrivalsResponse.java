@@ -6,13 +6,17 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
 public final class ArrivalsResponse extends ArrivalsResponseSchema {
 
-	public ArrivalsResponse() {
-		super();
+	public ArrivalsResponse(long currentTime) {
+		super(currentTime);
 	}
 
 	public ArrivalsResponse(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
+	}
+
+	public long getCurrentTime() {
+		return currentTime;
 	}
 
 	public ObjectImmutableList<ArrivalResponse> getArrivals() {

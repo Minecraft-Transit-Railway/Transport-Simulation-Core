@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @ParametersAreNonnullByDefault
 public class Main {
@@ -38,11 +39,10 @@ public class Main {
 			int i = 0;
 			final Path rootPath = Paths.get(args[i++]);
 			final int webserverPort = Integer.parseInt(args[i++]);
-			final int clientWebserverPort = Integer.parseInt(args[i++]);
 			final boolean threadedSimulation = Boolean.parseBoolean(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(rootPath, webserverPort, clientWebserverPort, threadedSimulation, dimensions);
+			final Main main = new Main(rootPath, webserverPort, threadedSimulation, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -50,19 +50,18 @@ public class Main {
 		}
 	}
 
-	public Main(Path rootPath, int webserverPort, int clientWebserverPort, boolean threadedSimulation, String... dimensions) {
+	public Main(Path rootPath, int webserverPort, boolean threadedSimulation, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
 		for (final String dimension : dimensions) {
-			tempSimulators.add(new Simulator(dimension, dimensions, rootPath, clientWebserverPort));
+			tempSimulators.add(new Simulator(dimension, dimensions, rootPath));
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);
 		webserver = new Webserver(webserverPort);
 		webserver.addServlet(new ServletHolder(new WebServlet()), "/");
-		webserver.addServlet(new ServletHolder(new OperationServlet(simulators)), "/mtr/api/operation/*");
-		webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/stations-and-routes");
+		webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/*");
 		webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
 		webserver.start();
 
@@ -78,6 +77,20 @@ public class Main {
 
 	public void manualTick() {
 		simulators.forEach(Simulator::tick);
+	}
+
+	public void sendMessageC2S(@Nullable Integer worldIndex, QueueObject queueObject) {
+		if (worldIndex == null) {
+			simulators.forEach(simulator -> simulator.sendMessageC2S(queueObject));
+		} else if (worldIndex >= 0 && worldIndex < simulators.size()) {
+			simulators.get(worldIndex).sendMessageC2S(queueObject);
+		}
+	}
+
+	public void processMessagesS2C(int worldIndex, Consumer<QueueObject> callback) {
+		if (worldIndex >= 0 && worldIndex < simulators.size()) {
+			simulators.get(worldIndex).processMessagesS2C(callback);
+		}
 	}
 
 	public void save() {
@@ -118,7 +131,7 @@ public class Main {
 						for (int i = 1; i < input.length; i++) {
 							generateKey.append(input[i]).append(" ");
 						}
-						simulators.forEach(simulator -> Depot.generateDepotsByName(simulator, generateKey.toString(), null));
+						simulators.forEach(simulator -> Depot.generateDepotsByName(simulator, generateKey.toString()));
 						break;
 					default:
 						LOGGER.info("Unknown command \"{}\"", input[0]);
@@ -134,6 +147,6 @@ public class Main {
 
 	private static void printHelp() {
 		LOGGER.info("Usage:");
-		LOGGER.info("java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <dimensions...>");
+		LOGGER.info("java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <useThreadedSimulation> <dimensions...>");
 	}
 }

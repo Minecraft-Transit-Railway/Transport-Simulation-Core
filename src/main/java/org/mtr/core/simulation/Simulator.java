@@ -2,12 +2,12 @@ package org.mtr.core.simulation;
 
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
-import org.mtr.core.integration.Response;
 import org.mtr.core.path.DirectionsPathFinder;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
-import org.mtr.core.servlet.HttpResponseStatus;
-import org.mtr.core.tool.RequestHelper;
+import org.mtr.core.servlet.MessageQueue;
+import org.mtr.core.servlet.OperationProcessor;
+import org.mtr.core.servlet.QueueObject;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.LegacyRailLoader;
 import org.mtr.libraries.com.google.gson.JsonObject;
@@ -33,7 +33,6 @@ public class Simulator extends Data implements Utilities {
 	public final String dimension;
 	public final String[] dimensions;
 
-	private final int clientWebserverPort;
 	private final FileLoader<Station> fileLoaderStations;
 	private final FileLoader<Platform> fileLoaderPlatforms;
 	private final FileLoader<Siding> fileLoaderSidings;
@@ -41,17 +40,16 @@ public class Simulator extends Data implements Utilities {
 	private final FileLoader<Depot> fileLoaderDepots;
 	private final FileLoader<Lift> fileLoaderLifts;
 	private final FileLoader<Rail> fileLoaderRails;
-	private final ObjectArrayList<Runnable> queuedRuns = new ObjectArrayList<>();
+	private final MessageQueue<Runnable> queuedRuns = new MessageQueue<>();
 	private final ObjectImmutableList<ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>>> vehiclePositions;
 	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
 	private final ObjectOpenHashSet<DirectionsPathFinder> directionsPathFinders = new ObjectOpenHashSet<>();
+	private final MessageQueue<QueueObject> messageQueueC2S = new MessageQueue<>();
+	private final MessageQueue<QueueObject> messageQueueS2C = new MessageQueue<>();
 
-	public static final RequestHelper REQUEST_HELPER = new RequestHelper(false);
-
-	public Simulator(String dimension, String[] dimensions, Path rootPath, int clientWebserverPort) {
+	public Simulator(String dimension, String[] dimensions, Path rootPath) {
 		this.dimension = dimension;
 		this.dimensions = dimensions;
-		this.clientWebserverPort = clientWebserverPort;
 		final long startMillis = System.currentTimeMillis();
 
 		final Path savePath = rootPath.resolve(dimension);
@@ -112,17 +110,16 @@ public class Simulator extends Data implements Utilities {
 			lifts.forEach(lift -> lift.tick(currentMillis - lastMillis));
 
 			// Process directions requests
-			final long startMillis = System.currentTimeMillis();
-			while (!directionsPathFinders.isEmpty() && System.currentTimeMillis() - startMillis < 400) {
+			final long currentMillis = System.currentTimeMillis();
+			while (!directionsPathFinders.isEmpty() && System.currentTimeMillis() - currentMillis < 400) {
 				directionsPathFinders.removeIf(DirectionsPathFinder::tick);
 			}
 
-			while (!queuedRuns.isEmpty()) {
-				final Runnable runnable = queuedRuns.remove(0);
-				if (runnable != null) {
-					runnable.run();
-				}
-			}
+			// Process queued runs
+			queuedRuns.process(Runnable::run);
+
+			// Process messages
+			messageQueueC2S.process(queueObject -> queueObject.runCallback(OperationProcessor.process(queueObject.key, queueObject.data, currentMillis, this)));
 		} catch (Throwable e) {
 			Main.LOGGER.fatal("", e);
 		}
@@ -188,7 +185,19 @@ public class Simulator extends Data implements Utilities {
 	}
 
 	public void run(Runnable runnable) {
-		queuedRuns.add(runnable);
+		queuedRuns.put(runnable);
+	}
+
+	public void sendMessageC2S(QueueObject queueObject) {
+		messageQueueC2S.put(queueObject);
+	}
+
+	public <T extends SerializedDataBase> void sendMessageS2C(String key, SerializedDataBase data, @Nullable Consumer<T> consumer, @Nullable Class<T> responseDataClass) {
+		messageQueueS2C.put(new QueueObject(key, data, consumer == null ? null : responseData -> run(() -> consumer.accept(responseData)), responseDataClass));
+	}
+
+	public void processMessagesS2C(Consumer<QueueObject> callback) {
+		messageQueueS2C.process(callback);
 	}
 
 	public boolean isRiding(UUID uuid, long vehicleId) {
@@ -228,9 +237,5 @@ public class Simulator extends Data implements Utilities {
 			Main.LOGGER.info("- Deleted {}: {}", fileLoader.key, deletedCount);
 		}
 		return changedCount > 0 || deletedCount > 0;
-	}
-
-	public void sendHttpRequest(String endpoint, SerializedDataBase data, @Nullable Consumer<JsonObject> consumer) {
-		REQUEST_HELPER.sendPostRequest(String.format("http://localhost:%s/%s", clientWebserverPort, endpoint), new Response(HttpResponseStatus.OK.code, System.currentTimeMillis(), "Success", Utilities.getJsonObjectFromData(data)).getJson(), consumer);
 	}
 }

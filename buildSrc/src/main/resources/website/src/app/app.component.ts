@@ -6,7 +6,6 @@ import {MatFabButton, MatIconButton} from "@angular/material/button";
 import {SearchComponent} from "./component/search/search.component";
 import {StationComponent} from "./component/station/station.component";
 import {StationService} from "./service/station.service";
-import {NgIf} from "@angular/common";
 import {FormatNamePipe} from "./pipe/formatNamePipe";
 import {SideComponent} from "./component/side/side.component";
 import {DataService} from "./service/data.service";
@@ -24,7 +23,6 @@ import {DirectionsService} from "./service/directions.service";
 		MatFabButton,
 		SearchComponent,
 		StationComponent,
-		NgIf,
 		SideComponent,
 		DirectionsComponent,
 	],

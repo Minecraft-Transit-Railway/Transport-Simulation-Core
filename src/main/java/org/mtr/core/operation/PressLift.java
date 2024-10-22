@@ -7,7 +7,6 @@ import org.mtr.core.data.Position;
 import org.mtr.core.generated.operation.PressLiftSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.com.google.gson.JsonObject;
 
 public final class PressLift extends PressLiftSchema {
 
@@ -23,7 +22,7 @@ public final class PressLift extends PressLiftSchema {
 		instructions.add(new PressLiftInstruction(position, direction));
 	}
 
-	public JsonObject pressLift(Simulator simulator) {
+	public void pressLift(Simulator simulator) {
 		double lowestDistance = Double.MAX_VALUE;
 		Lift selectedLift = null;
 		LiftInstruction selectedLiftInstruction = null;
@@ -46,7 +45,5 @@ public final class PressLift extends PressLiftSchema {
 		if (selectedLift != null) {
 			selectedLift.pressButton(selectedLiftInstruction, true);
 		}
-
-		return new JsonObject();
 	}
 }

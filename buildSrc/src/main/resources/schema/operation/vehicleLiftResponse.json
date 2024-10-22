@@ -8,9 +8,6 @@
 		"clientId": {
 			"type": "string"
 		},
-		"dimension": {
-			"type": "string"
-		},
 		"vehiclesToUpdate": {
 			"type": "array",
 			"items": {

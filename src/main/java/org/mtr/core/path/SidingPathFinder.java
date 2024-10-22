@@ -175,7 +175,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 				connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(newPosition, null), 0, 0, 0));
 				connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(newPosition), null), 0, 0, 0));
 			});
-		} else if (!savedRail.containsPos(Utilities.getElement(connectionDetailsList, isEnd ? -2 : 1).node.position)) {
+		} else if (connectionDetailsList.size() > 1 && !savedRail.containsPos(Utilities.getElement(connectionDetailsList, isEnd ? -2 : 1).node.position)) {
 			connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(lastPosition), null), 0, 0, 0));
 		}
 	}

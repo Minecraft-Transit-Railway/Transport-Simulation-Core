@@ -19,7 +19,7 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 	constructor(private readonly httpClient: HttpClient, private readonly dataService: DataService, private readonly splitNamePipe: SplitNamePipe, dimensionService: DimensionService) {
 		super(() => {
 			if (this.selectedStation) {
-				return this.httpClient.post<{ data: { arrivals: DataResponse[] } }>(this.getUrl("operation/arrivals"), JSON.stringify({
+				return this.httpClient.post<{ data: { arrivals: DataResponse[] } }>(this.getUrl("map/arrivals"), JSON.stringify({
 					stationIdsHex: [this.selectedStation.id],
 					maxCountPerPlatform: MAX_ARRIVALS,
 				}));

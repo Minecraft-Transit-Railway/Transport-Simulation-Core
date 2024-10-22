@@ -6,8 +6,6 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.com.google.gson.JsonObject;
 
-import java.util.function.Consumer;
-
 public final class GenerateOrClearByDepotName extends GenerateOrClearByDepotNameSchema {
 
 	public GenerateOrClearByDepotName() {
@@ -22,8 +20,8 @@ public final class GenerateOrClearByDepotName extends GenerateOrClearByDepotName
 		this.filter = filter;
 	}
 
-	public JsonObject generate(Simulator simulator, Consumer<JsonObject> sendResponse) {
-		Depot.generateDepotsByName(simulator, filter, sendResponse);
+	public JsonObject generate(Simulator simulator) {
+		Depot.generateDepotsByName(simulator, filter);
 		return new JsonObject();
 	}
 

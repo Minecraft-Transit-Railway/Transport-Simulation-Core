@@ -1,22 +1,30 @@
 <div class="column margin">
-	<div class="column center" *ngIf="isLoading()">
-		<mat-spinner/>
-	</div>
-	<div *ngFor="let directionsSegment of getDirections()">
-		<div class="row gap-small center">
-			<div class="station"></div>
-			<div>{{ directionsSegment.startStationName | formatName }}</div>
-			<div class="spacing"></div>
-			<div>{{ directionsSegment.time | formatDate }}</div>
+	@if (isLoading()) {
+		<div class="column center">
+			<mat-spinner/>
 		</div>
-		<div class="row gap-small center" *ngIf="directionsSegment.getTotalDuration() > 0">
-			<div class="line {{ directionsSegment.routeId === 0 ? 'thin' : '' }}" [style.background-color]="directionsSegment.routeId === 0 ? '' : directionsSegment.routeColor | formatColor"></div>
-			<mat-icon>schedule</mat-icon>
-			<div class="subtitle">{{ directionsSegment.getTotalDuration() | formatTime: "" }}</div>
+	}
+	@for (directionsSegment of getDirections(); track $index) {
+		<div>
+			<div class="row gap-small center">
+				<div class="station"></div>
+				<div>{{ directionsSegment.startStationName | formatName }}</div>
+				<div class="spacing"></div>
+				<div>{{ directionsSegment.time | formatDate }}</div>
+			</div>
+			@if (directionsSegment.getTotalDuration() > 0) {
+				<div class="row gap-small center">
+					<div class="line {{ directionsSegment.routeId === 0 ? 'thin' : '' }}" [style.background-color]="directionsSegment.routeId === 0 ? '' : directionsSegment.routeColor | formatColor"></div>
+					<mat-icon>schedule</mat-icon>
+					<div class="subtitle">{{ directionsSegment.getTotalDuration() | formatTime: "" }}</div>
+				</div>
+			}
+			@for (intermediateStation of directionsSegment.intermediateStations; track $index) {
+				<div class="row gap-small center">
+					<div class="line {{ directionsSegment.routeId === 0 ? 'thin' : '' }}" [style.background-color]="directionsSegment.routeId === 0 ? '' : directionsSegment.routeColor | formatColor"></div>
+					<div class="subtitle">{{ intermediateStation | formatName }}</div>
+				</div>
+			}
 		</div>
-		<div class="row gap-small center" *ngFor="let intermediateStation of directionsSegment.intermediateStations">
-			<div class="line {{ directionsSegment.routeId === 0 ? 'thin' : '' }}" [style.background-color]="directionsSegment.routeId === 0 ? '' : directionsSegment.routeColor | formatColor"></div>
-			<div class="subtitle">{{ intermediateStation | formatName }}</div>
-		</div>
-	</div>
+	}
 </div>

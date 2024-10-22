@@ -1,6 +1,5 @@
 import {Component} from "@angular/core";
 import {DirectionsSegment, DirectionsService} from "../../service/directions.service";
-import {NgForOf, NgIf} from "@angular/common";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
@@ -12,9 +11,7 @@ import {FormatDatePipe} from "../../pipe/formatDatePipe";
 	selector: "app-directions",
 	standalone: true,
 	imports: [
-		NgForOf,
 		MatProgressSpinner,
-		NgIf,
 		FormatTimePipe,
 		FormatNamePipe,
 		MatIcon,

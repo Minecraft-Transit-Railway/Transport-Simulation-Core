@@ -5,11 +5,18 @@
 		"SerializedDataBase"
 	],
 	"properties": {
+		"currentTime": {
+			"type": "integer",
+			"minimum": 0
+		},
 		"arrivals": {
 			"type": "array",
 			"items": {
 				"$ref": "arrivalResponse.json"
 			}
 		}
-	}
+	},
+	"required": [
+		"currentTime"
+	]
 }

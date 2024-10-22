@@ -4,10 +4,7 @@ import org.mtr.core.data.Depot;
 import org.mtr.core.generated.operation.GenerateOrClearByDepotIdsSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import java.util.function.Consumer;
 
 public final class GenerateOrClearByDepotIds extends GenerateOrClearByDepotIdsSchema {
 
@@ -23,14 +20,12 @@ public final class GenerateOrClearByDepotIds extends GenerateOrClearByDepotIdsSc
 		depotIds.add(depotId);
 	}
 
-	public JsonObject generate(Simulator simulator, Consumer<JsonObject> sendResponse) {
-		Depot.generateDepots(simulator, getDepots(simulator), sendResponse);
-		return new JsonObject();
+	public void generate(Simulator simulator) {
+		Depot.generateDepots(simulator, getDepots(simulator));
 	}
 
-	public JsonObject clear(Simulator simulator) {
+	public void clear(Simulator simulator) {
 		Depot.clearDepots(getDepots(simulator));
-		return new JsonObject();
 	}
 
 	private ObjectArrayList<Depot> getDepots(Simulator simulator) {

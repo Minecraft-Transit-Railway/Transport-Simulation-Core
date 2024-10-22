@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
-import {AsyncPipe, NgForOf, NgIf} from "@angular/common";
+import {AsyncPipe} from "@angular/common";
 import {MatAutocomplete, MatAutocompleteTrigger, MatOption} from "@angular/material/autocomplete";
 import {MatDivider} from "@angular/material/divider";
 import {MatFormField, MatLabel} from "@angular/material/form-field";
@@ -20,8 +20,6 @@ import {StationService} from "../../service/station.service";
 		MatAutocomplete,
 		MatDivider,
 		MatOption,
-		NgForOf,
-		NgIf,
 		MatAutocompleteTrigger,
 		MatFormField,
 		MatInput,

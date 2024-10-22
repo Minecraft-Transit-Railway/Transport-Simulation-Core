@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
+import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 
 public class RailMath {
 
@@ -213,6 +214,10 @@ public class RailMath {
 
 	public Rail.Shape getShape() {
 		return shape;
+	}
+
+	public DoubleDoubleImmutablePair getHorizontalRadii() {
+		return new DoubleDoubleImmutablePair(isStraight1 ? 0 : Math.abs(r1), isStraight2 ? 0 : Math.abs(r2));
 	}
 
 	public double getVerticalRadius() {

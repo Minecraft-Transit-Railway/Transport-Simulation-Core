@@ -3,7 +3,6 @@ package org.mtr.core.operation;
 import org.mtr.core.data.Data;
 import org.mtr.core.data.Lift;
 import org.mtr.core.serializer.JsonReader;
-import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class GenerateByLift {
@@ -16,12 +15,11 @@ public final class GenerateByLift {
 		lift = new Lift(jsonReader, data);
 	}
 
-	public JsonObject generate() {
+	public void generate() {
 		final ObjectArrayList<Lift> liftsToModify = UpdateDataRequest.getAndRemoveMatchingLifts(data, lift);
 		liftsToModify.add(lift);
 		liftsToModify.get(0).setFloors(lift);
 		data.lifts.add(liftsToModify.get(0));
 		data.sync();
-		return new JsonObject();
 	}
 }
