@@ -8,6 +8,7 @@ import org.mtr.libraries.com.google.gson.GsonBuilder;
 import org.mtr.libraries.com.google.gson.JsonElement;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.com.google.gson.JsonParser;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectLongImmutablePair;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -16,6 +17,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 public interface Utilities {
 
@@ -198,6 +200,28 @@ public interface Utilities {
 
 	static <T> boolean sameItems(Collection<T> collection1, Collection<T> collection2) {
 		return collection1.containsAll(collection2) && collection2.containsAll(collection1);
+	}
+
+	static <T> T loopUntilTimeout(Supplier<T> action, long timeoutMillis) {
+		final long startMillis = System.currentTimeMillis();
+		while (System.currentTimeMillis() - startMillis < timeoutMillis) {
+			final T result = action.get();
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	static long measureDuration(Runnable action) {
+		final long startMillis = System.currentTimeMillis();
+		action.run();
+		return System.currentTimeMillis() - startMillis;
+	}
+
+	static <T> ObjectLongImmutablePair<T> measureDuration(Supplier<T> action) {
+		final long startMillis = System.currentTimeMillis();
+		return new ObjectLongImmutablePair<>(action.get(), System.currentTimeMillis() - startMillis);
 	}
 
 	static void awaitTermination(ExecutorService executorService) {

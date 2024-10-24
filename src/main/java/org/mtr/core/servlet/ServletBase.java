@@ -41,13 +41,12 @@ public abstract class ServletBase extends HttpServlet {
 		try {
 			final AsyncContext asyncContext = httpServletRequest.startAsync();
 			asyncContext.setTimeout(0);
-			final long currentMillis = System.currentTimeMillis();
 			final JsonElement jsonElement = JsonParser.parseReader(httpServletRequest.getReader());
 			final JsonReader jsonReader = new JsonReader(jsonElement.isJsonNull() ? new JsonObject() : jsonElement);
 
 			if (tryGetParameter(httpServletRequest, "dimensions").equals("all")) {
-				simulators.forEach(simulator -> run(httpServletRequest, null, null, jsonReader, currentMillis, simulator));
-				buildResponseObject(httpServletResponse, asyncContext, currentMillis, null, HttpResponseStatus.OK);
+				simulators.forEach(simulator -> run(httpServletRequest, null, null, jsonReader, simulator));
+				buildResponseObject(httpServletResponse, asyncContext, null, HttpResponseStatus.OK);
 			} else {
 				int dimension = 0;
 				try {
@@ -56,9 +55,9 @@ public abstract class ServletBase extends HttpServlet {
 				}
 
 				if (dimension < 0 || dimension >= simulators.size()) {
-					buildResponseObject(httpServletResponse, asyncContext, currentMillis, null, HttpResponseStatus.BAD_REQUEST, "Invalid Dimension");
+					buildResponseObject(httpServletResponse, asyncContext, null, HttpResponseStatus.BAD_REQUEST, "Invalid Dimension");
 				} else {
-					run(httpServletRequest, httpServletResponse, asyncContext, jsonReader, currentMillis, simulators.get(dimension));
+					run(httpServletRequest, httpServletResponse, asyncContext, jsonReader, simulators.get(dimension));
 				}
 			}
 		} catch (Exception e) {
@@ -66,9 +65,9 @@ public abstract class ServletBase extends HttpServlet {
 		}
 	}
 
-	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator, Consumer<JsonObject> sendResponse);
+	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse);
 
-	private void run(HttpServletRequest httpServletRequest, @Nullable HttpServletResponse httpServletResponse, @Nullable AsyncContext asyncContext, JsonReader jsonReader, long currentMillis, Simulator simulator) {
+	private void run(HttpServletRequest httpServletRequest, @Nullable HttpServletResponse httpServletResponse, @Nullable AsyncContext asyncContext, JsonReader jsonReader, Simulator simulator) {
 		final String endpoint;
 		final String data;
 		final String path = httpServletRequest.getPathInfo();
@@ -88,9 +87,9 @@ public abstract class ServletBase extends HttpServlet {
 			}
 		});
 
-		simulator.run(() -> getContent(endpoint, data, parameters, jsonReader, currentMillis, simulator, jsonObject -> {
+		simulator.run(() -> getContent(endpoint, data, parameters, jsonReader, simulator, jsonObject -> {
 			if (httpServletResponse != null && asyncContext != null) {
-				buildResponseObject(httpServletResponse, asyncContext, currentMillis, jsonObject, jsonObject == null ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, endpoint, data);
+				buildResponseObject(httpServletResponse, asyncContext, jsonObject, jsonObject == null ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, endpoint, data);
 			}
 		}));
 	}
@@ -151,13 +150,13 @@ public abstract class ServletBase extends HttpServlet {
 		}
 	}
 
-	private static void buildResponseObject(HttpServletResponse httpServletResponse, AsyncContext asyncContext, long currentMillis, @Nullable JsonObject data, HttpResponseStatus httpResponseStatus, String... parameters) {
+	private static void buildResponseObject(HttpServletResponse httpServletResponse, AsyncContext asyncContext, @Nullable JsonObject data, HttpResponseStatus httpResponseStatus, String... parameters) {
 		final StringBuilder reasonPhrase = new StringBuilder(httpResponseStatus.description);
 		final String trimmedParameters = Arrays.stream(parameters).filter(parameter -> !parameter.isEmpty()).collect(Collectors.joining(", "));
 		if (!trimmedParameters.isEmpty()) {
 			reasonPhrase.append(" - ").append(trimmedParameters);
 		}
-		sendResponse(httpServletResponse, asyncContext, new Response(httpResponseStatus.code, currentMillis, reasonPhrase.toString(), data).getJson().toString(), getMimeType("json"), httpResponseStatus);
+		sendResponse(httpServletResponse, asyncContext, new Response(httpResponseStatus.code, reasonPhrase.toString(), data).getJson().toString(), getMimeType("json"), httpResponseStatus);
 	}
 
 	private static String tryGetParameter(HttpServletRequest httpServletRequest, String parameter) {

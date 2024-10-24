@@ -281,7 +281,9 @@ public final class Siding extends SidingSchema implements Utilities {
 					final int departureIndex = matchDeparture();
 					if (departureIndex >= 0 && departureIndex < departures.size()) {
 						if (!transportMode.continuousMovement && vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
-							Main.LOGGER.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
+							if (millisElapsed <= MILLIS_PER_HOUR) {
+								Main.LOGGER.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
+							}
 						} else {
 							vehicle.startUp(departureIndex, departures.getLong(departureIndex));
 						}
@@ -487,7 +489,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	private int matchDeparture() {
 		final long repeatInterval = getRepeatInterval(0);
-		final long offset = departures.isEmpty() || repeatInterval == 0 ? 0 : (System.currentTimeMillis() - departures.getLong(0)) / repeatInterval * repeatInterval;
+		final long offset = departures.isEmpty() || repeatInterval == 0 ? 0 : (data.getCurrentMillis() - departures.getLong(0)) / repeatInterval * repeatInterval;
 
 		for (int i = 0; i < departures.size(); i++) {
 			if ((data instanceof Simulator ? ((Simulator) data).matchMillis(departures.getLong(i) + offset) : 0) == 0) {

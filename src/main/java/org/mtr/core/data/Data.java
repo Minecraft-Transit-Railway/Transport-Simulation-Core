@@ -14,6 +14,8 @@ import java.util.function.Supplier;
 
 public abstract class Data {
 
+	private long currentMillis;
+
 	public final ObjectArraySet<Station> stations = new ObjectArraySet<>();
 	public final ObjectArraySet<Platform> platforms = new ObjectArraySet<>();
 	public final ObjectArraySet<Siding> sidings = new ObjectArraySet<>();
@@ -131,6 +133,14 @@ public abstract class Data {
 		} catch (Exception e) {
 			Main.LOGGER.error("", e);
 		}
+	}
+
+	public final long getCurrentMillis() {
+		return currentMillis;
+	}
+
+	protected final void setCurrentMillis(long currentMillis) {
+		this.currentMillis = currentMillis;
 	}
 
 	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> V tryGet(W map, T key1, U key2, V defaultValue) {

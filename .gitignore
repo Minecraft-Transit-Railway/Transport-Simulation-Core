@@ -30,3 +30,4 @@ bin/
 
 generated/
 **/website/src/assets/
+log4j2.properties

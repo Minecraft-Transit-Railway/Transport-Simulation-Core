@@ -14,7 +14,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public class Lift extends LiftSchema {
+public class Lift extends LiftSchema implements Utilities {
 
 	private boolean needsUpdate;
 	private Position minPosition = new Position(0, 0, 0);
@@ -25,7 +25,7 @@ public class Lift extends LiftSchema {
 	 */
 	private final boolean isClientside;
 
-	private static final float MAX_SPEED = 10F / Depot.MILLIS_PER_SECOND; // 10 m/s
+	private static final float MAX_SPEED = 10F / MILLIS_PER_SECOND; // 10 m/s
 	private static final int DOOR_OPEN_TIME = 2000;
 	private static final int DOOR_MOVE_TIME = Vehicle.DOOR_MOVE_TIME / 2;
 	private static final int DOOR_DELAY = 500;

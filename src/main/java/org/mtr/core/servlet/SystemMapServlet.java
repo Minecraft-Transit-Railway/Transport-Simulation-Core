@@ -18,7 +18,7 @@ public final class SystemMapServlet extends ServletBase {
 	}
 
 	@Override
-	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator, Consumer<JsonObject> sendResponse) {
+	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse) {
 		final JsonObject response;
 		switch (endpoint) {
 			case "stations-and-routes":
@@ -28,7 +28,7 @@ public final class SystemMapServlet extends ServletBase {
 				response = Utilities.getJsonObjectFromData(stationAndRoutes);
 				break;
 			case "arrivals":
-				response = Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator, currentMillis));
+				response = Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));
 				break;
 			default:
 				response = new JsonObject();

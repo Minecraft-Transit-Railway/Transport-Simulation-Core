@@ -19,8 +19,6 @@ import java.util.function.Consumer;
 
 public class Client extends ClientSchema {
 
-	private long nextSendTime;
-
 	private final LongAVLTreeSet existingVehicleIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepVehicleIds = new LongAVLTreeSet();
 	private final Long2ObjectAVLTreeMap<VehicleUpdate> vehicleUpdates = new Long2ObjectAVLTreeMap<>();
@@ -61,18 +59,14 @@ public class Client extends ClientSchema {
 	}
 
 	public void sendUpdates(Simulator simulator) {
-		final long currentMillis = System.currentTimeMillis();
-		if (currentMillis > nextSendTime) {
-			nextSendTime = currentMillis + 100;
-			final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
-			final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep);
-			final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
-			final boolean hasUpdate3 = process(signalBlockUpdates, existingRailIds, keepRailIds, vehicleLiftResponse::addSignalBlockUpdate, railId -> {
-			});
+		final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(clientId, simulator);
+		final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep);
+		final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
+		final boolean hasUpdate3 = process(signalBlockUpdates, existingRailIds, keepRailIds, vehicleLiftResponse::addSignalBlockUpdate, railId -> {
+		});
 
-			if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
-				simulator.sendMessageS2C(OperationProcessor.VEHICLES_LIFTS, vehicleLiftResponse, playerPresentResponse -> playerPresentResponse.verify(simulator, clientId), PlayerPresentResponse.class);
-			}
+		if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
+			simulator.sendMessageS2C(OperationProcessor.VEHICLES_LIFTS, vehicleLiftResponse, playerPresentResponse -> playerPresentResponse.verify(simulator, clientId), PlayerPresentResponse.class);
 		}
 	}
 

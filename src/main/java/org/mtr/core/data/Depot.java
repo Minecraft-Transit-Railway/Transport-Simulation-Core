@@ -366,12 +366,12 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	private void updateGenerationStatus(GeneratedStatus lastGeneratedStatus, long lastGeneratedFailedStartId, long lastGeneratedFailedEndId, String message) {
-		updateGenerationStatus(System.currentTimeMillis(), lastGeneratedStatus, lastGeneratedFailedStartId, lastGeneratedFailedEndId);
+		updateGenerationStatus(data.getCurrentMillis(), lastGeneratedStatus, lastGeneratedFailedStartId, lastGeneratedFailedEndId);
 		if (onGenerationComplete != null) {
 			onGenerationComplete.accept(false);
 		}
 		onGenerationComplete = null;
-		Main.LOGGER.info(String.format(message, name));
+		Main.LOGGER.info("{}", String.format(message, name));
 	}
 
 	public static void generateDepotsByName(Simulator simulator, String filter) {

@@ -25,7 +25,7 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 		updateData(readerBase);
 	}
 
-	public ArrivalsResponse getArrivals(Simulator simulator, long currentMillis) {
+	public ArrivalsResponse getArrivals(Simulator simulator) {
 		final ObjectArrayList<ArrivalResponse> arrivalResponseList = new ObjectArrayList<>();
 		final ObjectAVLTreeSet<String> visitedKeys = new ObjectAVLTreeSet<>();
 		final LongAVLTreeSet allPlatformIds = new LongAVLTreeSet();
@@ -42,14 +42,14 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 					final String key = String.format("%s_%s", platformId, siding.getId());
 					if (!visitedKeys.contains(key)) {
 						visitedKeys.add(key);
-						siding.getArrivals(currentMillis, platform, maxCountPerPlatform, arrivalResponseList);
+						siding.getArrivals(simulator.getCurrentMillis(), platform, maxCountPerPlatform, arrivalResponseList);
 					}
 				})));
 			}
 		});
 
 		Collections.sort(arrivalResponseList);
-		final ArrivalsResponse arrivalsResponse = new ArrivalsResponse(currentMillis);
+		final ArrivalsResponse arrivalsResponse = new ArrivalsResponse(simulator.getCurrentMillis());
 
 		for (int i = 0; i < (maxCountTotal <= 0 ? arrivalResponseList.size() : Math.min(arrivalResponseList.size(), maxCountTotal)); i++) {
 			arrivalsResponse.add(arrivalResponseList.get(i));

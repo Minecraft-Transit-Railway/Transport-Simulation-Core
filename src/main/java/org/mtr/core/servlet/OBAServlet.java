@@ -15,8 +15,8 @@ public final class OBAServlet extends ServletBase {
 	}
 
 	@Override
-	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, long currentMillis, Simulator simulator, Consumer<JsonObject> sendResponse) {
-		final OBAResponse obaResponse = new OBAResponse(data, parameters, currentMillis, simulator);
+	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse) {
+		final OBAResponse obaResponse = new OBAResponse(data, parameters, simulator.getCurrentMillis(), simulator);
 		switch (endpoint) {
 			case "agencies-with-coverage":
 				sendResponse.accept(obaResponse.getAgenciesWithCoverage());

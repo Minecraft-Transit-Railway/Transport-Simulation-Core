@@ -37,7 +37,7 @@ public final class OperationProcessor {
 	public static final String GENERATION_STATUS_UPDATE = "generation_status_update";
 
 	@Nullable
-	public static SerializedDataBase process(String key, SerializedDataBase data, long currentMillis, Simulator simulator) {
+	public static SerializedDataBase process(String key, SerializedDataBase data, Simulator simulator) {
 		// TODO is there a better way to create these objects than to cast to a JSON and back?
 		final JsonReader jsonReader = new JsonReader(Utilities.getJsonObjectFromData(data));
 
@@ -51,7 +51,7 @@ public final class OperationProcessor {
 			case LIST_DATA:
 				return new ListDataResponse(jsonReader, simulator).list();
 			case ARRIVALS:
-				return new ArrivalsRequest(jsonReader).getArrivals(simulator, currentMillis);
+				return new ArrivalsRequest(jsonReader).getArrivals(simulator);
 			case SET_TIME:
 				new SetTime(jsonReader).setGameTime(simulator);
 				return null;

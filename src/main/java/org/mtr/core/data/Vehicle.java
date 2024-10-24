@@ -148,7 +148,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			vehicleTimesAlongRoute.put(departureIndex, timeAlongRoute);
 			// Calculate deviation every time the vehicle dwells at a platform and when it starts moving
 			if (oldElapsedDwellTime == 0 && elapsedDwellTime > 0 || oldSpeed == 0 && speed > 0) {
-				deviation = transportMode.continuousMovement ? 0 : Utilities.circularDifference(System.currentTimeMillis() - sidingDepartureTime, timeAlongRoute, siding.getRepeatInterval(MILLIS_PER_DAY));
+				deviation = transportMode.continuousMovement ? 0 : Utilities.circularDifference(data.getCurrentMillis() - sidingDepartureTime, timeAlongRoute, siding.getRepeatInterval(MILLIS_PER_DAY));
 			}
 		}
 

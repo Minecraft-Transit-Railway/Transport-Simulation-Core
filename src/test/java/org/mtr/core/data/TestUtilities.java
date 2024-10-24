@@ -177,6 +177,10 @@ public interface TestUtilities {
 		return new RoutePlatformData(RANDOM.nextLong());
 	}
 
+	static Settings randomSettings() {
+		return new Settings(RANDOM.nextLong());
+	}
+
 	static Siding randomSiding() {
 		return new Siding(randomPosition(), randomPosition(), RANDOM.nextDouble(), randomTransportMode(), getDefaultSimulator());
 	}
@@ -263,6 +267,10 @@ public interface TestUtilities {
 
 	static RoutePlatformData newRoutePlatformData(ReaderBase readerBase) {
 		return new RoutePlatformData(readerBase);
+	}
+
+	static Settings newSettings(ReaderBase readerBase) {
+		return new Settings(readerBase);
 	}
 
 	static Siding newSiding(ReaderBase readerBase) {

@@ -10,8 +10,8 @@ public final class Response extends ResponseSchema {
 
 	public final JsonObject data;
 
-	public Response(int code, long currentTime, String text, @Nullable JsonObject data) {
-		super(code, currentTime, text, 1);
+	public Response(int code, String text, @Nullable JsonObject data) {
+		super(code, System.currentTimeMillis(), text, 1);
 		this.data = data;
 	}
 

@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 public class Main {
 
 	private final ObjectImmutableList<Simulator> simulators;
+	@Nullable
 	private final Webserver webserver;
 	@Nullable
 	private final ScheduledExecutorService scheduledExecutorService;
@@ -59,11 +60,16 @@ public class Main {
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);
-		webserver = new Webserver(webserverPort);
-		webserver.addServlet(new ServletHolder(new WebServlet()), "/");
-		webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/*");
-		webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
-		webserver.start();
+
+		if (webserverPort > 0) {
+			webserver = new Webserver(webserverPort);
+			webserver.addServlet(new ServletHolder(new WebServlet()), "/");
+			webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/*");
+			webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
+			webserver.start();
+		} else {
+			webserver = null;
+		}
 
 		if (threadedSimulation) {
 			scheduledExecutorService = Executors.newScheduledThreadPool(simulators.size());
@@ -99,7 +105,10 @@ public class Main {
 
 	public void stop() {
 		LOGGER.info("Stopping...");
-		webserver.stop();
+
+		if (webserver != null) {
+			webserver.stop();
+		}
 
 		if (scheduledExecutorService != null) {
 			scheduledExecutorService.shutdown();
