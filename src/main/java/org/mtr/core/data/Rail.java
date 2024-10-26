@@ -155,7 +155,9 @@ public final class Rail extends RailSchema {
 	}
 
 	public boolean closeTo(Position position, double radius) {
-		return Utilities.isBetween(position, position1, position2, radius);
+		final long halfDistance = position1.manhattanDistance(position2) / 2;
+		final Position centerPosition = new Position((position1.getX() + position2.getX()) / 2, (position1.getY() + position2.getY()) / 2, (position1.getZ() + position2.getZ()) / 2);
+		return Utilities.isBetween(position, centerPosition.offset(-halfDistance, -halfDistance, -halfDistance), centerPosition.offset(halfDistance, halfDistance, halfDistance), radius);
 	}
 
 	public void tick(Simulator simulator) {
