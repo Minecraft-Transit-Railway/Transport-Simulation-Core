@@ -545,43 +545,46 @@ public final class Siding extends SidingSchema implements Utilities {
 		final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
 
 		tripStopTimes.forEach(stopTime -> {
-			for (int departureIndex = 0; departureIndex < departures.size(); departureIndex++) {
-				final long departure = departures.getLong(departureIndex);
-				long departureOffset = (currentMillis - (transportMode.continuousMovement ? 0 : millsBefore) - repeatInterval / 2 - stopTime.endTime - departure) / repeatInterval + 1;
-				final BooleanLongImmutablePair predictedAndDeviation = getPredictedAndDeviation(currentMillis, departureIndex, departureOffset);
-				final boolean predicted = predictedAndDeviation.leftBoolean();
-				final long deviation = predictedAndDeviation.rightLong();
-				final Trip trip = stopTime.trip;
+			final Trip trip = stopTime.trip;
 
-				while (true) {
-					final long scheduledArrivalTime;
-					final long scheduledDepartureTime;
+			if (!area.getRepeatInfinitely() || trip.tripIndexInBlock < trips.size() - 1 || stopTime.tripStopIndex < trip.route.getRoutePlatforms().size() - 1) {
+				for (int departureIndex = 0; departureIndex < departures.size(); departureIndex++) {
+					final long departure = departures.getLong(departureIndex);
+					long departureOffset = (currentMillis - (transportMode.continuousMovement ? 0 : millsBefore) - repeatInterval / 2 - stopTime.endTime - departure) / repeatInterval + 1;
+					final BooleanLongImmutablePair predictedAndDeviation = getPredictedAndDeviation(currentMillis, departureIndex, departureOffset);
+					final boolean predicted = predictedAndDeviation.leftBoolean();
+					final long deviation = predictedAndDeviation.rightLong();
 
-					if (transportMode.continuousMovement) {
-						scheduledArrivalTime = 0;
-						scheduledDepartureTime = 0;
-					} else {
-						final long offsetMillis = repeatInterval * departureOffset;
-						scheduledArrivalTime = stopTime.startTime + offsetMillis + departure;
-						scheduledDepartureTime = stopTime.endTime + offsetMillis + departure;
-					}
+					while (true) {
+						final long scheduledArrivalTime;
+						final long scheduledDepartureTime;
 
-					departureOffset++;
-
-					if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
-						break;
-					} else if (!transportMode.continuousMovement) {
-						final boolean outOfRange = scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter;
-						final boolean missedDeparture = !predicted && scheduledArrivalTime - stopTime.startTime + MILLIS_PER_SECOND < currentMillis;
-						if (outOfRange || missedDeparture) {
-							continue;
+						if (transportMode.continuousMovement) {
+							scheduledArrivalTime = 0;
+							scheduledDepartureTime = 0;
+						} else {
+							final long offsetMillis = repeatInterval * departureOffset;
+							scheduledArrivalTime = stopTime.startTime + offsetMillis + departure;
+							scheduledDepartureTime = stopTime.endTime + offsetMillis + departure;
 						}
-					}
 
-					arrivalConsumer.accept(trip, stopTime.tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset - 1);
+						departureOffset++;
 
-					if (transportMode.continuousMovement) {
-						break;
+						if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
+							break;
+						} else if (!transportMode.continuousMovement) {
+							final boolean outOfRange = scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter;
+							final boolean missedDeparture = !predicted && scheduledArrivalTime - stopTime.startTime + MILLIS_PER_SECOND < currentMillis;
+							if (outOfRange || missedDeparture) {
+								continue;
+							}
+						}
+
+						arrivalConsumer.accept(trip, stopTime.tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset - 1);
+
+						if (transportMode.continuousMovement) {
+							break;
+						}
 					}
 				}
 			}
