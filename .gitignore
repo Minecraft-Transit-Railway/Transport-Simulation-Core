@@ -29,5 +29,6 @@ bin/
 *.DS_Store
 
 generated/
+**/website/.gitignore
 **/website/src/assets/
 log4j2.properties

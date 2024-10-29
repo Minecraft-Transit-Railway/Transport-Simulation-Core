@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 @ParametersAreNonnullByDefault
-public class Generator {
+public final class Generator {
 
 	private static final Logger LOGGER = LogManager.getLogger("Generator");
 

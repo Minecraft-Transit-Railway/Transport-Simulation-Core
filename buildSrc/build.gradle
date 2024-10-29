@@ -21,5 +21,13 @@ jar {
 tasks.withType(AbstractArchiveTask).configureEach {
 	preserveFileTimestamps = false
 	reproducibleFileOrder = true
-	excludes = ["website"]
+	excludes = [
+			"website/.*",
+			"website/dist",
+			"website/node_modules",
+			"website/src/app",
+			"website/src/assets",
+			"website/src/index.html",
+			"website/src/main.ts",
+	]
 }

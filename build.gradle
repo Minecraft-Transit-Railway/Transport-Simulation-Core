@@ -60,7 +60,7 @@ tasks.register("generateSchemaClasses") {
 	Generator.generate(project, "schema/map", "core/generated/map", false, "core.map")
 	Generator.generate(project, "schema/oba", "core/generated/oba", false, "core.oba")
 	Generator.generate(project, "schema/operation", "core/generated/operation", false, "core.data", "core.operation")
-	WebserverSetup.setup(project.rootDir)
+	WebserverSetup.setup(project.rootDir, "", "core")
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {
