@@ -100,6 +100,9 @@ public abstract class ServletBase extends HttpServlet {
 			final ByteBuffer byteBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
 			httpServletResponse.addHeader("Content-Type", contentType);
 			httpServletResponse.addHeader("Access-Control-Allow-Origin", "*");
+			if (httpResponseStatus == HttpResponseStatus.REDIRECT) {
+				httpServletResponse.addHeader("Location", content);
+			}
 			servletOutputStream.setWriteListener(new WriteListener() {
 				@Override
 				public void onWritePossible() {

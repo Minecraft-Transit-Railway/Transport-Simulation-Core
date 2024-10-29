@@ -3,6 +3,7 @@ package org.mtr.core;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.mtr.core.data.Depot;
+import org.mtr.core.generated.WebserverResources;
 import org.mtr.core.servlet.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
@@ -43,7 +44,7 @@ public class Main {
 			final boolean threadedSimulation = Boolean.parseBoolean(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(rootPath, webserverPort, threadedSimulation, dimensions);
+			final Main main = new Main(rootPath, webserverPort, threadedSimulation, null, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -51,7 +52,7 @@ public class Main {
 		}
 	}
 
-	public Main(Path rootPath, int webserverPort, boolean threadedSimulation, String... dimensions) {
+	public Main(Path rootPath, int webserverPort, boolean threadedSimulation, @Nullable Consumer<Webserver> additionalWebserverSetup, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
@@ -63,9 +64,12 @@ public class Main {
 
 		if (webserverPort > 0) {
 			webserver = new Webserver(webserverPort);
-			webserver.addServlet(new ServletHolder(new WebServlet()), "/");
+			webserver.addServlet(new ServletHolder(new WebServlet(WebserverResources::get, "/")), "/");
 			webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/*");
 			webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
+			if (additionalWebserverSetup != null) {
+				additionalWebserverSetup.accept(webserver);
+			}
 			webserver.start();
 		} else {
 			webserver = null;
