@@ -36,7 +36,7 @@ const lineMaterialThin = new LineMaterial({color: 0xFFFFFF, linewidth: 3 * SETTI
 	styleUrls: ["./map.component.css"],
 })
 export class MapComponent implements AfterViewInit {
-	@Output() onClickStation = new EventEmitter<string>;
+	@Output() stationClicked = new EventEmitter<string>;
 	@ViewChild("wrapper") private readonly wrapperRef!: ElementRef<HTMLDivElement>;
 	@ViewChild("canvas") private readonly canvasRef!: ElementRef<HTMLCanvasElement>;
 	@ViewChild("stats") private readonly statsRef!: ElementRef<HTMLDivElement>;

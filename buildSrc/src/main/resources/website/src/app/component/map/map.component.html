@@ -8,7 +8,7 @@
 	<div>
 		@for (textLabel of textLabels; track $index) {
 			<div class="column center label" [style.transform]="'translate(-50%,0) translate(' + textLabel.x + 'px, ' + textLabel.y + 'px)'"
-				 (mousedown)="onClickStation.emit(textLabel.id)"
+				 (mousedown)="stationClicked.emit(textLabel.id)"
 				 (mouseenter)="textLabel.hoverOverride = true"
 				 (mouseleave)="textLabel.hoverOverride = false">
 				<div [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'"></div>

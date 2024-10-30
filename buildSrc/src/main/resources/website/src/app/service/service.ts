@@ -19,7 +19,7 @@ export abstract class ServiceBase<T> {
 	}
 
 	protected getUrl(endpoint: string) {
-		return `${document.location.origin}${document.location.pathname.replace("index.html", "")}mtr/api/${endpoint}?dimension=${this.dimensionService.getDimensionIndex()}`;
+		return `${document.location.origin}${document.location.pathname}mtr/api/map/${endpoint}?dimension=${this.dimensionService.getDimensionIndex()}`;
 	}
 
 	public isLoading() {

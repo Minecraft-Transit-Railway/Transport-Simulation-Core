@@ -1,17 +1,17 @@
-<app-side #sideDirections [onClose]="onCloseDirections">
-	<app-side #sideStation [onClose]="onCloseStation">
+<app-side #sideDirections (closed)="onCloseDirections()">
+	<app-side #sideStation (closed)="onCloseStation()">
 		<app-side #sideMain>
-			<app-map (onClickStation)="onClickStation($event, sideStation, sideDirections, false)"/>
+			<app-map (stationClicked)="onClickStation($event, sideStation, sideDirections, false)"/>
 			<button mat-fab class="button-corner" color="" aria-label="Menu" (click)="sideMain.open()">
 				<mat-icon>menu</mat-icon>
 			</button>
 			<div sidenav class="column margin">
-				<app-search label="Search for anything..." [includeRoutes]="true" (onClickStation)="onClickStation($event, sideStation, sideDirections, true)"/>
+				<app-search label="Search for anything..." [includeRoutes]="true" (stationClicked)="onClickStation($event, sideStation, sideDirections, true)"/>
 				<app-panel/>
 			</div>
 			<div title>{{ getTitle() }}</div>
 		</app-side>
-		<app-station sidenav (onOpenDirections)="sideDirections.open()"/>
+		<app-station sidenav (directionsOpened)="sideDirections.open()"/>
 		<div title>Station Details</div>
 	</app-side>
 	<app-directions sidenav/>

@@ -44,7 +44,7 @@ import {MatProgressSpinner} from "@angular/material/progress-spinner";
 	styleUrl: "./station.component.css",
 })
 export class StationComponent {
-	@Output() onOpenDirections = new EventEmitter<void>;
+	@Output() directionsOpened = new EventEmitter<void>;
 
 	constructor(private readonly stationService: StationService, private readonly dialog: MatDialog) {
 	}

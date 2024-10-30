@@ -5,7 +5,7 @@
 
 <mat-autocomplete #auto="matAutocomplete">
 	@for (station of searchedStations$ | async; track $index) {
-		<mat-option (click)="onClickStation.emit(station.id)">
+		<mat-option (click)="stationClicked.emit(station.id)">
 			<div class="row gap center">
 				<div class="station-color-dot" style="{{'background-color:#'+station.color}}"></div>
 				<div>{{ station.name | formatName }}</div>
@@ -16,7 +16,7 @@
 		<mat-divider/>
 	}
 	@for (route of searchedRoutes$ | async; track $index) {
-		<mat-option (click)="onClickRoute.emit(route.id)">
+		<mat-option (click)="routeClicked.emit(route.id)">
 			<div class="row gap center">
 				<div class="station-color-dot" style="{{'background-color:#'+route.color}}"></div>
 				<div>{{ route.name | formatName }}</div>

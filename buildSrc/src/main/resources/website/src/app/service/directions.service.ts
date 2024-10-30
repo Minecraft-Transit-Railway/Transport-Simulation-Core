@@ -15,7 +15,7 @@ export class DirectionsService extends ServiceBase<{ data: { responseTime: numbe
 	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
 		super(() => {
 			if (this.originStation && this.destinationStation) {
-				return this.httpClient.post<{ data: { responseTime: number, directionsSegments: DataResponse[] } }>(this.getUrl("operation/directions"), JSON.stringify({
+				return this.httpClient.post<{ data: { responseTime: number, directionsSegments: DataResponse[] } }>(this.getUrl("directions"), JSON.stringify({
 					startPosition: DirectionsService.stationPositionToObject(this.originStation),
 					endPosition: DirectionsService.stationPositionToObject(this.destinationStation),
 					maxWalkingDistance: 10000,

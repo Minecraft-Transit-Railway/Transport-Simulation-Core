@@ -31,7 +31,7 @@ export class DataService extends ServiceBase<{ currentTime: number, data: DataRe
 	};
 
 	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
-		super(() => this.httpClient.get<{ currentTime: number, data: DataResponse }>(this.getUrl("map/stations-and-routes")), REFRESH_INTERVAL, dimensionService);
+		super(() => this.httpClient.get<{ currentTime: number, data: DataResponse }>(this.getUrl("stations-and-routes")), REFRESH_INTERVAL, dimensionService);
 		this.getData("");
 	}
 

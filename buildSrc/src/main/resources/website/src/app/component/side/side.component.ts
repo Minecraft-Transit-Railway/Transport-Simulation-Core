@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild} from "@angular/core";
+import {Component, EventEmitter, Output, ViewChild} from "@angular/core";
 import {MapComponent} from "../map/map.component";
 import {MatIconButton} from "@angular/material/button";
 import {MatIcon} from "@angular/material/icon";
@@ -24,8 +24,7 @@ import {DirectionsService} from "../../service/directions.service";
 })
 export class SideComponent {
 	@ViewChild(MatSidenav) private readonly sidenav!: MatSidenav;
-	@Input() onClose: () => void = () => {
-	};
+	@Output() closed = new EventEmitter<void>;
 
 	constructor(private readonly stationService: StationService, private readonly directionsService: DirectionsService) {
 	}
@@ -40,6 +39,6 @@ export class SideComponent {
 
 	onCloseMenu() {
 		this.sidenav.close().then();
-		this.onClose();
+		this.closed.emit();
 	}
 }

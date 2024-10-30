@@ -31,8 +31,8 @@ import {StationService} from "../../service/station.service";
 	styleUrl: "./search.component.css",
 })
 export class SearchComponent implements OnInit {
-	@Output() onClickStation = new EventEmitter<string>();
-	@Output() onClickRoute = new EventEmitter<string>();
+	@Output() stationClicked = new EventEmitter<string>();
+	@Output() routeClicked = new EventEmitter<string>();
 	@Input() label!: string;
 	@Input() includeRoutes!: boolean;
 	searchBox = new FormControl("");
