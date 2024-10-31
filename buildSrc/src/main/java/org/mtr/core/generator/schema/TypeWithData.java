@@ -69,7 +69,7 @@ public class TypeWithData {
 		parameters.add("readerBaseChild");
 		extraParameters.forEach(parameter -> parameters.add(String.format("%1$s%2$sParameter()", "%1$s", Utilities.capitalizeFirstLetter(parameter))));
 		return new TypeWithData(
-				Type.createObject(className),
+				Type.createObject(className, className),
 				"%1$s = new %2$s(readerBase.getChild(\"%1$s\"));",
 				String.format("readerBase.unpackChild(\"%1$s\", readerBaseChild -> %1$s = new %2$s(%3$s));", "%1$s", "%2$s", String.join(", ", parameters)),
 				"if (%1$s != null) %1$s.serializeData(writerBase.writeChild(\"%1$s\"));",
@@ -79,9 +79,9 @@ public class TypeWithData {
 		);
 	}
 
-	public static TypeWithData createEnum(String refName) {
+	public static TypeWithData createEnum(String refName, @Nullable String typeScriptEnum) {
 		return new TypeWithData(
-				Type.createEnum(refName),
+				Type.createEnum(refName, typeScriptEnum == null ? "" : typeScriptEnum),
 				String.format("%1$s = EnumHelper.valueOf(%2$s.values()[0], readerBase.getString(\"%1$s\", \"\"));", "%1$s", refName),
 				String.format("readerBase.unpackString(\"%1$s\", value -> %1$s = EnumHelper.valueOf(%2$s.values()[0], value));", "%1$s", refName),
 				"writerBase.writeString(\"%1$s\", %1$s.toString());",
@@ -92,7 +92,7 @@ public class TypeWithData {
 	}
 
 	private static String getRandomPrimitive(String primitiveType) {
-		if (primitiveType.equals(Type.STRING.name)) {
+		if (primitiveType.equals(Type.STRING.nameJava)) {
 			return "TestUtilities.randomString()";
 		} else {
 			return String.format("RANDOM.next%s()", primitiveType);

@@ -2,8 +2,10 @@ package org.mtr.core.generator.objects;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.mtr.core.generator.schema.Utilities;
 
 import javax.annotation.Nullable;
+import java.util.function.Function;
 
 public class Class implements GeneratedObject {
 
@@ -24,7 +26,7 @@ public class Class implements GeneratedObject {
 	}
 
 	@Override
-	public ObjectArrayList<String> generate() {
+	public ObjectArrayList<String> generateJava() {
 		final ObjectArrayList<String> result = new ObjectArrayList<>();
 
 		result.add(String.format("package %s;", packageName));
@@ -33,10 +35,38 @@ public class Class implements GeneratedObject {
 		imports.forEach(text -> result.add(String.format("import %s;", text)));
 		result.add("");
 
-		final StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("public ");
+		final StringBuilder stringBuilder = new StringBuilder("public ");
 		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
 		stringBuilder.append("class ").append(name);
+
+		getClassBody(result, stringBuilder);
+
+		appendWithTab(result, fields, GeneratedObject::generateJava, true);
+		appendWithTab(result, constructors, GeneratedObject::generateJava, false);
+		appendWithTab(result, methods, GeneratedObject::generateJava, false);
+
+		result.add("}");
+		return result;
+	}
+
+	@Override
+	public ObjectArrayList<String> generateTypeScript() {
+		final ObjectArrayList<String> result = new ObjectArrayList<>();
+
+		imports.forEach(text -> result.add(String.format("import {%s} from \"./%s\";", Utilities.capitalizeFirstLetter(text), text)));
+		result.add("");
+
+		getClassBody(result, new StringBuilder("export class ").append(name));
+
+		appendWithTab(result, fields, GeneratedObject::generateTypeScript, true);
+		appendWithTab(result, constructors, GeneratedObject::generateTypeScript, false);
+		appendWithTab(result, methods, GeneratedObject::generateTypeScript, false);
+
+		result.add("}");
+		return result;
+	}
+
+	private void getClassBody(ObjectArrayList<String> result, StringBuilder stringBuilder) {
 		if (extendsClass != null) {
 			stringBuilder.append(" extends ").append(extendsClass);
 		}
@@ -45,13 +75,6 @@ public class Class implements GeneratedObject {
 		}
 		stringBuilder.append(" {");
 		result.add(stringBuilder.toString());
-
-		appendWithTab(result, fields, true);
-		appendWithTab(result, constructors, false);
-		appendWithTab(result, methods, false);
-
-		result.add("}");
-		return result;
 	}
 
 	public Constructor createConstructor(VisibilityModifier visibilityModifier) {
@@ -60,10 +83,10 @@ public class Class implements GeneratedObject {
 		return constructor;
 	}
 
-	private static <T extends GeneratedObject> void appendWithTab(ObjectArrayList<String> result, ObjectArrayList<T> generatedObjects, boolean addSemicolon) {
+	private static <T extends GeneratedObject> void appendWithTab(ObjectArrayList<String> result, ObjectArrayList<T> generatedObjects, Function<T, ObjectArrayList<String>> getGenerated, boolean addSemicolon) {
 		generatedObjects.forEach(generatedObject -> {
 			result.add("");
-			generatedObject.generate().forEach(line -> result.add(String.format("\t%s%s", line, addSemicolon ? ";" : "")));
+			getGenerated.apply(generatedObject).forEach(line -> result.add(String.format("\t%s%s", line, addSemicolon ? ";" : "")));
 		});
 	}
 }

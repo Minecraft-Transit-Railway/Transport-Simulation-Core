@@ -18,7 +18,8 @@
 			"type": "string"
 		},
 		"circularState": {
-			"$ref": "org.mtr.core.data.Route.CircularState"
+			"$ref": "org.mtr.core.data.Route.CircularState",
+			"typeScriptEnum": "NONE|CLOCKWISE|ANTICLOCKWISE"
 		},
 		"stations": {
 			"type": "array",

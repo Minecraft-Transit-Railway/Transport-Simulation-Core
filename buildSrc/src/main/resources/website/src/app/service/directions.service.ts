@@ -1,6 +1,6 @@
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
-import {Station} from "./data.service";
+import {StationExtended} from "./data.service";
 import {ServiceBase} from "./service";
 import {DimensionService} from "./dimension.service";
 
@@ -8,8 +8,8 @@ const REFRESH_INTERVAL = 10000;
 
 @Injectable({providedIn: "root"})
 export class DirectionsService extends ServiceBase<{ data: { responseTime: number, directionsSegments: DataResponse[] } }> {
-	private originStation?: Station;
-	private destinationStation?: Station;
+	private originStation?: StationExtended;
+	private destinationStation?: StationExtended;
 	readonly directions: DirectionsSegment[] = [];
 
 	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
@@ -48,13 +48,13 @@ export class DirectionsService extends ServiceBase<{ data: { responseTime: numbe
 		});
 	}
 
-	public setOriginStation(originStation: Station) {
+	public setOriginStation(originStation: StationExtended) {
 		this.originStation = originStation;
 		this.directions.length = 0;
 		this.getData2();
 	}
 
-	public setDestinationStation(destinationStation: Station) {
+	public setDestinationStation(destinationStation: StationExtended) {
 		this.destinationStation = destinationStation;
 		this.directions.length = 0;
 		this.getData2();
@@ -72,7 +72,7 @@ export class DirectionsService extends ServiceBase<{ data: { responseTime: numbe
 		}
 	}
 
-	private static stationPositionToObject(station: Station) {
+	private static stationPositionToObject(station: StationExtended) {
 		return {x: station.x, y: station.y, z: station.z};
 	}
 }

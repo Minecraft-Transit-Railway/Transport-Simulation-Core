@@ -1,5 +1,5 @@
 import {Pipe, PipeTransform} from "@angular/core";
-import {Route} from "../service/data.service";
+import {RouteExtended} from "../service/data.service";
 
 @Pipe({
 	name: "simplifyRoutes",
@@ -8,7 +8,7 @@ import {Route} from "../service/data.service";
 })
 export class SimplifyRoutesPipe implements PipeTransform {
 
-	transform(routes: Route[]): { id: string, color: string, name: string }[] {
+	transform(routes: RouteExtended[]): { id: string, color: string, name: string }[] {
 		return routes.map(route => ({id: route.color, color: route.color, name: route.name}));
 	}
 }

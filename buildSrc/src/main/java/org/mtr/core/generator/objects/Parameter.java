@@ -15,8 +15,13 @@ public class Parameter implements GeneratedObject {
 	}
 
 	@Override
-	public ObjectArrayList<String> generate() {
-		return ObjectArrayList.of(String.format("%s %s %s", OtherModifier.FINAL.name, type.name, name));
+	public ObjectArrayList<String> generateJava() {
+		return ObjectArrayList.of(String.format("%s %s %s", OtherModifier.FINAL.name, type.nameJava, name));
+	}
+
+	@Override
+	public ObjectArrayList<String> generateTypeScript() {
+		return ObjectArrayList.of(String.format("%s: %s", name, type.nameTypeScript));
 	}
 
 	protected static String getParameterNames(ObjectArrayList<Parameter> superParameters) {

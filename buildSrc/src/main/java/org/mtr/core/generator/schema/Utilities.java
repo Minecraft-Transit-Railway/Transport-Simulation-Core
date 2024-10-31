@@ -15,6 +15,10 @@ public interface Utilities {
 		return isObject(text) ? capitalizeFirstLetter(text.split("\\.json")[0]) : text;
 	}
 
+	static String formatRefNameRaw(String text) {
+		return isObject(text) ? text.split("\\.json")[0] : text;
+	}
+
 	static boolean isObject(String text) {
 		return text.endsWith(".json");
 	}

@@ -53,13 +53,17 @@ test {
 	testLogging { showStandardStreams = true }
 }
 
-tasks.register("generateSchemaClasses") {
-	Generator.generate(project, "schema/data", "core/generated/data", true, "core.data", "core.simulation")
-	Generator.generate(project, "schema/legacy", "legacy/generated/data", false, "core.data", "legacy.data")
-	Generator.generate(project, "schema/integration", "core/generated/integration", false, "core.data", "core.integration")
-	Generator.generate(project, "schema/map", "core/generated/map", false, "core.map")
-	Generator.generate(project, "schema/oba", "core/generated/oba", false, "core.oba")
-	Generator.generate(project, "schema/operation", "core/generated/operation", false, "core.data", "core.operation")
+tasks.register("generateTypeScriptSchemaClasses") {
+	Generator.generateTypeScript(project, "schema/map", "buildSrc/src/main/resources/website/src/app/entity/generated")
+}
+
+tasks.register("generateJavaSchemaClasses") {
+	Generator.generateJava(project, "schema/data", "core/generated/data", true, "core.data", "core.simulation")
+	Generator.generateJava(project, "schema/legacy", "legacy/generated/data", false, "core.data", "legacy.data")
+	Generator.generateJava(project, "schema/integration", "core/generated/integration", false, "core.data", "core.integration")
+	Generator.generateJava(project, "schema/map", "core/generated/map", false, "core.map")
+	Generator.generateJava(project, "schema/oba", "core/generated/oba", false, "core.oba")
+	Generator.generateJava(project, "schema/operation", "core/generated/operation", false, "core.data", "core.operation")
 	WebserverSetup.setup(project.rootDir, "", "core")
 }
 

@@ -18,9 +18,23 @@ public class Constructor implements GeneratedObject {
 	}
 
 	@Override
-	public ObjectArrayList<String> generate() {
+	public ObjectArrayList<String> generateJava() {
 		final ObjectArrayList<String> result = new ObjectArrayList<>();
-		result.add(String.format("%s %s(%s) {", visibilityModifier.name, name, getAllParameters().stream().map(parameter -> String.join(" ", parameter.generate())).collect(Collectors.joining(", "))));
+		result.add(String.format("%s %s(%s) {", visibilityModifier.name, name, getAllParameters().stream().map(parameter -> String.join(" ", parameter.generateJava())).collect(Collectors.joining(", "))));
+
+		if (!superParameters.isEmpty()) {
+			result.add(String.format("\tsuper(%s);", Parameter.getParameterNames(superParameters)));
+		}
+
+		content.forEach(line -> result.add(String.format("\t%s", line)));
+		result.add("}");
+		return result;
+	}
+
+	@Override
+	public ObjectArrayList<String> generateTypeScript() {
+		final ObjectArrayList<String> result = new ObjectArrayList<>();
+		result.add(String.format("%s constructor(%s) {", visibilityModifier.name, getAllParameters().stream().map(parameter -> String.join(" ", parameter.generateTypeScript())).collect(Collectors.joining(", "))));
 
 		if (!superParameters.isEmpty()) {
 			result.add(String.format("\tsuper(%s);", Parameter.getParameterNames(superParameters)));

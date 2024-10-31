@@ -1,22 +1,26 @@
 import {plainToInstance} from "class-transformer";
 import {arrayAverage, pushIfNotExists, setIfUndefined} from "../data/utilities";
 import {ROUTE_TYPES} from "../data/routeType";
-import {LineConnection} from "../data/lineConnection";
-import {StationConnection} from "../data/stationConnection";
+import {LineConnection} from "../entity/lineConnection";
+import {StationConnection} from "../entity/stationConnection";
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {ServiceBase} from "./service";
 import {DimensionService} from "./dimension.service";
+import {RouteStation} from "../entity/generated/routeStation";
+import {StationsAndRoutes} from "../entity/generated/stationsAndRoutes";
+import {Station} from "../entity/generated/station";
+import {Route} from "../entity/generated/route";
 
 const REFRESH_INTERVAL = 30000;
 
 @Injectable({providedIn: "root"})
-export class DataService extends ServiceBase<{ currentTime: number, data: DataResponse }> {
+export class DataService extends ServiceBase<{ currentTime: number, data: StationsAndRoutes }> {
 	private routeTypes: { [key: string]: number } = {};
-	private tempRoutes: Route[] = [];
+	private tempRoutes: RouteExtended[] = [];
 	private stations: StationWithPosition[] = [];
 	private allStations: StationWithPosition[] = [];
-	private allRoutes: Route[] = [];
+	private allRoutes: RouteExtended[] = [];
 	private stationConnections: StationConnection[] = [];
 	private lineConnections: LineConnection[] = [];
 	private centerX = 0;
@@ -31,11 +35,11 @@ export class DataService extends ServiceBase<{ currentTime: number, data: DataRe
 	};
 
 	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
-		super(() => this.httpClient.get<{ currentTime: number, data: DataResponse }>(this.getUrl("stations-and-routes")), REFRESH_INTERVAL, dimensionService);
+		super(() => this.httpClient.get<{ currentTime: number, data: StationsAndRoutes }>(this.getUrl("stations-and-routes")), REFRESH_INTERVAL, dimensionService);
 		this.getData("");
 	}
 
-	protected override processData(data: { currentTime: number; data: DataResponse }) {
+	protected override processData(data: { currentTime: number; data: StationsAndRoutes }) {
 		if (this.canSetTimeOffset) {
 			this.timeOffset = Date.now() - data.currentTime;
 			this.canSetTimeOffset = false;
@@ -46,19 +50,19 @@ export class DataService extends ServiceBase<{ currentTime: number, data: DataRe
 
 		data.data.routes.forEach(dataResponseRoute => {
 			const stationIds: string [] = [];
-			const routeStationsInfo: Station[] = [];
+			const routeStationsInfo: StationExtended[] = [];
 			pushIfNotExists(availableRouteTypes, dataResponseRoute.type);
 
 			dataResponseRoute.stations.forEach(dateResponseRouteStation => {
 				const dataResponseStation = data.data.stations.find(dataResponseStation => dataResponseStation.id === dateResponseRouteStation.id);
 				if (dataResponseStation !== undefined) {
 					pushIfNotExists(stationIds, dateResponseRouteStation.id);
-					routeStationsInfo.push(Station.create(dataResponseStation, dateResponseRouteStation));
+					routeStationsInfo.push(StationExtended.create(dataResponseStation, dateResponseRouteStation));
 				}
 			});
 
 			if (stationIds.length > 1) {
-				this.tempRoutes.push(new Route(dataResponseRoute, routeStationsInfo));
+				this.tempRoutes.push(new RouteExtended(dataResponseRoute, routeStationsInfo));
 			}
 		});
 
@@ -386,55 +390,24 @@ export class DataService extends ServiceBase<{ currentTime: number, data: DataRe
 	}
 }
 
-class DataResponse {
-	readonly stations: DataResponseStation[] = [];
-	readonly routes: DataResponseRoute[] = [];
-	readonly dimensions: string[] = [];
-}
-
-class DataResponseStation {
-	readonly id: string = "";
-	readonly name: string = "";
-	readonly color: string = "";
-	readonly zone1: number = 0;
-	readonly zone2: number = 0;
-	readonly zone3: number = 0;
-	readonly connections: string[] = [];
-}
-
-class DataResponseRoute {
-	readonly name: string = "";
-	readonly color: string = "";
-	readonly number: string = "";
-	readonly type: string = "";
-	readonly circularState: string = "";
-	readonly stations: DataResponseRouteStation[] = [];
-}
-
-class DataResponseRouteStation {
-	readonly id: string = "";
-	readonly x: number = 0;
-	readonly y: number = 0;
-	readonly z: number = 0;
-}
-
-export class Station {
+export class StationExtended extends RouteStation {
 	constructor(
-		public readonly id: string,
+		id: string,
 		public readonly name: string,
 		public readonly color: string,
 		public readonly zone1: number,
 		public readonly zone2: number,
 		public readonly zone3: number,
 		public readonly connections: string[],
-		public readonly x: number,
-		public readonly y: number,
-		public readonly z: number,
+		x: number,
+		y: number,
+		z: number,
 	) {
+		super(id, x, y, z);
 	}
 
-	static create(dataResponseStation: DataResponseStation, dataResponseRouteStation: DataResponseRouteStation) {
-		return new Station(
+	static create(dataResponseStation: Station, dataResponseRouteStation: RouteStation) {
+		return new StationExtended(
 			dataResponseStation.id,
 			dataResponseStation.name,
 			dataResponseStation.color,
@@ -449,7 +422,7 @@ export class Station {
 	}
 }
 
-export class StationWithPosition extends Station {
+export class StationWithPosition extends StationExtended {
 	public readonly types: string[] = [];
 	public readonly rotate: boolean = false;
 	public readonly routeCount: number = 0;
@@ -457,14 +430,14 @@ export class StationWithPosition extends Station {
 	public readonly height: number = 0;
 }
 
-export class Route {
+export class RouteExtended {
 	public readonly name: string;
 	public readonly color: string;
 	public readonly number: string;
 	public readonly type: string;
 	public readonly circularState: string;
 
-	constructor(dataResponseRoute: DataResponseRoute, readonly stations: Station[]) {
+	constructor(dataResponseRoute: Route, readonly stations: StationExtended[]) {
 		this.name = dataResponseRoute.name;
 		this.color = dataResponseRoute.color;
 		this.number = dataResponseRoute.number;

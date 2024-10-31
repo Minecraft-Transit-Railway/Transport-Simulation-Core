@@ -29,12 +29,24 @@ public class Field implements GeneratedObject {
 	}
 
 	@Override
-	public ObjectArrayList<String> generate() {
+	public ObjectArrayList<String> generateJava() {
 		final ObjectArrayList<String> result = new ObjectArrayList<>();
 
 		final StringBuilder stringBuilder = new StringBuilder(visibilityModifier.name).append(' ');
 		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
-		stringBuilder.append(type.name).append(' ').append(name).append(type.getInitializer(defaultValue, useDefaultInitializer));
+		stringBuilder.append(type.nameJava).append(' ').append(name).append(type.getInitializerJava(defaultValue, useDefaultInitializer));
+		result.add(stringBuilder.toString());
+
+		return result;
+	}
+
+	@Override
+	public ObjectArrayList<String> generateTypeScript() {
+		final ObjectArrayList<String> result = new ObjectArrayList<>();
+
+		final StringBuilder stringBuilder = new StringBuilder(visibilityModifier.name).append(' ');
+		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
+		stringBuilder.append(name).append(": ").append(type.nameTypeScript).append(type.getInitializerTypeScript(defaultValue, useDefaultInitializer));
 		result.add(stringBuilder.toString());
 
 		return result;

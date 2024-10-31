@@ -4,5 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public interface GeneratedObject {
 
-	ObjectArrayList<String> generate();
+	ObjectArrayList<String> generateJava();
+
+	ObjectArrayList<String> generateTypeScript();
 }

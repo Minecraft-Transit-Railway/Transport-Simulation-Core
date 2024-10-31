@@ -23,17 +23,37 @@ public class Method implements GeneratedObject {
 	}
 
 	@Override
-	public ObjectArrayList<String> generate() {
+	public ObjectArrayList<String> generateJava() {
 		final ObjectArrayList<String> result = new ObjectArrayList<>();
 		annotations.forEach(annotation -> result.add(String.format("@%s", annotation)));
 		final boolean isAbstract = otherModifiers.contains(OtherModifier.ABSTRACT);
 
 		final StringBuilder stringBuilder = new StringBuilder(visibilityModifier.name).append(' ');
 		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
-		stringBuilder.append(returnType == null ? "void" : returnType.name).append(' ');
+		stringBuilder.append(returnType == null ? "void" : returnType.nameJava).append(' ');
 		stringBuilder.append(name).append('(');
-		stringBuilder.append(parameters.stream().map(parameter -> String.join(" ", parameter.generate())).collect(Collectors.joining(", "))).append(")");
+		stringBuilder.append(parameters.stream().map(parameter -> String.join(" ", parameter.generateJava())).collect(Collectors.joining(", "))).append(")");
 
+		getMethodBody(result, isAbstract, stringBuilder);
+		return result;
+	}
+
+	@Override
+	public ObjectArrayList<String> generateTypeScript() {
+		final ObjectArrayList<String> result = new ObjectArrayList<>();
+		final boolean isAbstract = otherModifiers.contains(OtherModifier.ABSTRACT);
+
+		final StringBuilder stringBuilder = new StringBuilder(visibilityModifier.name).append(' ');
+		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
+		stringBuilder.append(name).append("(");
+		stringBuilder.append(parameters.stream().map(parameter -> String.join(" ", parameter.generateTypeScript())).collect(Collectors.joining(", "))).append("): ");
+		stringBuilder.append(returnType == null ? "void" : returnType.nameTypeScript);
+
+		getMethodBody(result, isAbstract, stringBuilder);
+		return result;
+	}
+
+	private void getMethodBody(ObjectArrayList<String> result, boolean isAbstract, StringBuilder stringBuilder) {
 		if (isAbstract) {
 			stringBuilder.append(";");
 			result.add(stringBuilder.toString());
@@ -43,7 +63,5 @@ public class Method implements GeneratedObject {
 			content.forEach(line -> result.add(String.format("\t%s", line)));
 			result.add("}");
 		}
-
-		return result;
 	}
 }

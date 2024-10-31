@@ -2,13 +2,14 @@ package org.mtr.core.generator.schema;
 
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generator.objects.Class;
 import org.mtr.core.generator.objects.*;
 
 import javax.annotation.Nullable;
 
-public class SchemaParser {
+public class SchemaParserJava {
 
 	private final Class schemaClass;
 	private final Constructor constructor1;
@@ -20,7 +21,7 @@ public class SchemaParser {
 	final ObjectArrayList<String> testMethodContent1 = new ObjectArrayList<>();
 	final ObjectArrayList<String> testMethodContent2 = new ObjectArrayList<>();
 
-	public SchemaParser(Class schemaClass, @Nullable String extendsClassName, Method testMethod, JsonObject jsonObject) {
+	public SchemaParserJava(Class schemaClass, @Nullable String extendsClassName, Method testMethod, JsonObject jsonObject) {
 		this.schemaClass = schemaClass;
 		constructor1 = schemaClass.createConstructor(VisibilityModifier.PROTECTED);
 		constructor2 = schemaClass.createConstructor(VisibilityModifier.PROTECTED);
@@ -29,8 +30,8 @@ public class SchemaParser {
 		this.extendsClassName = extendsClassName;
 		this.testMethod = testMethod;
 
-		updateMethod.parameters.add(new Parameter(Type.createObject("ReaderBase"), "readerBase"));
-		serializeMethod.parameters.add(new Parameter(Type.createObject("WriterBase"), "writerBase"));
+		updateMethod.parameters.add(new Parameter(Type.createObject("ReaderBase", ""), "readerBase"));
+		serializeMethod.parameters.add(new Parameter(Type.createObject("WriterBase", ""), "writerBase"));
 		schemaClass.methods.add(updateMethod);
 		schemaClass.methods.add(serializeMethod);
 		final Method toStringMethod = new Method(VisibilityModifier.PUBLIC, Type.STRING, "toString");
@@ -39,7 +40,7 @@ public class SchemaParser {
 		schemaClass.methods.add(toStringMethod);
 
 		Utilities.iterateObject(jsonObject.getAsJsonObject("properties"), (key, propertyObject) -> {
-			final TypeWithData typeWithData = getType(propertyObject, false);
+			final TypeWithData typeWithData = getType(propertyObject, false, new ObjectAVLTreeSet<>());
 			if (typeWithData != null) {
 				final boolean required = Utilities.arrayContains(jsonObject.getAsJsonArray("required"), key);
 				final Field field;
@@ -58,11 +59,11 @@ public class SchemaParser {
 							constructor1.parameters.add(new Parameter(typeWithData.type, key));
 							constructor1.content.add(String.format("this.%1$s = %1$s;", key));
 						} else {
-							constructor1.content.add(String.format("this.%s%s;", key, typeWithData.type.getInitializer(defaultValue, false)));
+							constructor1.content.add(String.format("this.%s%s;", key, typeWithData.type.getInitializerJava(defaultValue, false)));
 						}
 
-						constructor2.content.add(String.format(typeWithData.readData, key, typeWithData.type.name));
-						serializeMethod.content.add(String.format(typeWithData.writeData, key, typeWithData.type.name));
+						constructor2.content.add(String.format(typeWithData.readData, key, typeWithData.type.nameJava));
+						serializeMethod.content.add(String.format(typeWithData.writeData, key, typeWithData.type.nameJava));
 					} else {
 						if (defaultValue != null) {
 							field = new Field(VisibilityModifier.PROTECTED, typeWithData.type, key, defaultValue);
@@ -82,7 +83,7 @@ public class SchemaParser {
 
 				typeWithData.extraParameters.forEach(parameter -> {
 					final String methodName = String.format("%s%sParameter", key, Utilities.capitalizeFirstLetter(parameter));
-					final Method method = new Method(VisibilityModifier.PROTECTED, Type.createObject(Utilities.capitalizeFirstLetter(parameter)), methodName);
+					final Method method = new Method(VisibilityModifier.PROTECTED, Type.createObject(Utilities.capitalizeFirstLetter(parameter), ""), methodName);
 					method.otherModifiers.add(OtherModifier.ABSTRACT);
 					method.annotations.add("Nonnull");
 					schemaClass.methods.add(method);
@@ -94,7 +95,7 @@ public class SchemaParser {
 		});
 
 		Utilities.iterateStringArray(jsonObject.getAsJsonArray("javaConstructorFields"), constructorField -> {
-			final Type type = Type.createObject(Utilities.capitalizeFirstLetter(constructorField));
+			final Type type = Type.createObject(Utilities.capitalizeFirstLetter(constructorField), "");
 			constructor1.parameters.add(new Parameter(type, constructorField));
 			constructor1.content.add(String.format("this.%1$s = %1$s;", constructorField));
 			constructor2.parameters.add(new Parameter(type, constructorField));
@@ -108,11 +109,11 @@ public class SchemaParser {
 		toStringMethod.content.add(";");
 
 		if (extendsClassName == null) {
-			constructor2.parameters.add(0, new Parameter(Type.createObject("ReaderBase"), "readerBase"));
+			constructor2.parameters.add(0, new Parameter(Type.createObject("ReaderBase", ""), "readerBase"));
 		}
 	}
 
-	public String generateSchemaClass(Object2ObjectAVLTreeMap<String, SchemaParser> schemaParsers, Class testClass) {
+	public String generateSchemaClass(Object2ObjectAVLTreeMap<String, SchemaParserJava> schemaParsers, Class testClass) {
 		if (extendsClassName != null) {
 			updateMethod.content.add(0, "super.updateData(readerBase);");
 			serializeMethod.content.add(0, "super.serializeData(writerBase);");
@@ -120,28 +121,50 @@ public class SchemaParser {
 
 		traverseExtendedClasses(this, schemaParsers);
 
-		if (schemaParsers.values().stream().noneMatch(schemaParser -> schemaParser.extendsClassName != null && equals(schemaParsers.get(schemaParser.extendsClassName)))) {
+		if (schemaParsers.values().stream().noneMatch(schemaParserJava -> schemaParserJava.extendsClassName != null && equals(schemaParsers.get(schemaParserJava.extendsClassName)))) {
 			testMethod.content.addAll(testMethodContent1);
 			testMethod.content.addAll(testMethodContent2);
 			testMethod.content.add(testMethod.content.get(1));
 			testClass.methods.add(testMethod);
 		}
 
-		return String.join("\n", schemaClass.generate());
+		return String.join("\n", schemaClass.generateJava());
 	}
 
-	private TypeWithData getType(JsonObject jsonObject, boolean isArray) {
+	private void addNonFinalSerialization(TypeWithData typeWithData, String key) {
+		final String methodName = String.format("serialize%s", Utilities.capitalizeFirstLetter(key));
+		final Method method = new Method(VisibilityModifier.PROTECTED, null, methodName);
+		method.parameters.add(new Parameter(Type.createObject("WriterBase", ""), "writerBase"));
+		method.content.add(String.format(typeWithData.writeData, key, typeWithData.type.nameJava));
+		schemaClass.methods.add(method);
+		updateMethod.content.add(String.format(typeWithData.unpackData, key, typeWithData.type.nameJava));
+		serializeMethod.content.add(String.format("%s(writerBase);", methodName));
+		testMethodContent1.add(String.format(typeWithData.randomData, String.format("data.%s", key)));
+	}
+
+	private void traverseExtendedClasses(SchemaParserJava schemaParserJava, Object2ObjectAVLTreeMap<String, SchemaParserJava> schemaParsers) {
+		if (schemaParserJava.extendsClassName != null) {
+			final SchemaParserJava extendedSchemaParserJava = schemaParsers.get(schemaParserJava.extendsClassName);
+			constructor1.superParameters.addAll(extendedSchemaParserJava.constructor1.parameters);
+			constructor2.superParameters.addAll(extendedSchemaParserJava.constructor2.parameters);
+			testMethodContent2.addAll(extendedSchemaParserJava.testMethodContent1);
+			traverseExtendedClasses(extendedSchemaParserJava, schemaParsers);
+		}
+	}
+
+	public static TypeWithData getType(JsonObject jsonObject, boolean isArray, ObjectAVLTreeSet<String> typeScriptImports) {
 		final String refName = Utilities.getStringOrNull(jsonObject.get("$ref"));
 		final String typeString = Utilities.getStringOrNull(jsonObject.get("type"));
 
 		if (refName != null) {
 			final String formattedRefName = Utilities.formatRefName(refName);
 			if (Utilities.isObject(refName)) {
+				typeScriptImports.add(Utilities.formatRefNameRaw(refName));
 				final ObjectArrayList<String> extraParameters = new ObjectArrayList<>();
 				Utilities.iterateStringArray(jsonObject.getAsJsonArray("parameters"), parameter -> extraParameters.add(Utilities.formatRefName(parameter)));
-				return isArray ? TypeWithData.createArray(Type.createArray(formattedRefName), formattedRefName, extraParameters) : TypeWithData.createObject(formattedRefName, extraParameters);
+				return isArray ? TypeWithData.createArray(Type.createArray(formattedRefName, formattedRefName), formattedRefName, extraParameters) : TypeWithData.createObject(formattedRefName, extraParameters);
 			} else {
-				return isArray ? null : TypeWithData.createEnum(formattedRefName);
+				return isArray ? null : TypeWithData.createEnum(formattedRefName, Utilities.getStringOrNull(jsonObject.get("typeScriptEnum")));
 			}
 		} else if (typeString != null) {
 			switch (typeString) {
@@ -154,7 +177,7 @@ public class SchemaParser {
 				case "string":
 					return isArray ? TypeWithData.createPrimitiveArray(Type.STRING_ARRAY, "String") : TypeWithData.createPrimitive(Type.STRING, "String", "\"\"");
 				case "array":
-					return getType(jsonObject.getAsJsonObject("items"), true);
+					return getType(jsonObject.getAsJsonObject("items"), true, typeScriptImports);
 				case "object":
 					// TODO nested objects not supported
 				default:
@@ -162,27 +185,6 @@ public class SchemaParser {
 			}
 		} else {
 			return null;
-		}
-	}
-
-	private void addNonFinalSerialization(TypeWithData typeWithData, String key) {
-		final String methodName = String.format("serialize%s", Utilities.capitalizeFirstLetter(key));
-		final Method method = new Method(VisibilityModifier.PROTECTED, null, methodName);
-		method.parameters.add(new Parameter(Type.createObject("WriterBase"), "writerBase"));
-		method.content.add(String.format(typeWithData.writeData, key, typeWithData.type.name));
-		schemaClass.methods.add(method);
-		updateMethod.content.add(String.format(typeWithData.unpackData, key, typeWithData.type.name));
-		serializeMethod.content.add(String.format("%s(writerBase);", methodName));
-		testMethodContent1.add(String.format(typeWithData.randomData, String.format("data.%s", key)));
-	}
-
-	private void traverseExtendedClasses(SchemaParser schemaParser, Object2ObjectAVLTreeMap<String, SchemaParser> schemaParsers) {
-		if (schemaParser.extendsClassName != null) {
-			final SchemaParser extendedSchemaParser = schemaParsers.get(schemaParser.extendsClassName);
-			constructor1.superParameters.addAll(extendedSchemaParser.constructor1.parameters);
-			constructor2.superParameters.addAll(extendedSchemaParser.constructor2.parameters);
-			testMethodContent2.addAll(extendedSchemaParser.testMethodContent1);
-			traverseExtendedClasses(extendedSchemaParser, schemaParsers);
 		}
 	}
 }
