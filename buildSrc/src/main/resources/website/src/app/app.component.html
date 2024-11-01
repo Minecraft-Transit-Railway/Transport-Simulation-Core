@@ -5,9 +5,9 @@
 			<button mat-fab class="button-corner" color="" aria-label="Menu" (click)="sideMain.open()">
 				<mat-icon>menu</mat-icon>
 			</button>
-			<div sidenav class="column margin">
+			<div sidenav class="column wrapper">
 				<app-search label="Search for anything..." [includeRoutes]="true" (stationClicked)="onClickStation($event, sideStation, sideDirections, true)"/>
-				<app-panel/>
+				<app-panel class="wrapper"/>
 			</div>
 			<div title>{{ getTitle() }}</div>
 		</app-side>

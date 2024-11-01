@@ -43,7 +43,7 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 				name: newArrival.routeName,
 				number: newArrival.routeNumber,
 				color: newArrival.routeColor,
-				lineCount: Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length),
+				lineCount: Math.max(2, Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length)),
 				typeIcon: newArrival.routeTypeIcon,
 			};
 			if (newArrival.isTerminating) {

@@ -54,7 +54,7 @@ export abstract class ServiceBase<T> {
 	private scheduleData() {
 		clearTimeout(this.timeoutId);
 		const instance = this;
-		this.timeoutId = setTimeout(() => instance.getDataInternal(), this.refreshInterval);
+		this.timeoutId = setTimeout(() => instance.getDataInternal(), this.refreshInterval) as unknown as number;
 	}
 
 	private formatId() {

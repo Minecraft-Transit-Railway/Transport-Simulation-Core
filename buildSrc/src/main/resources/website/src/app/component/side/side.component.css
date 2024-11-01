@@ -13,10 +13,7 @@ mat-sidenav {
 	width: 24em;
 }
 
-.wrapper {
-	height: 100%;
-}
-
-.content {
-	overflow: auto;
+.padded {
+	box-sizing: border-box;
+	padding: 1em;
 }

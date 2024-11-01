@@ -1,4 +1,4 @@
-<div class="column gap-small">
+<div class="column wrapper">
 	<mat-form-field>
 		<mat-label>Dimension</mat-label>
 		<mat-select #dropdown (selectionChange)="setDimension(dropdown.value)">
@@ -7,22 +7,24 @@
 			}
 		</mat-select>
 	</mat-form-field>
-	@for (routeType of routeTypes; track $index) {
-		<div class="row-reverse gap center">
-			<mat-button-toggle-group hideSingleSelectionIndicator #group="matButtonToggleGroup" [value]="getSelected(routeType[0])?.toString()" (change)="onSelect(routeType[0], group.value)">
-				<mat-button-toggle value="0">
-					<mat-icon>visibility_off</mat-icon>
-				</mat-button-toggle>
-				<mat-button-toggle value="1">
-					<mat-icon>horizontal_rule</mat-icon>
-				</mat-button-toggle>
-				<mat-button-toggle value="2">
-					<mat-icon>drag_handle</mat-icon>
-				</mat-button-toggle>
-			</mat-button-toggle-group>
-			<div class="spacing"></div>
-			<div class="shrink">{{ routeType[1].text }}</div>
-			<mat-icon>{{ routeType[1].icon }}</mat-icon>
-		</div>
-	}
+	<div class="column gap-small content">
+		@for (routeType of routeTypes; track $index) {
+			<div class="row-reverse gap center">
+				<mat-button-toggle-group hideSingleSelectionIndicator #group="matButtonToggleGroup" [value]="getSelected(routeType[0])?.toString()" (change)="onSelect(routeType[0], group.value)">
+					<mat-button-toggle value="0">
+						<mat-icon>visibility_off</mat-icon>
+					</mat-button-toggle>
+					<mat-button-toggle value="1">
+						<mat-icon>horizontal_rule</mat-icon>
+					</mat-button-toggle>
+					<mat-button-toggle value="2">
+						<mat-icon>drag_handle</mat-icon>
+					</mat-button-toggle>
+				</mat-button-toggle-group>
+				<div class="spacing"></div>
+				<div class="shrink">{{ routeType[1].text }}</div>
+				<mat-icon>{{ routeType[1].icon }}</mat-icon>
+			</div>
+		}
+	</div>
 </div>

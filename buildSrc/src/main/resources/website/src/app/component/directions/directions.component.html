@@ -1,7 +1,7 @@
-<div class="column margin">
+<div class="column">
 	@if (isLoading()) {
 		<div class="column center">
-			<mat-spinner/>
+			<mat-spinner class="grayscale"/>
 		</div>
 	}
 	@for (directionsSegment of getDirections(); track $index) {
