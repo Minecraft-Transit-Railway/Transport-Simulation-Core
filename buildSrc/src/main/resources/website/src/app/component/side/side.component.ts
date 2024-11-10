@@ -1,23 +1,23 @@
 import {Component, EventEmitter, Output, ViewChild} from "@angular/core";
 import {MapComponent} from "../map/map.component";
-import {MatIconButton} from "@angular/material/button";
-import {MatIcon} from "@angular/material/icon";
-import {MatSidenav, MatSidenavContainer, MatSidenavContent} from "@angular/material/sidenav";
-import {MatToolbar} from "@angular/material/toolbar";
+import {MatButtonModule} from "@angular/material/button";
+import {MatIconModule} from "@angular/material/icon";
+import {MatSidenav, MatSidenavModule} from "@angular/material/sidenav";
+import {MatToolbarModule} from "@angular/material/toolbar";
 import {StationService} from "../../service/station.service";
 import {DirectionsService} from "../../service/directions.service";
+import {MatTooltipModule} from "@angular/material/tooltip";
 
 @Component({
 	selector: "app-side",
 	standalone: true,
 	imports: [
 		MapComponent,
-		MatIcon,
-		MatIconButton,
-		MatSidenav,
-		MatSidenavContainer,
-		MatSidenavContent,
-		MatToolbar,
+		MatIconModule,
+		MatButtonModule,
+		MatSidenavModule,
+		MatToolbarModule,
+		MatTooltipModule,
 	],
 	templateUrl: "./side.component.html",
 	styleUrl: "./side.component.css",

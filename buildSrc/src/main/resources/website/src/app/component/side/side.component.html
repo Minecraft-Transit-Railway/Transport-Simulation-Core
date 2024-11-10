@@ -2,14 +2,14 @@
 	<mat-sidenav position="end">
 		<div class="column-reverse wrapper">
 			<div class="spacing"></div>
-			<div class="wrapper padded">
+			<div class="wrapper padding-top-bottom">
 				<ng-content select="[sidenav]"/>
 			</div>
 			<mat-toolbar>
 				<div>&nbsp;</div>
 				<ng-content select="[title]"/>
 				<div class="spacing"></div>
-				<button mat-icon-button aria-label="Close Menu" (click)="onCloseMenu()">
+				<button mat-icon-button aria-label="Close Menu" (click)="onCloseMenu()" matTooltip="Close Menu">
 					<mat-icon>close</mat-icon>
 				</button>
 			</mat-toolbar>

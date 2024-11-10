@@ -68,6 +68,30 @@ html, body {
 	height: 100%;
 }
 
+.padding-top-bottom {
+	box-sizing: border-box;
+	padding-top: 1em;
+	padding-bottom: 1em;
+}
+
+.padding-sides {
+	box-sizing: border-box;
+	padding-left: 1em;
+	padding-right: 1em;
+}
+
+.padding-top-bottom-small {
+	box-sizing: border-box;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+}
+
+.padding-sides-small {
+	box-sizing: border-box;
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+}
+
 mat-icon {
 	min-width: 1em;
 }

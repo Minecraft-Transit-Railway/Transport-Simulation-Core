@@ -1,44 +1,39 @@
 import {Component, EventEmitter, Inject, Output} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
-import {MatIcon} from "@angular/material/icon";
+import {MatIcon, MatIconModule} from "@angular/material/icon";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
-import {MatButtonToggle, MatButtonToggleGroup} from "@angular/material/button-toggle";
-import {MatExpansionPanel, MatExpansionPanelHeader, MatExpansionPanelTitle} from "@angular/material/expansion";
+import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
-import {MatDivider} from "@angular/material/divider";
-import {MatChipListbox, MatChipOption} from "@angular/material/chips";
+import {MatDividerModule} from "@angular/material/divider";
+import {MatChipListbox, MatChipOption, MatChipsModule} from "@angular/material/chips";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {FormatDatePipe} from "../../pipe/formatDatePipe";
-import {MatCheckbox} from "@angular/material/checkbox";
-import {MatRipple} from "@angular/material/core";
+import {MatCheckbox, MatCheckboxModule} from "@angular/material/checkbox";
+import {MatRippleModule} from "@angular/material/core";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle} from "@angular/material/dialog";
-import {MatButton, MatButtonModule, MatIconButton} from "@angular/material/button";
-import {MatProgressSpinner} from "@angular/material/progress-spinner";
+import {MatButtonModule} from "@angular/material/button";
+import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
+import {MatTooltipModule} from "@angular/material/tooltip";
 
 @Component({
 	selector: "app-station",
 	standalone: true,
 	imports: [
-		MatIcon,
+		MatIconModule,
 		SplitNamePipe,
-		MatButtonToggle,
-		MatButtonToggleGroup,
-		MatExpansionPanel,
-		MatExpansionPanelHeader,
-		MatExpansionPanelTitle,
+		MatButtonToggleModule,
 		FormatTimePipe,
 		FormatNamePipe,
-		MatDivider,
-		MatChipListbox,
-		MatChipOption,
+		MatDividerModule,
+		MatChipsModule,
 		FormatColorPipe,
 		FormatDatePipe,
-		MatCheckbox,
-		MatRipple,
-		MatProgressSpinner,
-		MatIconButton,
-		MatButton,
+		MatCheckboxModule,
+		MatRippleModule,
+		MatProgressSpinnerModule,
+		MatButtonModule,
+		MatTooltipModule,
 	],
 	templateUrl: "./station.component.html",
 	styleUrl: "./station.component.css",

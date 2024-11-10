@@ -1,8 +1,7 @@
 import {Component} from "@angular/core";
 import {MapComponent} from "./component/map/map.component";
 import {PanelComponent} from "./component/panel/panel.component";
-import {MatIcon} from "@angular/material/icon";
-import {MatFabButton, MatIconButton} from "@angular/material/button";
+import {MatButtonModule} from "@angular/material/button";
 import {SearchComponent} from "./component/search/search.component";
 import {StationComponent} from "./component/station/station.component";
 import {StationService} from "./service/station.service";
@@ -11,6 +10,8 @@ import {SideComponent} from "./component/side/side.component";
 import {DataService} from "./service/data.service";
 import {DirectionsComponent} from "./component/directions/directions.component";
 import {DirectionsService} from "./service/directions.service";
+import {MatTooltipModule} from "@angular/material/tooltip";
+import {MatIconModule} from "@angular/material/icon";
 
 @Component({
 	selector: "app-root",
@@ -18,13 +19,13 @@ import {DirectionsService} from "./service/directions.service";
 	imports: [
 		MapComponent,
 		PanelComponent,
-		MatIcon,
-		MatIconButton,
-		MatFabButton,
+		MatButtonModule,
+		MatIconModule,
 		SearchComponent,
 		StationComponent,
 		SideComponent,
 		DirectionsComponent,
+		MatTooltipModule,
 	],
 	templateUrl: "./app.component.html",
 	styleUrls: ["./app.component.css"],

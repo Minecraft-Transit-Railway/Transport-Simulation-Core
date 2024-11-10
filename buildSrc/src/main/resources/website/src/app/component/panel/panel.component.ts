@@ -1,30 +1,24 @@
 import {Component} from "@angular/core";
-import {MatExpansionPanel, MatExpansionPanelDescription, MatExpansionPanelHeader, MatExpansionPanelTitle} from "@angular/material/expansion";
 import {DataService} from "../../service/data.service";
-import {MatButtonToggle, MatButtonToggleGroup} from "@angular/material/button-toggle";
+import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {ReactiveFormsModule} from "@angular/forms";
-import {MatIcon} from "@angular/material/icon";
-import {MatFormField, MatLabel} from "@angular/material/form-field";
-import {MatOption, MatSelect} from "@angular/material/select";
+import {MatIconModule} from "@angular/material/icon";
+import {MatSelectModule} from "@angular/material/select";
 import {DimensionService} from "../../service/dimension.service";
+import {SearchComponent} from "../search/search.component";
+import {MatTooltipModule} from "@angular/material/tooltip";
 
 @Component({
 	selector: "app-panel",
 	standalone: true,
 	imports: [
-		MatExpansionPanel,
-		MatExpansionPanelTitle,
-		MatExpansionPanelHeader,
-		MatExpansionPanelDescription,
-		MatButtonToggleGroup,
-		MatButtonToggle,
+		MatButtonToggleModule,
 		ReactiveFormsModule,
-		MatIcon,
-		MatLabel,
-		MatFormField,
-		MatSelect,
-		MatOption,
+		MatIconModule,
+		MatSelectModule,
+		MatTooltipModule,
+		SearchComponent,
 	],
 	templateUrl: "./panel.component.html",
 	styleUrl: "./panel.component.css",

@@ -1,5 +1,5 @@
-<div class="column wrapper">
-	<mat-form-field>
+<div class="column gap wrapper">
+	<mat-form-field class="padding-sides" subscriptSizing="dynamic">
 		<mat-label>Dimension</mat-label>
 		<mat-select #dropdown (selectionChange)="setDimension(dropdown.value)">
 			@for (dimension of getDimensions(); track $index) {
@@ -9,15 +9,15 @@
 	</mat-form-field>
 	<div class="column gap-small content">
 		@for (routeType of routeTypes; track $index) {
-			<div class="row-reverse gap center">
+			<div class="row-reverse gap center padding-sides">
 				<mat-button-toggle-group hideSingleSelectionIndicator #group="matButtonToggleGroup" [value]="getSelected(routeType[0])?.toString()" (change)="onSelect(routeType[0], group.value)">
-					<mat-button-toggle value="0">
+					<mat-button-toggle value="0" matTooltip="Hidden">
 						<mat-icon>visibility_off</mat-icon>
 					</mat-button-toggle>
-					<mat-button-toggle value="1">
+					<mat-button-toggle value="1" matTooltip="Solid">
 						<mat-icon>horizontal_rule</mat-icon>
 					</mat-button-toggle>
-					<mat-button-toggle value="2">
+					<mat-button-toggle value="2" matTooltip="Hollow">
 						<mat-icon>drag_handle</mat-icon>
 					</mat-button-toggle>
 				</mat-button-toggle-group>

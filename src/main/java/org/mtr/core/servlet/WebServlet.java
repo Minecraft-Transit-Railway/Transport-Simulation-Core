@@ -29,12 +29,12 @@ public final class WebServlet extends HttpServlet {
 			final String content = contentProvider.apply(newPath);
 
 			if (content == null) {
-				ServletBase.sendResponse(httpServletResponse, asyncContext, expectedPath, "", HttpResponseStatus.REDIRECT);
+				ServletBase.sendResponse(httpServletResponse, asyncContext, "..", "", HttpResponseStatus.REDIRECT);
 			} else {
 				ServletBase.sendResponse(httpServletResponse, asyncContext, content, ServletBase.getMimeType(newPath), HttpResponseStatus.OK);
 			}
 		} else {
-			ServletBase.sendResponse(httpServletResponse, asyncContext, expectedPath, "", HttpResponseStatus.REDIRECT);
+			ServletBase.sendResponse(httpServletResponse, asyncContext, "..", "", HttpResponseStatus.REDIRECT);
 		}
 	}
 }
