@@ -4,7 +4,6 @@ import SETTINGS from "../../utility/settings";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {DataService} from "../../service/data.service";
 import {MatIcon} from "@angular/material/icon";
-import {StationService} from "../../service/station.service";
 import {connectStations, connectWith45} from "../../utility/drawing";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import {LineMaterial} from "three/examples/jsm/lines/LineMaterial.js";
@@ -23,6 +22,7 @@ const lineMaterialStationConnectionThin = new LineMaterial({color: 0xFFFFFF, lin
 const lineMaterialStationConnectionThick = new LineMaterial({color: 0xFFFFFF, linewidth: 8 * SETTINGS.scale, vertexColors: true});
 const lineMaterialNormal = new LineMaterial({color: 0xFFFFFF, linewidth: 6 * SETTINGS.scale, vertexColors: true});
 const lineMaterialThin = new LineMaterial({color: 0xFFFFFF, linewidth: 3 * SETTINGS.scale, vertexColors: true});
+const animationDuration = 2000;
 
 @Component({
 	selector: "app-map",
@@ -52,7 +52,7 @@ export class MapComponent implements AfterViewInit {
 	private lineGeometryNormal: LineGeometry | undefined;
 	private lineGeometryThin: LineGeometry | undefined;
 
-	constructor(private readonly dataService: DataService, private readonly stationService: StationService) {
+	constructor(private readonly dataService: DataService) {
 		this.canvas = () => this.canvasRef.nativeElement;
 	}
 
@@ -65,6 +65,11 @@ export class MapComponent implements AfterViewInit {
 		let previousZoom = 1;
 		let hasUpdate = false;
 		let needsCenter = true;
+		let animationStartX = 0;
+		let animationStartY = 0;
+		let animationTargetX = 0;
+		let animationTargetY = 0;
+		let animationStartTime = 0;
 
 		const draw = () => {
 			hasUpdate = true;
@@ -76,6 +81,12 @@ export class MapComponent implements AfterViewInit {
 		};
 
 		const animate = () => {
+			const animationProgress = Date.now() - animationStartTime;
+			if (animationProgress < animationDuration) {
+				const animationPercentage = (1 - Math.cos(Math.PI * animationProgress / animationDuration)) / 2;
+				this.moveMap(animationStartX + (animationTargetX - animationStartX) * animationPercentage, animationStartY + (animationTargetY - animationStartY) * animationPercentage);
+			}
+
 			if (hasUpdate) {
 				previousZoom = this.camera.zoom;
 				const {clientWidth, clientHeight} = this.canvas();
@@ -179,6 +190,13 @@ export class MapComponent implements AfterViewInit {
 			this.scene.add(new THREE.Mesh(this.oneWayArrowGeometry, materialWithVertexColors));
 			this.updateLabels();
 			draw();
+		};
+		this.dataService.animateCenter = (x, z) => {
+			animationStartX = this.camera.position.x;
+			animationStartY = this.camera.position.y;
+			animationTargetX = x;
+			animationTargetY = -z;
+			animationStartTime = Date.now();
 		};
 	}
 
@@ -374,9 +392,13 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	private centerMap() {
+		this.moveMap(-this.dataService.getCenterX(), this.dataService.getCenterY());
+	}
+
+	private moveMap(x: number, y: number) {
 		if (this.controls) {
-			this.camera.position.x = -this.dataService.getCenterX();
-			this.camera.position.y = this.dataService.getCenterY();
+			this.camera.position.x = x;
+			this.camera.position.y = y;
 			this.controls.target.set(this.camera.position.x, this.camera.position.y, 0);
 			this.controls.update();
 		}

@@ -6,11 +6,10 @@ import {ReactiveFormsModule} from "@angular/forms";
 import {MatIconModule} from "@angular/material/icon";
 import {MatSelectModule} from "@angular/material/select";
 import {DimensionService} from "../../service/dimension.service";
-import {SearchComponent} from "../search/search.component";
 import {MatTooltipModule} from "@angular/material/tooltip";
 
 @Component({
-	selector: "app-panel",
+	selector: "app-main-panel",
 	standalone: true,
 	imports: [
 		MatButtonToggleModule,
@@ -18,12 +17,12 @@ import {MatTooltipModule} from "@angular/material/tooltip";
 		MatIconModule,
 		MatSelectModule,
 		MatTooltipModule,
-		SearchComponent,
+
 	],
-	templateUrl: "./panel.component.html",
-	styleUrl: "./panel.component.css",
+	templateUrl: "./main-panel.component.html",
+	styleUrl: "./main-panel.component.css",
 })
-export class PanelComponent {
+export class MainPanelComponent {
 
 	readonly routeTypes: [string, RouteType][] = Object.entries(ROUTE_TYPES).map(([routeTypeKey, routeType]) => [routeTypeKey, routeType]);
 

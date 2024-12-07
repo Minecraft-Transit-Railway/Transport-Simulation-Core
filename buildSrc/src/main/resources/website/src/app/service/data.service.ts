@@ -425,7 +425,7 @@ export class StationExtended extends RouteStation {
 export class StationWithPosition extends StationExtended {
 	public readonly types: string[] = [];
 	public readonly rotate: boolean = false;
-	public readonly routeCount: number = 0;
+	public readonly routes: RouteExtended[] = [];
 	public readonly width: number = 0;
 	public readonly height: number = 0;
 }
@@ -435,7 +435,7 @@ export class RouteExtended {
 	public readonly color: string;
 	public readonly number: string;
 	public readonly type: string;
-	public readonly circularState: string;
+	public readonly circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE";
 
 	constructor(dataResponseRoute: Route, readonly stations: StationExtended[]) {
 		this.name = dataResponseRoute.name;

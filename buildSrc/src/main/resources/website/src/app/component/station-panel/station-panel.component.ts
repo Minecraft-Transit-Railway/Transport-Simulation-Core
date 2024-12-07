@@ -2,27 +2,28 @@ import {Component, EventEmitter, Inject, Output} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {MatIcon, MatIconModule} from "@angular/material/icon";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
-import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {MatDividerModule} from "@angular/material/divider";
 import {MatChipListbox, MatChipOption, MatChipsModule} from "@angular/material/chips";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {FormatDatePipe} from "../../pipe/formatDatePipe";
-import {MatCheckbox, MatCheckboxModule} from "@angular/material/checkbox";
-import {MatRippleModule} from "@angular/material/core";
+import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle} from "@angular/material/dialog";
 import {MatButtonModule} from "@angular/material/button";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {MatTooltipModule} from "@angular/material/tooltip";
+import {DataService, StationWithPosition} from "../../service/data.service";
+import {MatTabsModule} from "@angular/material/tabs";
+import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
+import {ROUTE_TYPES} from "../../data/routeType";
 
 @Component({
-	selector: "app-station",
+	selector: "app-station-panel",
 	standalone: true,
 	imports: [
 		MatIconModule,
 		SplitNamePipe,
-		MatButtonToggleModule,
 		FormatTimePipe,
 		FormatNamePipe,
 		MatDividerModule,
@@ -30,18 +31,21 @@ import {MatTooltipModule} from "@angular/material/tooltip";
 		FormatColorPipe,
 		FormatDatePipe,
 		MatCheckboxModule,
-		MatRippleModule,
 		MatProgressSpinnerModule,
 		MatButtonModule,
 		MatTooltipModule,
+		MatTabsModule,
+		DataListEntryComponent,
 	],
-	templateUrl: "./station.component.html",
-	styleUrl: "./station.component.css",
+	templateUrl: "./station-panel.component.html",
+	styleUrl: "./station-panel.component.css",
 })
-export class StationComponent {
+export class StationPanelComponent {
+	@Output() stationClicked = new EventEmitter<string>();
+	@Output() routeClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<void>;
 
-	constructor(private readonly stationService: StationService, private readonly dialog: MatDialog) {
+	constructor(private readonly dataService: DataService, private readonly stationService: StationService, private readonly dialog: MatDialog) {
 	}
 
 	getStation() {
@@ -58,23 +62,51 @@ export class StationComponent {
 		return station == undefined ? "" : `${station.zone1}, ${station.zone2}, ${station.zone3}`;
 	}
 
-	getActiveRoutes() {
-		return this.stationService.routes;
-	}
-
-	getArrivals(chipList: MatChipListbox, showTerminatingCheckbox: MatCheckbox): Arrival[] {
-		try {
-			const selected = (chipList.selected as MatChipOption[]).map(option => option.id);
-			const newArrivals: Arrival[] = [];
-			this.stationService.arrivals.forEach(arrival => {
-				if (newArrivals.length < 10 && (arrival.isContinuous || arrival.getDepartureTime() >= 0) && (selected.length == 0 || selected.includes(arrival.key)) && (showTerminatingCheckbox.checked || !arrival.isTerminating)) {
-					newArrivals.push(arrival);
+	getConnections(): StationWithPosition[] {
+		const station = this.stationService.getSelectedStation();
+		if (station == undefined) {
+			return [];
+		} else {
+			const stations: StationWithPosition[] = [];
+			this.dataService.getAllStations().forEach(otherStation => {
+				if (station.connections.includes(otherStation.id)) {
+					stations.push(otherStation);
 				}
 			});
-			return newArrivals;
-		} catch (e) {
-			return [];
+			return stations;
 		}
+	}
+
+	getActiveRoutes() {
+		return this.stationService.arrivalsRoutes;
+	}
+
+	getArrivals() {
+		return this.stationService.getArrivals();
+	}
+
+	getRoutes() {
+		return this.stationService.routesAtStation;
+	}
+
+	getCircularStateIcon(circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE") {
+		return circularState === "CLOCKWISE" ? "rotate_right" : circularState === "ANTICLOCKWISE" ? "rotate_left" : "";
+	}
+
+	mapRouteVariations(variations: string[]): [string, string][] {
+		return variations.map(variation => [variation, ""]);
+	}
+
+	updateArrivalFilter(chipList: MatChipListbox, filterArrivalShowTerminating: boolean) {
+		try {
+			this.stationService.updateArrivalFilter((chipList.selected as MatChipOption[]).map(option => option.id), filterArrivalShowTerminating);
+		} catch (e) {
+			this.stationService.updateArrivalFilter([], filterArrivalShowTerminating);
+		}
+	}
+
+	resetArrivalFilter() {
+		this.stationService.resetArrivalFilter();
 	}
 
 	getHasTerminating() {
@@ -92,16 +124,19 @@ export class StationComponent {
 		setTimeout(() => copyIconButton.fontIcon = "content_copy", 1000);
 	}
 
-	setDirectionsOrigin() {
-		// TODO
-	}
-
-	setDirectionsDestination() {
-		// TODO
+	focus() {
+		const station = this.stationService.getSelectedStation();
+		if (station) {
+			this.dataService.animateCenter(station.x, station.z);
+		}
 	}
 
 	showDetails(arrival: Arrival) {
 		this.dialog.open(DialogOverviewExampleDialog, {data: arrival});
+	}
+
+	mapConnectionTypes(types: string[]) {
+		return types.map(type => ROUTE_TYPES[type].icon);
 	}
 }
 
@@ -113,11 +148,10 @@ export class StationComponent {
 		MatDialogTitle,
 		MatDialogContent,
 		MatDialogActions,
-		FormatTimePipe,
-		FormatNamePipe,
+
 	],
 	templateUrl: "arrival-dialog.html",
-	styleUrl: "./station.component.css",
+	styleUrl: "./station-panel.component.css",
 })
 export class DialogOverviewExampleDialog {
 	constructor(

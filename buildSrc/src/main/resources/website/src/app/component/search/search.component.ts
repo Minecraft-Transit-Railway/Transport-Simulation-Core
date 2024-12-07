@@ -10,7 +10,6 @@ import {DataService} from "../../service/data.service";
 import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
-import {StationService} from "../../service/station.service";
 
 @Component({
 	selector: "app-search",
@@ -41,7 +40,7 @@ export class SearchComponent implements OnInit {
 	hasStations = false;
 	hasRoutes = false;
 
-	constructor(private readonly dataService: DataService, private readonly stationService: StationService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
+	constructor(private readonly dataService: DataService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
 	}
 
 	ngOnInit() {

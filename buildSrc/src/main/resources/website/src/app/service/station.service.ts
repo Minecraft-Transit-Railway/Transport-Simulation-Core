@@ -11,10 +11,13 @@ const MAX_ARRIVALS = 5;
 
 @Injectable({providedIn: "root"})
 export class StationService extends ServiceBase<{ data: { arrivals: DataResponse[] } }> {
-	public readonly arrivals: Arrival[] = [];
-	public readonly routes: { key: string, name: string, number: string, color: number, lineCount: number, typeIcon: string }[] = [];
+	public readonly arrivalsRoutes: { key: string, name: string, number: string, colorInt: number, lineCount: number, typeIcon: string }[] = [];
+	public readonly routesAtStation: { name: string, variations: string[], number: string, color: string, colorInt: number, circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE", typeIcon: string }[] = [];
 	private selectedStation?: StationWithPosition;
+	private readonly arrivals: Arrival[] = [];
 	private hasTerminating = false;
+	private readonly filterArrivalRoutes: string[] = [];
+	private filterArrivalShowTerminating = false;
 
 	constructor(private readonly httpClient: HttpClient, private readonly dataService: DataService, private readonly splitNamePipe: SplitNamePipe, dimensionService: DimensionService) {
 		super(() => {
@@ -32,7 +35,7 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 
 	protected override processData(data: { data: { arrivals: DataResponse[] } }) {
 		this.arrivals.length = 0;
-		const routes: { [key: string]: { key: string, name: string, number: string, color: number, lineCount: number, typeIcon: string } } = {};
+		const routes: { [key: string]: { key: string, name: string, number: string, colorInt: number, lineCount: number, typeIcon: string } } = {};
 		this.hasTerminating = false;
 
 		data.data.arrivals.forEach(arrival => {
@@ -42,7 +45,7 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 				key: newArrival.key,
 				name: newArrival.routeName,
 				number: newArrival.routeNumber,
-				color: newArrival.routeColor,
+				colorInt: newArrival.routeColor,
 				lineCount: Math.max(2, Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length)),
 				typeIcon: newArrival.routeTypeIcon,
 			};
@@ -58,15 +61,15 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 			const linesCompare = route1.lineCount - route2.lineCount;
 			if (linesCompare == 0) {
 				const numberCompare = route1.number.localeCompare(route2.number);
-				return numberCompare == 0 ? `${route1.color} ${route1.name}`.localeCompare(`${route2.color} ${route2.name}`) : numberCompare;
+				return numberCompare == 0 ? `${route1.colorInt} ${route1.name}`.localeCompare(`${route2.colorInt} ${route2.name}`) : numberCompare;
 			} else {
 				return linesCompare;
 			}
 		});
 
-		if (JSON.stringify(newRoutes) !== JSON.stringify(this.routes)) {
-			this.routes.length = 0;
-			newRoutes.forEach(route => this.routes.push(route));
+		if (JSON.stringify(newRoutes) !== JSON.stringify(this.arrivalsRoutes)) {
+			this.arrivalsRoutes.length = 0;
+			newRoutes.forEach(route => this.arrivalsRoutes.push(route));
 		}
 	}
 
@@ -74,16 +77,75 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 		return this.selectedStation;
 	}
 
-	public setStation(stationId: string) {
+	public setStation(stationId: string, zoomToStation: boolean) {
 		this.selectedStation = this.dataService.getAllStations().find(station => station.id === stationId);
 		this.arrivals.length = 0;
-		this.routes.length = 0;
+		this.arrivalsRoutes.length = 0;
+
+		this.routesAtStation.length = 0;
+		const newRoutes: { [key: string]: { name: string, variations: string[], number: string, color: string, colorInt: number, circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE", typeIcon: string } } = {};
+		this.dataService.getAllRoutes().forEach(({name, number, color, circularState, type, stations}) => {
+			if (stations.some(station => station.id === this.selectedStation?.id)) {
+				const routeName = name.split("||")[0];
+				const key = `${color}_${routeName}_${number}`;
+				const variation = name.split("||")[1];
+				if (key in newRoutes) {
+					newRoutes[key].variations.push(variation);
+				} else {
+					newRoutes[key] = {name: routeName, variations: [variation], number, color, colorInt: parseInt(color, 16), circularState, typeIcon: ROUTE_TYPES[type].icon};
+				}
+			}
+		});
+		Object.values(newRoutes).forEach(route => {
+			route.variations.sort();
+			this.routesAtStation.push(route);
+		});
+		this.routesAtStation.sort((route1, route2) => {
+			if (route1.color === route2.color) {
+				return route1.name.localeCompare(route2.name);
+			} else {
+				return route2.colorInt - route1.colorInt;
+			}
+		});
+
 		this.hasTerminating = false;
 		this.getData(stationId);
+		this.resetArrivalFilter();
+
+		if (this.selectedStation) {
+			if (this.selectedStation.types.every(routeType => this.dataService.getRouteTypes()[routeType] === 0)) {
+				this.selectedStation.types.forEach(routeType => this.dataService.getRouteTypes()[routeType] = 1);
+				this.dataService.updateData();
+			}
+			if (zoomToStation) {
+				this.dataService.animateCenter(this.selectedStation.x, this.selectedStation.z);
+			}
+		}
+	}
+
+	public getArrivals() {
+		const newArrivals: Arrival[] = [];
+		this.arrivals.forEach(arrival => {
+			if (newArrivals.length < 10 && (arrival.isContinuous || arrival.getDepartureTime() >= 0) && (this.filterArrivalRoutes.length == 0 || this.filterArrivalRoutes.includes(arrival.key)) && (this.filterArrivalShowTerminating || !arrival.isTerminating)) {
+				newArrivals.push(arrival);
+			}
+		});
+		return newArrivals;
 	}
 
 	public getHasTerminating() {
 		return this.hasTerminating;
+	}
+
+	public updateArrivalFilter(filterArrivalRoutes: string[], filterArrivalShowTerminating: boolean) {
+		this.resetArrivalFilter();
+		filterArrivalRoutes.forEach(routeKey => this.filterArrivalRoutes.push(routeKey));
+		this.filterArrivalShowTerminating = filterArrivalShowTerminating;
+	}
+
+	public resetArrivalFilter() {
+		this.filterArrivalRoutes.length = 0;
+		this.filterArrivalShowTerminating = false;
 	}
 
 	public clear() {

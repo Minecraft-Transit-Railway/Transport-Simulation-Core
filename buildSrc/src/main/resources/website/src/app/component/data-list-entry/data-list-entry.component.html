@@ -1,0 +1,21 @@
+<div matRipple class="column arrival clickable {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
+	<div class="row gap center title arrival-color" [style.border-left-color]="color">
+		<div class="row center">
+			@for (icon of icons; track $index) {
+				@if (icon) {
+					<mat-icon>{{ icon }}</mat-icon>
+				}
+			}
+			<div>{{ title[0] }}</div>
+		</div>
+		<div class="spacing"></div>
+		<div class="align-right">{{ title[1] }}</div>
+	</div>
+	@for (subtitle of subtitles; track $index) {
+		<div class="row gap center subtitle arrival-color" [style.border-left-color]="color">
+			<div>{{ subtitle[0] }}</div>
+			<div class="spacing"></div>
+			<div class="align-right">{{ subtitle[1] }}</div>
+		</div>
+	}
+</div>

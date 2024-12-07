@@ -1,0 +1,33 @@
+.clickable {
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.clickable:hover {
+	background-color: rgba(127, 127, 127, 10%);
+}
+
+.arrival {
+	padding: 0.4em 0;
+}
+
+.title {
+	font-weight: bold;
+}
+
+.subtitle {
+	font-size: 0.6em;
+}
+
+.light-color {
+	color: rgba(127, 127, 127, 50%);
+}
+
+.arrival-color {
+	border-left: 4px solid;
+	padding-left: 4px;
+}
+
+.align-right {
+	text-align: right;
+}
