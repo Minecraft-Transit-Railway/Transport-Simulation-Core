@@ -17,7 +17,6 @@ import {MatTooltipModule} from "@angular/material/tooltip";
 		MatIconModule,
 		MatSelectModule,
 		MatTooltipModule,
-
 	],
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.css",

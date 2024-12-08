@@ -5,14 +5,15 @@ import {SplitNamePipe} from "../pipe/splitNamePipe";
 import {ROUTE_TYPES} from "../data/routeType";
 import {ServiceBase} from "./service";
 import {DimensionService} from "./dimension.service";
+import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
 
 const REFRESH_INTERVAL = 3000;
 const MAX_ARRIVALS = 5;
 
 @Injectable({providedIn: "root"})
 export class StationService extends ServiceBase<{ data: { arrivals: DataResponse[] } }> {
-	public readonly arrivalsRoutes: { key: string, name: string, number: string, colorInt: number, lineCount: number, typeIcon: string }[] = [];
-	public readonly routesAtStation: { name: string, variations: string[], number: string, color: string, colorInt: number, circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE", typeIcon: string }[] = [];
+	public readonly arrivalsRoutes: { key: string, name: string, number: string, colorInt: number, textLineCount: number, typeIcon: string }[] = [];
+	public readonly routesAtStation: { name: string, variations: string[], number: string, color: string, colorInt: number, typeIcon: string }[] = [];
 	private selectedStation?: StationWithPosition;
 	private readonly arrivals: Arrival[] = [];
 	private hasTerminating = false;
@@ -35,7 +36,7 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 
 	protected override processData(data: { data: { arrivals: DataResponse[] } }) {
 		this.arrivals.length = 0;
-		const routes: { [key: string]: { key: string, name: string, number: string, colorInt: number, lineCount: number, typeIcon: string } } = {};
+		const routes: { [key: string]: { key: string, name: string, number: string, color: string, colorInt: number, textLineCount: number, typeIcon: string } } = {};
 		this.hasTerminating = false;
 
 		data.data.arrivals.forEach(arrival => {
@@ -45,8 +46,9 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 				key: newArrival.key,
 				name: newArrival.routeName,
 				number: newArrival.routeNumber,
-				colorInt: newArrival.routeColor,
-				lineCount: Math.max(2, Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length)),
+				color: newArrival.routeColor,
+				colorInt: newArrival.routeColorInt,
+				textLineCount: Math.max(2, Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length)),
 				typeIcon: newArrival.routeTypeIcon,
 			};
 			if (newArrival.isTerminating) {
@@ -55,17 +57,8 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 		});
 
 		this.arrivals.sort((arrival1, arrival2) => arrival1.arrival - arrival2.arrival);
-
 		const newRoutes = Object.values(routes);
-		newRoutes.sort((route1, route2) => {
-			const linesCompare = route1.lineCount - route2.lineCount;
-			if (linesCompare == 0) {
-				const numberCompare = route1.number.localeCompare(route2.number);
-				return numberCompare == 0 ? `${route1.colorInt} ${route1.name}`.localeCompare(`${route2.colorInt} ${route2.name}`) : numberCompare;
-			} else {
-				return linesCompare;
-			}
-		});
+		SimplifyRoutesPipe.sortRoutes(newRoutes);
 
 		if (JSON.stringify(newRoutes) !== JSON.stringify(this.arrivalsRoutes)) {
 			this.arrivalsRoutes.length = 0;
@@ -83,16 +76,15 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 		this.arrivalsRoutes.length = 0;
 
 		this.routesAtStation.length = 0;
-		const newRoutes: { [key: string]: { name: string, variations: string[], number: string, color: string, colorInt: number, circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE", typeIcon: string } } = {};
-		this.dataService.getAllRoutes().forEach(({name, number, color, circularState, type, stations}) => {
+		const newRoutes: { [key: string]: { name: string, variations: string[], number: string, color: string, colorInt: number, typeIcon: string } } = {};
+		this.dataService.getAllRoutes().forEach(({name, number, color, type, stations}) => {
 			if (stations.some(station => station.id === this.selectedStation?.id)) {
-				const routeName = name.split("||")[0];
-				const key = `${color}_${routeName}_${number}`;
+				const key = SimplifyRoutesPipe.getRouteId({name, number, color});
 				const variation = name.split("||")[1];
 				if (key in newRoutes) {
 					newRoutes[key].variations.push(variation);
 				} else {
-					newRoutes[key] = {name: routeName, variations: [variation], number, color, colorInt: parseInt(color, 16), circularState, typeIcon: ROUTE_TYPES[type].icon};
+					newRoutes[key] = {name: name.split("||")[0], variations: [variation], number, color, colorInt: parseInt(color, 16), typeIcon: ROUTE_TYPES[type].icon};
 				}
 			}
 		});
@@ -100,13 +92,7 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 			route.variations.sort();
 			this.routesAtStation.push(route);
 		});
-		this.routesAtStation.sort((route1, route2) => {
-			if (route1.color === route2.color) {
-				return route1.name.localeCompare(route2.name);
-			} else {
-				return route2.colorInt - route1.colorInt;
-			}
-		});
+		SimplifyRoutesPipe.sortRoutes(this.routesAtStation);
 
 		this.hasTerminating = false;
 		this.getData(stationId);
@@ -181,7 +167,8 @@ export class Arrival {
 	readonly isTerminating: boolean;
 	readonly routeName: string;
 	readonly routeNumber: string;
-	readonly routeColor: number;
+	readonly routeColor: string;
+	readonly routeColorInt: number;
 	readonly routeTypeIcon: string;
 	readonly circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE";
 	readonly platformName: string;
@@ -201,7 +188,8 @@ export class Arrival {
 		this.isTerminating = dataResponse.isTerminating;
 		this.routeName = dataResponse.routeName.split("||")[0];
 		this.routeNumber = dataResponse.routeNumber;
-		this.routeColor = dataResponse.routeColor;
+		this.routeColor = dataResponse.routeColor.toString(16);
+		this.routeColorInt = dataResponse.routeColor;
 		const tempRouteType = dataService.getAllRoutes().find(route => route.name === dataResponse.routeName)?.type;
 		this.routeTypeIcon = tempRouteType == undefined ? "" : ROUTE_TYPES[tempRouteType].icon;
 		this.circularState = dataResponse.circularState;
@@ -210,7 +198,7 @@ export class Arrival {
 		this.arrival = dataResponse.arrival === 0 ? 0 : dataResponse.arrival + dataService.getTimeOffset();
 		this.departure = dataResponse.departure === 0 ? 0 : dataResponse.departure + dataService.getTimeOffset();
 		this.isContinuous = this.arrival === 0;
-		this.key = `${this.routeName} ${this.routeNumber} ${this.routeColor}`;
+		this.key = SimplifyRoutesPipe.getRouteId({name: this.routeName, number: this.routeNumber, color: this.routeColor});
 		this.calculateValues();
 	}
 

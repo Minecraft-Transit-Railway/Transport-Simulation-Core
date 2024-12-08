@@ -1,5 +1,6 @@
 import {Pipe, PipeTransform} from "@angular/core";
-import {StationExtended} from "../service/data.service";
+import {StationWithPosition} from "../service/data.service";
+import {ROUTE_TYPES} from "../data/routeType";
 
 @Pipe({
 	name: "simplifyStations",
@@ -8,7 +9,7 @@ import {StationExtended} from "../service/data.service";
 })
 export class SimplifyStationsPipe implements PipeTransform {
 
-	transform(stations: StationExtended[]): { id: string, color: string, name: string }[] {
-		return stations.map(station => ({id: station.id, color: station.color, name: station.name}));
+	transform(stations: StationWithPosition[]): { id: string, icons: string[], color: string, name: string, number: string }[] {
+		return stations.map(station => ({id: station.id, icons: station.types.map(type => ROUTE_TYPES[type].icon), color: station.color, name: station.name, number: ""}));
 	}
 }

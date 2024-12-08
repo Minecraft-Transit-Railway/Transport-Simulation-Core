@@ -1,19 +1,23 @@
-<app-sidenav #sideDirections (closed)="onCloseDirections()">
-	<app-sidenav #sideStation (closed)="onCloseStation()">
-		<app-sidenav #sideMain>
-			<app-map (stationClicked)="onClickStation($event, sideStation, sideDirections, false)"/>
-			<button mat-fab class="button-corner" aria-label="Menu" (click)="sideMain.open()" matTooltip="Menu">
-				<mat-icon>menu</mat-icon>
-			</button>
-			<div sidenav class="column gap wrapper">
-				<app-search label="Search for anything..." [includeRoutes]="true" (stationClicked)="onClickStation($event, sideStation, sideDirections, true)" (routeClicked)="onClickRoute($event)"/>
-				<app-main-panel class="wrapper"/>
-			</div>
-			<div title>{{ getTitle() }}</div>
+<app-sidenav #sideRoute (closed)="onCloseRoute()">
+	<app-sidenav #sideDirections (closed)="onCloseDirections()">
+		<app-sidenav #sideStation (closed)="onCloseStation()">
+			<app-sidenav #sideMain>
+				<app-map (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, false)"/>
+				<button mat-fab class="button-corner" aria-label="Menu" (click)="onClickMain(sideMain, sideStation, sideDirections, sideRoute)" matTooltip="Menu">
+					<mat-icon>menu</mat-icon>
+				</button>
+				<div sidenav class="column gap wrapper">
+					<app-search label="Search for anything..." [includeRoutes]="true" (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
+					<app-main-panel class="wrapper"/>
+				</div>
+				<div title>{{ getTitle() }}</div>
+			</app-sidenav>
+			<app-station-panel sidenav (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)" (directionsOpened)="sideDirections.open()"/>
+			<div title>Station Details</div>
 		</app-sidenav>
-		<app-station-panel sidenav (stationClicked)="onClickStation($event, sideStation, sideDirections, true)" (routeClicked)="onClickRoute($event)" (directionsOpened)="sideDirections.open()"/>
-		<div title>Station Details</div>
+		<app-directions sidenav/>
+		<div title>Directions</div>
 	</app-sidenav>
-	<app-directions sidenav/>
-	<div title>Directions</div>
+	<app-route-panel sidenav (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
+	<div title>Route Details</div>
 </app-sidenav>

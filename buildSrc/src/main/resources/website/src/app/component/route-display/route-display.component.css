@@ -1,0 +1,42 @@
+.display-container {
+	display: flex;
+	position: relative;
+	min-width: 14px;
+}
+
+.line {
+	left: 4px;
+	position: absolute;
+	width: 6px;
+}
+
+.line.middle {
+	height: 100%;
+	top: 0;
+}
+
+.line.above {
+	height: 50%;
+	top: 0;
+}
+
+.line.below {
+	bottom: 0;
+	height: 50%;
+}
+
+.circle {
+	background-color: white;
+	border: 2px solid black;
+	border-radius: 8px;
+	box-sizing: border-box;
+	position: absolute;
+	top: 50%;
+	transform: translate(0, -50%);
+	width: 14px;
+	height: 14px;
+}
+
+.full {
+	width: 100%;
+}

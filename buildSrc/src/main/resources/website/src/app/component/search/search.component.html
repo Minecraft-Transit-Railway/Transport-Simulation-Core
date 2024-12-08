@@ -6,10 +6,7 @@
 <mat-autocomplete #auto="matAutocomplete">
 	@for (station of searchedStations$ | async; track $index) {
 		<mat-option (click)="stationClicked.emit(station.id)">
-			<div class="row gap center">
-				<div class="station-color-dot" style="{{'background-color:#'+station.color}}"></div>
-				<div>{{ station.name | formatName }}</div>
-			</div>
+			<app-data-list-entry [icons]="station.icons" [title]="[station.name | formatName, '']" [subtitles]="[]" [color]="'#' + station.color" [useLightColor]="false" [clickable]="false"/>
 		</mat-option>
 	}
 	@if (hasStations && hasRoutes) {
@@ -17,10 +14,7 @@
 	}
 	@for (route of searchedRoutes$ | async; track $index) {
 		<mat-option (click)="routeClicked.emit(route.id)">
-			<div class="row gap center">
-				<div class="station-color-dot" style="{{'background-color:#'+route.color}}"></div>
-				<div>{{ route.name | formatName }}</div>
-			</div>
+			<app-data-list-entry [icons]="route.icons" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="[]" [color]="'#' + route.color" [useLightColor]="false" [clickable]="false"/>
 		</mat-option>
 	}
 </mat-autocomplete>

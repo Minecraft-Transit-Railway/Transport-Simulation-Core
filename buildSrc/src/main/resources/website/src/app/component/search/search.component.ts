@@ -10,6 +10,9 @@ import {DataService} from "../../service/data.service";
 import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
+import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
+
+const maxResults = 50;
 
 @Component({
 	selector: "app-search",
@@ -25,6 +28,7 @@ import {FormatNamePipe} from "../../pipe/formatNamePipe";
 		MatLabel,
 		ReactiveFormsModule,
 		FormatNamePipe,
+		DataListEntryComponent,
 	],
 	templateUrl: "./search.component.html",
 	styleUrl: "./search.component.css",
@@ -35,8 +39,8 @@ export class SearchComponent implements OnInit {
 	@Input() label!: string;
 	@Input() includeRoutes!: boolean;
 	searchBox = new FormControl("");
-	searchedStations$ = new Observable<{ id: string, color: string, name: string }[]>();
-	searchedRoutes$ = new Observable<{ id: string, color: string, name: string }[]>();
+	searchedStations$ = new Observable<{ id: string, icons: string[], color: string, name: string, number: string }[]>();
+	searchedRoutes$ = new Observable<{ id: string, icons: string[], color: string, name: string, number: string }[]>();
 	hasStations = false;
 	hasRoutes = false;
 
@@ -44,23 +48,23 @@ export class SearchComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		const filter = (getList: () => { id: string, color: string, name: string }[], setHasData: (value: boolean) => void): Observable<{ id: string, color: string, name: string }[]> => this.searchBox.valueChanges.pipe(map(value => {
+		const filter = (getList: () => { id: string, icons: string[], color: string, name: string, number: string }[], setHasData: (value: boolean) => void): Observable<{ id: string, icons: string[], color: string, name: string, number: string }[]> => this.searchBox.valueChanges.pipe(map(value => {
 			if (value == null || value === "") {
 				return [];
 			} else {
-				const matches: { id: string, color: string, name: string, index: number }[] = [];
-				getList().forEach(({id, color, name}) => {
+				const matches: { id: string, icons: string[], color: string, name: string, number: string, index: number }[] = [];
+				getList().forEach(({id, icons, color, name, number}) => {
 					const index = name.toLowerCase().indexOf(value.toLowerCase());
 					if (index >= 0) {
-						matches.push({id, color, name, index});
+						matches.push({id, icons, color, name, number, index});
 					}
 				});
-				const result: { id: string, color: string, name: string }[] = matches.sort((match1, match2) => {
+				const result: { id: string, icons: string[], color: string, name: string, number: string }[] = matches.sort((match1, match2) => {
 					const indexDifference = match1.index - match2.index;
 					return indexDifference === 0 ? match1.name.localeCompare(match2.name) : indexDifference;
 				});
 				setHasData(result.length > 0);
-				return result;
+				return result.slice(0, maxResults);
 			}
 		}));
 

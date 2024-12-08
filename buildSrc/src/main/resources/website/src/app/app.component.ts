@@ -10,6 +10,8 @@ import {DirectionsService} from "./service/directions.service";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {MatIconModule} from "@angular/material/icon";
 import {MainPanelComponent} from "./component/panel/main-panel.component";
+import {RouteService} from "./service/route.service";
+import {RoutePanelComponent} from "./component/route-panel/route-panel.component";
 
 @Component({
 	selector: "app-root",
@@ -24,27 +26,41 @@ import {MainPanelComponent} from "./component/panel/main-panel.component";
 		DirectionsComponent,
 		MatTooltipModule,
 		MainPanelComponent,
+		RoutePanelComponent,
 	],
 	templateUrl: "./app.component.html",
 	styleUrls: ["./app.component.css"],
 })
 export class AppComponent {
 
-	constructor(private readonly stationService: StationService, private readonly directionsService: DirectionsService) {
+	constructor(private readonly stationService: StationService, private readonly routeService: RouteService, private readonly directionsService: DirectionsService) {
 	}
 
 	getTitle() {
 		return document.title;
 	}
 
-	onClickStation(stationId: string, sideStation: SidenavComponent, sideDirections: SidenavComponent, zoomToStation: boolean) {
-		this.stationService.setStation(stationId, zoomToStation);
-		sideStation.open();
+	onClickMain(sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+		sideMain.open();
+		sideStation.close();
 		sideDirections.close();
+		sideRoute.close();
 	}
 
-	onClickRoute(routeColor: string) {
-		console.log(routeColor);
+	onClickStation(stationId: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent, zoomToStation: boolean) {
+		this.stationService.setStation(stationId, zoomToStation);
+		sideMain.close();
+		sideStation.open();
+		sideDirections.close();
+		sideRoute.close();
+	}
+
+	onClickRoute(routeId: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+		this.routeService.setRoute(routeId);
+		sideMain.close();
+		sideStation.close();
+		sideDirections.close();
+		sideRoute.open();
 	}
 
 	onCloseStation() {
@@ -54,5 +70,9 @@ export class AppComponent {
 	onCloseDirections() {
 		console.log(this);
 		this.directionsService.clear();
+	}
+
+	onCloseRoute() {
+		this.routeService.clear();
 	}
 }

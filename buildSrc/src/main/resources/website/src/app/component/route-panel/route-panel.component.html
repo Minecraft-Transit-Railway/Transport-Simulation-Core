@@ -1,0 +1,23 @@
+<div class="column gap wrapper">
+	<div class="column padding-sides">
+		@for (routeNamePart of getRouteName() | splitName; track $index) {
+			<div class="route-name {{routeNamePart.isCjk ? 'cjk' : ''}}">{{ routeNamePart.text }}</div>
+		}
+	</div>
+	<mat-form-field class="padding-sides" subscriptSizing="dynamic">
+		<mat-label>Route Variation</mat-label>
+		<mat-select #dropdown (selectionChange)="selectRoute(dropdown.value)" [value]="getRandomSeed()">
+			@for (name of getNames(); track $index) {
+				<mat-option [value]="'id_' + $index">{{ name | formatName }}</mat-option>
+			}
+		</mat-select>
+	</mat-form-field>
+
+	<div class="column padding-sides content">
+		@for (station of getStations(); track $index) {
+			<app-route-display [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true">
+				<app-data-list-entry [icons]="[]" [title]="[station.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(station.id)"/>
+			</app-route-display>
+		}
+	</div>
+</div>

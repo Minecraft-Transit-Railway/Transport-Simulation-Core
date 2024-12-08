@@ -17,6 +17,7 @@ import {DataService, StationWithPosition} from "../../service/data.service";
 import {MatTabsModule} from "@angular/material/tabs";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {ROUTE_TYPES} from "../../data/routeType";
+import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 
 @Component({
 	selector: "app-station-panel",
@@ -90,7 +91,7 @@ export class StationPanelComponent {
 	}
 
 	getCircularStateIcon(circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE") {
-		return circularState === "CLOCKWISE" ? "rotate_right" : circularState === "ANTICLOCKWISE" ? "rotate_left" : "";
+		return SimplifyRoutesPipe.getCircularStateIcon(circularState);
 	}
 
 	mapRouteVariations(variations: string[]): [string, string][] {
@@ -137,6 +138,10 @@ export class StationPanelComponent {
 
 	mapConnectionTypes(types: string[]) {
 		return types.map(type => ROUTE_TYPES[type].icon);
+	}
+
+	getRouteId(route: { color: string, name: string, number: string }) {
+		return SimplifyRoutesPipe.getRouteId(route);
 	}
 }
 

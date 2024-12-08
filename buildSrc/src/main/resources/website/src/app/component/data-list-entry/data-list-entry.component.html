@@ -1,9 +1,19 @@
-<div matRipple class="column arrival clickable {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
-	<div class="row gap center title arrival-color" [style.border-left-color]="color">
+@if (clickable) {
+	<div matRipple class="column padding-top-bottom-small clickable {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
+		<div *ngTemplateOutlet="content"></div>
+	</div>
+} @else {
+	<div class="column padding-top-bottom-small {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
+		<div *ngTemplateOutlet="content"></div>
+	</div>
+}
+
+<ng-template #content>
+	<div class="row gap center title color" [style.border-left-color]="color ? color : 'transparent'">
 		<div class="row center">
 			@for (icon of icons; track $index) {
 				@if (icon) {
-					<mat-icon>{{ icon }}</mat-icon>
+					<mat-icon class="icon">{{ icon }}</mat-icon>
 				}
 			}
 			<div>{{ title[0] }}</div>
@@ -12,10 +22,10 @@
 		<div class="align-right">{{ title[1] }}</div>
 	</div>
 	@for (subtitle of subtitles; track $index) {
-		<div class="row gap center subtitle arrival-color" [style.border-left-color]="color">
+		<div class="row gap center subtitle color" [style.border-left-color]="color ? color : 'transparent'">
 			<div>{{ subtitle[0] }}</div>
 			<div class="spacing"></div>
 			<div class="align-right">{{ subtitle[1] }}</div>
 		</div>
 	}
-</div>
+</ng-template>

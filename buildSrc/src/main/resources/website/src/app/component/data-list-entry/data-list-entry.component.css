@@ -3,12 +3,12 @@
 	transition: background-color 0.2s;
 }
 
-.clickable:hover {
-	background-color: rgba(127, 127, 127, 10%);
+.icon {
+	margin: 0;
 }
 
-.arrival {
-	padding: 0.4em 0;
+.clickable:hover {
+	background-color: rgba(127, 127, 127, 10%);
 }
 
 .title {
@@ -20,10 +20,10 @@
 }
 
 .light-color {
-	color: rgba(127, 127, 127, 50%);
+	color: rgba(127, 127, 127, 80%);
 }
 
-.arrival-color {
+.color {
 	border-left: 4px solid;
 	padding-left: 4px;
 }
