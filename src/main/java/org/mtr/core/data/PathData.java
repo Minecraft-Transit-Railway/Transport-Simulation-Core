@@ -2,7 +2,6 @@ package org.mtr.core.data;
 
 import org.mtr.core.generated.data.PathDataSchema;
 import org.mtr.core.path.SidingPathFinder;
-import org.mtr.core.serializer.MessagePackReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.ConditionalList;
@@ -26,16 +25,27 @@ public class PathData extends PathDataSchema implements ConditionalList {
 
 	public PathData(PathData oldPathData, double startDistance, double endDistance) {
 		this(oldPathData.rail, oldPathData.savedRailBaseId, oldPathData.dwellTime, oldPathData.stopIndex, startDistance, endDistance, oldPathData.startPosition, oldPathData.startAngle, oldPathData.endPosition, oldPathData.endAngle);
+		shape = oldPathData.shape;
+		verticalRadius = oldPathData.verticalRadius;
+		speedLimit = oldPathData.speedLimit;
+		canAccelerate = oldPathData.canAccelerate;
 	}
 
 	public PathData(@Nullable Rail rail, long savedRailBaseId, long dwellTime, long stopIndex, double startDistance, double endDistance, Position startPosition, Angle startAngle, Position endPosition, Angle endAngle) {
 		super(savedRailBaseId, dwellTime, stopIndex, startDistance, endDistance, startPosition, startAngle, endPosition, endAngle);
 		this.rail = rail;
 		reversePositions = startPosition.compareTo(endPosition) > 0;
+		if (rail != null) {
+			shape = rail.railMath.getShape();
+			verticalRadius = rail.railMath.getVerticalRadius();
+			speedLimit = getSpeedLimitKilometersPerHour();
+			canAccelerate = canAccelerate();
+		}
 	}
 
 	public PathData(ReaderBase readerBase) {
 		super(readerBase);
+		updateData(readerBase);
 		reversePositions = startPosition.compareTo(endPosition) > 0;
 	}
 
@@ -45,7 +55,7 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	}
 
 	public final Rail getRail() {
-		return rail == null ? new Rail(new MessagePackReader()) : rail;
+		return rail == null ? defaultRail() : rail;
 	}
 
 	public final long getSavedRailBaseId() {
@@ -130,15 +140,24 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return getRail().getSignalColors();
 	}
 
-	public void writePathCache(Data data, TransportMode transportMode) {
+	public void writePathCache(Data data) {
 		rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
 		if (rail == null) {
-			final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
-			rail = Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), Rail.Shape.QUADRATIC, 0, new ObjectArrayList<>(), SidingPathFinder.AIRPLANE_SPEED, 0, false, false, transportMode == TransportMode.AIRPLANE, false, false, transportMode);
+			rail = defaultRail();
+		} else {
+			shape = rail.railMath.getShape();
+			verticalRadius = rail.railMath.getVerticalRadius();
+			speedLimit = getSpeedLimitKilometersPerHour();
+			canAccelerate = canAccelerate();
 		}
 	}
 
-	public static void writePathCache(ObjectArrayList<PathData> path, Data data, TransportMode transportMode) {
-		path.forEach(pathData -> pathData.writePathCache(data, transportMode));
+	private Rail defaultRail() {
+		final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
+		return Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), shape, verticalRadius, new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0, false, false, canAccelerate, false, false, TransportMode.TRAIN);
+	}
+
+	public static void writePathCache(ObjectArrayList<PathData> path, Data data) {
+		path.forEach(pathData -> pathData.writePathCache(data));
 	}
 }

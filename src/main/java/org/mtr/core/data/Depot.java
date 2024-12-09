@@ -83,7 +83,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	public void writePathCache() {
-		PathData.writePathCache(path, data, transportMode);
+		PathData.writePathCache(path, data);
 		savedRails.forEach(Siding::writePathCache);
 	}
 

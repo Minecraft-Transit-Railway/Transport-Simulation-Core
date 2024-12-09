@@ -465,8 +465,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	void writePathCache() {
-		PathData.writePathCache(pathSidingToMainRoute, data, transportMode);
-		PathData.writePathCache(pathMainRouteToSiding, data, transportMode);
+		PathData.writePathCache(pathSidingToMainRoute, data);
+		PathData.writePathCache(pathMainRouteToSiding, data);
 	}
 
 	long getRepeatInterval(long defaultAmount) {
