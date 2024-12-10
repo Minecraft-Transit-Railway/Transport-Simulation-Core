@@ -5,27 +5,17 @@
 		"SerializedDataBase"
 	],
 	"properties": {
-		"id": {
-			"type": "string"
-		},
-		"x": {
+		"deviation": {
 			"type": "integer"
 		},
-		"y": {
-			"type": "integer"
-		},
-		"z": {
-			"type": "integer"
-		},
-		"dwellTime": {
-			"type": "integer"
+		"departures": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
 		}
 	},
 	"required": [
-		"id",
-		"x",
-		"y",
-		"z",
-		"dwellTime"
+		"deviation"
 	]
 }

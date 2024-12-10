@@ -1,10 +1,3 @@
-.route-name {
-	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
-	font-size: 1.5em;
-	font-weight: 600;
-	text-align: center;
-}
-
-.route-name.cjk {
-	font-size: 3em;
+.duration {
+	color: rgba(127, 127, 127, 50%);
 }

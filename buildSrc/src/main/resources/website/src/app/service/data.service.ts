@@ -402,8 +402,9 @@ export class StationExtended extends RouteStation {
 		x: number,
 		y: number,
 		z: number,
+		dwellTime: number,
 	) {
-		super(id, x, y, z);
+		super(id, x, y, z, dwellTime);
 	}
 
 	static create(dataResponseStation: Station, dataResponseRouteStation: RouteStation) {
@@ -418,6 +419,7 @@ export class StationExtended extends RouteStation {
 			dataResponseRouteStation.x,
 			dataResponseRouteStation.y,
 			dataResponseRouteStation.z,
+			dataResponseRouteStation.dwellTime,
 		);
 	}
 }
@@ -431,17 +433,23 @@ export class StationWithPosition extends StationExtended {
 }
 
 export class RouteExtended {
+	public readonly id: string;
 	public readonly name: string;
 	public readonly color: string;
 	public readonly number: string;
 	public readonly type: string;
 	public readonly circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE";
+	public readonly durations: number[];
+	public readonly depots: string[];
 
 	constructor(dataResponseRoute: Route, readonly stations: StationExtended[]) {
+		this.id = dataResponseRoute.id;
 		this.name = dataResponseRoute.name;
 		this.color = dataResponseRoute.color;
 		this.number = dataResponseRoute.number;
 		this.type = dataResponseRoute.type;
 		this.circularState = dataResponseRoute.circularState;
+		this.durations = dataResponseRoute.durations;
+		this.depots = dataResponseRoute.depots;
 	}
 }

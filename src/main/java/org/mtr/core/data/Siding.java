@@ -16,12 +16,12 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Random;
+import java.util.function.LongConsumer;
 
 public final class Siding extends SidingSchema implements Utilities {
 
@@ -365,22 +365,16 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 	}
 
-	public void getArrivals(long startMillis, long platformId, ArrivalPathFindingConsumer consumer) {
+	public void getDepartures(long currentMillis, Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures) {
 		if (area != null) {
-			final Long2ObjectAVLTreeMap<LongObjectImmutablePair<Runnable>> stopTimesForPlatform = new Long2ObjectAVLTreeMap<>();
-			iterateArrivals(startMillis, platformId, 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> trip.getUpcomingStopTimes(
-					tripStopIndex,
-					trips,
-					area.getRepeatInfinitely(),
-					newStopTime -> {
-						final long departureTime = scheduledDepartureTime + deviation;
-						final LongObjectImmutablePair<Runnable> existingStopTime = stopTimesForPlatform.get(newStopTime.platformId);
-						if (existingStopTime == null || departureTime < existingStopTime.leftLong()) {
-							stopTimesForPlatform.put(newStopTime.platformId, new LongObjectImmutablePair<>(departureTime, () -> consumer.accept(newStopTime.platformId, newStopTime.trip.route.getId(), departureTime, newStopTime.startTime - stopTime.endTime)));
-						}
-					}
-			));
-			stopTimesForPlatform.values().forEach(departureTimePair -> departureTimePair.right().run());
+			area.routes.forEach(route -> {
+				final RoutePlatformData routePlatformData = Utilities.getElement(route.getRoutePlatforms(), -1);
+				if (routePlatformData != null) {
+					iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
+						departures.computeIfAbsent(route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis);
+					});
+				}
+			});
 		}
 	}
 
@@ -663,6 +657,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			final ObjectArrayList<RoutePlatformInfo> routePlatformInfoList = new ObjectArrayList<>();
 			for (int i = 0; i < area.routes.size(); i++) {
 				final Route route = area.routes.get(i);
+				route.durations.clear();
 				for (int j = 0; j < route.getRoutePlatforms().size(); j++) {
 					final long platformId = route.getRoutePlatforms().get(j).platform.getId();
 					if (j == 0 && !routePlatformInfoList.isEmpty() && Utilities.getElement(routePlatformInfoList, -1).platformId == platformId) {
@@ -676,6 +671,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			double nextStoppingDistance = 0;
 			double speed = 0;
 			double time = 0;
+			LongConsumer writeRouteDuration = null;
 			int tripStopIndex = 0;
 			for (int i = 0; i < path.size(); i++) {
 				if (railProgress >= nextStoppingDistance) {
@@ -740,6 +736,11 @@ public final class Siding extends SidingSchema implements Utilities {
 							platformTripStopTimes.get(pathData.getSavedRailBaseId()).add(currentTrip.addStopTime(startTime, endTime, pathData.getSavedRailBaseId(), tripStopIndex, routePlatformInfo.customDestination));
 						}
 
+						if (writeRouteDuration != null) {
+							writeRouteDuration.accept(startTime);
+						}
+
+						writeRouteDuration = newStartTime -> routePlatformInfo.route.durations.add(newStartTime - endTime);
 						tripStopIndex++;
 						routePlatformInfoList.remove(0);
 					}
@@ -827,11 +828,6 @@ public final class Siding extends SidingSchema implements Utilities {
 				return endSpeedSquared < 0 ? -1 : startTime + (distance == 0 ? 0 : (Math.sqrt(endSpeedSquared) - startSpeed) / totalAcceleration);
 			}
 		}
-	}
-
-	@FunctionalInterface
-	public interface ArrivalPathFindingConsumer {
-		void accept(long platformId, long routeId, long departureTime, long duration);
 	}
 
 	@FunctionalInterface

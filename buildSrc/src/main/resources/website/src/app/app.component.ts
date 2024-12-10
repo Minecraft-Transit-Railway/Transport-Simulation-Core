@@ -55,8 +55,8 @@ export class AppComponent {
 		sideRoute.close();
 	}
 
-	onClickRoute(routeId: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
-		this.routeService.setRoute(routeId);
+	onClickRoute(routeKey: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+		this.routeService.setRoute(routeKey);
 		sideMain.close();
 		sideStation.close();
 		sideDirections.close();

@@ -8,24 +8,14 @@
 		"id": {
 			"type": "string"
 		},
-		"x": {
-			"type": "integer"
-		},
-		"y": {
-			"type": "integer"
-		},
-		"z": {
-			"type": "integer"
-		},
-		"dwellTime": {
-			"type": "integer"
+		"departures": {
+			"type": "array",
+			"items": {
+				"$ref": "departuresByDeviation.json"
+			}
 		}
 	},
 	"required": [
-		"id",
-		"x",
-		"y",
-		"z",
-		"dwellTime"
+		"id"
 	]
 }

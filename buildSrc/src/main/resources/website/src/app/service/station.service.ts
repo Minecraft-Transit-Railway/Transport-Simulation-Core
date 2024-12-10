@@ -79,7 +79,7 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 		const newRoutes: { [key: string]: { name: string, variations: string[], number: string, color: string, colorInt: number, typeIcon: string } } = {};
 		this.dataService.getAllRoutes().forEach(({name, number, color, type, stations}) => {
 			if (stations.some(station => station.id === this.selectedStation?.id)) {
-				const key = SimplifyRoutesPipe.getRouteId({name, number, color});
+				const key = SimplifyRoutesPipe.getRouteKey({name, number, color});
 				const variation = name.split("||")[1];
 				if (key in newRoutes) {
 					newRoutes[key].variations.push(variation);
@@ -198,7 +198,7 @@ export class Arrival {
 		this.arrival = dataResponse.arrival === 0 ? 0 : dataResponse.arrival + dataService.getTimeOffset();
 		this.departure = dataResponse.departure === 0 ? 0 : dataResponse.departure + dataService.getTimeOffset();
 		this.isContinuous = this.arrival === 0;
-		this.key = SimplifyRoutesPipe.getRouteId({name: this.routeName, number: this.routeNumber, color: this.routeColor});
+		this.key = SimplifyRoutesPipe.getRouteKey({name: this.routeName, number: this.routeNumber, color: this.routeColor});
 		this.calculateValues();
 	}
 
@@ -215,7 +215,7 @@ export class Arrival {
 	}
 
 	public getDeviationString() {
-		return this.realtime ? this.deviation > 0 ? "delay" : "early" : "Scheduled";
+		return SimplifyRoutesPipe.getDeviationString(this.realtime, this.deviation);
 	}
 
 	calculateValues() {

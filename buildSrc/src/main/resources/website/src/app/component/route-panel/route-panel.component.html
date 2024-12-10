@@ -1,22 +1,66 @@
-<div class="column gap wrapper">
-	<div class="column padding-sides">
-		@for (routeNamePart of getRouteName() | splitName; track $index) {
-			<div class="route-name {{routeNamePart.isCjk ? 'cjk' : ''}}">{{ routeNamePart.text }}</div>
+<div class="column gap-small wrapper">
+	<div class="column gap padding-sides">
+		<app-title [name]="getRouteName()" [color]="getRouteColor()"/>
+		<mat-form-field subscriptSizing="dynamic">
+			<mat-label>Route Variation</mat-label>
+			<mat-select #dropdown (selectionChange)="selectRoute(dropdown.value)" [value]="getRandomSeed()">
+				@for (name of getNames(); track $index) {
+					<mat-option [value]="'id_' + $index">{{ name | formatName }}</mat-option>
+				}
+			</mat-select>
+		</mat-form-field>
+		@if (getTotalDurationSeconds()) {
+			<div class="row gap center">
+				<div class="row gap center" matTooltip="Total Duration">
+					<mat-icon>schedule</mat-icon>
+					<div>{{ getTotalDurationSeconds() | formatTime :"" }}</div>
+				</div>
+			</div>
 		}
+		<div class="row gap center">
+			<div class="row gap center" matTooltip="Depot(s) For Route">
+				<mat-icon>home</mat-icon>
+				@if (getRouteDepots().length === 0) {
+					<div>(None)</div>
+				} @else {
+					<div class="column gap-small">
+						@for (depot of getRouteDepots(); track $index) {
+							<div>{{ depot.split("||")[0] | formatName }}</div>
+						}
+					</div>
+				}
+			</div>
+		</div>
+		<mat-divider/>
 	</div>
-	<mat-form-field class="padding-sides" subscriptSizing="dynamic">
-		<mat-label>Route Variation</mat-label>
-		<mat-select #dropdown (selectionChange)="selectRoute(dropdown.value)" [value]="getRandomSeed()">
-			@for (name of getNames(); track $index) {
-				<mat-option [value]="'id_' + $index">{{ name | formatName }}</mat-option>
-			}
-		</mat-select>
-	</mat-form-field>
+	<div class="column padding-sides" [style.display]="hasDurations() || hasDwellTimes() ? '' : 'none'">
+		<mat-checkbox class="grayscale" #showDurationsCheckbox [style.display]="hasDurations() ? '' : 'none'">Show Travel Times</mat-checkbox>
+		<mat-checkbox class="grayscale" #showDwellTimesCheckbox [style.display]="hasDwellTimes() ? '' : 'none'">Show Dwell Times</mat-checkbox>
+	</div>
 
 	<div class="column padding-sides content">
-		@for (station of getStations(); track $index) {
-			<app-route-display [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true">
-				<app-data-list-entry [icons]="[]" [title]="[station.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(station.id)"/>
+		@for (stationDetails of getRouteStationDetails(); track $index) {
+			<app-route-display #display1 [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true" [icons]="getVehicleIcons(stationDetails.vehicles, display1.getHeight() + display2.getHeight())">
+				<div class="row center">
+					<app-data-list-entry class="spacing" [icons]="[]" [title]="[stationDetails.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(stationDetails.id)"/>
+					@if (showDwellTimesCheckbox.checked && stationDetails.dwellTimeSeconds) {
+						<div class="row center duration" matTooltip="Dwell Time">
+							<mat-icon inline>hourglass_empty</mat-icon>
+							<div>&nbsp;{{ stationDetails.dwellTimeSeconds | formatTime :"" }}</div>
+						</div>
+					}
+				</div>
+			</app-route-display>
+			<app-route-display #display2 [colorAbove]="getRouteColor()" [colorBelow]="getRouteColor()" [isStation]="false" [icons]="[]" [style.display]="$index < $count - 1? '' : 'none'">
+				@if (showDurationsCheckbox.checked && stationDetails.durationSeconds) {
+					<div class="row">
+						<div class="spacing"></div>
+						<div class="row center duration" matTooltip="Travel Time">
+							<mat-icon inline>{{ getRouteIcon() }}</mat-icon>
+							<div>&nbsp;{{ stationDetails.durationSeconds | formatTime :"" }}</div>
+						</div>
+					</div>
+				}
 			</app-route-display>
 		}
 	</div>

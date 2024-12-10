@@ -12,12 +12,12 @@ public final class RouteStation extends RouteStationSchema {
 		updateData(readerBase);
 	}
 
-	private RouteStation(String id, Position position) {
-		super(id, position.getX(), position.getY(), position.getZ());
+	private RouteStation(String id, Position position, long dwellTime) {
+		super(id, position.getX(), position.getY(), position.getZ(), dwellTime);
 	}
 
 	static RouteStation create(Platform platform) {
 		final Position position = platform.getMidPosition();
-		return new RouteStation(platform.area.getHexId(), position);
+		return new RouteStation(platform.area.getHexId(), position, platform.getDwellTime());
 	}
 }

@@ -11,11 +11,13 @@ public final class Route extends RouteSchema {
 	}
 
 	Route(org.mtr.core.data.Route route) {
-		super(route.getName(), route.getColorHex(), route.getRouteNumber(), route.getRouteTypeKey(), route.getCircularState());
+		super(route.getHexId(), route.getName(), route.getColorHex(), route.getRouteNumber(), route.getRouteTypeKey(), route.getCircularState());
 		route.getRoutePlatforms().forEach(routePlatformData -> {
 			if (routePlatformData.platform != null && routePlatformData.platform.area != null) {
 				stations.add(RouteStation.create(routePlatformData.platform));
 			}
 		});
+		durations.addAll(route.durations);
+		route.depots.forEach(depot -> depots.add(depot.getName()));
 	}
 }

@@ -18,6 +18,7 @@ import {MatTabsModule} from "@angular/material/tabs";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {ROUTE_TYPES} from "../../data/routeType";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {TitleComponent} from "../title/title.component";
 
 @Component({
 	selector: "app-station-panel",
@@ -37,6 +38,7 @@ import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 		MatTooltipModule,
 		MatTabsModule,
 		DataListEntryComponent,
+		TitleComponent,
 	],
 	templateUrl: "./station-panel.component.html",
 	styleUrl: "./station-panel.component.css",
@@ -51,6 +53,11 @@ export class StationPanelComponent {
 
 	getStation() {
 		return this.stationService.getSelectedStation();
+	}
+
+	getStationColor() {
+		const station = this.stationService.getSelectedStation();
+		return station == undefined ? undefined : parseInt(station.color, 16);
 	}
 
 	getCoordinatesText() {
@@ -140,8 +147,8 @@ export class StationPanelComponent {
 		return types.map(type => ROUTE_TYPES[type].icon);
 	}
 
-	getRouteId(route: { color: string, name: string, number: string }) {
-		return SimplifyRoutesPipe.getRouteId(route);
+	getRouteKey(route: { color: string, name: string, number: string }) {
+		return SimplifyRoutesPipe.getRouteKey(route);
 	}
 }
 

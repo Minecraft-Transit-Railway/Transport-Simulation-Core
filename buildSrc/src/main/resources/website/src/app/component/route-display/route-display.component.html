@@ -15,6 +15,11 @@
 		@if (isStation) {
 			<div class="circle"></div>
 		}
+		@for (icon of icons; track $index) {
+			<div [class]="'icon ' + (icon.offset === 0 ? '' : 'light')" [style.top]="(icon.offset + getHeight() / 2 - 12) + 'px'" [matTooltip]="icon.tooltip">
+				<mat-icon>{{ icon.icon }}</mat-icon>
+			</div>
+		}
 	</div>
 	<div class="full" #text>
 		<ng-content/>

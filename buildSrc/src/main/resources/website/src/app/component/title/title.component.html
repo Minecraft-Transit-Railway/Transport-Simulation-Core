@@ -1,0 +1,8 @@
+<div class="column gap">
+	<div class="column">
+		@for (namePart of name | splitName; track $index) {
+			<div class="name {{namePart.isCjk ? 'cjk' : ''}}">{{ namePart.text }}</div>
+		}
+	</div>
+	<div class="color-bar" [style.background-color]="color ? (color | formatColor) : 'transparent'"></div>
+</div>

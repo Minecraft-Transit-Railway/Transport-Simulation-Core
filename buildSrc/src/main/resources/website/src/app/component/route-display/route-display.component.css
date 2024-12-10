@@ -1,11 +1,11 @@
 .display-container {
 	display: flex;
 	position: relative;
-	min-width: 14px;
+	min-width: 40px;
 }
 
 .line {
-	left: 4px;
+	left: 30px;
 	position: absolute;
 	width: 6px;
 }
@@ -28,13 +28,24 @@
 .circle {
 	background-color: white;
 	border: 2px solid black;
-	border-radius: 8px;
+	border-radius: 7px;
 	box-sizing: border-box;
+	left: 26px;
 	position: absolute;
 	top: 50%;
 	transform: translate(0, -50%);
 	width: 14px;
 	height: 14px;
+}
+
+.icon {
+	position: absolute;
+	width: 24px;
+	height: 24px;
+}
+
+.icon.light {
+	color: rgba(127, 127, 127, 50%);
 }
 
 .full {

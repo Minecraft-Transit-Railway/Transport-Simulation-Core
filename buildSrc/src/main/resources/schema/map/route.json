@@ -5,6 +5,9 @@
 		"SerializedDataBase"
 	],
 	"properties": {
+		"id": {
+			"type": "string"
+		},
 		"name": {
 			"type": "string"
 		},
@@ -26,9 +29,22 @@
 			"items": {
 				"$ref": "routeStation.json"
 			}
+		},
+		"durations": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"depots": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
 		}
 	},
 	"required": [
+		"id",
 		"name",
 		"color",
 		"number",

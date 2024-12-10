@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"cachedResponseTime": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"departures": {
+			"type": "array",
+			"items": {
+				"$ref": "departuresByRoute.json"
+			}
+		}
+	},
+	"required": [
+		"cachedResponseTime"
+	]
+}

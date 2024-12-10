@@ -39,8 +39,8 @@ export class SearchComponent implements OnInit {
 	@Input() label!: string;
 	@Input() includeRoutes!: boolean;
 	searchBox = new FormControl("");
-	searchedStations$ = new Observable<{ id: string, icons: string[], color: string, name: string, number: string }[]>();
-	searchedRoutes$ = new Observable<{ id: string, icons: string[], color: string, name: string, number: string }[]>();
+	searchedStations$ = new Observable<{ key: string, icons: string[], color: string, name: string, number: string }[]>();
+	searchedRoutes$ = new Observable<{ key: string, icons: string[], color: string, name: string, number: string }[]>();
 	hasStations = false;
 	hasRoutes = false;
 
@@ -48,18 +48,18 @@ export class SearchComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		const filter = (getList: () => { id: string, icons: string[], color: string, name: string, number: string }[], setHasData: (value: boolean) => void): Observable<{ id: string, icons: string[], color: string, name: string, number: string }[]> => this.searchBox.valueChanges.pipe(map(value => {
+		const filter = (getList: () => { key: string, icons: string[], color: string, name: string, number: string }[], setHasData: (value: boolean) => void): Observable<{ key: string, icons: string[], color: string, name: string, number: string }[]> => this.searchBox.valueChanges.pipe(map(value => {
 			if (value == null || value === "") {
 				return [];
 			} else {
-				const matches: { id: string, icons: string[], color: string, name: string, number: string, index: number }[] = [];
-				getList().forEach(({id, icons, color, name, number}) => {
+				const matches: { key: string, icons: string[], color: string, name: string, number: string, index: number }[] = [];
+				getList().forEach(({key, icons, color, name, number}) => {
 					const index = name.toLowerCase().indexOf(value.toLowerCase());
 					if (index >= 0) {
-						matches.push({id, icons, color, name, number, index});
+						matches.push({key, icons, color, name, number, index});
 					}
 				});
-				const result: { id: string, icons: string[], color: string, name: string, number: string }[] = matches.sort((match1, match2) => {
+				const result: { key: string, icons: string[], color: string, name: string, number: string }[] = matches.sort((match1, match2) => {
 					const indexDifference = match1.index - match2.index;
 					return indexDifference === 0 ? match1.name.localeCompare(match2.name) : indexDifference;
 				});

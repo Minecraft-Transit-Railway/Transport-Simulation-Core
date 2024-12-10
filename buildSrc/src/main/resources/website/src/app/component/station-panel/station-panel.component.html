@@ -1,11 +1,6 @@
 <div class="column gap wrapper">
 	<div class="column gap padding-sides">
-		<div class="column">
-			@for (stationNamePart of getStation()?.name | splitName; track $index) {
-				<div class="station-name {{stationNamePart.isCjk ? 'cjk' : ''}}">{{ stationNamePart.text }}</div>
-			}
-		</div>
-		<div class="station-color-bar" [style.background-color]="'#' + getStation()?.color"></div>
+		<app-title [name]="getStation()?.name ?? ''" [color]="getStationColor()"/>
 		<div class="row gap-small center">
 			<div class="row gap center" matTooltip="Location">
 				<mat-icon>my_location</mat-icon>
@@ -41,7 +36,7 @@
 					<div class="column gap-small padding-top-bottom padding-sides content">
 						<mat-chip-listbox class="chip" #chipList aria-label="Routes" multiple>
 							@for (route of getActiveRoutes(); track $index) {
-								<mat-chip-option [style.box-shadow]="'0 0 0 2px ' + (route.colorInt | formatColor) + ' inset'" [style.height]="(route.textLineCount + 1) + 'em'" [id]="route.key" (selectionChange)="updateArrivalFilter(chipList,showTerminatingCheckbox.checked)">
+								<mat-chip-option [style.box-shadow]="'0 0 0 2px ' + (route.colorInt | formatColor) + ' inset'" [style.height]="(route.textLineCount + 1) + 'em'" [id]="route.key" (selectionChange)="updateArrivalFilter(chipList, showTerminatingCheckbox.checked)">
 									<div class="row gap-small center">
 										<mat-icon>{{ route.typeIcon }}</mat-icon>
 										<div class="column chip-text">
@@ -89,7 +84,7 @@
 						@for (route of getRoutes(); track $index) {
 							<div class="column">
 								<mat-divider/>
-								<app-data-list-entry [icons]="[route.typeIcon, '']" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.colorInt | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteId(route))"/>
+								<app-data-list-entry [icons]="[route.typeIcon, '']" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.colorInt | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
 							</div>
 						}
 					</div>
