@@ -11,7 +11,7 @@ public final class Station extends StationSchema {
 	}
 
 	Station(org.mtr.core.data.Station station) {
-		super(station.getHexId(), station.getName(), station.getColorHex(), station.getZone1(), station.getZone2(), station.getZone3());
+		super(station.getHexId(), station.getName(), station.getColor(), station.getZone1(), station.getZone2(), station.getZone3());
 		station.connectedStations.forEach(connectedStation -> connections.add(connectedStation.getHexId()));
 	}
 }

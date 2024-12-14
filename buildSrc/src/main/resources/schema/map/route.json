@@ -12,7 +12,7 @@
 			"type": "string"
 		},
 		"color": {
-			"type": "string"
+			"type": "integer"
 		},
 		"number": {
 			"type": "string"
@@ -23,6 +23,9 @@
 		"circularState": {
 			"$ref": "org.mtr.core.data.Route.CircularState",
 			"typeScriptEnum": "NONE|CLOCKWISE|ANTICLOCKWISE"
+		},
+		"hidden": {
+			"type": "boolean"
 		},
 		"stations": {
 			"type": "array",
@@ -49,6 +52,7 @@
 		"color",
 		"number",
 		"type",
-		"circularState"
+		"circularState",
+		"hidden"
 	]
 }

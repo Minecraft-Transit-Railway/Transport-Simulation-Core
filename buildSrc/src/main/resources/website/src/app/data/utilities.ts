@@ -27,6 +27,12 @@ export function arrayAverage(array: number[]) {
 	return array.reduce((previousTotal, currentValue) => previousTotal + currentValue, 0) / array.length;
 }
 
+export function getFromArray<T>(map: { [key: string]: T }, key: string, consumer: (data: T) => void) {
+	if (key in map) {
+		consumer(map[key]);
+	}
+}
+
 export function atan45(y: number, x: number) {
 	const absX = Math.abs(x);
 	const absY = Math.abs(y);

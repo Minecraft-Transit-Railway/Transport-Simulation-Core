@@ -1,42 +1,63 @@
 import {Injectable} from "@angular/core";
-import {HttpClient} from "@angular/common/http";
-import {DataService, RouteExtended} from "./data.service";
-import {ServiceBase} from "./service";
-import {DimensionService} from "./dimension.service";
+import {MapDataService} from "./map-data.service";
 import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
-
-const REFRESH_INTERVAL = 3000;
+import {DeparturesService} from "./departures.service";
+import {Route} from "../entity/route";
+import {SelectableDataServiceBase} from "./selectable-data-service-base";
+import {DimensionService} from "./dimension.service";
 
 @Injectable({providedIn: "root"})
-export class RouteService extends ServiceBase<{ currentTime: number, data: { cachedResponseTime: number, departures: DataResponse[] } }> {
-	private readonly selectedRoutes: RouteExtended[] = [];
-	private selectedRoute?: RouteExtended;
-	private readonly routeStationDetails: { id: string, name: string, duration: number, durationSeconds: number, dwellTime: number, dwellTimeSeconds: number, vehicles: { deviation: number, percentage: number }[] }[] = [];
-	private readonly departures: { departureFromNow: number, deviation: number }[] = [];
+export class RouteVariationService extends SelectableDataServiceBase<void, Route> {
+	public readonly routeStationDetails: { id: string, name: string, duration: number, durationSeconds: number, dwellTime: number, dwellTimeSeconds: number, vehicles: { deviation: number, percentage: number }[] }[] = [];
 	private totalDuration = 0;
-	private randomSeed = 0;
 
-	constructor(private readonly httpClient: HttpClient, private readonly dataService: DataService, dimensionService: DimensionService) {
-		super(() => {
-			if (this.selectedRoutes.length > 0) {
-				return this.httpClient.get<{ currentTime: number, data: { cachedResponseTime: number, departures: DataResponse[] } }>(this.getUrl("all-arrivals"));
-			} else {
-				return;
+	constructor(private readonly routeKeyService: RouteKeyService, departuresService: DeparturesService, dimensionService: DimensionService) {
+		super(routeId => {
+			this.routeStationDetails.length = 0;
+			this.totalDuration = 0;
+			const selectedRoutes = this.routeKeyService.getSelectedData();
+			const selectedRoute = selectedRoutes ? selectedRoutes.find(route => route.id === routeId) ?? selectedRoutes[0] : undefined;
+			if (selectedRoute) {
+				for (let i = 0; i < selectedRoute.routePlatforms.length; i++) {
+					const {station, dwellTime, duration} = selectedRoute.routePlatforms[i];
+					this.routeStationDetails.push({id: station.id, name: station.name, duration, durationSeconds: Math.round(duration / 1000), dwellTime, dwellTimeSeconds: Math.round(dwellTime / 1000), vehicles: []});
+					this.totalDuration += dwellTime;
+					if (i < selectedRoute.routePlatforms.length - 1) {
+						this.totalDuration += duration;
+					}
+				}
 			}
-		}, REFRESH_INTERVAL, dimensionService);
+			updateDepartures(selectedRoute);
+			return selectedRoute;
+		}, () => {
+		}, () => {
+		}, () => {
+		}, 0, dimensionService);
+
+		const departures: { departureFromNow: number, deviation: number }[] = [];
+		const updateDepartures = (route: Route | undefined) => {
+			departures.length = 0;
+			if (route) {
+				departuresService.getDepartures(route.id, ({departureFromNow}) => departureFromNow <= this.totalDuration).forEach(departure => departures.push(departure));
+			}
+		};
+
+		routeKeyService.selectionChanged.subscribe(() => this.select(""));
+		departuresService.dataProcessed.subscribe(() => updateDepartures(this.getSelectedData()));
+
 		setInterval(() => {
 			this.routeStationDetails.forEach(({vehicles}) => vehicles.length = 0);
 			let routeStationIndex = this.routeStationDetails.length - 1;
 			let departureIndex = 0;
 			let cumulativeTime = 0;
 
-			while (routeStationIndex >= 0 && departureIndex < this.departures.length) {
+			while (routeStationIndex >= 0 && departureIndex < departures.length) {
 				cumulativeTime += this.routeStationDetails[routeStationIndex].dwellTime;
-				if (this.departures[departureIndex].departureFromNow <= cumulativeTime) {
-					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: this.departures[departureIndex].deviation, percentage: 0});
-					this.departures[departureIndex].departureFromNow -= 100;
+				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
+					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: departures[departureIndex].deviation, percentage: 0});
+					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
-					if (departureIndex >= this.departures.length) {
+					if (departureIndex >= departures.length) {
 						break;
 					}
 				}
@@ -48,23 +69,23 @@ export class RouteService extends ServiceBase<{ currentTime: number, data: { cac
 
 				const halfDuration = this.routeStationDetails[routeStationIndex].duration / 2;
 				cumulativeTime += halfDuration;
-				if (this.departures[departureIndex].departureFromNow <= cumulativeTime) {
-					const difference = this.departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
-					this.routeStationDetails[routeStationIndex + 1].vehicles.push({deviation: this.departures[departureIndex].deviation, percentage: -difference / halfDuration});
-					this.departures[departureIndex].departureFromNow -= 100;
+				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
+					const difference = departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
+					this.routeStationDetails[routeStationIndex + 1].vehicles.push({deviation: departures[departureIndex].deviation, percentage: -difference / halfDuration});
+					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
-					if (departureIndex >= this.departures.length) {
+					if (departureIndex >= departures.length) {
 						break;
 					}
 				}
 
 				cumulativeTime += halfDuration;
-				if (this.departures[departureIndex].departureFromNow <= cumulativeTime) {
-					const difference = this.departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
-					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: this.departures[departureIndex].deviation, percentage: 1 - difference / halfDuration});
-					this.departures[departureIndex].departureFromNow -= 100;
+				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
+					const difference = departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
+					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: departures[departureIndex].deviation, percentage: 1 - difference / halfDuration});
+					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
-					if (departureIndex >= this.departures.length) {
+					if (departureIndex >= departures.length) {
 						break;
 					}
 				}
@@ -72,83 +93,31 @@ export class RouteService extends ServiceBase<{ currentTime: number, data: { cac
 		}, 100);
 	}
 
-	protected override processData(data: { currentTime: number, data: { cachedResponseTime: number, departures: DataResponse[] } }) {
-		this.departures.length = 0;
-		data.data.departures.forEach(routeDepartures => {
-			if (routeDepartures.id === this.selectedRoute?.id) {
-				routeDepartures.departures.forEach(departuresForRoute => departuresForRoute.departures.forEach(departure => {
-					const departureFromNow = departure + departuresForRoute.deviation + data.data.cachedResponseTime - data.currentTime;
-					if (departureFromNow <= this.totalDuration + REFRESH_INTERVAL) {
-						this.departures.push({departureFromNow, deviation: departuresForRoute.deviation});
-					}
-				}));
-			}
-		});
-		this.departures.sort((departure1, departure2) => departure1.departureFromNow - departure2.departureFromNow);
-	}
-
-	public setRoute(routeKey: string) {
-		this.selectedRoutes.length = 0;
-		this.dataService.getAllRoutes().forEach(route => {
-			if (SimplifyRoutesPipe.getRouteKey(route) === routeKey) {
-				this.selectedRoutes.push(route);
-			}
-		});
-		SimplifyRoutesPipe.sortRoutes(this.selectedRoutes);
-		this.randomSeed = Math.random();
-		this.selectRoute(0);
-	}
-
 	public getNames() {
-		return this.selectedRoutes.map(route => route.name);
-	}
-
-	public getRandomSeed() {
-		return this.randomSeed;
-	}
-
-	public getSelectedRoute() {
-		return this.selectedRoute;
-	}
-
-	public getRouteStationDetails() {
-		return this.routeStationDetails;
+		return this.routeKeyService.getSelectedData()?.map(route => route.name) ?? [];
 	}
 
 	public getTotalDurationSeconds() {
 		return Math.round(this.totalDuration / 1000);
 	}
+}
 
-	public selectRoute(index: number) {
-		this.routeStationDetails.length = 0;
-		this.totalDuration = 0;
-		this.selectedRoute = this.selectedRoutes[index] ?? this.selectedRoutes[0];
-		if (this.selectedRoute) {
-			for (let i = 0; i < this.selectedRoute.stations.length; i++) {
-				const {id, name, dwellTime} = this.selectedRoute.stations[i];
-				const duration = this.selectedRoute.durations[i];
-				this.routeStationDetails.push({id, name, duration, durationSeconds: Math.round(duration / 1000), dwellTime, dwellTimeSeconds: Math.round(dwellTime / 1000), vehicles: []});
-				this.totalDuration += dwellTime;
-				if (i < this.selectedRoute.stations.length - 1) {
-					this.totalDuration += duration;
+@Injectable({providedIn: "root"})
+export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
+
+	constructor(private readonly dataService: MapDataService, dimensionService: DimensionService) {
+		super(routeKey => {
+			const selectedRouteVariations: Route[] = [];
+			this.dataService.routes.forEach(route => {
+				if (SimplifyRoutesPipe.getRouteKey(route) === routeKey) {
+					selectedRouteVariations.push(route);
 				}
-			}
-		}
-		this.getData("");
-		this.departures.length = 0;
+			});
+			SimplifyRoutesPipe.sortRoutes(selectedRouteVariations);
+			return selectedRouteVariations;
+		}, () => {
+		}, () => {
+		}, () => {
+		}, 0, dimensionService);
 	}
-
-	public clear() {
-		this.selectedRoutes.length = 0;
-	}
-}
-
-class DataResponse {
-	readonly id: string = "";
-	readonly departures: DataResponseDeparturesForRoute[] = [];
-}
-
-class DataResponseDeparturesForRoute {
-	readonly deviation: number = 0;
-	readonly departures: number[] = [];
 }

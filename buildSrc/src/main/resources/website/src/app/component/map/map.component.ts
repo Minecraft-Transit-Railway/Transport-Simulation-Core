@@ -2,7 +2,7 @@ import * as THREE from "three";
 import {AfterViewInit, Component, ElementRef, EventEmitter, Output, ViewChild} from "@angular/core";
 import SETTINGS from "../../utility/settings";
 import {MatProgressSpinner} from "@angular/material/progress-spinner";
-import {DataService} from "../../service/data.service";
+import {MapDataService} from "../../service/map-data.service";
 import {MatIcon} from "@angular/material/icon";
 import {connectStations, connectWith45} from "../../utility/drawing";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
@@ -11,7 +11,6 @@ import {LineGeometry} from "three/examples/jsm/lines/LineGeometry.js";
 import {Line2} from "three/examples/jsm/lines/Line2.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import {rotate, trig45} from "../../data/utilities";
-import {ROUTE_TYPES} from "../../data/routeType";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
 
 const blackColor = 0x000000;
@@ -36,7 +35,7 @@ const animationDuration = 2000;
 	styleUrls: ["./map.component.css"],
 })
 export class MapComponent implements AfterViewInit {
-	@Output() stationClicked = new EventEmitter<string>;
+	@Output() stationClicked = new EventEmitter<string>();
 	@ViewChild("wrapper") private readonly wrapperRef!: ElementRef<HTMLDivElement>;
 	@ViewChild("canvas") private readonly canvasRef!: ElementRef<HTMLCanvasElement>;
 	@ViewChild("stats") private readonly statsRef!: ElementRef<HTMLDivElement>;
@@ -52,8 +51,9 @@ export class MapComponent implements AfterViewInit {
 	private lineGeometryNormal: LineGeometry | undefined;
 	private lineGeometryThin: LineGeometry | undefined;
 
-	constructor(private readonly dataService: DataService) {
+	constructor(private readonly dataService: MapDataService) {
 		this.canvas = () => this.canvasRef.nativeElement;
+		this.dataService.mapLoading.subscribe(() => this.loading = true);
 	}
 
 	ngAfterViewInit() {
@@ -125,8 +125,7 @@ export class MapComponent implements AfterViewInit {
 		this.controls.addEventListener("change", () => draw());
 		window.addEventListener("resize", () => draw());
 
-		this.dataService.setLoading = () => this.loading = true;
-		this.dataService.drawMap = () => {
+		this.dataService.drawMap.subscribe(() => {
 			this.loading = true;
 			this.scene.background = new THREE.Color(MapComponent.getBackgroundColor()).convertLinearToSRGB();
 			this.scene.clear();
@@ -144,7 +143,7 @@ export class MapComponent implements AfterViewInit {
 			const interchangeStyle = SETTINGS.interchangeStyle;
 			const positions1 = [0, 0, -10000, 0, 0, -10000];
 			const positions2 = [0, 0, -10000, 0, 0, -10000];
-			this.dataService.getStationConnections().forEach(({x1, z1, x2, z2, start45}) => {
+			this.dataService.stationConnections.forEach(({x1, z1, x2, z2, start45}) => {
 				const write = (offset: number, positions: number[]) => {
 					const points: [number, number][] = [];
 					connectWith45(points, x1, z1, x2, z2, start45);
@@ -190,14 +189,15 @@ export class MapComponent implements AfterViewInit {
 			this.scene.add(new THREE.Mesh(this.oneWayArrowGeometry, materialWithVertexColors));
 			this.updateLabels();
 			draw();
-		};
-		this.dataService.animateCenter = (x, z) => {
+		});
+
+		this.dataService.animateMap.subscribe(({x, z}) => {
 			animationStartX = this.camera.position.x;
 			animationStartY = this.camera.position.y;
 			animationTargetX = x;
 			animationTargetY = -z;
 			animationStartTime = Date.now();
-		};
+		});
 	}
 
 	private createStationBlobs() {
@@ -205,7 +205,8 @@ export class MapComponent implements AfterViewInit {
 		const colors: number[] = [];
 		const darkMode = MapComponent.isDarkMode();
 
-		this.dataService.getStations().forEach(({x, z, rotate, width, height}) => {
+		this.dataService.stationsForMap.forEach(({station, rotate, width, height}) => {
+			const {x, z} = station;
 			const newWidth = width * 3 * SETTINGS.scale / this.camera.zoom;
 			const newHeight = height * 3 * SETTINGS.scale / this.camera.zoom;
 
@@ -277,13 +278,14 @@ export class MapComponent implements AfterViewInit {
 			MapComponent.setColor(color, colorsArrow, 9);
 		};
 
-		this.dataService.getLineConnections().forEach(({lineConnectionParts, direction1, direction2, x1, z1, x2, z2, length}) => {
+		this.dataService.lineConnections.forEach(({lineConnectionParts, direction1, direction2, x1, z1, x2, z2, length, relativeLength}) => {
+			const lineOffset = length * this.camera.zoom < 10 ? Number.MAX_SAFE_INTEGER : 0;
 			for (let i = 0; i < lineConnectionParts.length; i++) {
 				const {color, offset1, offset2, oneWay} = lineConnectionParts[i];
-				const colorInt = parseInt(color, 16);
+				const colorInt = parseInt(color);
 				const colorOffset = (i - lineConnectionParts.length / 2 + 0.5) * 6 * SETTINGS.scale;
-				const hollow = this.dataService.getRouteTypes()[color.split("|")[1]] === 2;
-				const lineZ = (hollow ? (oneWay === 0 ? -8 : -12) : (oneWay === 0 ? -2 : -5)) - length;
+				const hollow = this.dataService.routeTypeVisibility[color.split("|")[1]] === "HOLLOW";
+				const lineZ = (hollow ? (oneWay === 0 ? -8 : -12) : (oneWay === 0 ? -2 : -5)) - relativeLength;
 
 				// z layers
 				// 2-3     solid    two-way line
@@ -312,10 +314,10 @@ export class MapComponent implements AfterViewInit {
 
 				if (points.length >= 2) {
 					points.forEach(([x, y, offset]) => {
-						positionsNormal.push(x, -y, offset ? -10000 : lineZ);
+						positionsNormal.push(x + lineOffset, -y, offset ? -10000 : lineZ);
 						MapComponent.setColor(colorInt, colorsNormal);
 						if (hollow) {
-							positionsThin.push(x, -y, offset ? -10000 : lineZ + 1);
+							positionsThin.push(x + lineOffset, -y, offset ? -10000 : lineZ + 1);
 							MapComponent.setColor(backgroundColor, colorsThin);
 						}
 					});
@@ -365,17 +367,18 @@ export class MapComponent implements AfterViewInit {
 	private updateLabels() {
 		this.textLabels.length = 0;
 		let renderedTextCount = 0;
-		this.dataService.getStations().forEach(({id, name, types, x, z, rotate, width, height}) => {
+		this.dataService.stationsForMap.forEach(({station, rotate, width, height}) => {
+			const {id, name, getIcons, x, z} = station;
 			const newWidth = width * 3 * SETTINGS.scale;
 			const newHeight = height * 3 * SETTINGS.scale;
 			const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
 			const textOffset = (rotate ? rotatedSize : newHeight) + 9 * SETTINGS.scale;
-			const icons = types.filter(type => this.dataService.getRouteTypes()[type] === 0).map(type => ROUTE_TYPES[type].icon);
+			const icons = getIcons(type => this.dataService.routeTypeVisibility[type] === "HIDDEN");
 			const canvasX = (x - this.camera.position.x) * this.camera.zoom;
 			const canvasY = (z + this.camera.position.y) * this.camera.zoom;
 			const halfCanvasWidth = this.canvas().clientWidth / 2;
 			const halfCanvasHeight = this.canvas().clientHeight / 2;
-			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight) {
+			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && renderedTextCount < SETTINGS.maxText * 2) {
 				this.textLabels.push(new TextLabel(
 					id,
 					name,

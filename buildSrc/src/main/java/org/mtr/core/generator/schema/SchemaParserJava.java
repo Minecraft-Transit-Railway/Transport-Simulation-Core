@@ -162,7 +162,7 @@ public class SchemaParserJava {
 				typeScriptImports.add(Utilities.formatRefNameRaw(refName));
 				final ObjectArrayList<String> extraParameters = new ObjectArrayList<>();
 				Utilities.iterateStringArray(jsonObject.getAsJsonArray("parameters"), parameter -> extraParameters.add(Utilities.formatRefName(parameter)));
-				return isArray ? TypeWithData.createArray(Type.createArray(formattedRefName, formattedRefName), formattedRefName, extraParameters) : TypeWithData.createObject(formattedRefName, extraParameters);
+				return isArray ? TypeWithData.createArray(Type.createArray(formattedRefName, formattedRefName + "DTO"), formattedRefName, extraParameters) : TypeWithData.createObject(formattedRefName, extraParameters);
 			} else {
 				return isArray ? null : TypeWithData.createEnum(formattedRefName, Utilities.getStringOrNull(jsonObject.get("typeScriptEnum")));
 			}

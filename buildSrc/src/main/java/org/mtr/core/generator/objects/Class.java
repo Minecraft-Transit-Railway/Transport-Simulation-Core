@@ -53,10 +53,10 @@ public class Class implements GeneratedObject {
 	public ObjectArrayList<String> generateTypeScript() {
 		final ObjectArrayList<String> result = new ObjectArrayList<>();
 
-		imports.forEach(text -> result.add(String.format("import {%s} from \"./%s\";", Utilities.capitalizeFirstLetter(text), text)));
+		imports.forEach(text -> result.add(String.format("import {%sDTO} from \"./%s\";", Utilities.capitalizeFirstLetter(text), text)));
 		result.add("");
 
-		getClassBody(result, new StringBuilder("export class ").append(name));
+		getClassBody(result, new StringBuilder("export class ").append(name).append("DTO"));
 
 		appendWithTab(result, fields, GeneratedObject::generateTypeScript, true);
 		appendWithTab(result, constructors, GeneratedObject::generateTypeScript, false);

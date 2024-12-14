@@ -36,7 +36,7 @@
 					<div class="column gap-small padding-top-bottom padding-sides content">
 						<mat-chip-listbox class="chip" #chipList aria-label="Routes" multiple>
 							@for (route of getActiveRoutes(); track $index) {
-								<mat-chip-option [style.box-shadow]="'0 0 0 2px ' + (route.colorInt | formatColor) + ' inset'" [style.height]="(route.textLineCount + 1) + 'em'" [id]="route.key" (selectionChange)="updateArrivalFilter(chipList, showTerminatingCheckbox.checked)">
+								<mat-chip-option [style.box-shadow]="'0 0 0 2px ' + (route.color | formatColor) + ' inset'" [style.height]="(route.textLineCount + 1) + 'em'" [id]="route.key" (selectionChange)="updateArrivalFilter(chipList, showTerminatingCheckbox.checked)">
 									<div class="row gap-small center">
 										<mat-icon>{{ route.typeIcon }}</mat-icon>
 										<div class="column chip-text">
@@ -67,7 +67,7 @@
 									<app-data-list-entry [icons]="[arrival.routeTypeIcon, getCircularStateIcon(arrival.circularState)]" [title]="[arrival.destination | formatName, arrival.getArrivalTime() | formatTime : 'Arrived']" [subtitles]="[
 										[(arrival.routeName | formatName) + ' ' + (arrival.routeNumber | formatName), arrival.isContinuous ? 'Every 8 Seconds' : arrival.arrival | formatDate],
 										['Platform ' + arrival.platformName, arrival.isContinuous ? '' : (arrival.getDeviation() | formatTime :'') + ' ' + arrival.getDeviationString()]
-									]" [color]="arrival.routeColorInt | formatColor" [useLightColor]="!arrival.realtime" [clickable]="true" (entryClicked)="showDetails(arrival)"/>
+									]" [color]="arrival.routeColor | formatColor" [useLightColor]="!arrival.realtime" [clickable]="true" (entryClicked)="showDetails(arrival)"/>
 								</div>
 							}
 						</div>
@@ -84,7 +84,7 @@
 						@for (route of getRoutes(); track $index) {
 							<div class="column">
 								<mat-divider/>
-								<app-data-list-entry [icons]="[route.typeIcon, '']" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.colorInt | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
+								<app-data-list-entry [icons]="[route.typeIcon, '']" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
 							</div>
 						}
 					</div>
@@ -101,7 +101,7 @@
 								@if ($index > 0) {
 									<mat-divider/>
 								}
-								<app-data-list-entry [icons]="mapConnectionTypes(connection.types)" [title]="[connection.name | formatName, '']" [subtitles]="[]" [color]="'#' + connection.color" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(connection.id)"/>
+								<app-data-list-entry [icons]="connection.getIcons()" [title]="[connection.name | formatName, '']" [subtitles]="[]" [color]="connection.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(connection.id)"/>
 							</div>
 						}
 					</div>

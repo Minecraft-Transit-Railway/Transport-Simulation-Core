@@ -3,7 +3,7 @@
 		<app-title [name]="getRouteName()" [color]="getRouteColor()"/>
 		<mat-form-field subscriptSizing="dynamic">
 			<mat-label>Route Variation</mat-label>
-			<mat-select #dropdown (selectionChange)="selectRoute(dropdown.value)" [value]="getRandomSeed()">
+			<mat-select #dropdown (selectionChange)="selectRoute(dropdown.value)" [value]="dropdownValue">
 				@for (name of getNames(); track $index) {
 					<mat-option [value]="'id_' + $index">{{ name | formatName }}</mat-option>
 				}
@@ -33,12 +33,12 @@
 		</div>
 		<mat-divider/>
 	</div>
-	<div class="column padding-sides" [style.display]="hasDurations() || hasDwellTimes() ? '' : 'none'">
-		<mat-checkbox class="grayscale" #showDurationsCheckbox [style.display]="hasDurations() ? '' : 'none'">Show Travel Times</mat-checkbox>
-		<mat-checkbox class="grayscale" #showDwellTimesCheckbox [style.display]="hasDwellTimes() ? '' : 'none'">Show Dwell Times</mat-checkbox>
-	</div>
 
 	<div class="column padding-sides content">
+		<div class="column" [style.display]="hasDurations() || hasDwellTimes() ? '' : 'none'">
+			<mat-checkbox class="grayscale" #showDurationsCheckbox [style.display]="hasDurations() ? '' : 'none'">Show Travel Times</mat-checkbox>
+			<mat-checkbox class="grayscale" #showDwellTimesCheckbox [style.display]="hasDwellTimes() ? '' : 'none'">Show Dwell Times</mat-checkbox>
+		</div>
 		@for (stationDetails of getRouteStationDetails(); track $index) {
 			<app-route-display #display1 [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true" [icons]="getVehicleIcons(stationDetails.vehicles, display1.getHeight() + display2.getHeight())">
 				<div class="row center">

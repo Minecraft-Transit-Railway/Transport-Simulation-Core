@@ -22,7 +22,7 @@ public final class SystemMapServlet extends ServletBase {
 		simulator.routes.forEach(stationAndRoutes::addRoute);
 		return Utilities.getJsonObjectFromData(stationAndRoutes);
 	}, 30000);
-	private final CachedResponse allArrivalsResponse = new CachedResponse(simulator -> {
+	private final CachedResponse departuresResponse = new CachedResponse(simulator -> {
 		final long currentMillis = System.currentTimeMillis();
 		final Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures = new Object2ObjectAVLTreeMap<>();
 		simulator.sidings.forEach(siding -> {
@@ -44,8 +44,8 @@ public final class SystemMapServlet extends ServletBase {
 			case "stations-and-routes":
 				response = stationsAndRoutesResponse.get(simulator);
 				break;
-			case "all-arrivals":
-				response = allArrivalsResponse.get(simulator);
+			case "departures":
+				response = departuresResponse.get(simulator);
 				break;
 			case "arrivals":
 				response = Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));

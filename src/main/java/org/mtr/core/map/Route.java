@@ -11,7 +11,7 @@ public final class Route extends RouteSchema {
 	}
 
 	Route(org.mtr.core.data.Route route) {
-		super(route.getHexId(), route.getName(), route.getColorHex(), route.getRouteNumber(), route.getRouteTypeKey(), route.getCircularState());
+		super(route.getHexId(), route.getName(), route.getColor(), route.getRouteNumber(), route.getRouteTypeKey(), route.getCircularState(), route.getHidden());
 		route.getRoutePlatforms().forEach(routePlatformData -> {
 			if (routePlatformData.platform != null && routePlatformData.platform.area != null) {
 				stations.add(RouteStation.create(routePlatformData.platform));

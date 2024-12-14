@@ -1,90 +1,77 @@
 import {Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
-import {DataService, StationWithPosition} from "./data.service";
+import {MapDataService} from "./map-data.service";
 import {SplitNamePipe} from "../pipe/splitNamePipe";
 import {ROUTE_TYPES} from "../data/routeType";
-import {ServiceBase} from "./service";
 import {DimensionService} from "./dimension.service";
 import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
+import {SelectableDataServiceBase} from "./selectable-data-service-base";
+import {Station} from "../entity/station";
 
 const REFRESH_INTERVAL = 3000;
 const MAX_ARRIVALS = 5;
 
 @Injectable({providedIn: "root"})
-export class StationService extends ServiceBase<{ data: { arrivals: DataResponse[] } }> {
-	public readonly arrivalsRoutes: { key: string, name: string, number: string, colorInt: number, textLineCount: number, typeIcon: string }[] = [];
-	public readonly routesAtStation: { name: string, variations: string[], number: string, color: string, colorInt: number, typeIcon: string }[] = [];
-	private selectedStation?: StationWithPosition;
+export class StationService extends SelectableDataServiceBase<{ currentTime: number, data: { arrivals: DataResponse[] } }, Station> {
+	public readonly arrivalsRoutes: { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }[] = [];
+	public readonly routesAtStation: { name: string, variations: string[], number: string, color: number, typeIcon: string }[] = [];
 	private readonly arrivals: Arrival[] = [];
 	private hasTerminating = false;
 	private readonly filterArrivalRoutes: string[] = [];
 	private filterArrivalShowTerminating = false;
 
-	constructor(private readonly httpClient: HttpClient, private readonly dataService: DataService, private readonly splitNamePipe: SplitNamePipe, dimensionService: DimensionService) {
-		super(() => {
-			if (this.selectedStation) {
-				return this.httpClient.post<{ data: { arrivals: DataResponse[] } }>(this.getUrl("arrivals"), JSON.stringify({
-					stationIdsHex: [this.selectedStation.id],
-					maxCountPerPlatform: MAX_ARRIVALS,
-				}));
-			} else {
-				return;
+	constructor(private readonly httpClient: HttpClient, private readonly dataService: MapDataService, private readonly splitNamePipe: SplitNamePipe, dimensionService: DimensionService) {
+		super(stationId => this.dataService.stations.find(station => station.id === stationId), () => {
+			this.arrivals.length = 0;
+			this.arrivalsRoutes.length = 0;
+			this.routesAtStation.length = 0;
+		}, selectedStation => this.httpClient.post<{ currentTime: number, data: { arrivals: DataResponse[] } }>(this.getUrl("arrivals"), JSON.stringify({
+			stationIdsHex: [selectedStation.id],
+			maxCountPerPlatform: MAX_ARRIVALS,
+		})), (data: { currentTime: number, data: { arrivals: DataResponse[] } }) => {
+			this.arrivals.length = 0;
+			const routes: { [key: string]: { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string } } = {};
+			this.hasTerminating = false;
+
+			data.data.arrivals.forEach(arrival => {
+				const newArrival = new Arrival(this.dataService, Date.now() - data.currentTime, arrival);
+				this.arrivals.push(newArrival);
+				routes[newArrival.key] = {
+					key: newArrival.key,
+					name: newArrival.routeName,
+					number: newArrival.routeNumber,
+					color: newArrival.routeColor,
+					textLineCount: Math.max(2, Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length)),
+					typeIcon: newArrival.routeTypeIcon,
+				};
+				if (newArrival.isTerminating) {
+					this.hasTerminating = true;
+				}
+			});
+
+			this.arrivals.sort((arrival1, arrival2) => arrival1.arrival - arrival2.arrival);
+			const newRoutes = Object.values(routes);
+			SimplifyRoutesPipe.sortRoutes(newRoutes);
+
+			if (JSON.stringify(newRoutes) !== JSON.stringify(this.arrivalsRoutes)) {
+				this.arrivalsRoutes.length = 0;
+				newRoutes.forEach(route => this.arrivalsRoutes.push(route));
 			}
 		}, REFRESH_INTERVAL, dimensionService);
 		setInterval(() => this.arrivals.forEach(arrival => arrival.calculateValues()), 100);
 	}
 
-	protected override processData(data: { data: { arrivals: DataResponse[] } }) {
-		this.arrivals.length = 0;
-		const routes: { [key: string]: { key: string, name: string, number: string, color: string, colorInt: number, textLineCount: number, typeIcon: string } } = {};
-		this.hasTerminating = false;
-
-		data.data.arrivals.forEach(arrival => {
-			const newArrival = new Arrival(this.dataService, arrival);
-			this.arrivals.push(newArrival);
-			routes[newArrival.key] = {
-				key: newArrival.key,
-				name: newArrival.routeName,
-				number: newArrival.routeNumber,
-				color: newArrival.routeColor,
-				colorInt: newArrival.routeColorInt,
-				textLineCount: Math.max(2, Math.max(this.splitNamePipe.transform(newArrival.routeName).length, this.splitNamePipe.transform(newArrival.routeNumber).length)),
-				typeIcon: newArrival.routeTypeIcon,
-			};
-			if (newArrival.isTerminating) {
-				this.hasTerminating = true;
-			}
-		});
-
-		this.arrivals.sort((arrival1, arrival2) => arrival1.arrival - arrival2.arrival);
-		const newRoutes = Object.values(routes);
-		SimplifyRoutesPipe.sortRoutes(newRoutes);
-
-		if (JSON.stringify(newRoutes) !== JSON.stringify(this.arrivalsRoutes)) {
-			this.arrivalsRoutes.length = 0;
-			newRoutes.forEach(route => this.arrivalsRoutes.push(route));
-		}
-	}
-
-	public getSelectedStation() {
-		return this.selectedStation;
-	}
-
 	public setStation(stationId: string, zoomToStation: boolean) {
-		this.selectedStation = this.dataService.getAllStations().find(station => station.id === stationId);
-		this.arrivals.length = 0;
-		this.arrivalsRoutes.length = 0;
-
-		this.routesAtStation.length = 0;
-		const newRoutes: { [key: string]: { name: string, variations: string[], number: string, color: string, colorInt: number, typeIcon: string } } = {};
-		this.dataService.getAllRoutes().forEach(({name, number, color, type, stations}) => {
-			if (stations.some(station => station.id === this.selectedStation?.id)) {
+		this.select(stationId);
+		const newRoutes: { [key: string]: { name: string, variations: string[], number: string, color: number, typeIcon: string } } = {};
+		this.dataService.routes.forEach(({name, number, color, type, routePlatforms}) => {
+			if (routePlatforms.some(routePlatform => routePlatform.station.id === this.getSelectedData()?.id)) {
 				const key = SimplifyRoutesPipe.getRouteKey({name, number, color});
 				const variation = name.split("||")[1];
 				if (key in newRoutes) {
 					newRoutes[key].variations.push(variation);
 				} else {
-					newRoutes[key] = {name: name.split("||")[0], variations: [variation], number, color, colorInt: parseInt(color, 16), typeIcon: ROUTE_TYPES[type].icon};
+					newRoutes[key] = {name: name.split("||")[0], variations: [variation], number, color, typeIcon: ROUTE_TYPES[type].icon};
 				}
 			}
 		});
@@ -95,16 +82,17 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 		SimplifyRoutesPipe.sortRoutes(this.routesAtStation);
 
 		this.hasTerminating = false;
-		this.getData(stationId);
+		this.fetchData(stationId);
 		this.resetArrivalFilter();
 
-		if (this.selectedStation) {
-			if (this.selectedStation.types.every(routeType => this.dataService.getRouteTypes()[routeType] === 0)) {
-				this.selectedStation.types.forEach(routeType => this.dataService.getRouteTypes()[routeType] = 1);
+		const selectedStation = this.getSelectedData();
+		if (selectedStation) {
+			if (selectedStation.routes.every(({type}) => this.dataService.routeTypeVisibility[type] === "HIDDEN")) {
+				selectedStation.routes.forEach(({type}) => this.dataService.routeTypeVisibility[type] = "SOLID");
 				this.dataService.updateData();
 			}
 			if (zoomToStation) {
-				this.dataService.animateCenter(this.selectedStation.x, this.selectedStation.z);
+				this.dataService.animateMap.emit({x: selectedStation.x, z: selectedStation.z});
 			}
 		}
 	}
@@ -132,10 +120,6 @@ export class StationService extends ServiceBase<{ data: { arrivals: DataResponse
 	public resetArrivalFilter() {
 		this.filterArrivalRoutes.length = 0;
 		this.filterArrivalShowTerminating = false;
-	}
-
-	public clear() {
-		this.selectedStation = undefined;
 	}
 }
 
@@ -167,8 +151,7 @@ export class Arrival {
 	readonly isTerminating: boolean;
 	readonly routeName: string;
 	readonly routeNumber: string;
-	readonly routeColor: string;
-	readonly routeColorInt: number;
+	readonly routeColor: number;
 	readonly routeTypeIcon: string;
 	readonly circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE";
 	readonly platformName: string;
@@ -180,7 +163,7 @@ export class Arrival {
 	private arrivalDifference: number = 0;
 	private departureDifference: number = 0;
 
-	constructor(dataService: DataService, dataResponse: DataResponse) {
+	constructor(dataService: MapDataService, timeOffset: number, dataResponse: DataResponse) {
 		this.destination = dataResponse.destination;
 		this.deviation = dataResponse.deviation;
 		this.realtime = dataResponse.realtime;
@@ -188,15 +171,14 @@ export class Arrival {
 		this.isTerminating = dataResponse.isTerminating;
 		this.routeName = dataResponse.routeName.split("||")[0];
 		this.routeNumber = dataResponse.routeNumber;
-		this.routeColor = dataResponse.routeColor.toString(16);
-		this.routeColorInt = dataResponse.routeColor;
-		const tempRouteType = dataService.getAllRoutes().find(route => route.name === dataResponse.routeName)?.type;
+		this.routeColor = dataResponse.routeColor;
+		const tempRouteType = dataService.routes.find(route => route.name === dataResponse.routeName)?.type;
 		this.routeTypeIcon = tempRouteType == undefined ? "" : ROUTE_TYPES[tempRouteType].icon;
 		this.circularState = dataResponse.circularState;
 		this.platformName = dataResponse.platformName;
 		this.cars = dataResponse.cars.map(car => car.vehicleId);
-		this.arrival = dataResponse.arrival === 0 ? 0 : dataResponse.arrival + dataService.getTimeOffset();
-		this.departure = dataResponse.departure === 0 ? 0 : dataResponse.departure + dataService.getTimeOffset();
+		this.arrival = dataResponse.arrival === 0 ? 0 : dataResponse.arrival + timeOffset;
+		this.departure = dataResponse.departure === 0 ? 0 : dataResponse.departure + timeOffset;
 		this.isContinuous = this.arrival === 0;
 		this.key = SimplifyRoutesPipe.getRouteKey({name: this.routeName, number: this.routeNumber, color: this.routeColor});
 		this.calculateValues();

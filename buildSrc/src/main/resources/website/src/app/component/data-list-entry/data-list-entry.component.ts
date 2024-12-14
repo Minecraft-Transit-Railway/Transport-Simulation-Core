@@ -21,5 +21,5 @@ export class DataListEntryComponent {
 	@Input() color = "";
 	@Input({required: true}) useLightColor = false;
 	@Input({required: true}) clickable = true;
-	@Output() entryClicked = new EventEmitter<void>;
+	@Output() entryClicked = new EventEmitter<void>();
 }

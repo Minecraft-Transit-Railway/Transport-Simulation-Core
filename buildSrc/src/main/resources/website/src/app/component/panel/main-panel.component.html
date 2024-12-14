@@ -1,7 +1,7 @@
 <div class="column gap wrapper">
 	<mat-form-field class="padding-sides" subscriptSizing="dynamic">
 		<mat-label>Dimension</mat-label>
-		<mat-select #dropdown (selectionChange)="setDimension(dropdown.value)">
+		<mat-select #dropdown (selectionChange)="setDimension(dropdown.value)" [value]="dropdownValue">
 			@for (dimension of getDimensions(); track $index) {
 				<mat-option [value]="dimension">{{ dimension }}</mat-option>
 			}
@@ -10,14 +10,14 @@
 	<div class="column gap-small content">
 		@for (routeType of routeTypes; track $index) {
 			<div class="row-reverse gap center padding-sides">
-				<mat-button-toggle-group hideSingleSelectionIndicator #group="matButtonToggleGroup" [value]="getSelected(routeType[0])?.toString()" (change)="onSelect(routeType[0], group.value)">
-					<mat-button-toggle value="0" matTooltip="Hidden">
+				<mat-button-toggle-group hideSingleSelectionIndicator #group="matButtonToggleGroup" [value]="getSelected(routeType[0])" (change)="onSelect(routeType[0], group.value)">
+					<mat-button-toggle value="HIDDEN" matTooltip="Hidden">
 						<mat-icon>visibility_off</mat-icon>
 					</mat-button-toggle>
-					<mat-button-toggle value="1" matTooltip="Solid">
+					<mat-button-toggle value="SOLID" matTooltip="Solid">
 						<mat-icon>horizontal_rule</mat-icon>
 					</mat-button-toggle>
-					<mat-button-toggle value="2" matTooltip="Hollow">
+					<mat-button-toggle value="HOLLOW" matTooltip="Hollow">
 						<mat-icon>drag_handle</mat-icon>
 					</mat-button-toggle>
 				</mat-button-toggle-group>

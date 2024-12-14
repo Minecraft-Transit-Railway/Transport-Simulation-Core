@@ -1,5 +1,5 @@
 import {Component} from "@angular/core";
-import {DataService} from "../../service/data.service";
+import {MapDataService} from "../../service/map-data.service";
 import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {ReactiveFormsModule} from "@angular/forms";
@@ -22,19 +22,30 @@ import {MatTooltipModule} from "@angular/material/tooltip";
 	styleUrl: "./main-panel.component.css",
 })
 export class MainPanelComponent {
+	protected dropdownValue = "";
+	protected readonly routeTypes: [string, RouteType][] = [];
 
-	readonly routeTypes: [string, RouteType][] = Object.entries(ROUTE_TYPES).map(([routeTypeKey, routeType]) => [routeTypeKey, routeType]);
-
-	constructor(private readonly dataService: DataService, private readonly dimensionService: DimensionService) {
+	constructor(private readonly mapDataService: MapDataService, private readonly dimensionService: DimensionService) {
+		mapDataService.dataProcessed.subscribe(() => {
+			if (!this.dropdownValue) {
+				this.dropdownValue = dimensionService.getDimensions()[0];
+			}
+			this.routeTypes.length = 0;
+			Object.entries(ROUTE_TYPES).forEach(([routeTypeKey, routeType]) => {
+				if (routeTypeKey in mapDataService.routeTypeVisibility) {
+					this.routeTypes.push([routeTypeKey, routeType]);
+				}
+			});
+		});
 	}
 
 	onSelect(routeTypeKey: string, value: string) {
-		this.dataService.getRouteTypes()[routeTypeKey] = parseInt(value);
-		this.dataService.updateData();
+		this.mapDataService.routeTypeVisibility[routeTypeKey] = value as "HIDDEN" | "SOLID" | "HOLLOW";
+		this.mapDataService.updateData();
 	}
 
-	getSelected(routeTypeKey: string): number | undefined {
-		return this.dataService.getRouteTypes()[routeTypeKey];
+	getSelected(routeTypeKey: string): string | undefined {
+		return this.mapDataService.routeTypeVisibility[routeTypeKey];
 	}
 
 	getDimensions() {
@@ -42,6 +53,6 @@ export class MainPanelComponent {
 	}
 
 	setDimension(dimension: string) {
-		this.dataService.setDimension(dimension);
+		this.mapDataService.setDimension(dimension);
 	}
 }

@@ -13,12 +13,12 @@ import {MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialo
 import {MatButtonModule} from "@angular/material/button";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {MatTooltipModule} from "@angular/material/tooltip";
-import {DataService, StationWithPosition} from "../../service/data.service";
+import {MapDataService} from "../../service/map-data.service";
 import {MatTabsModule} from "@angular/material/tabs";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
-import {ROUTE_TYPES} from "../../data/routeType";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 import {TitleComponent} from "../title/title.component";
+import {Station} from "../../entity/station";
 
 @Component({
 	selector: "app-station-panel",
@@ -48,36 +48,36 @@ export class StationPanelComponent {
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<void>;
 
-	constructor(private readonly dataService: DataService, private readonly stationService: StationService, private readonly dialog: MatDialog) {
+	constructor(private readonly dataService: MapDataService, private readonly stationService: StationService, private readonly dialog: MatDialog) {
 	}
 
 	getStation() {
-		return this.stationService.getSelectedStation();
+		return this.stationService.getSelectedData();
 	}
 
 	getStationColor() {
-		const station = this.stationService.getSelectedStation();
-		return station == undefined ? undefined : parseInt(station.color, 16);
+		const station = this.stationService.getSelectedData();
+		return station == undefined ? undefined : station.color;
 	}
 
 	getCoordinatesText() {
-		const station = this.stationService.getSelectedStation();
+		const station = this.stationService.getSelectedData();
 		return station == undefined ? "" : `${Math.round(station.x)}, ${Math.round(station.y)}, ${Math.round(station.z)}`;
 	}
 
 	getZoneText() {
-		const station = this.stationService.getSelectedStation();
+		const station = this.stationService.getSelectedData();
 		return station == undefined ? "" : `${station.zone1}, ${station.zone2}, ${station.zone3}`;
 	}
 
-	getConnections(): StationWithPosition[] {
-		const station = this.stationService.getSelectedStation();
+	getConnections(): Station[] {
+		const station = this.stationService.getSelectedData();
 		if (station == undefined) {
 			return [];
 		} else {
-			const stations: StationWithPosition[] = [];
-			this.dataService.getAllStations().forEach(otherStation => {
-				if (station.connections.includes(otherStation.id)) {
+			const stations: Station[] = [];
+			this.dataService.stations.forEach(otherStation => {
+				if (station.connections.some(connectingStation => connectingStation.id === otherStation.id)) {
 					stations.push(otherStation);
 				}
 			});
@@ -127,15 +127,15 @@ export class StationPanelComponent {
 
 	copyLocation(copyIconButton: MatIcon) {
 		copyIconButton.fontIcon = "check";
-		const station = this.stationService.getSelectedStation();
+		const station = this.stationService.getSelectedData();
 		navigator.clipboard.writeText(station == undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();
 		setTimeout(() => copyIconButton.fontIcon = "content_copy", 1000);
 	}
 
 	focus() {
-		const station = this.stationService.getSelectedStation();
+		const station = this.stationService.getSelectedData();
 		if (station) {
-			this.dataService.animateCenter(station.x, station.z);
+			this.dataService.animateMap.emit({x: station.x, z: station.z});
 		}
 	}
 
@@ -143,11 +143,7 @@ export class StationPanelComponent {
 		this.dialog.open(DialogOverviewExampleDialog, {data: arrival});
 	}
 
-	mapConnectionTypes(types: string[]) {
-		return types.map(type => ROUTE_TYPES[type].icon);
-	}
-
-	getRouteKey(route: { color: string, name: string, number: string }) {
+	getRouteKey(route: { color: number, name: string, number: string }) {
 		return SimplifyRoutesPipe.getRouteKey(route);
 	}
 }

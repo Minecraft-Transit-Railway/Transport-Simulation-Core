@@ -6,11 +6,10 @@ import {StationPanelComponent} from "./component/station-panel/station-panel.com
 import {StationService} from "./service/station.service";
 import {SidenavComponent} from "./component/sidenav/sidenav.component";
 import {DirectionsComponent} from "./component/directions/directions.component";
-import {DirectionsService} from "./service/directions.service";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {MatIconModule} from "@angular/material/icon";
 import {MainPanelComponent} from "./component/panel/main-panel.component";
-import {RouteService} from "./service/route.service";
+import {RouteKeyService} from "./service/route.service";
 import {RoutePanelComponent} from "./component/route-panel/route-panel.component";
 
 @Component({
@@ -33,7 +32,7 @@ import {RoutePanelComponent} from "./component/route-panel/route-panel.component
 })
 export class AppComponent {
 
-	constructor(private readonly stationService: StationService, private readonly routeService: RouteService, private readonly directionsService: DirectionsService) {
+	constructor(private readonly stationService: StationService, private readonly routeKeyService: RouteKeyService) {
 	}
 
 	getTitle() {
@@ -45,6 +44,9 @@ export class AppComponent {
 		sideStation.close();
 		sideDirections.close();
 		sideRoute.close();
+		this.onCloseStation();
+		this.onCloseDirections();
+		this.onCloseRoute();
 	}
 
 	onClickStation(stationId: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent, zoomToStation: boolean) {
@@ -53,14 +55,18 @@ export class AppComponent {
 		sideStation.open();
 		sideDirections.close();
 		sideRoute.close();
+		this.onCloseDirections();
+		this.onCloseRoute();
 	}
 
 	onClickRoute(routeKey: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
-		this.routeService.setRoute(routeKey);
+		this.routeKeyService.select(routeKey);
 		sideMain.close();
 		sideStation.close();
 		sideDirections.close();
 		sideRoute.open();
+		this.onCloseStation();
+		this.onCloseDirections();
 	}
 
 	onCloseStation() {
@@ -68,11 +74,9 @@ export class AppComponent {
 	}
 
 	onCloseDirections() {
-		console.log(this);
-		this.directionsService.clear();
 	}
 
 	onCloseRoute() {
-		this.routeService.clear();
+		this.routeKeyService.clear();
 	}
 }

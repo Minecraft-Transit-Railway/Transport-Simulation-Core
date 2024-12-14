@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Output} from "@angular/core";
 import {MatSelectModule} from "@angular/material/select";
-import {RouteService} from "../../service/route.service";
+import {RouteKeyService, RouteVariationService} from "../../service/route.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
@@ -34,40 +34,44 @@ import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 export class RoutePanelComponent {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<void>;
+	@Output() directionsOpened = new EventEmitter<void>();
+	protected dropdownValue = "";
 
-	constructor(private readonly routeService: RouteService, private readonly formatTimePipe: FormatTimePipe) {
+	constructor(private readonly routeVariationService: RouteVariationService, private readonly routeKeyService: RouteKeyService, private readonly formatTimePipe: FormatTimePipe) {
+		routeKeyService.selectionChanged.subscribe(() => {
+			this.dropdownValue = Math.random().toString();
+			setTimeout(() => this.dropdownValue = "id_0", 0);
+		});
 	}
 
 	getNames() {
-		return this.routeService.getNames().map(name => name.split("||")[1] ?? "(Untitled)");
-	}
-
-	getRandomSeed() {
-		return this.routeService.getRandomSeed();
+		return this.routeVariationService.getNames().map(name => name.split("||")[1] ?? "(Untitled)");
 	}
 
 	selectRoute(id: string) {
-		this.routeService.selectRoute(parseInt(id.split("_")[1]));
+		const routeVariations = this.routeKeyService.getSelectedData();
+		if (routeVariations) {
+			this.routeVariationService.select(routeVariations[parseInt(id.split("_")[1])].id);
+		}
 	}
 
 	getRouteName() {
-		const route = this.routeService.getSelectedRoute();
+		const route = this.routeVariationService.getSelectedData();
 		return route ? route.name.split("||")[0] : "";
 	}
 
 	getRouteColor() {
-		const route = this.routeService.getSelectedRoute();
-		return route ? parseInt(route.color, 16) : undefined;
+		const route = this.routeVariationService.getSelectedData();
+		return route ? route.color : undefined;
 	}
 
 	getRouteIcon() {
-		const route = this.routeService.getSelectedRoute();
+		const route = this.routeVariationService.getSelectedData();
 		return route ? ROUTE_TYPES[route.type].icon : undefined;
 	}
 
 	getRouteDepots() {
-		const route = this.routeService.getSelectedRoute();
+		const route = this.routeVariationService.getSelectedData();
 		return route ? route.depots : [];
 	}
 
@@ -77,18 +81,18 @@ export class RoutePanelComponent {
 	}
 
 	getRouteStationDetails() {
-		return this.routeService.getRouteStationDetails();
+		return this.routeVariationService.routeStationDetails;
 	}
 
 	getTotalDurationSeconds() {
-		return this.routeService.getTotalDurationSeconds();
+		return this.routeVariationService.getTotalDurationSeconds();
 	}
 
 	hasDurations() {
-		return this.routeService.getRouteStationDetails()[0]?.durationSeconds;
+		return this.routeVariationService.routeStationDetails[0]?.durationSeconds;
 	}
 
 	hasDwellTimes() {
-		return this.routeService.getRouteStationDetails()[0]?.dwellTimeSeconds;
+		return this.routeVariationService.routeStationDetails[0]?.dwellTimeSeconds;
 	}
 }

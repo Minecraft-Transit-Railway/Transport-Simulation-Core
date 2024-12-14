@@ -12,7 +12,7 @@
 			"type": "string"
 		},
 		"color": {
-			"type": "string"
+			"type": "integer"
 		},
 		"zone1": {
 			"type": "integer"

@@ -1,6 +1,6 @@
 import {Pipe, PipeTransform} from "@angular/core";
-import {RouteExtended} from "../service/data.service";
 import {ROUTE_TYPES} from "../data/routeType";
+import {Route} from "../entity/route";
 
 @Pipe({
 	name: "simplifyRoutes",
@@ -9,8 +9,8 @@ import {ROUTE_TYPES} from "../data/routeType";
 })
 export class SimplifyRoutesPipe implements PipeTransform {
 
-	transform(routes: RouteExtended[]): { key: string, icons: string[], color: string, name: string, number: string }[] {
-		const newRoutes: { [key: string]: { key: string, icons: string[], color: string, name: string, number: string } } = {};
+	transform(routes: Route[]): { key: string, icons: string[], color: number, name: string, number: string }[] {
+		const newRoutes: { [key: string]: { key: string, icons: string[], color: number, name: string, number: string } } = {};
 		routes.forEach(route => {
 			const key = SimplifyRoutesPipe.getRouteKey(route);
 			newRoutes[key] = {key, icons: [ROUTE_TYPES[route.type].icon, ""], color: route.color, name: route.name.split("||")[0], number: route.number};
@@ -18,11 +18,11 @@ export class SimplifyRoutesPipe implements PipeTransform {
 		return Object.values(newRoutes);
 	}
 
-	public static getRouteKey(route: { color: string, name: string, number: string }) {
+	public static getRouteKey(route: { color: number, name: string, number: string }) {
 		return `${route.color}_${route.name.split("||")[0]}_${route.number}`;
 	}
 
-	public static sortRoutes(routes: { name: string, number: string, color: string, textLineCount?: number }[]) {
+	public static sortRoutes(routes: { name: string, number: string, color: number, textLineCount?: number }[]) {
 		routes.sort((route1, route2) => {
 			const linesCompare = route1.textLineCount === undefined || route2.textLineCount === undefined ? 0 : route1.textLineCount - route2.textLineCount;
 			if (linesCompare == 0) {

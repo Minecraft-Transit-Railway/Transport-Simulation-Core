@@ -365,16 +365,36 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 	}
 
+	/**
+	 * Gets the departure at the last stop of each route. This is used by the online system map for finding directions and showing realtime vehicle positions.
+	 */
 	public void getDepartures(long currentMillis, Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures) {
 		if (area != null) {
-			area.routes.forEach(route -> {
+			for (int i = 0; i < area.routes.size(); i++) {
+				final Route route = area.routes.get(i);
 				final RoutePlatformData routePlatformData = Utilities.getElement(route.getRoutePlatforms(), -1);
-				if (routePlatformData != null) {
-					iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
-						departures.computeIfAbsent(route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis);
-					});
+				if (routePlatformData == null) {
+					continue;
 				}
-			});
+
+				final long targetRouteId;
+				final int targetTripStopIndex;
+				final Route nextRoute = Utilities.getElement(area.routes, area.getRepeatInfinitely() && i == area.routes.size() - 1 ? 0 : i + 1);
+				final RoutePlatformData nextRoutePlatformData = nextRoute == null ? null : Utilities.getElement(nextRoute.getRoutePlatforms(), 0);
+				if (nextRoutePlatformData != null && routePlatformData.platform.getId() == nextRoutePlatformData.platform.getId()) {
+					targetRouteId = nextRoute.getId();
+					targetTripStopIndex = 0;
+				} else {
+					targetRouteId = route.getId();
+					targetTripStopIndex = route.getRoutePlatforms().size() - 1;
+				}
+
+				iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
+					if (trip.route.getId() == targetRouteId && tripStopIndex == targetTripStopIndex) {
+						departures.computeIfAbsent(route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis);
+					}
+				});
+			}
 		}
 	}
 
@@ -604,8 +624,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	/**
-	 * After a path is set, generate the distance and time values.
-	 * Should only be called during initialization and after a path is generated.
+	 * After a path is set, generate the distance and time values. Should only be called during initialization and after a path is generated.
 	 */
 	private void generatePathDistancesAndTimeSegments() {
 		vehicles.clear();

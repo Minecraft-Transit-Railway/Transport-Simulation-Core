@@ -69,7 +69,7 @@ public class TypeWithData {
 		parameters.add("readerBaseChild");
 		extraParameters.forEach(parameter -> parameters.add(String.format("%1$s%2$sParameter()", "%1$s", Utilities.capitalizeFirstLetter(parameter))));
 		return new TypeWithData(
-				Type.createObject(className, className),
+				Type.createObject(className, className + "DTO"),
 				"%1$s = new %2$s(readerBase.getChild(\"%1$s\"));",
 				String.format("readerBase.unpackChild(\"%1$s\", readerBaseChild -> %1$s = new %2$s(%3$s));", "%1$s", "%2$s", String.join(", ", parameters)),
 				"if (%1$s != null) %1$s.serializeData(writerBase.writeChild(\"%1$s\"));",
