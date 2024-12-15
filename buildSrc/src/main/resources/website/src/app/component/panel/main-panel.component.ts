@@ -7,16 +7,18 @@ import {MatIconModule} from "@angular/material/icon";
 import {MatSelectModule} from "@angular/material/select";
 import {DimensionService} from "../../service/dimension.service";
 import {MatTooltipModule} from "@angular/material/tooltip";
+import {MatSlideToggleModule} from "@angular/material/slide-toggle";
+import {ThemeService} from "../../service/theme.service";
 
 @Component({
 	selector: "app-main-panel",
-	standalone: true,
 	imports: [
 		MatButtonToggleModule,
 		ReactiveFormsModule,
 		MatIconModule,
 		MatSelectModule,
 		MatTooltipModule,
+		MatSlideToggleModule,
 	],
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.css",
@@ -25,7 +27,7 @@ export class MainPanelComponent {
 	protected dropdownValue = "";
 	protected readonly routeTypes: [string, RouteType][] = [];
 
-	constructor(private readonly mapDataService: MapDataService, private readonly dimensionService: DimensionService) {
+	constructor(private readonly mapDataService: MapDataService, private readonly dimensionService: DimensionService, private readonly themeService: ThemeService) {
 		mapDataService.dataProcessed.subscribe(() => {
 			if (!this.dropdownValue) {
 				this.dropdownValue = dimensionService.getDimensions()[0];
@@ -54,5 +56,13 @@ export class MainPanelComponent {
 
 	setDimension(dimension: string) {
 		this.mapDataService.setDimension(dimension);
+	}
+
+	changeTheme(isDarkTheme: boolean) {
+		this.themeService.setTheme(isDarkTheme);
+	}
+
+	isDarkTheme() {
+		return this.themeService.isDarkTheme();
 	}
 }

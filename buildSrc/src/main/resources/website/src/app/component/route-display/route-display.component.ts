@@ -3,10 +3,10 @@ import {MatSelectModule} from "@angular/material/select";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {MatIcon} from "@angular/material/icon";
 import {MatTooltipModule} from "@angular/material/tooltip";
+import {ThemeService} from "../../service/theme.service";
 
 @Component({
 	selector: "app-route-display",
-	standalone: true,
 	imports: [
 		MatSelectModule,
 		FormatColorPipe,
@@ -24,11 +24,18 @@ export class RouteDisplayComponent implements AfterViewInit {
 	@ViewChild("text") private readonly textRef!: ElementRef<HTMLDivElement>;
 	private height = 0;
 
+	constructor(private readonly themeService: ThemeService) {
+	}
+
 	ngAfterViewInit(): void {
 		new ResizeObserver(entries => entries.forEach(entry => this.height = entry.target.clientHeight)).observe(this.textRef.nativeElement);
 	}
 
 	getHeight() {
 		return this.height;
+	}
+
+	isDarkTheme() {
+		return this.themeService.isDarkTheme();
 	}
 }

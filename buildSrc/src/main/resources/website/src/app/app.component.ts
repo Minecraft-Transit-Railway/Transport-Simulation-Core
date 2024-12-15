@@ -11,10 +11,10 @@ import {MatIconModule} from "@angular/material/icon";
 import {MainPanelComponent} from "./component/panel/main-panel.component";
 import {RouteKeyService} from "./service/route.service";
 import {RoutePanelComponent} from "./component/route-panel/route-panel.component";
+import {ThemeService} from "./service/theme.service";
 
 @Component({
 	selector: "app-root",
-	standalone: true,
 	imports: [
 		MapComponent,
 		MatButtonModule,
@@ -31,8 +31,9 @@ import {RoutePanelComponent} from "./component/route-panel/route-panel.component
 	styleUrls: ["./app.component.css"],
 })
 export class AppComponent {
+	protected darkTheme = false;
 
-	constructor(private readonly stationService: StationService, private readonly routeKeyService: RouteKeyService) {
+	constructor(private readonly themeService: ThemeService, private readonly stationService: StationService, private readonly routeKeyService: RouteKeyService) {
 	}
 
 	getTitle() {
@@ -78,5 +79,9 @@ export class AppComponent {
 
 	onCloseRoute() {
 		this.routeKeyService.clear();
+	}
+
+	isDarkTheme() {
+		return this.themeService.isDarkTheme();
 	}
 }

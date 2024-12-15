@@ -15,7 +15,6 @@ import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 
 @Component({
 	selector: "app-route-panel",
-	standalone: true,
 	imports: [
 		MatSelectModule,
 		FormatNamePipe,
@@ -77,7 +76,7 @@ export class RoutePanelComponent {
 
 	getVehicleIcons(vehicles: { deviation: number, percentage: number }[], displayHeight: number) {
 		const icon = this.getRouteIcon() ?? "";
-		return vehicles.map(vehicle => ({icon, offset: vehicle.percentage * displayHeight / 2, tooltip: vehicle.deviation ? `${this.formatTimePipe.transform(Math.abs(Math.round(vehicle.deviation / 1000)), "")} ${SimplifyRoutesPipe.getDeviationString(true, vehicle.deviation)}` : undefined}));
+		return vehicles.map(vehicle => ({icon, offset: vehicle.percentage * displayHeight / 2, tooltip: `${this.formatTimePipe.transform(Math.abs(Math.round(vehicle.deviation / 1000)), "")} ${SimplifyRoutesPipe.getDeviationString(true, vehicle.deviation)}`}));
 	}
 
 	getRouteStationDetails() {

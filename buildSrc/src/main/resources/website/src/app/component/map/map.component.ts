@@ -12,9 +12,13 @@ import {Line2} from "three/examples/jsm/lines/Line2.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import {rotate, trig45} from "../../data/utilities";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
+import {RouteKeyService} from "../../service/route.service";
+import {ThemeService} from "../../service/theme.service";
 
 const blackColor = 0x000000;
 const whiteColor = 0xFFFFFF;
+const grayColorLight = 0xDDDDDD;
+const grayColorDark = 0x222222;
 const arrowSpacing = 80;
 const materialWithVertexColors = new THREE.MeshBasicMaterial({vertexColors: true});
 const lineMaterialStationConnectionThin = new LineMaterial({color: 0xFFFFFF, linewidth: 4 * SETTINGS.scale, vertexColors: true});
@@ -25,7 +29,6 @@ const animationDuration = 2000;
 
 @Component({
 	selector: "app-map",
-	standalone: true,
 	imports: [
 		MatProgressSpinner,
 		MatIcon,
@@ -44,22 +47,26 @@ export class MapComponent implements AfterViewInit {
 
 	private readonly canvas: () => HTMLCanvasElement;
 	private readonly scene = new THREE.Scene();
-	private readonly camera = new THREE.OrthographicCamera(0, 0, 0, 0, -20, 20);
+	private readonly camera = new THREE.OrthographicCamera(0, 0, 0, 0, -200, 200);
 	private controls: OrbitControls | undefined;
 	private stationGeometry: THREE.BufferGeometry | undefined;
 	private oneWayArrowGeometry: THREE.BufferGeometry | undefined;
 	private lineGeometryNormal: LineGeometry | undefined;
 	private lineGeometryThin: LineGeometry | undefined;
 
-	constructor(private readonly dataService: MapDataService) {
+	constructor(private readonly dataService: MapDataService, private readonly routeKeyService: RouteKeyService, private readonly themeService: ThemeService) {
 		this.canvas = () => this.canvasRef.nativeElement;
 		this.dataService.mapLoading.subscribe(() => this.loading = true);
 	}
 
 	ngAfterViewInit() {
+		this.routeKeyService.selectionChanged.subscribe(() => {
+			previousZoom = 0;
+			draw();
+		});
 		const stats = new Stats();
 		this.statsRef.nativeElement.append(stats.dom);
-		this.scene.background = new THREE.Color(MapComponent.getBackgroundColor()).convertLinearToSRGB();
+		this.scene.background = new THREE.Color(this.getBackgroundColor()).convertLinearToSRGB();
 		const renderer = new THREE.WebGLRenderer({antialias: true, canvas: this.canvas()});
 		renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 		let previousZoom = 1;
@@ -127,7 +134,7 @@ export class MapComponent implements AfterViewInit {
 
 		this.dataService.drawMap.subscribe(() => {
 			this.loading = true;
-			this.scene.background = new THREE.Color(MapComponent.getBackgroundColor()).convertLinearToSRGB();
+			this.scene.background = new THREE.Color(this.getBackgroundColor()).convertLinearToSRGB();
 			this.scene.clear();
 
 			if (needsCenter) {
@@ -140,38 +147,6 @@ export class MapComponent implements AfterViewInit {
 			this.scene.add(new THREE.Mesh(this.stationGeometry, materialWithVertexColors));
 
 			this.createStationConnections();
-			const interchangeStyle = SETTINGS.interchangeStyle;
-			const positions1 = [0, 0, -10000, 0, 0, -10000];
-			const positions2 = [0, 0, -10000, 0, 0, -10000];
-			this.dataService.stationConnections.forEach(({x1, z1, x2, z2, start45}) => {
-				const write = (offset: number, positions: number[]) => {
-					const points: [number, number][] = [];
-					connectWith45(points, x1, z1, x2, z2, start45);
-					positions.push(points[0][0], -points[0][1], -10000);
-					for (let i = 0; i < points.length; i++) {
-						positions.push(points[i][0], -points[i][1], -offset);
-					}
-					positions.push(points[points.length - 1][0], -points[points.length - 1][1], -10000);
-				};
-				write(interchangeStyle === 0 ? 1 : 0, positions1);
-				write(interchangeStyle === 0 ? 2 : 1, positions2);
-			});
-
-			const addStationConnection = (lineMaterial: LineMaterial, positions: number[], color: number) => {
-				const geometry = new LineGeometry();
-				geometry.setPositions(positions);
-				const colors: number[] = [];
-				MapComponent.setColor(color, colors, positions.length);
-				geometry.setColors(colors);
-				const line = new Line2(geometry, lineMaterial);
-				line.computeLineDistances();
-				this.scene.add(line);
-			};
-
-			const backgroundColor = MapComponent.getBackgroundColor();
-			const darkMode = MapComponent.isDarkMode();
-			addStationConnection(lineMaterialStationConnectionThin, positions1, interchangeStyle === 0 === darkMode ? whiteColor : blackColor);
-			addStationConnection(lineMaterialStationConnectionThick, positions2, interchangeStyle === 0 ? backgroundColor : darkMode ? whiteColor : blackColor);
 
 			this.lineGeometryNormal = new LineGeometry();
 			this.lineGeometryThin = new LineGeometry();
@@ -203,10 +178,10 @@ export class MapComponent implements AfterViewInit {
 	private createStationBlobs() {
 		const positions: number[] = [];
 		const colors: number[] = [];
-		const darkMode = MapComponent.isDarkMode();
+		const backgroundColor = this.getBackgroundColor();
 
 		this.dataService.stationsForMap.forEach(({station, rotate, width, height}) => {
-			const {x, z} = station;
+			const {id, x, z} = station;
 			const newWidth = width * 3 * SETTINGS.scale / this.camera.zoom;
 			const newHeight = height * 3 * SETTINGS.scale / this.camera.zoom;
 
@@ -238,13 +213,15 @@ export class MapComponent implements AfterViewInit {
 				}
 			};
 
-			processShape(7, -1, darkMode ? whiteColor : blackColor);
-			processShape(5, 0, darkMode ? blackColor : whiteColor);
+			const stationSelected = this.routeKeyService.selectedStations.includes(id);
+			const adjustZ = this.getSelectedRouteColor() !== undefined && stationSelected;
+			processShape(7, -1 + (adjustZ ? 20 : 0), this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, stationSelected));
+			processShape(5, adjustZ ? 20 : 0, this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, stationSelected));
 		});
 
 		if (this.stationGeometry) {
 			this.stationGeometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(positions), 3));
-			this.stationGeometry.setAttribute("color", new THREE.BufferAttribute(new Uint8Array(colors), 3));
+			this.stationGeometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(colors), 3));
 		}
 	}
 
@@ -252,6 +229,38 @@ export class MapComponent implements AfterViewInit {
 		lineMaterialStationConnectionThin.dashed = SETTINGS.interchangeStyle === 0;
 		lineMaterialStationConnectionThin.dashSize = 8 * SETTINGS.scale / this.camera.zoom;
 		lineMaterialStationConnectionThin.gapSize = 4 * SETTINGS.scale / this.camera.zoom;
+
+		const interchangeStyle = SETTINGS.interchangeStyle;
+		const positions1 = [0, 0, -10000, 0, 0, -10000];
+		const positions2 = [0, 0, -10000, 0, 0, -10000];
+		this.dataService.stationConnections.forEach(({x1, z1, x2, z2, start45}) => {
+			const write = (offset: number, positions: number[]) => {
+				const points: [number, number][] = [];
+				connectWith45(points, x1, z1, x2, z2, start45);
+				positions.push(points[0][0], -points[0][1], -10000);
+				for (let i = 0; i < points.length; i++) {
+					positions.push(points[i][0], -points[i][1], -offset);
+				}
+				positions.push(points[points.length - 1][0], -points[points.length - 1][1], -10000);
+			};
+			write(interchangeStyle === 0 ? 1 : 0, positions1);
+			write(interchangeStyle === 0 ? 2 : 1, positions2);
+		});
+
+		const addStationConnection = (lineMaterial: LineMaterial, positions: number[], color: number) => {
+			const geometry = new LineGeometry();
+			geometry.setPositions(positions);
+			const colors: number[] = [];
+			MapComponent.setColor(color, colors, positions.length);
+			geometry.setColors(colors);
+			const line = new Line2(geometry, lineMaterial);
+			line.computeLineDistances();
+			this.scene.add(line);
+		};
+
+		const backgroundColor = this.getBackgroundColor();
+		addStationConnection(lineMaterialStationConnectionThin, positions1, interchangeStyle === 0 ? this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, false) : this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, false));
+		addStationConnection(lineMaterialStationConnectionThick, positions2, interchangeStyle === 0 ? backgroundColor : this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, false));
 	}
 
 	private createLines() {
@@ -261,7 +270,7 @@ export class MapComponent implements AfterViewInit {
 		const colorsNormal = [0, 0, 0, 0, 0, 0];
 		const colorsThin = [0, 0, 0, 0, 0, 0];
 		const colorsArrow: number[] = [];
-		const backgroundColor = MapComponent.getBackgroundColor();
+		const backgroundColor = this.getBackgroundColor();
 
 		const drawArrow = (color: number, angle: number, x: number, y: number, z: number) => {
 			const [offset1X, offset1Y] = rotate(3 * SETTINGS.scale / this.camera.zoom, 0, angle);
@@ -278,14 +287,16 @@ export class MapComponent implements AfterViewInit {
 			MapComponent.setColor(color, colorsArrow, 9);
 		};
 
-		this.dataService.lineConnections.forEach(({lineConnectionParts, direction1, direction2, x1, z1, x2, z2, length, relativeLength}) => {
+		this.dataService.lineConnections.forEach(({lineConnectionParts, direction1, direction2, x1, z1, x2, z2, stationId1, stationId2, length, relativeLength}) => {
 			const lineOffset = length * this.camera.zoom < 10 ? Number.MAX_SAFE_INTEGER : 0;
 			for (let i = 0; i < lineConnectionParts.length; i++) {
 				const {color, offset1, offset2, oneWay} = lineConnectionParts[i];
-				const colorInt = parseInt(color);
+				const colorInt = parseInt(color.split("|")[0]);
+				const lineSelected = this.getSelectedRouteColor() === colorInt && this.routeKeyService.selectedStationConnections.some(stationConnection => stationConnection[0] === stationId1 && stationConnection[1] === stationId2);
+				const newColorInt = this.getColor(colorInt, colorInt, grayColorLight, grayColorDark, lineSelected);
 				const colorOffset = (i - lineConnectionParts.length / 2 + 0.5) * 6 * SETTINGS.scale;
 				const hollow = this.dataService.routeTypeVisibility[color.split("|")[1]] === "HOLLOW";
-				const lineZ = (hollow ? (oneWay === 0 ? -8 : -12) : (oneWay === 0 ? -2 : -5)) - relativeLength;
+				const lineZ = (hollow ? (oneWay === 0 ? -8 : -12) : (oneWay === 0 ? -2 : -5)) - relativeLength + (this.getSelectedRouteColor() !== undefined && lineSelected ? 20 : 0);
 
 				// z layers
 				// 2-3     solid    two-way line
@@ -315,7 +326,7 @@ export class MapComponent implements AfterViewInit {
 				if (points.length >= 2) {
 					points.forEach(([x, y, offset]) => {
 						positionsNormal.push(x + lineOffset, -y, offset ? -10000 : lineZ);
-						MapComponent.setColor(colorInt, colorsNormal);
+						MapComponent.setColor(newColorInt, colorsNormal);
 						if (hollow) {
 							positionsThin.push(x + lineOffset, -y, offset ? -10000 : lineZ + 1);
 							MapComponent.setColor(backgroundColor, colorsThin);
@@ -338,8 +349,8 @@ export class MapComponent implements AfterViewInit {
 							const x = point1X + differenceX * offset;
 							const y = point1Y + differenceY * offset;
 							if (hollow) {
-								drawArrow(colorInt, angle, x - hollowArrowPaddingX, y - hollowArrowPaddingY, hollow ? 10 : 4);
-								drawArrow(colorInt, angle, x + hollowArrowPaddingX, y + hollowArrowPaddingY, hollow ? 10 : 4);
+								drawArrow(newColorInt, angle, x - hollowArrowPaddingX, y - hollowArrowPaddingY, hollow ? 10 : 4);
+								drawArrow(newColorInt, angle, x + hollowArrowPaddingX, y + hollowArrowPaddingY, hollow ? 10 : 4);
 							}
 							drawArrow(backgroundColor, angle, x, y, hollow ? 10 : 4);
 						}
@@ -366,6 +377,8 @@ export class MapComponent implements AfterViewInit {
 
 	private updateLabels() {
 		this.textLabels.length = 0;
+		const selectedRouteColor = this.getSelectedRouteColor();
+		const stationConnections = this.routeKeyService.selectedStationConnections;
 		let renderedTextCount = 0;
 		this.dataService.stationsForMap.forEach(({station, rotate, width, height}) => {
 			const {id, name, getIcons, x, z} = station;
@@ -378,7 +391,7 @@ export class MapComponent implements AfterViewInit {
 			const canvasY = (z + this.camera.position.y) * this.camera.zoom;
 			const halfCanvasWidth = this.canvas().clientWidth / 2;
 			const halfCanvasHeight = this.canvas().clientHeight / 2;
-			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && renderedTextCount < SETTINGS.maxText * 2) {
+			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && renderedTextCount < SETTINGS.maxText * 2 && (selectedRouteColor === undefined || stationConnections.some(([stationId1, stationId2]) => id === stationId1 || id === stationId2))) {
 				this.textLabels.push(new TextLabel(
 					id,
 					name,
@@ -407,6 +420,28 @@ export class MapComponent implements AfterViewInit {
 		}
 	}
 
+	private getSelectedRouteColor() {
+		const selectedRoutes = this.routeKeyService.getSelectedData();
+		return selectedRoutes && selectedRoutes.length > 0 ? selectedRoutes[0].color : undefined;
+	}
+
+	private getColor(lightColorNormal: number, darkColorNormal: number, lightColorDisabled: number, darkColorDisabled: number, isSelected: boolean) {
+		if (this.getSelectedRouteColor() === undefined || isSelected) {
+			return this.isDarkTheme() ? darkColorNormal : lightColorNormal;
+		} else {
+			return this.isDarkTheme() ? darkColorDisabled : lightColorDisabled;
+		}
+	}
+
+	private getBackgroundColor() {
+		const backgroundColorComponents = getComputedStyle(document.body).getPropertyValue("--mat-sys-surface").match(/#[a-f\d]+/g)?.map(value => parseInt(value.substring(1), 16));
+		return backgroundColorComponents ? backgroundColorComponents[this.themeService.isDarkTheme() ? 1 : 0] : 0;
+	}
+
+	private isDarkTheme() {
+		return this.themeService.isDarkTheme();
+	}
+
 	private static setColor(color: number, colors: number[], times = 1) {
 		const r = (color >> 16) & 0xFF;
 		const g = (color >> 8) & 0xFF;
@@ -414,19 +449,6 @@ export class MapComponent implements AfterViewInit {
 		for (let i = 0; i < times; i++) {
 			colors.push(r / 0xFF, g / 0xFF, b / 0xFF);
 		}
-	}
-
-	private static getBackgroundColorComponents() {
-		return getComputedStyle(document.body).backgroundColor.match(/\d+/g)!.map(value => parseInt(value));
-	}
-
-	private static getBackgroundColor() {
-		const backgroundColorComponents = this.getBackgroundColorComponents();
-		return (backgroundColorComponents[0] << 16) + (backgroundColorComponents[1] << 8) + backgroundColorComponents[2];
-	}
-
-	private static isDarkMode() {
-		return this.getBackgroundColorComponents()[0] <= 0x7F;
 	}
 }
 

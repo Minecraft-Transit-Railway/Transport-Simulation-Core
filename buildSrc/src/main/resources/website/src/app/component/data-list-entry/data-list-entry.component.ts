@@ -5,7 +5,6 @@ import {NgTemplateOutlet} from "@angular/common";
 
 @Component({
 	selector: "app-data-list-entry",
-	standalone: true,
 	imports: [
 		MatIconModule,
 		MatRipple,

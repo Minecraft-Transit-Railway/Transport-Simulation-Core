@@ -4,7 +4,6 @@ import {FormatColorPipe} from "../../pipe/formatColorPipe";
 
 @Component({
 	selector: "app-title",
-	standalone: true,
 	imports: [
 		SplitNamePipe,
 		FormatColorPipe,

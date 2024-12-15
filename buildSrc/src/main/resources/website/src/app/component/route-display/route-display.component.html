@@ -13,7 +13,7 @@
 			}
 		}
 		@if (isStation) {
-			<div class="circle"></div>
+			<div class="circle" [style.border-color]="isDarkTheme() ? 'white' : 'black'" [style.background-color]="isDarkTheme() ? 'black' : 'white'"></div>
 		}
 		@for (icon of icons; track $index) {
 			<div [class]="'icon ' + (icon.offset === 0 ? '' : 'light')" [style.top]="(icon.offset + getHeight() / 2 - 12) + 'px'" [matTooltip]="icon.tooltip">

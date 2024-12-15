@@ -22,7 +22,6 @@ import {Station} from "../../entity/station";
 
 @Component({
 	selector: "app-station-panel",
-	standalone: true,
 	imports: [
 		MatIconModule,
 		SplitNamePipe,
@@ -150,13 +149,11 @@ export class StationPanelComponent {
 
 @Component({
 	selector: "dialog-arrival-dialog",
-	standalone: true,
 	imports: [
 		MatButtonModule,
 		MatDialogTitle,
 		MatDialogContent,
 		MatDialogActions,
-
 	],
 	templateUrl: "arrival-dialog.html",
 	styleUrl: "./station-panel.component.css",

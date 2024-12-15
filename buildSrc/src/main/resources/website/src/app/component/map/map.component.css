@@ -1,4 +1,5 @@
 canvas {
+	background: var(--mat-sys-surface);
 	position: absolute;
 	transition: opacity 0.2s;
 	width: 100%;
@@ -20,14 +21,14 @@ canvas {
 	font-size: 0.6em;
 	line-height: 1.2em;
 	white-space: nowrap;
-	text-shadow: -2px -2px 0 var(--mat-app-background-color),
-	0 -2px 0 var(--mat-app-background-color),
-	2px -2px 0 var(--mat-app-background-color),
-	2px 0 0 var(--mat-app-background-color),
-	2px 2px 0 var(--mat-app-background-color),
-	0 2px 0 var(--mat-app-background-color),
-	-2px 2px 0 var(--mat-app-background-color),
-	-2px 0 0 var(--mat-app-background-color);
+	text-shadow: -2px -2px 0 var(--mat-sys-surface),
+	0 -2px 0 var(--mat-sys-surface),
+	2px -2px 0 var(--mat-sys-surface),
+	2px 0 0 var(--mat-sys-surface),
+	2px 2px 0 var(--mat-sys-surface),
+	0 2px 0 var(--mat-sys-surface),
+	-2px 2px 0 var(--mat-sys-surface),
+	-2px 0 0 var(--mat-sys-surface);
 }
 
 .station-name.cjk {
@@ -35,7 +36,6 @@ canvas {
 }
 
 .station-name.text {
-	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
 	font-weight: 600;
 }
 
@@ -45,7 +45,7 @@ canvas {
 }
 
 .loading-background {
-	background-color: var(--mat-app-background-color);
+	background-color: var(--mat-sys-surface);
 	justify-content: center;
 	position: absolute;
 	width: 100%;

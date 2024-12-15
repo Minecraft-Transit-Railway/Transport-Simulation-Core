@@ -5,6 +5,7 @@ import {DeparturesService} from "./departures.service";
 import {Route} from "../entity/route";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
 import {DimensionService} from "./dimension.service";
+import {pushIfNotExists} from "../data/utilities";
 
 @Injectable({providedIn: "root"})
 export class RouteVariationService extends SelectableDataServiceBase<void, Route> {
@@ -104,16 +105,32 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 
 @Injectable({providedIn: "root"})
 export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
+	public readonly selectedStationConnections: [string, string][] = [];
+	public readonly selectedStations: string[] = [];
 
 	constructor(private readonly dataService: MapDataService, dimensionService: DimensionService) {
 		super(routeKey => {
+			this.selectedStationConnections.length = 0;
+			this.selectedStations.length = 0;
 			const selectedRouteVariations: Route[] = [];
+			const tempStationConnections: { [key: string]: [string, string] } = {};
 			this.dataService.routes.forEach(route => {
 				if (SimplifyRoutesPipe.getRouteKey(route) === routeKey) {
 					selectedRouteVariations.push(route);
+					for (let i = 0; i < route.routePlatforms.length - 1; i++) {
+						const stationId1 = route.routePlatforms[i].station.id;
+						const stationId2 = route.routePlatforms[i + 1].station.id;
+						const reverse = stationId1 > stationId2;
+						const newStationId1 = reverse ? stationId2 : stationId1;
+						const newStationId2 = reverse ? stationId1 : stationId2;
+						tempStationConnections[`${newStationId1}_${newStationId2}`] = [newStationId1, newStationId2];
+						pushIfNotExists(this.selectedStations, stationId1);
+						pushIfNotExists(this.selectedStations, stationId2);
+					}
 				}
 			});
 			SimplifyRoutesPipe.sortRoutes(selectedRouteVariations);
+			Object.values(tempStationConnections).forEach(stationConnection => this.selectedStationConnections.push(stationConnection));
 			return selectedRouteVariations;
 		}, () => {
 		}, () => {

@@ -160,7 +160,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			}
 		});
 
-		const lineConnections: { [key: string]: { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, length: number } } = {};
+		const lineConnections: { [key: string]: { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string, stationId2: string, length: number } } = {};
 		const stationConnections: { [key: string]: { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, sizeRatio: number, start45: boolean } } = {};
 		let closestDistance: number;
 		let maxLineConnectionLength = 1;
@@ -222,11 +222,21 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 					const [stationId, routeColors] = groupEntry;
 					const [key, reverse] = getKeyAndReverseFromStationIds(station.id, stationId);
 					routeColors.sort();
-					setIfUndefined(lineConnections, key, () => ({lineConnectionParts: routeColors.map(() => Object.create(null)), direction1: 0 as 0, direction2: 0 as 0, x1: undefined, x2: undefined, z1: undefined, z2: undefined, length: 0}));
+					setIfUndefined(lineConnections, key, () => ({
+						lineConnectionParts: routeColors.map(() => Object.create(null)),
+						direction1: 0 as 0,
+						direction2: 0 as 0,
+						stationId1: "",
+						stationId2: "",
+						x1: undefined, x2: undefined,
+						z1: undefined, z2: undefined,
+						length: 0,
+					}));
 					const index = reverse ? 2 : 1;
 					const direction = stationDirection[routeColors[0]];
 					const lineConnection = lineConnections[key];
 					lineConnection[`direction${index}`] = direction;
+					lineConnection[`stationId${index}`] = station.id;
 					lineConnection[`x${index}`] = station.x;
 					lineConnection[`z${index}`] = station.z;
 
@@ -283,6 +293,8 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 					direction1: lineConnection.direction1, direction2: lineConnection.direction2,
 					x1: lineConnection.x1, x2: lineConnection.x2,
 					z1: lineConnection.z1, z2: lineConnection.z2,
+					stationId1: lineConnection.stationId1,
+					stationId2: lineConnection.stationId2,
 					length: lineConnection.length,
 					relativeLength: lineConnection.length / (maxLineConnectionLength + 1),
 				});

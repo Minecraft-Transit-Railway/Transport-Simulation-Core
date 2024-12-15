@@ -17,7 +17,6 @@ const maxResults = 50;
 
 @Component({
 	selector: "app-search",
-	standalone: true,
 	imports: [
 		AsyncPipe,
 		MatAutocomplete,
