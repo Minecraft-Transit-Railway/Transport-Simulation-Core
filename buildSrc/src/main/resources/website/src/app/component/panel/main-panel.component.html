@@ -7,25 +7,46 @@
 			}
 		</mat-select>
 	</mat-form-field>
-	<mat-slide-toggle class="grayscale padding-sides" (change)="changeTheme($event.checked)" [checked]="isDarkTheme()">Dark Theme</mat-slide-toggle>
-	<div class="column gap-small content">
-		@for (routeType of routeTypes; track $index) {
-			<div class="row-reverse gap center padding-sides">
-				<mat-button-toggle-group hideSingleSelectionIndicator #group="matButtonToggleGroup" [value]="getSelected(routeType[0])" (change)="onSelect(routeType[0], group.value)">
-					<mat-button-toggle value="HIDDEN" matTooltip="Hidden">
-						<mat-icon>visibility_off</mat-icon>
-					</mat-button-toggle>
-					<mat-button-toggle value="SOLID" matTooltip="Solid">
-						<mat-icon>horizontal_rule</mat-icon>
-					</mat-button-toggle>
-					<mat-button-toggle value="HOLLOW" matTooltip="Hollow">
-						<mat-icon>drag_handle</mat-icon>
-					</mat-button-toggle>
-				</mat-button-toggle-group>
-				<div class="spacing"></div>
-				<div class="shrink">{{ routeType[1].text }}</div>
-				<mat-icon>{{ routeType[1].icon }}</mat-icon>
+	<div class="column content">
+		<div class="column gap padding-sides">
+			<div class="column gap-small">
+				@for (routeType of routeTypes; track $index) {
+					<div class="row gap center">
+						<mat-icon>{{ routeType[1].icon }}</mat-icon>
+						<div class="shrink">{{ routeType[1].text }}</div>
+						<div class="spacing"></div>
+						<mat-button-toggle-group class="route-type" hideSingleSelectionIndicator #routeTypeGroup="matButtonToggleGroup" [value]="getVisibility(routeType[0])" (change)="setVisibility(routeType[0], routeTypeGroup.value)">
+							<mat-button-toggle value="HIDDEN" matTooltip="Hidden">
+								<mat-icon>visibility_off</mat-icon>
+							</mat-button-toggle>
+							<mat-button-toggle value="SOLID" matTooltip="Solid">
+								<mat-icon>horizontal_rule</mat-icon>
+							</mat-button-toggle>
+							<mat-button-toggle value="HOLLOW" matTooltip="Hollow">
+								<mat-icon>drag_handle</mat-icon>
+							</mat-button-toggle>
+						</mat-button-toggle-group>
+					</div>
+				}
 			</div>
-		}
+			@if (hasInterchanges()) {
+				<mat-divider/>
+				<div class="row gap center">
+					<mat-icon>polyline</mat-icon>
+					<div class="shrink">Interchange Style</div>
+					<div class="spacing"></div>
+					<mat-button-toggle-group hideSingleSelectionIndicator #interchangeStyleGroup="matButtonToggleGroup" [value]="getInterchangeStyle()" (change)="setInterchangeStyle(interchangeStyleGroup.value)">
+						<mat-button-toggle value="DOTTED" matTooltip="Dotted">
+							<mat-icon>more_horiz</mat-icon>
+						</mat-button-toggle>
+						<mat-button-toggle value="HOLLOW" matTooltip="Hollow">
+							<mat-icon>drag_handle</mat-icon>
+						</mat-button-toggle>
+					</mat-button-toggle-group>
+				</div>
+			}
+		</div>
+		<div class="spacing"></div>
+		<mat-slide-toggle class="grayscale padding-sides padding-top-bottom" (change)="changeTheme($event.checked)" [checked]="isDarkTheme()">Dark Theme</mat-slide-toggle>
 	</div>
 </div>

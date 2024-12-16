@@ -9,6 +9,8 @@ import {DimensionService} from "../../service/dimension.service";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 import {ThemeService} from "../../service/theme.service";
+import {setCookie} from "../../data/utilities";
+import {MatDividerModule} from "@angular/material/divider";
 
 @Component({
 	selector: "app-main-panel",
@@ -19,6 +21,7 @@ import {ThemeService} from "../../service/theme.service";
 		MatSelectModule,
 		MatTooltipModule,
 		MatSlideToggleModule,
+		MatDividerModule,
 	],
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.css",
@@ -41,13 +44,28 @@ export class MainPanelComponent {
 		});
 	}
 
-	onSelect(routeTypeKey: string, value: string) {
+	setVisibility(routeTypeKey: string, value: string) {
 		this.mapDataService.routeTypeVisibility[routeTypeKey] = value as "HIDDEN" | "SOLID" | "HOLLOW";
 		this.mapDataService.updateData();
+		Object.entries(this.mapDataService.routeTypeVisibility).forEach(([newRouteTypeKey, visibility]) => setCookie(`visibility_${newRouteTypeKey}`, visibility));
 	}
 
-	getSelected(routeTypeKey: string): string | undefined {
+	getVisibility(routeTypeKey: string): "HIDDEN" | "SOLID" | "HOLLOW" {
 		return this.mapDataService.routeTypeVisibility[routeTypeKey];
+	}
+
+	setInterchangeStyle(value: string) {
+		this.mapDataService.interchangeStyle = value as "DOTTED" | "HOLLOW";
+		this.mapDataService.drawMap.emit();
+		setCookie("interchange_style", value);
+	}
+
+	hasInterchanges() {
+		return this.mapDataService.stationConnections.length > 0;
+	}
+
+	getInterchangeStyle(): "DOTTED" | "HOLLOW" {
+		return this.mapDataService.interchangeStyle;
 	}
 
 	getDimensions() {

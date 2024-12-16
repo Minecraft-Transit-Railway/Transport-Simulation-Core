@@ -7,12 +7,12 @@ export class ThemeService {
 	private darkTheme: boolean;
 
 	constructor(private readonly mapDataService: MapDataService) {
-		this.darkTheme = getCookie("dark-theme") === "true";
+		this.darkTheme = getCookie("dark_theme") === "true";
 	}
 
 	public setTheme(isDarkTheme: boolean) {
 		this.darkTheme = isDarkTheme;
-		setCookie("dark-theme", isDarkTheme.toString());
+		setCookie("dark_theme", isDarkTheme.toString());
 		setTimeout(() => this.mapDataService.drawMap.emit(), 0);
 	}
 

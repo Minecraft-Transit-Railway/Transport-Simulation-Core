@@ -1,4 +1,4 @@
-import {arrayAverage, getFromArray, pushIfNotExists, setIfUndefined} from "../data/utilities";
+import {arrayAverage, getCookie, getFromArray, pushIfNotExists, setIfUndefined} from "../data/utilities";
 import {ROUTE_TYPES} from "../data/routeType";
 import {LineConnection} from "../entity/lineConnection";
 import {StationConnection} from "../entity/stationConnection";
@@ -20,6 +20,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 	public readonly routes: Route[] = [];
 	public readonly stations: Station[] = [];
 	public readonly routeTypeVisibility: { [key: string]: "HIDDEN" | "SOLID" | "HOLLOW" } = {};
+	public interchangeStyle: "DOTTED" | "HOLLOW";
 	public readonly stationConnections: StationConnection[] = [];
 	public readonly lineConnections: LineConnection[] = [];
 	public readonly stationsForMap: StationForMap[] = [];
@@ -87,12 +88,26 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 
 			if (availableRouteTypes.length > 0 && Object.values(this.routeTypeVisibility).every(visibility => visibility === "HIDDEN")) {
 				this.routeTypeVisibility[Object.keys(this.routeTypeVisibility)[0]] = "SOLID";
+				if (availableRouteTypes.length > 1) {
+					this.routeTypeVisibility[Object.keys(this.routeTypeVisibility)[1]] = "HOLLOW";
+				}
 			}
 
 			this.dimensionService.setDimensions(data.dimensions);
 			this.updateData();
 		}, REFRESH_INTERVAL, dimensionService);
+
 		this.fetchData("");
+
+		const cookieInterchangeStyle = getCookie("interchange_style");
+		this.interchangeStyle = cookieInterchangeStyle === "DOTTED" || cookieInterchangeStyle === "HOLLOW" ? cookieInterchangeStyle : "DOTTED";
+
+		Object.keys(ROUTE_TYPES).forEach(routeTypeKey => {
+			const visibility = getCookie(`visibility_${routeTypeKey}`);
+			if (visibility === "HIDDEN" || visibility === "SOLID" || visibility === "HOLLOW") {
+				this.routeTypeVisibility[routeTypeKey] = visibility;
+			}
+		});
 	}
 
 	public setDimension(dimension: string) {

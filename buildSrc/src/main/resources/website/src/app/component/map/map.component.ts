@@ -214,9 +214,9 @@ export class MapComponent implements AfterViewInit {
 			};
 
 			const stationSelected = this.routeKeyService.selectedStations.includes(id);
-			const adjustZ = this.getSelectedRouteColor() !== undefined && stationSelected;
-			processShape(7, -1 + (adjustZ ? 20 : 0), this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, stationSelected));
-			processShape(5, adjustZ ? 20 : 0, this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, stationSelected));
+			const adjustZ = this.getSelectedRouteColor() !== undefined && stationSelected ? 20 : 0;
+			processShape(7, -1 + adjustZ, this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, stationSelected));
+			processShape(5, adjustZ, this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, stationSelected));
 		});
 
 		if (this.stationGeometry) {
@@ -226,11 +226,11 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	private createStationConnections() {
-		lineMaterialStationConnectionThin.dashed = SETTINGS.interchangeStyle === 0;
+		lineMaterialStationConnectionThin.dashed = this.dataService.interchangeStyle === "DOTTED";
 		lineMaterialStationConnectionThin.dashSize = 8 * SETTINGS.scale / this.camera.zoom;
 		lineMaterialStationConnectionThin.gapSize = 4 * SETTINGS.scale / this.camera.zoom;
 
-		const interchangeStyle = SETTINGS.interchangeStyle;
+		const interchangeStyle = this.dataService.interchangeStyle;
 		const positions1 = [0, 0, -10000, 0, 0, -10000];
 		const positions2 = [0, 0, -10000, 0, 0, -10000];
 		this.dataService.stationConnections.forEach(({x1, z1, x2, z2, start45}) => {
@@ -243,8 +243,8 @@ export class MapComponent implements AfterViewInit {
 				}
 				positions.push(points[points.length - 1][0], -points[points.length - 1][1], -10000);
 			};
-			write(interchangeStyle === 0 ? 1 : 0, positions1);
-			write(interchangeStyle === 0 ? 2 : 1, positions2);
+			write(interchangeStyle === "DOTTED" ? 1 : 0, positions1);
+			write(interchangeStyle === "DOTTED" ? 2 : 1, positions2);
 		});
 
 		const addStationConnection = (lineMaterial: LineMaterial, positions: number[], color: number) => {
@@ -259,8 +259,8 @@ export class MapComponent implements AfterViewInit {
 		};
 
 		const backgroundColor = this.getBackgroundColor();
-		addStationConnection(lineMaterialStationConnectionThin, positions1, interchangeStyle === 0 ? this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, false) : this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, false));
-		addStationConnection(lineMaterialStationConnectionThick, positions2, interchangeStyle === 0 ? backgroundColor : this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, false));
+		addStationConnection(lineMaterialStationConnectionThin, positions1, interchangeStyle === "DOTTED" ? this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, false) : this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, false));
+		addStationConnection(lineMaterialStationConnectionThick, positions2, interchangeStyle === "DOTTED" ? backgroundColor : this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, false));
 	}
 
 	private createLines() {
@@ -296,7 +296,8 @@ export class MapComponent implements AfterViewInit {
 				const newColorInt = this.getColor(colorInt, colorInt, grayColorLight, grayColorDark, lineSelected);
 				const colorOffset = (i - lineConnectionParts.length / 2 + 0.5) * 6 * SETTINGS.scale;
 				const hollow = this.dataService.routeTypeVisibility[color.split("|")[1]] === "HOLLOW";
-				const lineZ = (hollow ? (oneWay === 0 ? -8 : -12) : (oneWay === 0 ? -2 : -5)) - relativeLength + (this.getSelectedRouteColor() !== undefined && lineSelected ? 20 : 0);
+				const adjustZ = this.getSelectedRouteColor() !== undefined && lineSelected ? 20 : 0;
+				const lineZ = (hollow ? (oneWay === 0 ? -8 : -12) : (oneWay === 0 ? -2 : -5)) - relativeLength + adjustZ;
 
 				// z layers
 				// 2-3     solid    two-way line
@@ -349,10 +350,10 @@ export class MapComponent implements AfterViewInit {
 							const x = point1X + differenceX * offset;
 							const y = point1Y + differenceY * offset;
 							if (hollow) {
-								drawArrow(newColorInt, angle, x - hollowArrowPaddingX, y - hollowArrowPaddingY, hollow ? 10 : 4);
-								drawArrow(newColorInt, angle, x + hollowArrowPaddingX, y + hollowArrowPaddingY, hollow ? 10 : 4);
+								drawArrow(newColorInt, angle, x - hollowArrowPaddingX, y - hollowArrowPaddingY, (hollow ? 10 : 4) - adjustZ);
+								drawArrow(newColorInt, angle, x + hollowArrowPaddingX, y + hollowArrowPaddingY, (hollow ? 10 : 4) - adjustZ);
 							}
-							drawArrow(backgroundColor, angle, x, y, hollow ? 10 : 4);
+							drawArrow(backgroundColor, angle, x, y, (hollow ? 10 : 4) - adjustZ);
 						}
 					});
 				}

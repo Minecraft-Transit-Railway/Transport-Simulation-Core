@@ -114,9 +114,13 @@ export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 			this.selectedStations.length = 0;
 			const selectedRouteVariations: Route[] = [];
 			const tempStationConnections: { [key: string]: [string, string] } = {};
+			let mapUpdated = false;
+
 			this.dataService.routes.forEach(route => {
 				if (SimplifyRoutesPipe.getRouteKey(route) === routeKey) {
 					selectedRouteVariations.push(route);
+
+					// Update list of selected stations
 					for (let i = 0; i < route.routePlatforms.length - 1; i++) {
 						const stationId1 = route.routePlatforms[i].station.id;
 						const stationId2 = route.routePlatforms[i + 1].station.id;
@@ -127,8 +131,19 @@ export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 						pushIfNotExists(this.selectedStations, stationId1);
 						pushIfNotExists(this.selectedStations, stationId2);
 					}
+
+					// Update map visibility
+					if (this.dataService.routeTypeVisibility[route.type] === "HIDDEN") {
+						this.dataService.routeTypeVisibility[route.type] = "SOLID";
+						mapUpdated = true;
+					}
 				}
 			});
+
+			if (mapUpdated) {
+				this.dataService.updateData();
+			}
+
 			SimplifyRoutesPipe.sortRoutes(selectedRouteVariations);
 			Object.values(tempStationConnections).forEach(stationConnection => this.selectedStationConnections.push(stationConnection));
 			return selectedRouteVariations;
