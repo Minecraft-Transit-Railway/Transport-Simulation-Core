@@ -142,6 +142,22 @@ public class Simulator extends Data implements Utilities {
 		}
 	}
 
+	public void instantDeployDepots(ObjectArrayList<Depot> depotsToInstantDeploy) {
+		final long oldLastMillis = lastMillis;
+		final long oldCurrentMillis = getCurrentMillis();
+		for (int i = 0; i < MILLIS_PER_DAY; i += MILLIS_PER_SECOND) {
+			lastMillis = getCurrentMillis();
+			setCurrentMillis(lastMillis + MILLIS_PER_SECOND);
+			depotsToInstantDeploy.forEach(depot -> depot.savedRails.forEach(siding -> siding.simulateTrain(MILLIS_PER_SECOND, null)));
+		}
+		lastMillis = oldLastMillis;
+		setCurrentMillis(oldCurrentMillis);
+	}
+
+	public void instantDeployDepotsByName(Simulator simulator, String filter) {
+		instantDeployDepots(NameColorDataBase.getDataByName(simulator.depots, filter));
+	}
+
 	/**
 	 * @param gameMillis       the number of real-time milliseconds since midnight of the in-game time
 	 * @param gameMillisPerDay the total number of real-time milliseconds of one in-game day

@@ -1,17 +1,17 @@
 package org.mtr.core.operation;
 
 import org.mtr.core.data.Depot;
-import org.mtr.core.generated.operation.GenerateOrClearByDepotIdsSchema;
+import org.mtr.core.generated.operation.DepotOperationByIdsSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-public final class GenerateOrClearByDepotIds extends GenerateOrClearByDepotIdsSchema {
+public final class DepotOperationByIds extends DepotOperationByIdsSchema {
 
-	public GenerateOrClearByDepotIds() {
+	public DepotOperationByIds() {
 	}
 
-	public GenerateOrClearByDepotIds(ReaderBase readerBase) {
+	public DepotOperationByIds(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}
@@ -26,6 +26,10 @@ public final class GenerateOrClearByDepotIds extends GenerateOrClearByDepotIdsSc
 
 	public void clear(Simulator simulator) {
 		Depot.clearDepots(getDepots(simulator));
+	}
+
+	public void instantDeploy(Simulator simulator) {
+		simulator.instantDeployDepots(getDepots(simulator));
 	}
 
 	private ObjectArrayList<Depot> getDepots(Simulator simulator) {

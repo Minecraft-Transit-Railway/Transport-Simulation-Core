@@ -31,6 +31,8 @@ public final class OperationProcessor {
 	public static final String GENERATE_BY_LIFT = "generate_by_lift";
 	public static final String CLEAR_BY_DEPOT_IDS = "clear_by_depot_ids";
 	public static final String CLEAR_BY_DEPOT_NAME = "clear_by_depot_name";
+	public static final String INSTANT_DEPLOY_BY_DEPOT_IDS = "instant_deploy_by_depot_ids";
+	public static final String INSTANT_DEPLOY_BY_DEPOT_NAME = "instant_deploy_by_depot_name";
 
 	// Server to client
 	public static final String VEHICLES_LIFTS = "vehicles_lifts";
@@ -67,19 +69,25 @@ public final class OperationProcessor {
 			case RAILS:
 				return new RailsRequest(jsonReader).query(simulator);
 			case GENERATE_BY_DEPOT_IDS:
-				new GenerateOrClearByDepotIds(jsonReader).generate(simulator);
+				new DepotOperationByIds(jsonReader).generate(simulator);
 				return null;
 			case GENERATE_BY_DEPOT_NAME:
-				new GenerateOrClearByDepotName(jsonReader).generate(simulator);
+				new DepotOperationByName(jsonReader).generate(simulator);
 				return null;
 			case GENERATE_BY_LIFT:
 				new GenerateByLift(jsonReader, simulator).generate();
 				return null;
 			case CLEAR_BY_DEPOT_IDS:
-				new GenerateOrClearByDepotIds(jsonReader).clear(simulator);
+				new DepotOperationByIds(jsonReader).clear(simulator);
 				return null;
 			case CLEAR_BY_DEPOT_NAME:
-				new GenerateOrClearByDepotName(jsonReader).clear(simulator);
+				new DepotOperationByName(jsonReader).clear(simulator);
+				return null;
+			case INSTANT_DEPLOY_BY_DEPOT_IDS:
+				new DepotOperationByIds(jsonReader).instantDeploy(simulator);
+				return null;
+			case INSTANT_DEPLOY_BY_DEPOT_NAME:
+				new DepotOperationByName(jsonReader).instantDeploy(simulator);
 				return null;
 			default:
 				return null;

@@ -241,7 +241,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		vehicles.forEach(vehicle -> vehicle.initVehiclePositions(vehiclePositions));
 	}
 
-	public void simulateTrain(long millisElapsed, ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+	public void simulateTrain(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
 		vehicleTimesAlongRoute.clear();
 
 		if (area == null) {
