@@ -280,7 +280,7 @@ public final class Depot extends DepotSchema implements Utilities {
 				final long offsetMillis = simulator.getMillisOfGameMidnight();
 				long lastDeparture = Long.MIN_VALUE;
 
-				if (gameMillisPerDay > 0 && !repeatInfinitely) {
+				if (gameMillisPerDay > 0) {
 					final long highestJourneyTime = savedRails.stream().mapToLong(Siding::getJourneyTime).reduce(0, Math::max);
 					repeatDepartures = highestJourneyTime == 0 ? 1 : (long) Math.ceil((double) highestJourneyTime / gameMillisPerDay);
 				}
