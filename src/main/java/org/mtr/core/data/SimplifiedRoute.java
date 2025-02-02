@@ -9,7 +9,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comparable<SimplifiedRoute> {
 
 	private SimplifiedRoute(Route route) {
-		super(route.getId(), route.getName(), route.getColor(), route.getCircularState());
+		super(route.getId(), route.getHidden() ? "" : route.getName(), route.getColor(), route.getCircularState());
 		for (int i = 0; i < route.getRoutePlatforms().size(); i++) {
 			final Platform platform = route.getRoutePlatforms().get(i).platform;
 			final Station station = platform == null ? null : platform.area;
@@ -64,14 +64,12 @@ public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comp
 	}
 
 	public static void addToList(ObjectArrayList<SimplifiedRoute> simplifiedRoutes, Route route) {
-		if (!route.getHidden()) {
-			simplifiedRoutes.add(new SimplifiedRoute(route));
-		}
+		simplifiedRoutes.add(new SimplifiedRoute(route));
 	}
 
 	private static void addInterchangeRoutes(int thisColor, Int2ObjectAVLTreeMap<InterchangeRouteNamesForColor> interchangeRoutes, ObjectAVLTreeSet<Route> routes) {
 		routes.forEach(interchangeRoute -> {
-			if (interchangeRoute.getColor() != thisColor && !interchangeRoute.getHidden()) {
+			if (interchangeRoute.getColor() != thisColor) {
 				interchangeRoutes.computeIfAbsent(interchangeRoute.getColor(), key -> new InterchangeRouteNamesForColor(interchangeRoute.getColor())).addRouteName(interchangeRoute.getName().split("\\|\\|")[0]);
 			}
 		});

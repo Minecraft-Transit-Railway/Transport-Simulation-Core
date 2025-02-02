@@ -82,11 +82,13 @@ public final class Station extends StationSchema {
 		stations.forEach(station -> {
 			final Int2ObjectAVLTreeMap<ObjectArrayList<U>> colorToRouteMap = new Int2ObjectAVLTreeMap<>();
 			station.savedRails.forEach(platform -> platform.routes.forEach(route -> {
-				colorToRouteMap.computeIfAbsent(route.getColor(), routes -> new ObjectArrayList<>());
-				final U newRoute = routeMapper.apply(route);
-				final ObjectArrayList<U> newRoutes = colorToRouteMap.get(route.getColor());
-				if (!newRoutes.contains(newRoute)) {
-					newRoutes.add(routeMapper.apply(route));
+				if (!route.getHidden()) {
+					colorToRouteMap.computeIfAbsent(route.getColor(), routes -> new ObjectArrayList<>());
+					final U newRoute = routeMapper.apply(route);
+					final ObjectArrayList<U> newRoutes = colorToRouteMap.get(route.getColor());
+					if (!newRoutes.contains(newRoute)) {
+						newRoutes.add(routeMapper.apply(route));
+					}
 				}
 			}));
 
