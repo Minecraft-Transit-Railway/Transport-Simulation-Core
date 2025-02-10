@@ -15,11 +15,11 @@ import java.util.UUID;
 
 public final class LegacyRailLoader {
 
-	public static void load(Path savePath, ObjectArraySet<Rail> rails) {
+	public static void load(Path savePath, ObjectArraySet<Rail> rails, boolean threadedFileLoading) {
 		final ObjectArraySet<LegacyRailNode> legacyRailNodes = new ObjectArraySet<>();
 		final ObjectArraySet<LegacySignalBlock> legacySignalBlocks = new ObjectArraySet<>();
-		new FileLoader<>(legacyRailNodes, LegacyRailNode::new, savePath, "rails");
-		new FileLoader<>(legacySignalBlocks, LegacySignalBlock::new, savePath, "signal-blocks");
+		new FileLoader<>(legacyRailNodes, LegacyRailNode::new, savePath, "rails", threadedFileLoading);
+		new FileLoader<>(legacySignalBlocks, LegacySignalBlock::new, savePath, "signal-blocks", threadedFileLoading);
 
 		final Object2ObjectOpenHashMap<UUID, DataFixer.RailType> railCache = new Object2ObjectOpenHashMap<>();
 

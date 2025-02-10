@@ -11,6 +11,7 @@ import org.mtr.libraries.org.msgpack.core.MessagePack;
 import org.mtr.libraries.org.msgpack.core.MessagePacker;
 import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
 
+import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
@@ -28,14 +29,21 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 	public final String key;
 	private final ObjectSet<T> dataSet;
 	private final Path path;
+	private final boolean threadedFileLoading;
 	private final Object2IntAVLTreeMap<String> fileHashes = new Object2IntAVLTreeMap<>();
 
-	public FileLoader(ObjectSet<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key) {
+	public FileLoader(ObjectSet<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key, boolean threadedFileLoading) {
 		this.key = key;
 		this.dataSet = dataSet;
 		path = rootPath.resolve(key);
 		createDirectory(path);
+		this.threadedFileLoading = threadedFileLoading;
 		readMessagePackFromFile(getData);
+	}
+
+	@Deprecated
+	public FileLoader(ObjectSet<T> dataSet, Function<MessagePackReader, T> getData, Path rootPath, String key) {
+		this(dataSet, getData, rootPath, key, false);
 	}
 
 	public IntIntImmutablePair save(boolean useReducedHash) {
@@ -69,18 +77,14 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 		try (final Stream<Path> pathStream = Files.list(path)) {
 			pathStream.forEach(idFolder -> {
 				try (final Stream<Path> folderStream = Files.list(idFolder)) {
-					folderStream.forEach(idFile -> futureDataMap.put(combineAsPath(idFolder, idFile), executorService.submit(() -> {
-						try (final InputStream inputStream = Files.newInputStream(idFile)) {
-							try (final MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(inputStream)) {
-								return getData.apply(new MessagePackReader(messageUnpacker));
-							} catch (Exception e) {
-								Main.LOGGER.error("", e);
-							}
-						} catch (Exception e) {
-							Main.LOGGER.error("", e);
+					folderStream.forEach(idFile -> {
+						final String fileName = combineAsPath(idFolder, idFile);
+						if (threadedFileLoading) {
+							futureDataMap.put(fileName, executorService.submit(() -> readFile(getData, idFile)));
+						} else {
+							processFile(fileName, readFile(getData, idFile));
 						}
-						return null;
-					})));
+					});
 				} catch (Exception e) {
 					Main.LOGGER.error("", e);
 				}
@@ -99,19 +103,26 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 
 		futureDataMap.forEach((fileName, futureData) -> {
 			try {
-				final T data = futureData.get();
-				if (data != null) {
-					if (data.isValid()) {
-						dataSet.add(data);
-					} else {
-						Main.LOGGER.warn("Skipping invalid data: {}", data);
-					}
-					fileHashes.put(fileName, getHash(data, true));
-				}
+				processFile(fileName, futureData.get());
 			} catch (Exception e) {
 				Main.LOGGER.error("", e);
 			}
 		});
+	}
+
+	private void processFile(String fileName, @Nullable T data) {
+		try {
+			if (data != null) {
+				if (data.isValid()) {
+					dataSet.add(data);
+				} else {
+					Main.LOGGER.warn("Skipping invalid data: {}", data);
+				}
+				fileHashes.put(fileName, getHash(data, true));
+			}
+		} catch (Exception e) {
+			Main.LOGGER.error("", e);
+		}
 	}
 
 	private int writeDirtyDataToFile(ObjectImmutableList<ObjectArrayList<String>> checkFilesToDelete, ObjectArrayList<T> dirtyData, Function<T, String> getFileName, boolean useReducedHash) {
@@ -143,6 +154,20 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 		}
 
 		return filesWritten;
+	}
+
+	@Nullable
+	private static <T extends SerializedDataBaseWithId> T readFile(Function<MessagePackReader, T> getData, Path idFile) {
+		try (final InputStream inputStream = Files.newInputStream(idFile)) {
+			try (final MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(inputStream)) {
+				return getData.apply(new MessagePackReader(messageUnpacker));
+			} catch (Exception e) {
+				Main.LOGGER.error("", e);
+			}
+		} catch (Exception e) {
+			Main.LOGGER.error("", e);
+		}
+		return null;
 	}
 
 	private static String getParent(String fileName) {

@@ -42,9 +42,10 @@ public class Main {
 			final Path rootPath = Paths.get(args[i++]);
 			final int webserverPort = Integer.parseInt(args[i++]);
 			final boolean threadedSimulation = Boolean.parseBoolean(args[i++]);
+			final boolean threadedFileLoading = Boolean.parseBoolean(args[i++]);
 			final String[] dimensions = new String[args.length - i];
 			System.arraycopy(args, i, dimensions, 0, dimensions.length);
-			final Main main = new Main(rootPath, webserverPort, threadedSimulation, null, dimensions);
+			final Main main = new Main(rootPath, webserverPort, threadedSimulation, threadedFileLoading, null, dimensions);
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
@@ -52,12 +53,12 @@ public class Main {
 		}
 	}
 
-	public Main(Path rootPath, int webserverPort, boolean threadedSimulation, @Nullable Consumer<Webserver> additionalWebserverSetup, String... dimensions) {
+	public Main(Path rootPath, int webserverPort, boolean threadedSimulation, boolean threadedFileLoading, @Nullable Consumer<Webserver> additionalWebserverSetup, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
 		LOGGER.info("Loading files...");
 		for (final String dimension : dimensions) {
-			tempSimulators.add(new Simulator(dimension, dimensions, rootPath));
+			tempSimulators.add(new Simulator(dimension, dimensions, rootPath, threadedFileLoading));
 		}
 
 		simulators = new ObjectImmutableList<>(tempSimulators);
@@ -160,6 +161,6 @@ public class Main {
 
 	private static void printHelp() {
 		LOGGER.info("Usage:");
-		LOGGER.info("java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <useThreadedSimulation> <dimensions...>");
+		LOGGER.info("java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <useThreadedSimulation> <useThreadedFileLoading> <dimensions...>");
 	}
 }

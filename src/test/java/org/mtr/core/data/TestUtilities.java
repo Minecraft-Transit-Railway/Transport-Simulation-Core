@@ -50,7 +50,7 @@ public interface TestUtilities {
 	}
 
 	static Simulator getDefaultSimulator() {
-		return new Simulator("test", new String[]{"test"}, TEST_DIRECTORY);
+		return new Simulator("test", new String[]{"test"}, TEST_DIRECTORY, true);
 	}
 
 	static JsonObject sendHttpDataRequest(String endpoint, JsonObject bodyObject) {

@@ -16,7 +16,7 @@ public class RuntimeTests implements TestUtilities {
 	@Test
 	public void createAndUpdateData() throws IOException {
 		FileUtils.deleteDirectory(TEST_DIRECTORY.toFile());
-		final Main main = new Main(TEST_DIRECTORY, PORT, true, null, "overworld");
+		final Main main = new Main(TEST_DIRECTORY, PORT, true, true, null, "overworld");
 
 		final Station station1 = new Station(TestUtilities.getDefaultSimulator());
 		station1.setName("Test 1");

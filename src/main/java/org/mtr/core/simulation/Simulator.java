@@ -47,22 +47,22 @@ public class Simulator extends Data implements Utilities {
 
 	private static final int SIMULATION_DIFFERENCE_LOGGING_THRESHOLD = 120000;
 
-	public Simulator(String dimension, String[] dimensions, Path rootPath) {
+	public Simulator(String dimension, String[] dimensions, Path rootPath, boolean threadedFileLoading) {
 		this.dimension = dimension;
 		this.dimensions = dimensions;
 
 		// Load data
 		final Path savePath = rootPath.resolve(dimension);
 		final ObjectLongImmutablePair<FileLoaderHolder> fileLoaderHolderAndDuration = Utilities.measureDuration(() -> {
-			LegacyRailLoader.load(savePath, rails);
+			LegacyRailLoader.load(savePath, rails, threadedFileLoading);
 			return new FileLoaderHolder(
-					new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations"),
-					new FileLoader<>(platforms, messagePackHelper -> new Platform(messagePackHelper, this), savePath, "platforms"),
-					new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings"),
-					new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes"),
-					new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots"),
-					new FileLoader<>(lifts, messagePackHelper -> new Lift(messagePackHelper, this), savePath, "lifts"),
-					new FileLoader<>(rails, Rail::new, savePath, "rails")
+					new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations", threadedFileLoading),
+					new FileLoader<>(platforms, messagePackHelper -> new Platform(messagePackHelper, this), savePath, "platforms", threadedFileLoading),
+					new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings", threadedFileLoading),
+					new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes", threadedFileLoading),
+					new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", threadedFileLoading),
+					new FileLoader<>(lifts, messagePackHelper -> new Lift(messagePackHelper, this), savePath, "lifts", threadedFileLoading),
+					new FileLoader<>(rails, Rail::new, savePath, "rails", threadedFileLoading)
 			);
 		});
 		fileLoaderStations = fileLoaderHolderAndDuration.left().fileLoaderStations;
@@ -91,7 +91,7 @@ public class Simulator extends Data implements Utilities {
 
 		// Load settings
 		final ObjectArraySet<Settings> settings = new ObjectArraySet<>();
-		fileLoaderSettings = new FileLoader<>(settings, Settings::new, savePath, "settings");
+		fileLoaderSettings = new FileLoader<>(settings, Settings::new, savePath, "settings", threadedFileLoading);
 		writeSettings = newSettings -> {
 			settings.clear();
 			settings.add(newSettings);
