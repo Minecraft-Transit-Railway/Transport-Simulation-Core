@@ -16,12 +16,7 @@ import java.util.function.Consumer;
 
 public final class SystemMapServlet extends ServletBase {
 
-	private final CachedResponse stationsAndRoutesResponse = new CachedResponse(simulator -> {
-		final StationAndRoutes stationAndRoutes = new StationAndRoutes(simulator.dimensions);
-		simulator.stations.forEach(stationAndRoutes::addStation);
-		simulator.routes.forEach(stationAndRoutes::addRoute);
-		return Utilities.getJsonObjectFromData(stationAndRoutes);
-	}, 30000);
+	private final Object2ObjectAVLTreeMap<String, CachedResponse> stationsAndRoutesResponses = new Object2ObjectAVLTreeMap<>();
 	private final CachedResponse departuresResponse = new CachedResponse(simulator -> {
 		final long currentMillis = System.currentTimeMillis();
 		final Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures = new Object2ObjectAVLTreeMap<>();
@@ -42,7 +37,7 @@ public final class SystemMapServlet extends ServletBase {
 		final JsonObject response;
 		switch (endpoint) {
 			case "stations-and-routes":
-				response = stationsAndRoutesResponse.get(simulator);
+				response = stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, 30000)).get(simulator);
 				break;
 			case "departures":
 				response = departuresResponse.get(simulator);
@@ -55,5 +50,12 @@ public final class SystemMapServlet extends ServletBase {
 				break;
 		}
 		sendResponse.accept(response);
+	}
+
+	private static JsonObject getStationsAndRoutes(Simulator simulator) {
+		final StationAndRoutes stationAndRoutes = new StationAndRoutes(simulator.dimensions);
+		simulator.stations.forEach(stationAndRoutes::addStation);
+		simulator.routes.forEach(stationAndRoutes::addRoute);
+		return Utilities.getJsonObjectFromData(stationAndRoutes);
 	}
 }
