@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, EventEmitter, Output} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
@@ -11,6 +11,7 @@ import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 import {ThemeService} from "../../service/theme.service";
 import {setCookie} from "../../data/utilities";
 import {MatDividerModule} from "@angular/material/divider";
+import {MatButtonModule} from "@angular/material/button";
 
 @Component({
 	selector: "app-main-panel",
@@ -22,11 +23,13 @@ import {MatDividerModule} from "@angular/material/divider";
 		MatTooltipModule,
 		MatSlideToggleModule,
 		MatDividerModule,
+		MatButtonModule,
 	],
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.css",
 })
 export class MainPanelComponent {
+	@Output() directionsOpened = new EventEmitter<void>;
 	protected dropdownValue = "";
 	protected readonly routeTypes: [string, RouteType][] = [];
 

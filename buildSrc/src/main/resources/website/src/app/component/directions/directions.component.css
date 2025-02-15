@@ -1,0 +1,16 @@
+.expansion-panel-margin {
+	margin-left: 8px;
+}
+
+.big-icon {
+	font-size: 4em;
+	height: 1em;
+}
+
+.gray {
+	color: rgba(127, 127, 127, 80%);
+}
+
+.no-wrap {
+	white-space: nowrap;
+}

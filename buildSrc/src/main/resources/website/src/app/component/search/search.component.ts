@@ -13,6 +13,7 @@ import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 
+
 const maxResults = 50;
 
 @Component({
@@ -37,15 +38,17 @@ const maxResults = 50;
 export class SearchComponent implements OnInit {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
-	@Input() label!: string;
-	@Input() includeRoutes!: boolean;
+	@Output() textCleared = new EventEmitter<void>();
+	@Input({required: true}) label!: string;
+	@Input({required: true}) includeRoutes!: boolean;
+	@Input({required: true}) persistSearch!: boolean;
 	searchBox = new FormControl("");
 	searchedStations$ = new Observable<{ key: string, icons: string[], color: number, name: string, number: string }[]>();
 	searchedRoutes$ = new Observable<{ key: string, icons: string[], color: number, name: string, number: string }[]>();
 	hasStations = false;
 	hasRoutes = false;
 
-	constructor(private readonly dataService: MapDataService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
+	constructor(private readonly dataService: MapDataService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe, private readonly formatNamePipe: FormatNamePipe) {
 	}
 
 	ngOnInit() {
@@ -71,5 +74,25 @@ export class SearchComponent implements OnInit {
 
 		this.searchedStations$ = filter(() => this.simplifyStationsPipe.transform(this.dataService.stations), value => this.hasStations = value);
 		this.searchedRoutes$ = filter(() => this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes) : [], value => this.hasRoutes = value);
+	}
+
+	onClickStation(station: { key: string, name: string }) {
+		this.stationClicked.emit(station.key);
+		if (this.persistSearch) {
+			this.searchBox.setValue(this.formatNamePipe.transform(station.name));
+		}
+	}
+
+	onClickRoute(route: { key: string, name: string }) {
+		this.routeClicked.emit(route.key);
+		if (this.persistSearch) {
+			this.searchBox.setValue(this.formatNamePipe.transform(route.name));
+		}
+	}
+
+	onTextChanged() {
+		if (this.searchBox.getRawValue() === "") {
+			this.textCleared.emit();
+		}
 	}
 }

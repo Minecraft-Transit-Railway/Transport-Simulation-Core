@@ -45,6 +45,13 @@
 					</mat-button-toggle-group>
 				</div>
 			}
+			<mat-divider/>
+			<div>
+				<button mat-button (click)="directionsOpened.emit()">
+					<mat-icon>directions</mat-icon>
+					Directions
+				</button>
+			</div>
 		</div>
 		<div class="spacing"></div>
 		<mat-slide-toggle class="grayscale padding-sides padding-top-bottom" (change)="changeTheme($event.checked)" [checked]="isDarkTheme()">Dark Theme</mat-slide-toggle>

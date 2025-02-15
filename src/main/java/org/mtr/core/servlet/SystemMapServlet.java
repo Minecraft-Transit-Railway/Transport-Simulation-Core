@@ -17,16 +17,7 @@ import java.util.function.Consumer;
 public final class SystemMapServlet extends ServletBase {
 
 	private final Object2ObjectAVLTreeMap<String, CachedResponse> stationsAndRoutesResponses = new Object2ObjectAVLTreeMap<>();
-	private final CachedResponse departuresResponse = new CachedResponse(simulator -> {
-		final long currentMillis = System.currentTimeMillis();
-		final Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures = new Object2ObjectAVLTreeMap<>();
-		simulator.sidings.forEach(siding -> {
-			if (!siding.getTransportMode().continuousMovement) {
-				siding.getDepartures(currentMillis, departures);
-			}
-		});
-		return Utilities.getJsonObjectFromData(new Departures(currentMillis, departures));
-	}, 3000);
+	private final Object2ObjectAVLTreeMap<String, CachedResponse> departuresResponses = new Object2ObjectAVLTreeMap<>();
 
 	public SystemMapServlet(ObjectImmutableList<Simulator> simulators) {
 		super(simulators);
@@ -40,7 +31,7 @@ public final class SystemMapServlet extends ServletBase {
 				response = stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, 30000)).get(simulator);
 				break;
 			case "departures":
-				response = departuresResponse.get(simulator);
+				response = departuresResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getDepartures, 3000)).get(simulator);
 				break;
 			case "arrivals":
 				response = Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));
@@ -57,5 +48,16 @@ public final class SystemMapServlet extends ServletBase {
 		simulator.stations.forEach(stationAndRoutes::addStation);
 		simulator.routes.forEach(stationAndRoutes::addRoute);
 		return Utilities.getJsonObjectFromData(stationAndRoutes);
+	}
+
+	private static JsonObject getDepartures(Simulator simulator) {
+		final long currentMillis = System.currentTimeMillis();
+		final Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures = new Object2ObjectAVLTreeMap<>();
+		simulator.sidings.forEach(siding -> {
+			if (!siding.getTransportMode().continuousMovement) {
+				siding.getDepartures(currentMillis, departures);
+			}
+		});
+		return Utilities.getJsonObjectFromData(new Departures(currentMillis, departures));
 	}
 }

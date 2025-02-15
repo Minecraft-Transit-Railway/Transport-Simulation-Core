@@ -12,8 +12,8 @@ import {Line2} from "three/examples/jsm/lines/Line2.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import {rotate, trig45} from "../../data/utilities";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
-import {RouteKeyService} from "../../service/route.service";
 import {ThemeService} from "../../service/theme.service";
+import {MapSelectionService} from "../../service/map-selection.service";
 
 const blackColor = 0x000000;
 const whiteColor = 0xFFFFFF;
@@ -54,16 +54,12 @@ export class MapComponent implements AfterViewInit {
 	private lineGeometryNormal: LineGeometry | undefined;
 	private lineGeometryThin: LineGeometry | undefined;
 
-	constructor(private readonly dataService: MapDataService, private readonly routeKeyService: RouteKeyService, private readonly themeService: ThemeService) {
+	constructor(private readonly mapDataService: MapDataService, private readonly mapSelectionService: MapSelectionService, private readonly themeService: ThemeService) {
 		this.canvas = () => this.canvasRef.nativeElement;
-		this.dataService.mapLoading.subscribe(() => this.loading = true);
+		this.mapDataService.mapLoading.subscribe(() => this.loading = true);
 	}
 
 	ngAfterViewInit() {
-		this.routeKeyService.selectionChanged.subscribe(() => {
-			previousZoom = 0;
-			draw();
-		});
 		const stats = new Stats();
 		this.statsRef.nativeElement.append(stats.dom);
 		this.scene.background = new THREE.Color(this.getBackgroundColor()).convertLinearToSRGB();
@@ -132,7 +128,7 @@ export class MapComponent implements AfterViewInit {
 		this.controls.addEventListener("change", () => draw());
 		window.addEventListener("resize", () => draw());
 
-		this.dataService.drawMap.subscribe(() => {
+		this.mapDataService.drawMap.subscribe(() => {
 			this.loading = true;
 			this.scene.background = new THREE.Color(this.getBackgroundColor()).convertLinearToSRGB();
 			this.scene.clear();
@@ -166,7 +162,12 @@ export class MapComponent implements AfterViewInit {
 			draw();
 		});
 
-		this.dataService.animateMap.subscribe(({x, z}) => {
+		this.mapSelectionService.updateSelection.subscribe(() => {
+			previousZoom = 0;
+			draw();
+		});
+
+		this.mapDataService.animateMap.subscribe(({x, z}) => {
 			animationStartX = this.camera.position.x;
 			animationStartY = this.camera.position.y;
 			animationTargetX = x;
@@ -180,7 +181,7 @@ export class MapComponent implements AfterViewInit {
 		const colors: number[] = [];
 		const backgroundColor = this.getBackgroundColor();
 
-		this.dataService.stationsForMap.forEach(({station, rotate, width, height}) => {
+		this.mapDataService.stationsForMap.forEach(({station, rotate, width, height}) => {
 			const {id, x, z} = station;
 			const newWidth = width * 3 * SETTINGS.scale / this.camera.zoom;
 			const newHeight = height * 3 * SETTINGS.scale / this.camera.zoom;
@@ -213,8 +214,8 @@ export class MapComponent implements AfterViewInit {
 				}
 			};
 
-			const stationSelected = this.routeKeyService.selectedStations.includes(id);
-			const adjustZ = this.getSelectedRouteColor() !== undefined && stationSelected ? 20 : 0;
+			const stationSelected = this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStations.includes(id);
+			const adjustZ = stationSelected ? 20 : 0;
 			processShape(7, -1 + adjustZ, this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, stationSelected));
 			processShape(5, adjustZ, this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, stationSelected));
 		});
@@ -226,14 +227,14 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	private createStationConnections() {
-		lineMaterialStationConnectionThin.dashed = this.dataService.interchangeStyle === "DOTTED";
+		lineMaterialStationConnectionThin.dashed = this.mapDataService.interchangeStyle === "DOTTED";
 		lineMaterialStationConnectionThin.dashSize = 8 * SETTINGS.scale / this.camera.zoom;
 		lineMaterialStationConnectionThin.gapSize = 4 * SETTINGS.scale / this.camera.zoom;
 
-		const interchangeStyle = this.dataService.interchangeStyle;
+		const interchangeStyle = this.mapDataService.interchangeStyle;
 		const positions1 = [0, 0, -10000, 0, 0, -10000];
 		const positions2 = [0, 0, -10000, 0, 0, -10000];
-		this.dataService.stationConnections.forEach(({x1, z1, x2, z2, start45}) => {
+		this.mapDataService.stationConnections.forEach(({x1, z1, x2, z2, start45}) => {
 			const write = (offset: number, positions: number[]) => {
 				const points: [number, number][] = [];
 				connectWith45(points, x1, z1, x2, z2, start45);
@@ -287,16 +288,16 @@ export class MapComponent implements AfterViewInit {
 			MapComponent.setColor(color, colorsArrow, 9);
 		};
 
-		this.dataService.lineConnections.forEach(({lineConnectionParts, direction1, direction2, x1, z1, x2, z2, stationId1, stationId2, length, relativeLength}) => {
+		this.mapDataService.lineConnections.forEach(({lineConnectionParts, direction1, direction2, x1, z1, x2, z2, stationId1, stationId2, length, relativeLength}) => {
 			const lineOffset = length * this.camera.zoom < 10 ? Number.MAX_SAFE_INTEGER : 0;
 			for (let i = 0; i < lineConnectionParts.length; i++) {
 				const {color, offset1, offset2, oneWay} = lineConnectionParts[i];
 				const colorInt = parseInt(color.split("|")[0]);
-				const lineSelected = this.getSelectedRouteColor() === colorInt && this.routeKeyService.selectedStationConnections.some(stationConnection => stationConnection[0] === stationId1 && stationConnection[1] === stationId2);
+				const lineSelected = this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStationConnections.some(stationConnection => stationConnection.routeColor === colorInt && stationConnection.stationIds[0] === stationId1 && stationConnection.stationIds[1] === stationId2);
 				const newColorInt = this.getColor(colorInt, colorInt, grayColorLight, grayColorDark, lineSelected);
 				const colorOffset = (i - lineConnectionParts.length / 2 + 0.5) * 6 * SETTINGS.scale;
-				const hollow = this.dataService.routeTypeVisibility[color.split("|")[1]] === "HOLLOW";
-				const adjustZ = this.getSelectedRouteColor() !== undefined && lineSelected ? 20 : 0;
+				const hollow = this.mapDataService.routeTypeVisibility[color.split("|")[1]] === "HOLLOW";
+				const adjustZ = lineSelected ? 20 : 0;
 				const lineZ = (hollow ? (oneWay === 0 ? -8 : -12) : (oneWay === 0 ? -2 : -5)) - relativeLength + adjustZ;
 
 				// z layers
@@ -378,21 +379,19 @@ export class MapComponent implements AfterViewInit {
 
 	private updateLabels() {
 		this.textLabels.length = 0;
-		const selectedRouteColor = this.getSelectedRouteColor();
-		const stationConnections = this.routeKeyService.selectedStationConnections;
 		let renderedTextCount = 0;
-		this.dataService.stationsForMap.forEach(({station, rotate, width, height}) => {
+		this.mapDataService.stationsForMap.forEach(({station, rotate, width, height}) => {
 			const {id, name, getIcons, x, z} = station;
 			const newWidth = width * 3 * SETTINGS.scale;
 			const newHeight = height * 3 * SETTINGS.scale;
 			const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
 			const textOffset = (rotate ? rotatedSize : newHeight) + 9 * SETTINGS.scale;
-			const icons = getIcons(type => this.dataService.routeTypeVisibility[type] === "HIDDEN");
+			const icons = getIcons(type => this.mapDataService.routeTypeVisibility[type] === "HIDDEN");
 			const canvasX = (x - this.camera.position.x) * this.camera.zoom;
 			const canvasY = (z + this.camera.position.y) * this.camera.zoom;
 			const halfCanvasWidth = this.canvas().clientWidth / 2;
 			const halfCanvasHeight = this.canvas().clientHeight / 2;
-			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && renderedTextCount < SETTINGS.maxText * 2 && (selectedRouteColor === undefined || stationConnections.some(([stationId1, stationId2]) => id === stationId1 || id === stationId2))) {
+			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && renderedTextCount < SETTINGS.maxText * 2 && (this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStations.includes(id))) {
 				this.textLabels.push(new TextLabel(
 					id,
 					name,
@@ -409,7 +408,7 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	private centerMap() {
-		this.moveMap(-this.dataService.getCenterX(), this.dataService.getCenterY());
+		this.moveMap(-this.mapDataService.getCenterX(), this.mapDataService.getCenterY());
 	}
 
 	private moveMap(x: number, y: number) {
@@ -421,13 +420,8 @@ export class MapComponent implements AfterViewInit {
 		}
 	}
 
-	private getSelectedRouteColor() {
-		const selectedRoutes = this.routeKeyService.getSelectedData();
-		return selectedRoutes && selectedRoutes.length > 0 ? selectedRoutes[0].color : undefined;
-	}
-
 	private getColor(lightColorNormal: number, darkColorNormal: number, lightColorDisabled: number, darkColorDisabled: number, isSelected: boolean) {
-		if (this.getSelectedRouteColor() === undefined || isSelected) {
+		if (isSelected) {
 			return this.isDarkTheme() ? darkColorNormal : lightColorNormal;
 		} else {
 			return this.isDarkTheme() ? darkColorDisabled : lightColorDisabled;

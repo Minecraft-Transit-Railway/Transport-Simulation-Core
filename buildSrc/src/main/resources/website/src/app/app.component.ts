@@ -12,6 +12,7 @@ import {MainPanelComponent} from "./component/panel/main-panel.component";
 import {RouteKeyService} from "./service/route.service";
 import {RoutePanelComponent} from "./component/route-panel/route-panel.component";
 import {ThemeService} from "./service/theme.service";
+import {DirectionsService} from "./service/directions.service";
 
 @Component({
 	selector: "app-root",
@@ -33,7 +34,7 @@ import {ThemeService} from "./service/theme.service";
 export class AppComponent {
 	protected darkTheme = false;
 
-	constructor(private readonly themeService: ThemeService, private readonly stationService: StationService, private readonly routeKeyService: RouteKeyService) {
+	constructor(private readonly themeService: ThemeService, private readonly stationService: StationService, private readonly routeKeyService: RouteKeyService, private readonly directionsService: DirectionsService) {
 	}
 
 	getTitle() {
@@ -70,11 +71,23 @@ export class AppComponent {
 		this.onCloseDirections();
 	}
 
+	onOpenDirections(sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+		this.directionsService.directionsPanelOpened.emit();
+		sideMain.close();
+		sideStation.close();
+		sideDirections.open();
+		sideRoute.close();
+		this.onCloseStation();
+		this.onCloseDirections();
+		this.onCloseRoute();
+	}
+
 	onCloseStation() {
 		this.stationService.clear();
 	}
 
 	onCloseDirections() {
+		this.directionsService.clear();
 	}
 
 	onCloseRoute() {

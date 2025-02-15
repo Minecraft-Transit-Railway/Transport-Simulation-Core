@@ -32,6 +32,7 @@ export class Station {
 		this.z = z;
 	}
 
+	public readonly getDistance = (station: Station) => Math.sqrt((this.x - station.x) * (this.x - station.x) + (this.y - station.y) * (this.y - station.y) + (this.z - station.z) * (this.z - station.z));
 	public readonly getIcons = (predicate?: (type: string) => boolean) => {
 		const icons: string[] = [];
 		Object.entries(ROUTE_TYPES).forEach(([routeTypeKey, routeType]) => {

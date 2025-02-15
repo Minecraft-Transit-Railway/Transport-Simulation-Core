@@ -10,9 +10,17 @@
 	width: 6px;
 }
 
+.line.thin {
+	background-color: rgba(127, 127, 127, 80%);
+	left: 32px;
+	position: absolute;
+	width: 2px;
+}
+
 .line.middle {
 	height: 100%;
-	top: 0;
+	padding: 16px 0;
+	top: -8px;
 }
 
 .line.above {
@@ -44,7 +52,7 @@
 }
 
 .icon.light {
-	color: rgba(127, 127, 127, 50%);
+	color: rgba(127, 127, 127, 80%);
 }
 
 .full {

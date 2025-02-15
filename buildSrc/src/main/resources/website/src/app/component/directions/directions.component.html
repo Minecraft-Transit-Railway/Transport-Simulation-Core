@@ -1,0 +1,74 @@
+<div class="column gap wrapper">
+	<app-search label="Start Station" [includeRoutes]="false" [persistSearch]="true" (stationClicked)="onClickStation($event,true)" (textCleared)="onClickStation(undefined, true)"/>
+	<app-search label="End Station" [includeRoutes]="false" [persistSearch]="true" (stationClicked)="onClickStation($event,false)" (textCleared)="onClickStation(undefined, false)"/>
+	<mat-form-field class="padding-sides" subscriptSizing="dynamic">
+		<mat-label>Maximum Walking Distance (m)</mat-label>
+		<input matInput #maxWalkingDistance type="number" aria-label="Maximum Walking Distance (m)" min="0" max="1000000000" [value]="getDefaultMaxWalkingDistance()" (input)="updateMaxWalkingDistance(maxWalkingDistance.value)"/>
+	</mat-form-field>
+	@if (isLoading()) {
+		<div class="column center wrapper">
+			<div class="spacing"></div>
+			<mat-spinner class="grayscale"/>
+			<div class="spacing"></div>
+		</div>
+	} @else {
+		@if (noDirections()) {
+			<div class="column center wrapper">
+				<div class="spacing"></div>
+				<mat-icon class="big-icon">remove_road</mat-icon>
+				<div>No directions found.</div>
+				<div class="spacing"></div>
+			</div>
+		} @else {
+			<div class="column padding-sides content">
+				@for (direction of getDirections(); track $index) {
+					<app-route-display [colorAbove]="$index === 0 ? undefined : getRouteColor($index - 1)" [colorBelow]="getRouteColor($index)" [isStation]="true" [icons]="[]">
+						<div class="row center">
+							<app-data-list-entry class="spacing" [icons]="[]" [title]="[direction.startStation.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+							<div class="gray no-wrap">{{ direction.startTime | formatDate }}</div>
+						</div>
+					</app-route-display>
+					<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[{icon: direction.route ? direction.icon : 'directions_walk', offset: 0}]">
+						@if (direction.route) {
+							<div class="row center">
+								<app-data-list-entry class="spacing" [icons]="[getCircularIcon(direction.route)]" [title]="[getRouteName(direction.route), '']" [subtitles]="[[getRouteDestination(direction.route), '']]" [useLightColor]="true" [clickable]="false"/>
+								<div class="row center gray">
+									<mat-icon inline>schedule</mat-icon>
+									<div>&nbsp;{{ getDuration(direction) }}</div>
+								</div>
+							</div>
+						} @else {
+							<div class="row center">
+								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getDistance(direction) + ' km', '']" [subtitles]="[]" [useLightColor]="true" [clickable]="false"/>
+								<div class="row center gray">
+									<mat-icon inline>schedule</mat-icon>
+									<div>&nbsp;{{ getDuration(direction) }}</div>
+								</div>
+							</div>
+						}
+					</app-route-display>
+					@if (direction.intermediateStations.length > 0) {
+						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[]">
+							<mat-expansion-panel class="expansion-panel-margin">
+								<mat-expansion-panel-header>{{ direction.intermediateStations.length }} intermediate station{{ direction.intermediateStations.length > 1 ? 's' : '' }}</mat-expansion-panel-header>
+								<div class="column gap-small">
+									@for (intermediateStation of direction.intermediateStations; track $index) {
+										<div>{{ intermediateStation.name | formatName }}</div>
+									}
+								</div>
+							</mat-expansion-panel>
+						</app-route-display>
+					}
+					@if ($index === $count - 1) {
+						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="undefined" [isStation]="true" [icons]="[]">
+							<div class="row center">
+								<app-data-list-entry class="spacing" [icons]="[]" [title]="[direction.endStation.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+								<div class="gray no-wrap">{{ direction.endTime | formatDate }}</div>
+							</div>
+						</app-route-display>
+					}
+				}
+			</div>
+		}
+	}
+</div>

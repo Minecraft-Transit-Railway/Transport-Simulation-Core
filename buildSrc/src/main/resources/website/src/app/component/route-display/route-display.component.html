@@ -1,14 +1,20 @@
 <div class="row center">
 	<div class="display-container" [style.height]="(getHeight() + 4) + 'px'">
 		@if (colorAbove === colorBelow) {
-			@if (colorAbove !== undefined) {
+			@if (colorAbove === -1) {
+				<div class="line thin middle"></div>
+			} @else if (colorAbove !== undefined) {
 				<div class="line middle" [style.background-color]="colorAbove | formatColor"></div>
 			}
 		} @else {
-			@if (colorAbove !== undefined) {
+			@if (colorAbove === -1) {
+				<div class="line thin above"></div>
+			} @else if (colorAbove !== undefined) {
 				<div class="line above" [style.background-color]="colorAbove | formatColor"></div>
 			}
-			@if (colorBelow !== undefined) {
+			@if (colorBelow === -1) {
+				<div class="line thin below"></div>
+			} @else if (colorBelow !== undefined) {
 				<div class="line below" [style.background-color]="colorBelow | formatColor"></div>
 			}
 		}

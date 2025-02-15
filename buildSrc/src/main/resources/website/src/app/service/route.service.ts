@@ -6,6 +6,7 @@ import {Route} from "../entity/route";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
 import {DimensionService} from "./dimension.service";
 import {pushIfNotExists} from "../data/utilities";
+import {MapSelectionService} from "./map-selection.service";
 
 @Injectable({providedIn: "root"})
 export class RouteVariationService extends SelectableDataServiceBase<void, Route> {
@@ -105,18 +106,16 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 
 @Injectable({providedIn: "root"})
 export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
-	public readonly selectedStationConnections: [string, string][] = [];
-	public readonly selectedStations: string[] = [];
 
-	constructor(private readonly dataService: MapDataService, dimensionService: DimensionService) {
+	constructor(mapDataService: MapDataService, mapSelectionService: MapSelectionService, dimensionService: DimensionService) {
 		super(routeKey => {
-			this.selectedStationConnections.length = 0;
-			this.selectedStations.length = 0;
+			mapSelectionService.selectedStationConnections.length = 0;
+			mapSelectionService.selectedStations.length = 0;
 			const selectedRouteVariations: Route[] = [];
-			const tempStationConnections: { [key: string]: [string, string] } = {};
+			const tempStationConnections: { [key: string]: { stationIds: [string, string], routeColor: number } } = {};
 			let mapUpdated = false;
 
-			this.dataService.routes.forEach(route => {
+			mapDataService.routes.forEach(route => {
 				if (SimplifyRoutesPipe.getRouteKey(route) === routeKey) {
 					selectedRouteVariations.push(route);
 
@@ -127,28 +126,28 @@ export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 						const reverse = stationId1 > stationId2;
 						const newStationId1 = reverse ? stationId2 : stationId1;
 						const newStationId2 = reverse ? stationId1 : stationId2;
-						tempStationConnections[`${newStationId1}_${newStationId2}`] = [newStationId1, newStationId2];
-						pushIfNotExists(this.selectedStations, stationId1);
-						pushIfNotExists(this.selectedStations, stationId2);
+						tempStationConnections[`${newStationId1}_${newStationId2}`] = {stationIds: [newStationId1, newStationId2], routeColor: route.color};
+						pushIfNotExists(mapSelectionService.selectedStations, stationId1);
+						pushIfNotExists(mapSelectionService.selectedStations, stationId2);
 					}
 
 					// Update map visibility
-					if (this.dataService.routeTypeVisibility[route.type] === "HIDDEN") {
-						this.dataService.routeTypeVisibility[route.type] = "SOLID";
+					if (mapDataService.routeTypeVisibility[route.type] === "HIDDEN") {
+						mapDataService.routeTypeVisibility[route.type] = "SOLID";
 						mapUpdated = true;
 					}
 				}
 			});
 
 			if (mapUpdated) {
-				this.dataService.updateData();
+				mapDataService.updateData();
 			}
 
 			SimplifyRoutesPipe.sortRoutes(selectedRouteVariations);
-			Object.values(tempStationConnections).forEach(stationConnection => this.selectedStationConnections.push(stationConnection));
+			Object.values(tempStationConnections).forEach(stationConnection => mapSelectionService.selectedStationConnections.push(stationConnection));
+			mapSelectionService.select("route");
 			return selectedRouteVariations;
-		}, () => {
-		}, () => {
+		}, () => mapSelectionService.reset("route"), () => {
 		}, () => {
 		}, 0, dimensionService);
 	}

@@ -1,11 +1,11 @@
 <mat-form-field class="padding-sides" subscriptSizing="dynamic">
 	<mat-label>{{ label }}</mat-label>
-	<input matInput type="search" aria-label="Search" [formControl]="searchBox" [matAutocomplete]="auto"/>
+	<input matInput type="search" aria-label="Search" [formControl]="searchBox" [matAutocomplete]="auto" (input)="onTextChanged()"/>
 </mat-form-field>
 
 <mat-autocomplete #auto="matAutocomplete">
 	@for (station of searchedStations$ | async; track $index) {
-		<mat-option (click)="stationClicked.emit(station.key)">
+		<mat-option (click)="onClickStation(station)">
 			<app-data-list-entry [icons]="station.icons" [title]="[station.name | formatName, '']" [subtitles]="[]" [color]="station.color | formatColor" [useLightColor]="false" [clickable]="false"/>
 		</mat-option>
 	}
@@ -13,7 +13,7 @@
 		<mat-divider/>
 	}
 	@for (route of searchedRoutes$ | async; track $index) {
-		<mat-option (click)="routeClicked.emit(route.key)">
+		<mat-option (click)="onClickRoute(route)">
 			<app-data-list-entry [icons]="route.icons" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="[]" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="false"/>
 		</mat-option>
 	}

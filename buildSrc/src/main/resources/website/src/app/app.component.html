@@ -7,8 +7,8 @@
 					<mat-icon>menu</mat-icon>
 				</button>
 				<div sidenav class="column gap wrapper">
-					<app-search label="Search for anything..." [includeRoutes]="true" (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
-					<app-main-panel class="wrapper"/>
+					<app-search label="Search for anything..." [includeRoutes]="true" [persistSearch]="false" (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
+					<app-main-panel class="wrapper" (directionsOpened)="onOpenDirections(sideMain, sideStation, sideDirections, sideRoute)"/>
 				</div>
 				<div title>{{ getTitle() }}</div>
 			</app-sidenav>
