@@ -48,12 +48,12 @@ export class MainPanelComponent {
 	}
 
 	setVisibility(routeTypeKey: string, value: string) {
-		this.mapDataService.routeTypeVisibility[routeTypeKey] = value as "HIDDEN" | "SOLID" | "HOLLOW";
+		this.mapDataService.routeTypeVisibility[routeTypeKey] = value as "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED";
 		this.mapDataService.updateData();
 		Object.entries(this.mapDataService.routeTypeVisibility).forEach(([newRouteTypeKey, visibility]) => setCookie(`visibility_${newRouteTypeKey}`, visibility));
 	}
 
-	getVisibility(routeTypeKey: string): "HIDDEN" | "SOLID" | "HOLLOW" {
+	getVisibility(routeTypeKey: string): "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED" {
 		return this.mapDataService.routeTypeVisibility[routeTypeKey];
 	}
 

@@ -19,7 +19,7 @@ const REFRESH_INTERVAL = 30000;
 export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO }> {
 	public readonly routes: Route[] = [];
 	public readonly stations: Station[] = [];
-	public readonly routeTypeVisibility: { [key: string]: "HIDDEN" | "SOLID" | "HOLLOW" } = {};
+	public readonly routeTypeVisibility: { [key: string]: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED" } = {};
 	public interchangeStyle: "DOTTED" | "HOLLOW";
 	public readonly stationConnections: StationConnection[] = [];
 	public readonly lineConnections: LineConnection[] = [];
@@ -104,7 +104,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 
 		Object.keys(ROUTE_TYPES).forEach(routeTypeKey => {
 			const visibility = getCookie(`visibility_${routeTypeKey}`);
-			if (visibility === "HIDDEN" || visibility === "SOLID" || visibility === "HOLLOW") {
+			if (visibility === "HIDDEN" || visibility === "SOLID" || visibility === "HOLLOW" || visibility === "DASHED") {
 				this.routeTypeVisibility[routeTypeKey] = visibility;
 			}
 		});
@@ -176,7 +176,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		});
 
 		const lineConnections: { [key: string]: { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string, stationId2: string, length: number } } = {};
-		const stationConnections: { [key: string]: { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, sizeRatio: number, start45: boolean } } = {};
+		const stationConnections: { [key: string]: { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string | undefined, stationId2: string | undefined, sizeRatio: number, start45: boolean } } = {};
 		let closestDistance: number;
 		let maxLineConnectionLength = 1;
 
@@ -281,9 +281,10 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 
 				station.connections.forEach(connectingStation => {
 					const [key, reverse] = getKeyAndReverseFromStationIds(station.id, connectingStation.id);
-					setIfUndefined(stationConnections, key, () => ({x1: undefined, x2: undefined, z1: undefined, z2: undefined, sizeRatio: 0, start45: false}));
+					setIfUndefined(stationConnections, key, () => ({sizeRatio: 0, start45: false}));
 					stationConnections[key][`x${reverse ? 2 : 1}`] = station.x;
 					stationConnections[key][`z${reverse ? 2 : 1}`] = station.z;
+					stationConnections[key][`stationId${reverse ? 2 : 1}`] = station.id;
 					const sizeRatio = (Math.max(width, height) + 1) / (Math.min(width, height) + 1);
 					if (sizeRatio > stationConnections[key].sizeRatio) {
 						stationConnections[key].sizeRatio = sizeRatio;
@@ -317,12 +318,14 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		});
 
 		Object.values(stationConnections).forEach(stationConnection => {
-			if (stationConnection.x1 != undefined && stationConnection.x2 != undefined && stationConnection.z1 != undefined && stationConnection.z2 != undefined) {
+			if (stationConnection.x1 != undefined && stationConnection.x2 != undefined && stationConnection.z1 != undefined && stationConnection.z2 != undefined && stationConnection.stationId1 && stationConnection.stationId2) {
 				this.stationConnections.push({
 					x1: stationConnection.x1,
 					x2: stationConnection.x2,
 					z1: stationConnection.z1,
 					z2: stationConnection.z2,
+					stationId1: stationConnection.stationId1,
+					stationId2: stationConnection.stationId2,
 					start45: stationConnection.start45,
 				});
 			}

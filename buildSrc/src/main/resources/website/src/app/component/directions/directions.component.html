@@ -1,10 +1,26 @@
-<div class="column gap wrapper">
-	<app-search label="Start Station" [includeRoutes]="false" [persistSearch]="true" (stationClicked)="onClickStation($event,true)" (textCleared)="onClickStation(undefined, true)"/>
-	<app-search label="End Station" [includeRoutes]="false" [persistSearch]="true" (stationClicked)="onClickStation($event,false)" (textCleared)="onClickStation(undefined, false)"/>
-	<mat-form-field class="padding-sides" subscriptSizing="dynamic">
-		<mat-label>Maximum Walking Distance (m)</mat-label>
-		<input matInput #maxWalkingDistance type="number" aria-label="Maximum Walking Distance (m)" min="0" max="1000000000" [value]="getDefaultMaxWalkingDistance()" (input)="updateMaxWalkingDistance(maxWalkingDistance.value)"/>
-	</mat-form-field>
+<div class="column wrapper">
+	<div class="column gap padding-sides">
+		<div class="row gap-small center">
+			<div class="column gap spacing">
+				<app-search #startStationSearch label="Start Station" [includeRoutes]="false" [setText]="setStartStationText" (stationClicked)="onClickStation($event, true)" (textCleared)="onClickStation(undefined, true)"/>
+				<app-search #endStationSearch label="End Station" [includeRoutes]="false" [setText]="setEndStationText" (stationClicked)="onClickStation($event, false)" (textCleared)="onClickStation(undefined, false)"/>
+			</div>
+			<button mat-icon-button (click)="swapStations(startStationSearch, endStationSearch)" [disabled]="!startStationSearch.getText() && !endStationSearch.getText()" matTooltip="Swap Stations">
+				<mat-icon>swap_vert</mat-icon>
+			</button>
+		</div>
+		<mat-divider/>
+		<mat-form-field subscriptSizing="dynamic">
+			<mat-label>Maximum Walking Distance (m)</mat-label>
+			<input matInput #maxWalkingDistance type="number" aria-label="Maximum Walking Distance (m)" min="0" max="1000000000" [value]="getDefaultMaxWalkingDistance()" (input)="updateMaxWalkingDistance(maxWalkingDistance.value)"/>
+		</mat-form-field>
+		<div class="row gap center">
+			<mat-checkbox class="grayscale spacing" #refresh [formControl]="automaticRefresh">Automatic Refresh</mat-checkbox>
+			<button mat-icon-button (click)="refreshDirections()" [disabled]="refresh.checked || !isValid()" matTooltip="Refresh Directions">
+				<mat-icon>refresh</mat-icon>
+			</button>
+		</div>
+	</div>
 	@if (isLoading()) {
 		<div class="column center wrapper">
 			<div class="spacing"></div>
@@ -12,7 +28,7 @@
 			<div class="spacing"></div>
 		</div>
 	} @else {
-		@if (noDirections()) {
+		@if (isValid() && getDirections().length === 0) {
 			<div class="column center wrapper">
 				<div class="spacing"></div>
 				<mat-icon class="big-icon">remove_road</mat-icon>

@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, EventEmitter} from "@angular/core";
 import {SearchComponent} from "../search/search.component";
 import {DirectionsService} from "../../service/directions.service";
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
@@ -12,9 +12,15 @@ import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {MatSliderModule} from "@angular/material/slider";
 import {MatFormField, MatLabel} from "@angular/material/form-field";
 import {MatInput} from "@angular/material/input";
-import {ReactiveFormsModule} from "@angular/forms";
+import {FormControl, ReactiveFormsModule} from "@angular/forms";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 import {Route} from "../../entity/route";
+import {MatCheckboxModule} from "@angular/material/checkbox";
+import {MatButtonModule} from "@angular/material/button";
+import {MatTooltipModule} from "@angular/material/tooltip";
+import {MatDividerModule} from "@angular/material/divider";
+import {MapDataService} from "../../service/map-data.service";
+import {Station} from "../../entity/station";
 
 @Component({
 	selector: "app-directions",
@@ -32,26 +38,55 @@ import {Route} from "../../entity/route";
 		MatInput,
 		MatLabel,
 		ReactiveFormsModule,
+		MatCheckboxModule,
+		MatButtonModule,
+		MatTooltipModule,
+		MatDividerModule,
 	],
 	templateUrl: "./directions.component.html",
 	styleUrl: "./directions.component.css",
 })
 export class DirectionsComponent {
+	protected readonly automaticRefresh = new FormControl(true);
+	protected readonly setStartStationText = new EventEmitter<string>();
+	protected readonly setEndStationText = new EventEmitter<string>();
 	private startStationId?: string;
 	private endStationId?: string;
 	private maxWalkingDistanceString = "";
+	private directionsCache: { startStation: Station, endStation: Station, intermediateStations: Station[], route?: Route, icon: string, startTime: number, endTime: number, distance: number }[] = [];
 
-	constructor(private readonly directionsService: DirectionsService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
-		directionsService.directionsPanelOpened.subscribe(() => setTimeout(() => this.checkStatus(), 0));
+	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
+		directionsService.directionsPanelOpened.subscribe((stationDetails) => {
+			if (stationDetails) {
+				this.onClickStation(stationDetails.stationId, stationDetails.isStartStation);
+			}
+		});
+		directionsService.dataProcessed.subscribe(() => {
+			if (this.automaticRefresh.getRawValue()) {
+				this.directionsCache = [...this.directionsService.getDirections()];
+			}
+		});
 	}
 
-	onClickStation(stationId: string | undefined, isStart: boolean) {
-		if (isStart) {
+	onClickStation(stationId: string | undefined, isStartStation: boolean) {
+		(isStartStation ? this.setStartStationText : this.setEndStationText).emit(stationId ? this.formatNamePipe.transform(this.mapDataService.stations.find(station => station.id === stationId)?.name ?? "") : "");
+
+		if (isStartStation) {
 			this.startStationId = stationId;
 		} else {
 			this.endStationId = stationId;
 		}
 
+		this.checkStatus();
+	}
+
+	swapStations(startStation: SearchComponent, endStation: SearchComponent) {
+		const tempId = this.startStationId;
+		this.startStationId = this.endStationId;
+		this.endStationId = tempId;
+		const tempName = startStation.getText();
+		this.setStartStationText.emit(endStation.getText());
+		this.setEndStationText.emit(tempName);
 		this.checkStatus();
 	}
 
@@ -65,15 +100,19 @@ export class DirectionsComponent {
 	}
 
 	getDirections() {
-		return this.directionsService.getDirections();
+		return this.directionsCache;
+	}
+
+	isValid() {
+		return !!this.startStationId && !!this.endStationId && this.startStationId !== this.endStationId;
 	}
 
 	isLoading() {
 		return this.directionsService.isLoading();
 	}
 
-	noDirections() {
-		return this.startStationId && this.endStationId && this.startStationId !== this.endStationId && this.directionsService.getDirections().length === 0;
+	refreshDirections() {
+		this.directionsCache = [...this.directionsService.getDirections()];
 	}
 
 	getRouteName(route: Route) {
@@ -101,8 +140,8 @@ export class DirectionsComponent {
 	}
 
 	private checkStatus() {
-		if (this.startStationId && this.endStationId && this.startStationId !== this.endStationId) {
-			this.directionsService.selectStations(this.startStationId, this.endStationId, this.maxWalkingDistanceString);
+		if (this.isValid()) {
+			this.directionsService.selectStations(this.startStationId ?? "", this.endStationId ?? "", this.maxWalkingDistanceString);
 		} else {
 			this.directionsService.clear();
 		}

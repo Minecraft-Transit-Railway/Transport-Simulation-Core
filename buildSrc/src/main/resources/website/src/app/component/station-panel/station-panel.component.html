@@ -21,6 +21,11 @@
 				<div>({{ getZoneText() }})</div>
 			</div>
 		</div>
+		<div class="row center">
+			<mat-icon matTooltip="Directions">directions</mat-icon>
+			<button mat-button (click)="openDirections(true)">Start</button>
+			<button mat-button (click)="openDirections(false)">End</button>
+		</div>
 	</div>
 
 	<mat-tab-group class="wrapper" (selectedTabChange)="resetArrivalFilter()">

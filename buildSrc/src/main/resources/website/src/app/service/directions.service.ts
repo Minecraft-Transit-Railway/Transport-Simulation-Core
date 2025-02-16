@@ -14,7 +14,7 @@ const WALKING_SPEED = 4 / 1000; // meters per millisecond
 
 @Injectable({providedIn: "root"})
 export class DirectionsService extends SelectableDataServiceBase<{ route?: Route, targetStation: Station, departureTime: number, travelTime: number }[], { startStation: Station, endStation: Station, maxWalkingDistance: number }> {
-	public readonly directionsPanelOpened = new EventEmitter<void>();
+	public readonly directionsPanelOpened = new EventEmitter<{ stationId: string, isStartStation: boolean } | undefined>();
 	public readonly defaultMaxWalkingDistance = 250;
 	private readonly newDirections: { startStation: Station, endStation: Station, intermediateStations: Station[], route?: Route, icon: string, startTime: number, endTime: number, distance: number }[] = [];
 	private directionsTimeoutId = 0;
@@ -175,7 +175,7 @@ export class DirectionsService extends SelectableDataServiceBase<{ route?: Route
 							if (newDepartureTime >= 0) {
 								const arrivalTime = newDepartureTime + connection.travelTime;
 								if (arrivalTime <= (localStationTimes[targetStation.id] ?? Infinity) && arrivalTime <= (globalStationTimes[targetStation.id] ?? Infinity)) {
-									const increase = (currentDistance - targetStation.getDistance(endStation)) / (newDepartureTime - currentTime + connection.travelTime);
+									const increase = (currentDistance - targetStation.getDistance(endStation)) / (newDepartureTime - currentTime + connection.travelTime) - (connection.route ? 0 : 1000000000);
 									if (increase > bestData.increase) {
 										bestData.increase = increase;
 										bestData.connection = {route: connection.route, targetStation, departureTime: newDepartureTime, travelTime: connection.travelTime};

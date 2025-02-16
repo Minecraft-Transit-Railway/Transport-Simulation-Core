@@ -43,9 +43,6 @@ export class DeparturesService extends DataServiceBase<{
 								console.warn("Encountered invalid routes while creating directions cache!");
 								cacheCompleted.emit({departures: this.departures, directionsCache: this.directionsCache, lastUpdated: this.lastUpdated});
 							} else {
-								this.departures = departures;
-								this.directionsCache = directionsCache;
-								this.lastUpdated = startTime;
 								console.debug(`Cache for ${index} route(s) created after ${iterations} iteration(s) in ${Date.now() - startTime} ms`);
 								cacheCompleted.emit({departures, directionsCache, lastUpdated: startTime});
 							}

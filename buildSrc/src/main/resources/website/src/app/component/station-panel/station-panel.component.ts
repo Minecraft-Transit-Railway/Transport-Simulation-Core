@@ -45,7 +45,7 @@ import {Station} from "../../entity/station";
 export class StationPanelComponent {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<void>;
+	@Output() directionsOpened = new EventEmitter<{ stationId: string, isStartStation: boolean }>;
 
 	constructor(private readonly dataService: MapDataService, private readonly stationService: StationService, private readonly dialog: MatDialog) {
 	}
@@ -135,6 +135,13 @@ export class StationPanelComponent {
 		const station = this.stationService.getSelectedData();
 		if (station) {
 			this.dataService.animateMap.emit({x: station.x, z: station.z});
+		}
+	}
+
+	openDirections(isStartStation: boolean) {
+		const station = this.stationService.getSelectedData();
+		if (station) {
+			this.directionsOpened.emit({stationId: station.id, isStartStation});
 		}
 	}
 

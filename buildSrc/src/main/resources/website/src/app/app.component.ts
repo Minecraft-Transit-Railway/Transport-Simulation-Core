@@ -32,7 +32,6 @@ import {DirectionsService} from "./service/directions.service";
 	styleUrls: ["./app.component.css"],
 })
 export class AppComponent {
-	protected darkTheme = false;
 
 	constructor(private readonly themeService: ThemeService, private readonly stationService: StationService, private readonly routeKeyService: RouteKeyService, private readonly directionsService: DirectionsService) {
 	}
@@ -71,14 +70,13 @@ export class AppComponent {
 		this.onCloseDirections();
 	}
 
-	onOpenDirections(sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
-		this.directionsService.directionsPanelOpened.emit();
+	onOpenDirections(stationDetails: { stationId: string, isStartStation: boolean } | undefined, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+		this.directionsService.directionsPanelOpened.emit(stationDetails);
 		sideMain.close();
 		sideStation.close();
 		sideDirections.open();
 		sideRoute.close();
 		this.onCloseStation();
-		this.onCloseDirections();
 		this.onCloseRoute();
 	}
 
