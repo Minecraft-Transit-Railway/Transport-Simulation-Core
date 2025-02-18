@@ -53,7 +53,7 @@ export class DirectionsComponent {
 	private startStationId?: string;
 	private endStationId?: string;
 	private maxWalkingDistanceString = "";
-	private directionsCache: { startStation: Station, endStation: Station, intermediateStations: Station[], route?: Route, icon: string, startTime: number, endTime: number, distance: number }[] = [];
+	private directionsCache: { startPosition: { x: number, y: number, z: number }, startStation?: Station, endPosition: { x: number, y: number, z: number }, endStation?: Station, intermediateStations: Station[], route?: Route, icon: string, startTime: number, endTime: number, distance: number }[] = [];
 
 	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
 		directionsService.directionsPanelOpened.subscribe((stationDetails) => {
@@ -115,6 +115,10 @@ export class DirectionsComponent {
 		this.directionsCache = [...this.directionsService.getDirections()];
 	}
 
+	getStationName(position: { x: number, y: number, z: number }, station?: Station) {
+		return station ? this.formatNamePipe.transform(station.name) : `(${position.x}, ${position.y}, ${position.z})`;
+	}
+
 	getRouteName(route: Route) {
 		return `${this.formatNamePipe.transform(route.name.split("||")[0])} ${this.formatNamePipe.transform(route.number)}`;
 	}
@@ -131,17 +135,28 @@ export class DirectionsComponent {
 		return this.formatTimePipe.transform(Math.round((direction.endTime - direction.startTime) / 1000), "");
 	}
 
-	getDistance(direction: { distance: number }) {
-		return Math.round(direction.distance / 100) / 10;
+	getDistanceLabel(direction: { distance: number }) {
+		const roundedDistance = Math.round(direction.distance / 100) / 10;
+		return roundedDistance > 0 ? `${roundedDistance} km` : "";
 	}
 
 	getCircularIcon(route: Route) {
 		return SimplifyRoutesPipe.getCircularStateIcon(route.circularState);
 	}
 
+	sameStation(direction: { startStation?: Station, endStation?: Station }) {
+		return direction.startStation && direction.endStation && (direction.startStation.id === direction.endStation.id || direction.startStation.connections.some(station => station.id === direction.endStation?.id));
+	}
+
 	private checkStatus() {
 		if (this.isValid()) {
-			this.directionsService.selectStations(this.startStationId ?? "", this.endStationId ?? "", this.maxWalkingDistanceString);
+			const startStation = this.mapDataService.stations.find(station => station.id === this.startStationId);
+			const endStation = this.mapDataService.stations.find(station => station.id === this.endStationId);
+			if (startStation && endStation) {
+				this.directionsService.selectStations(startStation, endStation, this.maxWalkingDistanceString);
+			} else {
+				this.directionsService.clear();
+			}
 		} else {
 			this.directionsService.clear();
 		}

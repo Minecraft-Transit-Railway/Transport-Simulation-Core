@@ -40,11 +40,11 @@
 				@for (direction of getDirections(); track $index) {
 					<app-route-display [colorAbove]="$index === 0 ? undefined : getRouteColor($index - 1)" [colorBelow]="getRouteColor($index)" [isStation]="true" [icons]="[]">
 						<div class="row center">
-							<app-data-list-entry class="spacing" [icons]="[]" [title]="[direction.startStation.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+							<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.startPosition, direction.startStation), '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
 							<div class="gray no-wrap">{{ direction.startTime | formatDate }}</div>
 						</div>
 					</app-route-display>
-					<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[{icon: direction.route ? direction.icon : 'directions_walk', offset: 0}]">
+					<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[{icon: direction.route ? direction.icon : sameStation(direction) ? 'transfer_within_a_station' : 'directions_walk', offset: 0}]">
 						@if (direction.route) {
 							<div class="row center">
 								<app-data-list-entry class="spacing" [icons]="[getCircularIcon(direction.route)]" [title]="[getRouteName(direction.route), '']" [subtitles]="[[getRouteDestination(direction.route), '']]" [useLightColor]="true" [clickable]="false"/>
@@ -55,7 +55,7 @@
 							</div>
 						} @else {
 							<div class="row center">
-								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getDistance(direction) + ' km', '']" [subtitles]="[]" [useLightColor]="true" [clickable]="false"/>
+								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getDistanceLabel(direction), '']" [subtitles]="[]" [useLightColor]="true" [clickable]="false"/>
 								<div class="row center gray">
 									<mat-icon inline>schedule</mat-icon>
 									<div>&nbsp;{{ getDuration(direction) }}</div>
@@ -78,7 +78,7 @@
 					@if ($index === $count - 1) {
 						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="undefined" [isStation]="true" [icons]="[]">
 							<div class="row center">
-								<app-data-list-entry class="spacing" [icons]="[]" [title]="[direction.endStation.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.endPosition, direction.endStation), '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
 								<div class="gray no-wrap">{{ direction.endTime | formatDate }}</div>
 							</div>
 						</app-route-display>

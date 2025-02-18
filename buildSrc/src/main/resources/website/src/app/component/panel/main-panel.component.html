@@ -13,8 +13,7 @@
 				@for (routeType of routeTypes; track $index) {
 					<div class="row gap center">
 						<mat-icon>{{ routeType[1].icon }}</mat-icon>
-						<div class="shrink">{{ routeType[1].text }}</div>
-						<div class="spacing"></div>
+						<div class="shrink spacing">{{ routeType[1].text }}</div>
 						<mat-button-toggle-group class="route-type" hideSingleSelectionIndicator #routeTypeGroup="matButtonToggleGroup" [value]="getVisibility(routeType[0])" (change)="setVisibility(routeType[0], routeTypeGroup.value)">
 							<mat-button-toggle value="HIDDEN" matTooltip="Hidden">
 								<mat-icon>visibility_off</mat-icon>
@@ -36,8 +35,7 @@
 				<mat-divider/>
 				<div class="row gap center">
 					<mat-icon>polyline</mat-icon>
-					<div class="shrink">Interchange Style</div>
-					<div class="spacing"></div>
+					<div class="shrink spacing">Interchange Style</div>
 					<mat-button-toggle-group hideSingleSelectionIndicator #interchangeStyleGroup="matButtonToggleGroup" [value]="getInterchangeStyle()" (change)="setInterchangeStyle(interchangeStyleGroup.value)">
 						<mat-button-toggle value="DOTTED" matTooltip="Dotted">
 							<mat-icon>more_horiz</mat-icon>
