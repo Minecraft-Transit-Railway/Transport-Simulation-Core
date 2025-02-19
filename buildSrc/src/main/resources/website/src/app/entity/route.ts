@@ -30,6 +30,7 @@ export class RoutePlatform {
 	public readonly x: number;
 	public readonly y: number;
 	public readonly z: number;
+	public readonly name: string;
 	public readonly dwellTime: number;
 	public readonly duration: number;
 
@@ -42,6 +43,7 @@ export class RoutePlatform {
 		this.x = routeStationDTO.x;
 		this.y = routeStationDTO.y;
 		this.z = routeStationDTO.z;
+		this.name = routeStationDTO.name;
 		this.dwellTime = routeStationDTO.dwellTime;
 		this.duration = duration;
 	}

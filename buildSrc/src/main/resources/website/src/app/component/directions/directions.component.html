@@ -40,7 +40,7 @@
 				@for (direction of getDirections(); track $index) {
 					<app-route-display [colorAbove]="$index === 0 ? undefined : getRouteColor($index - 1)" [colorBelow]="getRouteColor($index)" [isStation]="true" [icons]="[]">
 						<div class="row center">
-							<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.startPosition, direction.startStation), '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+							<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.startPosition, direction.startRoutePlatform), '']" [subtitles]="[[getPlatformName(direction.startRoutePlatform), '']]" [useLightColor]="false" [clickable]="false"/>
 							<div class="gray no-wrap">{{ direction.startTime | formatDate }}</div>
 						</div>
 					</app-route-display>
@@ -63,13 +63,13 @@
 							</div>
 						}
 					</app-route-display>
-					@if (direction.intermediateStations.length > 0) {
+					@if (direction.intermediateRoutePlatforms.length > 0) {
 						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[]">
 							<mat-expansion-panel class="expansion-panel-margin">
-								<mat-expansion-panel-header>{{ direction.intermediateStations.length }} intermediate station{{ direction.intermediateStations.length > 1 ? 's' : '' }}</mat-expansion-panel-header>
+								<mat-expansion-panel-header>{{ direction.intermediateRoutePlatforms.length }} intermediate station{{ direction.intermediateRoutePlatforms.length > 1 ? 's' : '' }}</mat-expansion-panel-header>
 								<div class="column gap-small">
-									@for (intermediateStation of direction.intermediateStations; track $index) {
-										<div>{{ intermediateStation.name | formatName }}</div>
+									@for (intermediateRoutePlatform of direction.intermediateRoutePlatforms; track $index) {
+										<div>{{ intermediateRoutePlatform.station.name | formatName }}</div>
 									}
 								</div>
 							</mat-expansion-panel>
@@ -78,7 +78,7 @@
 					@if ($index === $count - 1) {
 						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="undefined" [isStation]="true" [icons]="[]">
 							<div class="row center">
-								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.endPosition, direction.endStation), '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.endPosition, direction.endRoutePlatform), '']" [subtitles]="[[getPlatformName(direction.endRoutePlatform), '']]" [useLightColor]="false" [clickable]="false"/>
 								<div class="gray no-wrap">{{ direction.endTime | formatDate }}</div>
 							</div>
 						</app-route-display>

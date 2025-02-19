@@ -3,7 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {setIfUndefined} from "../data/utilities";
 import {DataServiceBase} from "./data-service-base";
-import {Route} from "../entity/route";
+import {Route, RoutePlatform} from "../entity/route";
 import {MapDataService} from "./map-data.service";
 import {Station} from "../entity/station";
 
@@ -12,21 +12,24 @@ const REFRESH_INTERVAL = 3000;
 @Injectable({providedIn: "root"})
 export class DeparturesService extends DataServiceBase<{
 	departures: { [key: string]: { departureFromNow: number, deviation: number }[] },
-	directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, targetStation: Station, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
-	routePlatformsCache: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number } } } },
+	directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
+	routePlatformsCache1: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number, name: string } } } },
+	routePlatformsCache2: { [positionKey: string]: RoutePlatform },
 	lastUpdated: number,
 }> {
 	private departures: { [key: string]: { departureFromNow: number, deviation: number }[] } = {};
-	private directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, targetStation: Station, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } } = {};
-	private routePlatformsCache: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number } } } } = {};
+	private directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } } = {};
+	private routePlatformsCache1: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number, name: string } } } } = {};
+	private routePlatformsCache2: { [positionKey: string]: RoutePlatform } = {};
 	private lastUpdated = 0;
 
 	constructor(private readonly httpClient: HttpClient, mapDataService: MapDataService, dimensionService: DimensionService) {
 		super(() => {
 			const cacheCompleted = new EventEmitter<{
 				departures: { [key: string]: { departureFromNow: number, deviation: number }[] },
-				directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, targetStation: Station, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
-				routePlatformsCache: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number } } } },
+				directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
+				routePlatformsCache1: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number, name: string } } } },
+				routePlatformsCache2: { [positionKey: string]: RoutePlatform },
 				lastUpdated: number,
 			}>();
 			this.httpClient.get<{ currentTime: number, data: { cachedResponseTime: number, departures: DataResponse[] } }>(this.getUrl("departures")).subscribe(data => {
@@ -36,8 +39,9 @@ export class DeparturesService extends DataServiceBase<{
 					mappedRoutes: number,
 					startTime: number,
 					departures: { [key: string]: { departureFromNow: number, deviation: number }[] },
-					directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, targetStation: Station, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
-					routePlatformsCache: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number } } } },
+					directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
+					routePlatformsCache1: { [stationId: string]: { station: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number, name: string } } } },
+					routePlatformsCache2: { [positionKey: string]: RoutePlatform },
 				) => {
 					const startLoopTime = Date.now();
 
@@ -45,10 +49,10 @@ export class DeparturesService extends DataServiceBase<{
 						if (index >= data.data.departures.length) {
 							if (index > 0 && mappedRoutes === 0) {
 								console.warn("Encountered invalid routes while creating directions cache!");
-								cacheCompleted.emit({departures: this.departures, directionsCache: this.directionsCache, routePlatformsCache: this.routePlatformsCache, lastUpdated: this.lastUpdated});
+								cacheCompleted.emit({departures: this.departures, directionsCache: this.directionsCache, routePlatformsCache1: this.routePlatformsCache1, routePlatformsCache2: this.routePlatformsCache2, lastUpdated: this.lastUpdated});
 							} else {
 								console.debug(`Cache for ${index} route(s) created after ${iterations} iteration(s) in ${Date.now() - startTime} ms`);
-								cacheCompleted.emit({departures, directionsCache, routePlatformsCache, lastUpdated: startTime});
+								cacheCompleted.emit({departures, directionsCache, routePlatformsCache1, routePlatformsCache2, lastUpdated: startTime});
 							}
 							break;
 						}
@@ -79,7 +83,7 @@ export class DeparturesService extends DataServiceBase<{
 								timeOffset += thisRoutePlatform.duration;
 
 								setIfUndefined(directionsCache, thisRoutePlatformKey, () => ({}));
-								setIfUndefined(directionsCache[thisRoutePlatformKey], nextRoutePlatformKey, () => ({targetPosition: nextRoutePlatform, targetStation: nextRoutePlatform.station, connections: {}}));
+								setIfUndefined(directionsCache[thisRoutePlatformKey], nextRoutePlatformKey, () => ({targetPosition: nextRoutePlatform, targetPlatformName: nextRoutePlatform.name, connections: {}}));
 								directionsCache[thisRoutePlatformKey][nextRoutePlatformKey].connections[route.id] = {route, departureTimes: [], travelTime: thisRoutePlatform.duration};
 								departuresFromNow.forEach(departureFromNow => {
 									const departureOffset = departureFromNow - timeOffset;
@@ -90,11 +94,14 @@ export class DeparturesService extends DataServiceBase<{
 
 								timeOffset += thisRoutePlatform.dwellTime;
 
-								setIfUndefined(routePlatformsCache, nextRoutePlatform.station.id, () => ({station: nextRoutePlatform.station, routePlatforms: {}}));
-								routePlatformsCache[nextRoutePlatform.station.id].routePlatforms[nextRoutePlatformKey] = nextRoutePlatform;
+								setIfUndefined(routePlatformsCache1, nextRoutePlatform.station.id, () => ({station: nextRoutePlatform.station, routePlatforms: {}}));
+								routePlatformsCache1[nextRoutePlatform.station.id].routePlatforms[nextRoutePlatformKey] = nextRoutePlatform;
+								routePlatformsCache2[nextRoutePlatformKey] = nextRoutePlatform;
+
 								if (i === 0) {
-									setIfUndefined(routePlatformsCache, thisRoutePlatform.station.id, () => ({station: thisRoutePlatform.station, routePlatforms: {}}));
-									routePlatformsCache[thisRoutePlatform.station.id].routePlatforms[thisRoutePlatformKey] = thisRoutePlatform;
+									setIfUndefined(routePlatformsCache1, thisRoutePlatform.station.id, () => ({station: thisRoutePlatform.station, routePlatforms: {}}));
+									routePlatformsCache1[thisRoutePlatform.station.id].routePlatforms[thisRoutePlatformKey] = thisRoutePlatform;
+									routePlatformsCache2[thisRoutePlatformKey] = thisRoutePlatform;
 								}
 							}
 							mappedRoutes++;
@@ -103,19 +110,20 @@ export class DeparturesService extends DataServiceBase<{
 						index++;
 
 						if (Date.now() - startLoopTime >= 10) {
-							setTimeout(() => createCache(index, iterations + 1, mappedRoutes, startTime, departures, directionsCache, routePlatformsCache), 0);
+							setTimeout(() => createCache(index, iterations + 1, mappedRoutes, startTime, departures, directionsCache, routePlatformsCache1, routePlatformsCache2), 0);
 							break;
 						}
 					}
 				};
 
-				createCache(0, 0, 0, Date.now(), {}, {}, {});
+				createCache(0, 0, 0, Date.now(), {}, {}, {}, {});
 			});
 			return cacheCompleted;
 		}, data => {
 			this.departures = data.departures;
 			this.directionsCache = data.directionsCache;
-			this.routePlatformsCache = data.routePlatformsCache;
+			this.routePlatformsCache1 = data.routePlatformsCache1;
+			this.routePlatformsCache2 = data.routePlatformsCache2;
 			this.lastUpdated = data.lastUpdated;
 		}, REFRESH_INTERVAL, dimensionService);
 		this.fetchData("");
@@ -142,8 +150,12 @@ export class DeparturesService extends DataServiceBase<{
 		return this.directionsCache;
 	}
 
-	public getRoutePlatformsCache() {
-		return this.routePlatformsCache;
+	public getRoutePlatformsCache1() {
+		return this.routePlatformsCache1;
+	}
+
+	public getRoutePlatformsCache2() {
+		return this.routePlatformsCache2;
 	}
 
 	public static getDistance(position1: { x: number, y: number, z: number }, position2: { x: number, y: number, z: number }) {

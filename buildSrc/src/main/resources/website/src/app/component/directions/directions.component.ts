@@ -14,13 +14,14 @@ import {MatFormField, MatLabel} from "@angular/material/form-field";
 import {MatInput} from "@angular/material/input";
 import {FormControl, ReactiveFormsModule} from "@angular/forms";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
-import {Route} from "../../entity/route";
+import {Route, RoutePlatform} from "../../entity/route";
 import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatButtonModule} from "@angular/material/button";
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {MatDividerModule} from "@angular/material/divider";
 import {MapDataService} from "../../service/map-data.service";
-import {Station} from "../../entity/station";
+import {MapSelectionService} from "../../service/map-selection.service";
+import {pushIfNotExists} from "../../data/utilities";
 
 @Component({
 	selector: "app-directions",
@@ -53,17 +54,30 @@ export class DirectionsComponent {
 	private startStationId?: string;
 	private endStationId?: string;
 	private maxWalkingDistanceString = "";
-	private directionsCache: { startPosition: { x: number, y: number, z: number }, startStation?: Station, endPosition: { x: number, y: number, z: number }, endStation?: Station, intermediateStations: Station[], route?: Route, icon: string, startTime: number, endTime: number, distance: number }[] = [];
+	private directionsCache: {
+		startPosition: { x: number, y: number, z: number },
+		startRoutePlatform?: RoutePlatform,
+		endPosition: { x: number, y: number, z: number },
+		endRoutePlatform?: RoutePlatform,
+		intermediateRoutePlatforms: RoutePlatform[],
+		route?: Route,
+		icon: string,
+		startTime: number,
+		endTime: number,
+		distance: number,
+	}[] = [];
 
-	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
+	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly mapSelectionService: MapSelectionService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
 		directionsService.directionsPanelOpened.subscribe((stationDetails) => {
 			if (stationDetails) {
 				this.onClickStation(stationDetails.stationId, stationDetails.isStartStation);
+			} else {
+				this.checkStatus();
 			}
 		});
 		directionsService.dataProcessed.subscribe(() => {
 			if (this.automaticRefresh.getRawValue()) {
-				this.directionsCache = [...this.directionsService.getDirections()];
+				this.refreshDirections();
 			}
 		});
 	}
@@ -113,10 +127,47 @@ export class DirectionsComponent {
 
 	refreshDirections() {
 		this.directionsCache = [...this.directionsService.getDirections()];
+		this.mapSelectionService.selectedStationConnections.length = 0;
+		this.mapSelectionService.selectedStations.length = 0;
+		let mapUpdated = false;
+
+		this.directionsCache.forEach(direction => {
+			if (direction.startRoutePlatform && direction.endRoutePlatform) {
+				const routePlatforms = [direction.startRoutePlatform, ...direction.intermediateRoutePlatforms, direction.endRoutePlatform];
+				for (let i = 1; i < routePlatforms.length; i++) {
+					const routePlatform1 = routePlatforms[i - 1];
+					const routePlatform2 = routePlatforms[i];
+					const reverse = routePlatform1.station.id > routePlatform2.station.id;
+					const newStationId1 = reverse ? routePlatform2.station.id : routePlatform1.station.id;
+					const newStationId2 = reverse ? routePlatform1.station.id : routePlatform2.station.id;
+
+					if (direction.route) {
+						this.mapSelectionService.selectedStationConnections.push({stationIds: [newStationId1, newStationId2], routeColor: direction.route.color});
+						if (this.mapDataService.routeTypeVisibility[direction.route.type] === "HIDDEN") {
+							this.mapDataService.routeTypeVisibility[direction.route.type] = "SOLID";
+							mapUpdated = true;
+						}
+					}
+
+					pushIfNotExists(this.mapSelectionService.selectedStations, newStationId1);
+					pushIfNotExists(this.mapSelectionService.selectedStations, newStationId2);
+				}
+			}
+		});
+
+		if (mapUpdated) {
+			this.mapDataService.updateData();
+		}
+
+		this.mapSelectionService.select("directions");
 	}
 
-	getStationName(position: { x: number, y: number, z: number }, station?: Station) {
-		return station ? this.formatNamePipe.transform(station.name) : `(${position.x}, ${position.y}, ${position.z})`;
+	getStationName(position: { x: number, y: number, z: number }, routePlatform?: RoutePlatform) {
+		return routePlatform ? this.formatNamePipe.transform(routePlatform.station.name) : `(${position.x}, ${position.y}, ${position.z})`;
+	}
+
+	getPlatformName(routePlatform?: RoutePlatform) {
+		return routePlatform ? `Platform ${this.formatNamePipe.transform(routePlatform.name)}` : "";
 	}
 
 	getRouteName(route: Route) {
@@ -144,8 +195,8 @@ export class DirectionsComponent {
 		return SimplifyRoutesPipe.getCircularStateIcon(route.circularState);
 	}
 
-	sameStation(direction: { startStation?: Station, endStation?: Station }) {
-		return direction.startStation && direction.endStation && (direction.startStation.id === direction.endStation.id || direction.startStation.connections.some(station => station.id === direction.endStation?.id));
+	sameStation(direction: { startRoutePlatform?: RoutePlatform, endRoutePlatform?: RoutePlatform }) {
+		return direction.startRoutePlatform && direction.endRoutePlatform && (direction.startRoutePlatform.station.id === direction.endRoutePlatform.station.id || direction.startRoutePlatform.station.connections.some(station => station.id === direction.endRoutePlatform?.station?.id));
 	}
 
 	private checkStatus() {

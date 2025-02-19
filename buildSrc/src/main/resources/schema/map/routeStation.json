@@ -17,6 +17,9 @@
 		"z": {
 			"type": "integer"
 		},
+		"name": {
+			"type": "string"
+		},
 		"dwellTime": {
 			"type": "integer"
 		}
@@ -26,6 +29,7 @@
 		"x",
 		"y",
 		"z",
+		"name",
 		"dwellTime"
 	]
 }
