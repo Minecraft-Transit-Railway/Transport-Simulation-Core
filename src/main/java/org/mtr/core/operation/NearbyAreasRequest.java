@@ -6,7 +6,7 @@ import org.mtr.core.data.SavedRailBase;
 import org.mtr.core.generated.operation.NearbyAreasRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 public final class NearbyAreasRequest<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> extends NearbyAreasRequestSchema {
 

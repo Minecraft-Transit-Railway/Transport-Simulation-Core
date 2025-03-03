@@ -1,11 +1,11 @@
 package org.mtr.core;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonArray;
-import org.mtr.libraries.com.google.gson.JsonObject;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;

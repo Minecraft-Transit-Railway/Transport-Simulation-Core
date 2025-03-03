@@ -6,7 +6,7 @@ import org.mtr.core.data.VehicleCar;
 import org.mtr.core.generated.operation.ArrivalResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.function.Consumer;
 

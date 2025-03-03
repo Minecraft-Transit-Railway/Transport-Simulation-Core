@@ -1,7 +1,7 @@
 package org.mtr.core.serializer;
 
-import org.mtr.libraries.com.google.gson.JsonArray;
-import org.mtr.libraries.com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 public final class JsonWriter extends WriterBase {
 

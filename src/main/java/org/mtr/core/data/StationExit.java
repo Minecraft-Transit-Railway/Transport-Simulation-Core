@@ -2,7 +2,7 @@ package org.mtr.core.data;
 
 import org.mtr.core.generated.data.StationExitSchema;
 import org.mtr.core.serializer.ReaderBase;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class StationExit extends StationExitSchema implements Comparable<StationExit> {
 

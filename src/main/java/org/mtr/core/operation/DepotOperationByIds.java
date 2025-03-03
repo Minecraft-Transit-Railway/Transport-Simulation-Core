@@ -4,7 +4,7 @@ import org.mtr.core.data.Depot;
 import org.mtr.core.generated.operation.DepotOperationByIdsSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class DepotOperationByIds extends DepotOperationByIdsSchema {
 

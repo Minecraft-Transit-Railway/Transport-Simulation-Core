@@ -3,9 +3,9 @@ package org.mtr.core.data;
 import org.mtr.core.Main;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.*;
 
 import java.util.Collection;
 import java.util.Map;

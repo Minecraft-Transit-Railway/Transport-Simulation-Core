@@ -1,14 +1,14 @@
 package org.mtr.core.tool;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.objects.ObjectLongImmutablePair;
 import org.mtr.core.Main;
 import org.mtr.core.data.Position;
 import org.mtr.core.serializer.JsonWriter;
 import org.mtr.core.serializer.SerializedDataBase;
-import org.mtr.libraries.com.google.gson.GsonBuilder;
-import org.mtr.libraries.com.google.gson.JsonElement;
-import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.com.google.gson.JsonParser;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectLongImmutablePair;
 
 import javax.annotation.Nullable;
 import java.util.Collection;

@@ -3,7 +3,7 @@ package org.mtr.core.operation;
 import org.mtr.core.data.Data;
 import org.mtr.core.data.Lift;
 import org.mtr.core.serializer.JsonReader;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class GenerateByLift {
 

@@ -1,5 +1,7 @@
 package org.mtr.core.data;
 
+import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -14,8 +16,6 @@ import org.mtr.core.serializer.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
 import org.mtr.libraries.org.msgpack.core.MessagePack;
 import org.mtr.libraries.org.msgpack.core.MessageUnpacker;

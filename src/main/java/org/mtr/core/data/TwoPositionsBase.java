@@ -2,7 +2,7 @@ package org.mtr.core.data;
 
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 public abstract class TwoPositionsBase implements SerializedDataBaseWithId {
 

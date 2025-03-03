@@ -1,7 +1,7 @@
 package org.mtr.core.servlet;
 
+import com.google.gson.JsonObject;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.com.google.gson.JsonObject;
 
 import javax.annotation.Nullable;
 import java.util.function.Function;

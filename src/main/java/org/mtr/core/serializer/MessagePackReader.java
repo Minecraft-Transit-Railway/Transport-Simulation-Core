@@ -2,11 +2,11 @@ package org.mtr.core.serializer;
 
 import org.mtr.core.Main;
 import org.mtr.legacy.data.DataFixer;
-import org.mtr.libraries.it.unimi.dsi.fastutil.booleans.BooleanConsumer;
-import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleConsumer;
-import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntConsumer;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongConsumer;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
+import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
+import it.unimi.dsi.fastutil.ints.IntConsumer;
+import it.unimi.dsi.fastutil.longs.LongConsumer;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
 import org.mtr.libraries.org.msgpack.value.Value;
 

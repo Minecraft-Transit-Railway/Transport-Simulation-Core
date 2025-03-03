@@ -1,7 +1,7 @@
 package org.mtr.core.data;
 
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 
 public class ClientData extends Data {
 

@@ -5,10 +5,10 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongConsumer;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.LongConsumer;
+import it.unimi.dsi.fastutil.objects.*;
 
 public final class Rail extends RailSchema {
 

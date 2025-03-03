@@ -7,8 +7,8 @@ import org.mtr.core.generated.WebserverResources;
 import org.mtr.core.servlet.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.annotation.Nullable;

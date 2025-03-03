@@ -4,8 +4,8 @@ import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.UpdateDataResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
