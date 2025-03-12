@@ -53,11 +53,7 @@ public final class SystemMapServlet extends ServletBase {
 	private static JsonObject getDepartures(Simulator simulator) {
 		final long currentMillis = System.currentTimeMillis();
 		final Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures = new Object2ObjectAVLTreeMap<>();
-		simulator.sidings.forEach(siding -> {
-			if (!siding.getTransportMode().continuousMovement) {
-				siding.getDepartures(currentMillis, departures);
-			}
-		});
+		simulator.sidings.forEach(siding -> siding.getDepartures(currentMillis, departures));
 		return Utilities.getJsonObjectFromData(new Departures(currentMillis, departures));
 	}
 }

@@ -389,11 +389,19 @@ public final class Siding extends SidingSchema implements Utilities {
 					targetTripStopIndex = route.getRoutePlatforms().size() - 1;
 				}
 
-				iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
-					if (trip.route.getId() == targetRouteId && tripStopIndex == targetTripStopIndex) {
-						departures.computeIfAbsent(route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis);
+				if (transportMode.continuousMovement) {
+					if (!this.departures.isEmpty()) {
+						final Long2ObjectAVLTreeMap<LongArrayList> continuousDepartures = new Long2ObjectAVLTreeMap<>();
+						continuousDepartures.put(0, new LongArrayList());
+						departures.put(route.getHexId(), continuousDepartures);
 					}
-				});
+				} else {
+					iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
+						if (trip.route.getId() == targetRouteId && tripStopIndex == targetTripStopIndex) {
+							departures.computeIfAbsent(route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis);
+						}
+					});
+				}
 			}
 		}
 	}

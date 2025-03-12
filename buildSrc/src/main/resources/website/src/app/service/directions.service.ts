@@ -4,7 +4,6 @@ import {Station} from "../entity/station";
 import {Route, RoutePlatform} from "../entity/route";
 import {DeparturesService} from "./departures.service";
 import {DimensionService} from "./dimension.service";
-import {MapDataService} from "./map-data.service";
 import {ROUTE_TYPES} from "../data/routeType";
 import {MapSelectionService} from "./map-selection.service";
 import {setIfUndefined} from "../data/utilities";
@@ -39,7 +38,7 @@ export class DirectionsService extends SelectableDataServiceBase<{
 	}[] = [];
 	private directionsTimeoutId = 0;
 
-	constructor(mapDataService: MapDataService, mapSelectionService: MapSelectionService, departuresService: DeparturesService, dimensionService: DimensionService) {
+	constructor(mapSelectionService: MapSelectionService, departuresService: DeparturesService, dimensionService: DimensionService) {
 		super(selectedData => {
 			const dataSplit = selectedData.split("_");
 			const startX = parseInt(dataSplit[0]);
@@ -211,6 +210,8 @@ export class DirectionsService extends SelectableDataServiceBase<{
 		const endPositionKey = DeparturesService.getPositionKey(endPosition);
 		const localPositionTimes: { [positionKey: string]: number } = {};
 		globalPositionTimes[startPositionKey] = 0;
+		const travelTimeLimit = Math.round(DeparturesService.getDistance(startPosition, endPosition) / WALKING_SPEED);
+		let totalTravelTime = 0;
 
 		const findDirectionsSegment = (innerIterations: number) => {
 			const startLoopTime = Date.now();
@@ -239,11 +240,11 @@ export class DirectionsService extends SelectableDataServiceBase<{
 									const connection = connections[connectionKey];
 									// Don't allow two walking directions in a row
 									if (currentPositionKey === startPositionKey || connection.route || lastDirection.route) {
-										const newDepartureTime = connection.route ? DirectionsService.getBestDepartureTime(connection.departureTimes, currentTime) : currentTime;
+										const newDepartureTime = connection.route && connection.departureTimes.length > 0 ? DirectionsService.getBestDepartureTime(connection.departureTimes, currentTime) : currentTime;
 										if (newDepartureTime >= 0) {
 											const arrivalTime = newDepartureTime + connection.travelTime;
 											const targetPositionKey = DeparturesService.getPositionKey(targetPosition);
-											if (arrivalTime < endTime && arrivalTime < (localPositionTimes[targetPositionKey] ?? Number.MAX_SAFE_INTEGER) && arrivalTime <= (globalPositionTimes[targetPositionKey] ?? Number.MAX_SAFE_INTEGER)) {
+											if (arrivalTime < endTime && arrivalTime < (localPositionTimes[targetPositionKey] ?? Number.MAX_SAFE_INTEGER) && arrivalTime <= (globalPositionTimes[targetPositionKey] ?? Number.MAX_SAFE_INTEGER) && totalTravelTime + connection.travelTime <= travelTimeLimit) {
 												const increase = (currentDistance - DeparturesService.getDistance(targetPosition, endPosition)) / (arrivalTime - currentTime);
 												globalPositionTimes[targetPositionKey] = arrivalTime;
 												if (increase > bestData.increase) {
@@ -262,8 +263,10 @@ export class DirectionsService extends SelectableDataServiceBase<{
 				if (bestData.connection) {
 					tempDirections.push(bestData.connection);
 					localPositionTimes[bestData.connection.targetPositionKey] = bestData.connection.departureTime + bestData.connection.travelTime;
+					totalTravelTime += bestData.connection.travelTime;
 				} else {
-					tempDirections.pop();
+					const removedConnection = tempDirections.pop();
+					totalTravelTime -= removedConnection?.travelTime ?? 0;
 					if (tempDirections.length === 0) {
 						console.debug(`Directions found after ${iterations} iteration(s) and ${innerIterations} inner iteration(s) in ${Date.now() - startTime} ms`);
 						directionsCompleted.emit(directions);
