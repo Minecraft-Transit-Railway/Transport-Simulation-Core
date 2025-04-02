@@ -351,7 +351,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			thisRouteType = getRouteType(vehiclePlatformRouteInfo.thisRoute);
 			thisRouteCircularState = getRouteCircularState(vehiclePlatformRouteInfo.thisRoute);
 			thisStationName = getStationName(vehiclePlatformRouteInfo.thisPlatform);
-			thisRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.thisRoute, newStopIndex);
+			thisRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.thisRoute, vehiclePlatformRouteInfo.platformIndexInRoute);
 
 			nextRouteId = getId(vehiclePlatformRouteInfo.nextRoute);
 			nextPlatformId = getId(vehiclePlatformRouteInfo.nextPlatform);
@@ -364,7 +364,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 			nextStationName = getStationName(vehiclePlatformRouteInfo.nextPlatform);
 			nextRouteDestination = getRouteDestination(vehiclePlatformRouteInfo.nextRoute, 0);
 
-			isTerminating = vehiclePlatformRouteInfo.thisRoute != null && stopIndex >= vehiclePlatformRouteInfo.thisRoute.getRoutePlatforms().size() - 1;
+			isTerminating = vehiclePlatformRouteInfo.thisRoute != null && vehiclePlatformRouteInfo.platformIndexInRoute >= vehiclePlatformRouteInfo.thisRoute.getRoutePlatforms().size() - 1;
 
 			interchangeColorsForStationNameList.clear();
 			final Station station = vehiclePlatformRouteInfo.nextPlatform == null ? null : vehiclePlatformRouteInfo.nextPlatform.area;
@@ -471,14 +471,16 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		private final Route previousRoute;
 		private final Route thisRoute;
 		private final Route nextRoute;
+		private final int platformIndexInRoute;
 
-		public VehiclePlatformRouteInfo(@Nullable Platform previousPlatform, @Nullable Platform thisPlatform, @Nullable Platform nextPlatform, @Nullable Route previousRoute, @Nullable Route thisRoute, @Nullable Route nextRoute) {
+		public VehiclePlatformRouteInfo(@Nullable Platform previousPlatform, @Nullable Platform thisPlatform, @Nullable Platform nextPlatform, @Nullable Route previousRoute, @Nullable Route thisRoute, @Nullable Route nextRoute, int platformIndexInRoute) {
 			this.previousPlatform = previousPlatform;
 			this.thisPlatform = thisPlatform;
 			this.nextPlatform = nextPlatform;
 			this.previousRoute = previousRoute;
 			this.thisRoute = thisRoute;
 			this.nextRoute = nextRoute;
+			this.platformIndexInRoute = platformIndexInRoute;
 		}
 	}
 }

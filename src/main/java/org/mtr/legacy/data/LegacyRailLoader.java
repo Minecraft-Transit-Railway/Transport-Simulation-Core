@@ -40,7 +40,7 @@ public final class LegacyRailLoader {
 				} else if (modelKey.equals("null")) {
 					styles = new ObjectArrayList<>();
 				} else {
-					styles = ObjectArrayList.of(String.format("%s_%s", modelKey, railNodeConnection.getIsSecondaryDirection() ? 1 : 2));
+					styles = ObjectArrayList.of(String.format("%s_%s", modelKey, railNodeConnection.getIsSecondaryDirection() ? 2 : 1));
 				}
 				final double verticalRadius = railNodeConnection.getVerticalRadius();
 				final UUID uuid = getUuid(startPositionLong, endPositionLong);

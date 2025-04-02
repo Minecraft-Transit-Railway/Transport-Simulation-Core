@@ -34,7 +34,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	 * A temporary list to store all platforms of the vehicle instructions as well as the route used to get to each platform.
 	 * Repeated platforms are ignored.
 	 */
-	private final ObjectArrayList<ObjectObjectImmutablePair<Platform, Route>> platformsInRoute = new ObjectArrayList<>();
+	private final ObjectArrayList<PlatformRouteDetails> platformsInRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
@@ -175,7 +175,9 @@ public final class Depot extends DepotSchema implements Utilities {
 			for (int i = 0; i < route.getRoutePlatforms().size(); i++) {
 				final Platform platform = route.getRoutePlatforms().get(i).platform;
 				if (platform != null && platform.getId() != previousPlatformId) {
-					platformsInRoute.add(new ObjectObjectImmutablePair<>(platform, i == 0 ? null : route));
+					// To deal with edge cases (whether the next route starts from the same platform or not), we will always use the "next" data
+					// If i == 0, it's the first index of this route, but since we are looking for the "next" data, it's okay to set it as null as the "next" data of the previous route
+					platformsInRoute.add(new PlatformRouteDetails(platform, i == 0 ? null : route, i == 0 ? Integer.MAX_VALUE : i - 1));
 					previousPlatformId = platform.getId();
 				}
 			}
@@ -187,7 +189,7 @@ public final class Depot extends DepotSchema implements Utilities {
 			if (!platformsInRoute.isEmpty()) {
 				lastGeneratedFailedSidingCount = 0;
 				savedRails.forEach(siding -> {
-					siding.generateRoute(Utilities.getElement(platformsInRoute, 0).left(), repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1).left(), platformsInRoute.size(), cruisingAltitude);
+					siding.generateRoute(Utilities.getElement(platformsInRoute, 0).platform, repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1).platform, platformsInRoute.size(), cruisingAltitude);
 					generatingSidingIds.add(siding.getId());
 				});
 			}
@@ -204,10 +206,10 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public VehicleExtraData.VehiclePlatformRouteInfo getVehiclePlatformRouteInfo(int stopIndex) {
 		final int platformCount = platformsInRoute.size();
-		final ObjectObjectImmutablePair<Platform, Route> previousData;
-		final ObjectObjectImmutablePair<Platform, Route> thisData;
-		final ObjectObjectImmutablePair<Platform, Route> nextData;
-		final ObjectObjectImmutablePair<Platform, Route> nextNextData;
+		final PlatformRouteDetails previousData;
+		final PlatformRouteDetails thisData;
+		final PlatformRouteDetails nextData;
+		final PlatformRouteDetails nextNextData;
 
 		if (platformCount == 0) {
 			previousData = null;
@@ -227,12 +229,13 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 
 		return new VehicleExtraData.VehiclePlatformRouteInfo(
-				previousData == null ? null : previousData.left(),
-				thisData == null ? null : thisData.left(),
-				nextData == null ? null : nextData.left(),
-				thisData == null ? null : thisData.right(),
-				nextData == null ? null : nextData.right(),
-				nextNextData == null ? null : nextNextData.right()
+				previousData == null ? null : previousData.platform,
+				thisData == null ? null : thisData.platform,
+				nextData == null ? null : nextData.platform,
+				thisData == null ? null : thisData.route,
+				nextData == null ? null : nextData.route,
+				nextNextData == null ? null : nextNextData.route,
+				nextData == null ? Integer.MAX_VALUE : nextData.platformIndex
 		);
 	}
 
@@ -357,7 +360,7 @@ public final class Depot extends DepotSchema implements Utilities {
 			sidingPathFinders.clear();
 			generatingSidingIds.clear();
 			for (int i = 0; i < platformsInRoute.size() - 1; i++) {
-				sidingPathFinders.add(new SidingPathFinder<>(data, platformsInRoute.get(i).left(), platformsInRoute.get(i + 1).left(), i));
+				sidingPathFinders.add(new SidingPathFinder<>(data, platformsInRoute.get(i).platform, platformsInRoute.get(i + 1).platform, i));
 			}
 			if (sidingPathFinders.isEmpty()) {
 				updateGenerationStatus(GeneratedStatus.TWO_PLATFORMS_REQUIRED, 0, 0, "At least two platforms are required for path generation");
@@ -400,6 +403,20 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public static void clearDepots(ObjectArrayList<Depot> depotsToClear) {
 		depotsToClear.forEach(depot -> depot.savedRails.forEach(Siding::clearVehicles));
+	}
+
+	private static class PlatformRouteDetails {
+
+		private final Platform platform;
+		@Nullable
+		private final Route route;
+		private final int platformIndex;
+
+		private PlatformRouteDetails(Platform platform, @Nullable Route route, int platformIndex) {
+			this.platform = platform;
+			this.route = route;
+			this.platformIndex = platformIndex;
+		}
 	}
 
 	@FunctionalInterface
