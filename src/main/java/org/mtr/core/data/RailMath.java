@@ -227,8 +227,8 @@ public class RailMath {
 		minX = bounds[0] > bounds[3] ? 0 : (long) Math.floor(bounds[0]);
 		minY = bounds[1] > bounds[4] ? 0 : (long) Math.floor(bounds[1]);
 		minZ = bounds[2] > bounds[5] ? 0 : (long) Math.floor(bounds[2]);
-		maxY = bounds[3] < bounds[0] ? 0 : (long) Math.ceil(bounds[3]);
-		maxX = bounds[4] < bounds[1] ? 0 : (long) Math.ceil(bounds[4]);
+		maxX = bounds[3] < bounds[0] ? 0 : (long) Math.ceil(bounds[3]);
+		maxY = bounds[4] < bounds[1] ? 0 : (long) Math.ceil(bounds[4]);
 		maxZ = bounds[5] < bounds[2] ? 0 : (long) Math.ceil(bounds[5]);
 	}
 
