@@ -1,14 +1,14 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.LongConsumer;
+import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.generated.data.RailSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
-import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.LongConsumer;
-import it.unimi.dsi.fastutil.objects.*;
 
 public final class Rail extends RailSchema {
 
@@ -155,9 +155,7 @@ public final class Rail extends RailSchema {
 	}
 
 	public boolean closeTo(Position position, double radius) {
-		final long halfDistance = position1.manhattanDistance(position2) / 2;
-		final Position centerPosition = new Position((position1.getX() + position2.getX()) / 2, (position1.getY() + position2.getY()) / 2, (position1.getZ() + position2.getZ()) / 2);
-		return Utilities.isBetween(position, centerPosition.offset(-halfDistance, -halfDistance, -halfDistance), centerPosition.offset(halfDistance, halfDistance, halfDistance), radius);
+		return Utilities.isBetween(position, railMath.minX, railMath.minY, railMath.minZ, railMath.maxX, railMath.maxY, railMath.maxZ, radius);
 	}
 
 	public void tick(Simulator simulator) {

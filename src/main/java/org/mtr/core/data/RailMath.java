@@ -1,11 +1,18 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
-import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 
 public class RailMath {
+
+	public final long minX;
+	public final long minY;
+	public final long minZ;
+	public final long maxY;
+	public final long maxX;
+	public final long maxZ;
 
 	private final Rail.Shape shape;
 	private final double verticalRadius;
@@ -192,6 +199,37 @@ public class RailMath {
 		yEnd = position2.getY();
 		this.shape = shape;
 		this.verticalRadius = Math.min(verticalRadius, getMaxVerticalRadius());
+
+		// Calculate bounds (for culling)
+		final double[] bounds = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
+		render((x1, z1, x2, z2, x3, z3, x4, z4, y1, y2) -> {
+			bounds[0] = Math.min(x1, bounds[0]);
+			bounds[0] = Math.min(x2, bounds[0]);
+			bounds[0] = Math.min(x3, bounds[0]);
+			bounds[0] = Math.min(x4, bounds[0]);
+			bounds[1] = Math.min(y1, bounds[1]);
+			bounds[1] = Math.min(y2, bounds[1]);
+			bounds[2] = Math.min(z1, bounds[2]);
+			bounds[2] = Math.min(z2, bounds[2]);
+			bounds[2] = Math.min(z3, bounds[2]);
+			bounds[2] = Math.min(z4, bounds[2]);
+			bounds[3] = Math.max(x1, bounds[3]);
+			bounds[3] = Math.max(x2, bounds[3]);
+			bounds[3] = Math.max(x3, bounds[3]);
+			bounds[3] = Math.max(x4, bounds[3]);
+			bounds[4] = Math.max(y1, bounds[4]);
+			bounds[4] = Math.max(y2, bounds[4]);
+			bounds[5] = Math.max(z1, bounds[5]);
+			bounds[5] = Math.max(z2, bounds[5]);
+			bounds[5] = Math.max(z3, bounds[5]);
+			bounds[5] = Math.max(z4, bounds[5]);
+		}, 0.1, 0, 0);
+		minX = bounds[0] > bounds[3] ? 0 : (long) Math.floor(bounds[0]);
+		minY = bounds[1] > bounds[4] ? 0 : (long) Math.floor(bounds[1]);
+		minZ = bounds[2] > bounds[5] ? 0 : (long) Math.floor(bounds[2]);
+		maxY = bounds[3] < bounds[0] ? 0 : (long) Math.ceil(bounds[3]);
+		maxX = bounds[4] < bounds[1] ? 0 : (long) Math.ceil(bounds[4]);
+		maxZ = bounds[5] < bounds[2] ? 0 : (long) Math.ceil(bounds[5]);
 	}
 
 	public Vector getPosition(double rawValue, boolean reverse) {
