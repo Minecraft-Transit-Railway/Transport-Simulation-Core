@@ -1,5 +1,8 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.core.generated.data.PathDataSchema;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
@@ -7,9 +10,6 @@ import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.ConditionalList;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
-import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 
 import javax.annotation.Nullable;
 
@@ -132,8 +132,12 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		}
 	}
 
-	public boolean isSignalBlocked(long vehicleId, boolean reserveRail) {
-		return getRail().isBlocked(vehicleId, reserveRail);
+	public String getHexId(boolean reverse) {
+		return reverse ? TwoPositionsBase.getHexIdRaw(endPosition, startPosition) : TwoPositionsBase.getHexIdRaw(startPosition, endPosition);
+	}
+
+	public boolean isSignalBlocked(long vehicleId, Rail.BlockReservation blockReservation) {
+		return getRail().isBlocked(vehicleId, blockReservation);
 	}
 
 	public IntAVLTreeSet getSignalColors() {

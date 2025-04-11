@@ -1,5 +1,9 @@
 package org.mtr.legacy.data;
 
+import it.unimi.dsi.fastutil.ints.IntConsumer;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.serializer.MessagePackReader;
@@ -8,10 +12,6 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.WriterBase;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
-import it.unimi.dsi.fastutil.ints.IntConsumer;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
 import org.mtr.libraries.org.msgpack.core.MessagePack;
 import org.mtr.libraries.org.msgpack.core.MessageUnpacker;

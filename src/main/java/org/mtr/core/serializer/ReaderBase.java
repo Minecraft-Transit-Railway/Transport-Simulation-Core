@@ -1,10 +1,10 @@
 package org.mtr.core.serializer;
 
-import org.mtr.core.Main;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
+import org.mtr.core.Main;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;

@@ -1,5 +1,8 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.data.PlatformSchema;
 import org.mtr.core.oba.Stop;
 import org.mtr.core.oba.StopDirection;
@@ -9,9 +12,6 @@ import org.mtr.core.tool.EnumHelper;
 import org.mtr.core.tool.LatLon;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
-import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 
 public final class Platform extends PlatformSchema {
 

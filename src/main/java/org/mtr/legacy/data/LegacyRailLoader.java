@@ -1,14 +1,14 @@
 package org.mtr.legacy.data;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Rail;
 import org.mtr.core.data.SignalModification;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.simulation.FileLoader;
 import org.mtr.core.tool.Angle;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import java.nio.file.Path;
 import java.util.UUID;

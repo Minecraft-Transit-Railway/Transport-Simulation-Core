@@ -1,9 +1,9 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.data.SignalModificationSchema;
-import org.mtr.core.serializer.ReaderBase;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.generated.data.SignalModificationSchema;
+import org.mtr.core.serializer.ReaderBase;
 
 public final class SignalModification extends SignalModificationSchema {
 

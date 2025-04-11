@@ -1,5 +1,7 @@
 package org.mtr.core.simulation;
 
+import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.serializer.SerializedDataBase;
@@ -9,8 +11,6 @@ import org.mtr.core.servlet.OperationProcessor;
 import org.mtr.core.servlet.QueueObject;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.LegacyRailLoader;
-import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;

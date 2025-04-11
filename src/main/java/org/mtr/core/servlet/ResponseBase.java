@@ -1,7 +1,7 @@
 package org.mtr.core.servlet;
 
-import org.mtr.core.simulation.Simulator;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import org.mtr.core.simulation.Simulator;
 
 public abstract class ResponseBase<T> {
 

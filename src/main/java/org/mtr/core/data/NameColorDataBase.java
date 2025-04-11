@@ -1,12 +1,12 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.generated.data.NameColorDataBaseSchema;
 import org.mtr.core.generated.data.StationSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import java.util.Locale;
 import java.util.stream.Collectors;

@@ -1,9 +1,9 @@
 package org.mtr.core.operation;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.NearbyAreasResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
 import javax.annotation.Nonnull;
 

@@ -1,10 +1,10 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.oba.Schedule;
 import org.mtr.core.oba.SingleElement;
 import org.mtr.core.oba.TripDetails;
 import org.mtr.core.tool.Utilities;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;

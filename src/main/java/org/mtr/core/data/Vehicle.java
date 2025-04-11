@@ -1,10 +1,5 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.data.VehicleSchema;
-import org.mtr.core.serializer.ReaderBase;
-import org.mtr.core.simulation.Simulator;
-import org.mtr.core.tool.Utilities;
-import org.mtr.core.tool.Vector;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
@@ -13,6 +8,11 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.mtr.core.generated.data.VehicleSchema;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.simulation.Simulator;
+import org.mtr.core.tool.Utilities;
+import org.mtr.core.tool.Vector;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -406,7 +406,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 							newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
 							return newVehiclePosition;
 						}, Object2ObjectAVLTreeMap::new);
-						pathData.isSignalBlocked(id, true);
+						pathData.isSignalBlocked(id, Rail.BlockReservation.CURRENTLY_RESERVE);
 					}
 				}
 			}
@@ -478,7 +478,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		final PathData firstPathData = vehicleExtraData.immutablePath.get(currentIndex);
 
 		if (secondPass) {
-			return firstPathData.isSignalBlocked(id, false);
+			return firstPathData.isSignalBlocked(id, Rail.BlockReservation.DO_NOT_RESERVE);
 		} else {
 			final IntAVLTreeSet signalColors = firstPathData.getSignalColors();
 			int index = currentIndex + 1;
@@ -489,7 +489,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 				if (pathData.getSignalColors().intStream().noneMatch(signalColors::contains)) {
 					// Only reserve the signal block after checking if the path after the signal block is clear, not before!
 					final double railBlockedDistance = railBlockedDistance(index, pathData.getStartDistance(), vehicleExtraData.getTotalVehicleLength(), vehiclePositions, false, true);
-					return railBlockedDistance >= 0 && railBlockedDistance < vehicleExtraData.getTotalVehicleLength() || firstPathData.isSignalBlocked(id, reserveRail);
+					return railBlockedDistance >= 0 && railBlockedDistance < vehicleExtraData.getTotalVehicleLength() || firstPathData.isSignalBlocked(id, reserveRail ? Rail.BlockReservation.PRE_RESERVE : Rail.BlockReservation.DO_NOT_RESERVE);
 				}
 
 				index++;

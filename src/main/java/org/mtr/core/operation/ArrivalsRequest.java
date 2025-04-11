@@ -1,15 +1,15 @@
 package org.mtr.core.operation;
 
-import org.mtr.core.data.Platform;
-import org.mtr.core.data.Station;
-import org.mtr.core.generated.operation.ArrivalsRequestSchema;
-import org.mtr.core.serializer.ReaderBase;
-import org.mtr.core.simulation.Simulator;
 import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.longs.LongImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.data.Platform;
+import org.mtr.core.data.Station;
+import org.mtr.core.generated.operation.ArrivalsRequestSchema;
+import org.mtr.core.serializer.ReaderBase;
+import org.mtr.core.simulation.Simulator;
 
 import java.util.Collections;
 

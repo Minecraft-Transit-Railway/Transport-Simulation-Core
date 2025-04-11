@@ -1,12 +1,12 @@
 package org.mtr.core.oba;
 
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.generated.oba.ReferencesSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 
 public final class References extends ReferencesSchema {
 

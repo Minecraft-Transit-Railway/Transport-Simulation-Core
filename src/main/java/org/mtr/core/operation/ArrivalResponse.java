@@ -1,12 +1,12 @@
 package org.mtr.core.operation;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.data.VehicleCar;
 import org.mtr.core.generated.operation.ArrivalResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.function.Consumer;
 

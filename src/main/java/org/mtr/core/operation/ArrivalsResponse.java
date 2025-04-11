@@ -1,8 +1,8 @@
 package org.mtr.core.operation;
 
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.core.generated.operation.ArrivalsResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
 public final class ArrivalsResponse extends ArrivalsResponseSchema {
 

@@ -18,8 +18,10 @@ public final class Rail extends RailSchema {
 
 	private final ObjectOpenHashSet<Rail> connectedRails1 = new ObjectOpenHashSet<>();
 	private final ObjectOpenHashSet<Rail> connectedRails2 = new ObjectOpenHashSet<>();
-	private final Long2LongAVLTreeMap blockedVehicleIds = new Long2LongAVLTreeMap();
-	private final Long2LongAVLTreeMap blockedVehicleIdsOld = new Long2LongAVLTreeMap();
+	private final Long2LongAVLTreeMap preBlockedVehicleIds = new Long2LongAVLTreeMap();
+	private final Long2LongAVLTreeMap currentlyBlockedVehicleIds = new Long2LongAVLTreeMap();
+	private final Long2LongAVLTreeMap preBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
+	private final Long2LongAVLTreeMap currentlyBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
 	private final boolean reversePositions;
 
 	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, ObjectArrayList<String> styles, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode) {
@@ -159,16 +161,20 @@ public final class Rail extends RailSchema {
 	}
 
 	public void tick(Simulator simulator) {
-		final boolean needsUpdate = !Utilities.sameItems(blockedVehicleIds.keySet(), blockedVehicleIdsOld.keySet());
+		final boolean needsUpdate = !Utilities.sameItems(preBlockedVehicleIds.keySet(), preBlockedVehicleIdsOld.keySet()) || !Utilities.sameItems(currentlyBlockedVehicleIds.keySet(), currentlyBlockedVehicleIdsOld.keySet());
 		simulator.clients.values().forEach(client -> {
 			if (closeTo(client.getPosition(), client.getUpdateRadius())) {
 				client.update(this, needsUpdate);
 			}
 		});
 
-		blockedVehicleIdsOld.clear();
-		blockedVehicleIdsOld.putAll(blockedVehicleIds);
-		blockedVehicleIds.clear();
+		preBlockedVehicleIdsOld.clear();
+		preBlockedVehicleIdsOld.putAll(preBlockedVehicleIds);
+		preBlockedVehicleIds.clear();
+
+		currentlyBlockedVehicleIdsOld.clear();
+		currentlyBlockedVehicleIdsOld.putAll(currentlyBlockedVehicleIds);
+		currentlyBlockedVehicleIds.clear();
 	}
 
 	public void checkOrCreateSavedRail(Data data, ObjectArrayList<Platform> platformsToAdd, ObjectArrayList<Siding> sidingsToAdd) {
@@ -194,8 +200,12 @@ public final class Rail extends RailSchema {
 		return returnSet;
 	}
 
-	public void iterateBlockedSignalColors(LongConsumer consumer) {
-		blockedVehicleIds.keySet().forEach(consumer);
+	public void iteratePreBlockedSignalColors(LongConsumer consumer) {
+		preBlockedVehicleIds.keySet().forEach(consumer);
+	}
+
+	public void iterateCurrentlyBlockedSignalColors(LongConsumer consumer) {
+		currentlyBlockedVehicleIds.keySet().forEach(consumer);
 	}
 
 	public void applyModification(SignalModification signalModification) {
@@ -219,10 +229,10 @@ public final class Rail extends RailSchema {
 		}
 	}
 
-	boolean isBlocked(long vehicleId, boolean reserveRail) {
-		if (signalColors.isEmpty() || isNotBlocked(blockedVehicleIds, vehicleId) && isNotBlocked(blockedVehicleIdsOld, vehicleId)) {
-			if (reserveRail) {
-				signalColors.forEach(color -> reserveRail(vehicleId, color, new ObjectOpenHashSet<>(), this));
+	boolean isBlocked(long vehicleId, BlockReservation blockReservation) {
+		if (signalColors.isEmpty() || isNotBlocked(preBlockedVehicleIds, vehicleId) && isNotBlocked(currentlyBlockedVehicleIds, vehicleId) && isNotBlocked(preBlockedVehicleIdsOld, vehicleId) && isNotBlocked(currentlyBlockedVehicleIdsOld, vehicleId)) {
+			if (blockReservation != BlockReservation.DO_NOT_RESERVE) {
+				signalColors.forEach(color -> reserveRail(vehicleId, color, new ObjectOpenHashSet<>(), this, blockReservation == BlockReservation.CURRENTLY_RESERVE));
 			}
 			return false;
 		} else {
@@ -262,12 +272,12 @@ public final class Rail extends RailSchema {
 		);
 	}
 
-	private static void reserveRail(long vehicleId, long color, ObjectOpenHashSet<Rail> visitedRails, Rail rail) {
+	private static void reserveRail(long vehicleId, long color, ObjectOpenHashSet<Rail> visitedRails, Rail rail, boolean currentlyBlocked) {
 		if (!visitedRails.contains(rail) && rail.signalColors.contains(color)) {
-			rail.blockedVehicleIds.put(color, vehicleId);
+			(currentlyBlocked ? rail.currentlyBlockedVehicleIds : rail.preBlockedVehicleIds).put(color, vehicleId);
 			visitedRails.add(rail);
-			rail.connectedRails1.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail));
-			rail.connectedRails2.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail));
+			rail.connectedRails1.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail, currentlyBlocked));
+			rail.connectedRails2.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail, currentlyBlocked));
 		}
 	}
 
@@ -276,4 +286,6 @@ public final class Rail extends RailSchema {
 	}
 
 	public enum Shape {QUADRATIC, TWO_RADII, CABLE}
+
+	public enum BlockReservation {DO_NOT_RESERVE, PRE_RESERVE, CURRENTLY_RESERVE}
 }

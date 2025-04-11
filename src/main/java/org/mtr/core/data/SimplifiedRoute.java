@@ -1,10 +1,10 @@
 package org.mtr.core.data;
 
-import org.mtr.core.generated.data.SimplifiedRouteSchema;
-import org.mtr.core.serializer.ReaderBase;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.generated.data.SimplifiedRouteSchema;
+import org.mtr.core.serializer.ReaderBase;
 
 public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comparable<SimplifiedRoute> {
 

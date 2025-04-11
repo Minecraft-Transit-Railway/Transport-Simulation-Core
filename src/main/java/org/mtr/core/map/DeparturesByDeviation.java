@@ -1,8 +1,8 @@
 package org.mtr.core.map;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.core.generated.map.DeparturesByDeviationSchema;
 import org.mtr.core.serializer.ReaderBase;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 public final class DeparturesByDeviation extends DeparturesByDeviationSchema {
 

@@ -1,10 +1,10 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.generated.data.AreaBaseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 
 import javax.annotation.Nullable;
 

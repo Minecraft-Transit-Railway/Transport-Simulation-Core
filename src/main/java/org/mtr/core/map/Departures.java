@@ -1,9 +1,9 @@
 package org.mtr.core.map;
 
-import org.mtr.core.generated.map.DeparturesSchema;
 import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import org.mtr.core.generated.map.DeparturesSchema;
 
 public final class Departures extends DeparturesSchema {
 

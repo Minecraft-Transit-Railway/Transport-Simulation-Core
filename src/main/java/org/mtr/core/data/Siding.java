@@ -1,5 +1,11 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.booleans.BooleanLongImmutablePair;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.SidingSchema;
 import org.mtr.core.oba.*;
@@ -11,12 +17,6 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.ConditionalList;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
-import it.unimi.dsi.fastutil.booleans.BooleanLongImmutablePair;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.*;
 
 import javax.annotation.Nullable;
 import java.util.Collections;

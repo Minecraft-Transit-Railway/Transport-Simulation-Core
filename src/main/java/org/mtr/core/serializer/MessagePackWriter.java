@@ -1,7 +1,7 @@
 package org.mtr.core.serializer;
 
-import org.mtr.core.Main;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.Main;
 import org.mtr.libraries.org.msgpack.core.MessagePacker;
 
 import javax.annotation.Nullable;

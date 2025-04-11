@@ -1,9 +1,9 @@
 package org.mtr.core.path;
 
-import org.mtr.core.Main;
-import org.mtr.core.tool.Utilities;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.Main;
+import org.mtr.core.tool.Utilities;
 
 import javax.annotation.Nullable;
 

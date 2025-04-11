@@ -8,7 +8,13 @@
 		"railId": {
 			"type": "string"
 		},
-		"blockedSignalColors": {
+		"preBlockedSignalColors": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"currentlyBlockedSignalColors": {
 			"type": "array",
 			"items": {
 				"type": "integer"

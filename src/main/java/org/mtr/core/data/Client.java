@@ -1,5 +1,9 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.data.ClientSchema;
 import org.mtr.core.operation.PlayerPresentResponse;
 import org.mtr.core.operation.VehicleLiftResponse;
@@ -8,10 +12,6 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.servlet.OperationProcessor;
 import org.mtr.core.simulation.Simulator;
-import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 
 import java.util.Map;
 import java.util.Set;

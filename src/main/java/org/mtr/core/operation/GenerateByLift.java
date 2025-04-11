@@ -1,9 +1,9 @@
 package org.mtr.core.operation;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.data.Data;
 import org.mtr.core.data.Lift;
 import org.mtr.core.serializer.JsonReader;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class GenerateByLift {
 

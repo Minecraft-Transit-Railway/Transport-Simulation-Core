@@ -1,13 +1,13 @@
 package org.mtr.core.operation;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.UpdateDataRequestSchema;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.tool.Utilities;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
