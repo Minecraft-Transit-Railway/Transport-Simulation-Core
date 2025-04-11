@@ -11,7 +11,7 @@
 }
 
 .line.thin {
-	background-color: rgba(127, 127, 127, 80%);
+	background-color: #777777;
 	left: 32px;
 	position: absolute;
 	width: 2px;
