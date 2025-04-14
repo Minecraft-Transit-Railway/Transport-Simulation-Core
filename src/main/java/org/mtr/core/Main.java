@@ -23,6 +23,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @ParametersAreNonnullByDefault
 public class Main {
@@ -65,7 +66,7 @@ public class Main {
 
 		if (webserverPort > 0) {
 			webserver = new Webserver(webserverPort);
-			webserver.addServlet(new ServletHolder(new WebServlet(WebserverResources::get, "/")), "/");
+			webserver.addServlet(new ServletHolder(new MainWebServlet(WebserverResources::get, "/")), "/");
 			webserver.addServlet(new ServletHolder(new SystemMapServlet(simulators)), "/mtr/api/map/*");
 			webserver.addServlet(new ServletHolder(new OBAServlet(simulators)), "/oba/api/where/*");
 			if (additionalWebserverSetup != null) {
@@ -162,5 +163,12 @@ public class Main {
 	private static void printHelp() {
 		LOGGER.info("Usage:");
 		LOGGER.info("java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <useThreadedSimulation> <useThreadedFileLoading> <dimensions...>");
+	}
+
+	private static class MainWebServlet extends WebServlet {
+
+		public MainWebServlet(Function<String, String> contentProvider, String expectedPath) {
+			super(contentProvider, expectedPath);
+		}
 	}
 }

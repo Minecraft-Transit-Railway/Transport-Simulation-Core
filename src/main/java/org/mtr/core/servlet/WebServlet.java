@@ -7,7 +7,7 @@ import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
 
 import java.util.function.Function;
 
-public final class WebServlet extends HttpServlet {
+public abstract class WebServlet extends HttpServlet {
 
 	private final Function<String, String> contentProvider;
 	private final String expectedPath;
@@ -18,7 +18,7 @@ public final class WebServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+	protected final void doGet(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
 		final AsyncContext asyncContext = httpServletRequest.startAsync();
 		asyncContext.setTimeout(0);
 
