@@ -7,6 +7,8 @@ import org.mtr.core.generated.operation.DataRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 
+import java.util.UUID;
+
 public final class DataRequest extends DataRequestSchema {
 
 	private final UUID uuid;
