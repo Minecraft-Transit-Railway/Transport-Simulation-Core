@@ -27,6 +27,10 @@
 			"type": "integer",
 			"default": 100
 		},
+		"earlyVehicleIncreaseDwellTime": {
+			"type": "boolean",
+			"default": true
+		},
 		"maxManualSpeed": {
 			"type": "number"
 		},

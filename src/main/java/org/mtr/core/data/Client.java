@@ -15,9 +15,12 @@ import org.mtr.core.simulation.Simulator;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class Client extends ClientSchema {
+
+	public final UUID uuid;
 
 	private final LongAVLTreeSet existingVehicleIds = new LongAVLTreeSet();
 	private final LongAVLTreeSet keepVehicleIds = new LongAVLTreeSet();
@@ -31,13 +34,15 @@ public class Client extends ClientSchema {
 	private final ObjectAVLTreeSet<String> keepRailIds = new ObjectAVLTreeSet<>();
 	private final Object2ObjectAVLTreeMap<String, Rail> signalBlockUpdates = new Object2ObjectAVLTreeMap<>();
 
-	public Client(String id) {
-		super(id);
+	public Client(UUID uuid) {
+		super(uuid.toString());
+		this.uuid = uuid;
 	}
 
 	public Client(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
+		uuid = UUID.fromString(clientId);
 	}
 
 	@Override

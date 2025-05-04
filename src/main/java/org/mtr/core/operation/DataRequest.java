@@ -9,13 +9,17 @@ import org.mtr.core.simulation.Simulator;
 
 public final class DataRequest extends DataRequestSchema {
 
-	public DataRequest(String clientId, Position clientPosition, long requestRadius) {
-		super(clientId, clientPosition, requestRadius);
+	private final UUID uuid;
+
+	public DataRequest(UUID uuid, Position clientPosition, long requestRadius) {
+		super(uuid.toString(), clientPosition, requestRadius);
+		this.uuid = uuid;
 	}
 
 	public DataRequest(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
+		uuid = UUID.fromString(clientId);
 	}
 
 	public DataResponse getData(Simulator simulator) {
@@ -79,7 +83,7 @@ public final class DataRequest extends DataRequestSchema {
 			}
 		});
 
-		simulator.clients.computeIfAbsent(clientId, key -> new Client(clientId)).setPositionAndUpdateRadius(clientPosition, requestRadius);
+		simulator.clients.computeIfAbsent(uuid, key -> new Client(uuid)).setPositionAndUpdateRadius(clientPosition, requestRadius);
 		return dataResponse;
 	}
 

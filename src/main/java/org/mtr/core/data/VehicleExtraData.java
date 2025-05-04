@@ -10,6 +10,7 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -19,7 +20,9 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	private int stopIndex = -1;
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
+	private long oldManualNotch;
 	private double oldDelayedVehicleSpeedIncreasePercentage;
+	private boolean oldIsCurrentlyManual;
 	private boolean hasRidingEntityUpdate;
 
 	public final ObjectImmutableList<PathData> immutablePath;
@@ -214,12 +217,24 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return doorTarget ? 1 : -1;
 	}
 
+	public boolean getIsCurrentlyManual() {
+		return isCurrentlyManual;
+	}
+
+	public int getManualNotch() {
+		return (int) manualNotch;
+	}
+
 	public double getTotalVehicleLength() {
 		return totalVehicleLength;
 	}
 
 	public double getDelayedVehicleSpeedIncreasePercentage() {
 		return delayedVehicleSpeedIncreasePercentage;
+	}
+
+	public double getMaxManualSpeed() {
+		return maxManualSpeed;
 	}
 
 	protected double getStoppingPoint() {
@@ -242,10 +257,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return isManualAllowed;
 	}
 
-	protected double getMaxManualSpeed() {
-		return maxManualSpeed;
-	}
-
 	protected long getManualToAutomaticTime() {
 		return manualToAutomaticTime;
 	}
@@ -266,6 +277,14 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		this.delayedVehicleSpeedIncreasePercentage = delayedVehicleSpeedIncreasePercentage;
 	}
 
+	protected void setIsCurrentlyManual(boolean isCurrentlyManual) {
+		this.isCurrentlyManual = isCurrentlyManual;
+	}
+
+	protected void setManualNotch(int manualNotch) {
+		this.manualNotch = manualNotch;
+	}
+
 	protected void toggleDoors() {
 		doorTarget = !doorTarget;
 	}
@@ -279,10 +298,12 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	}
 
 	protected boolean checkForUpdate() {
-		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || oldDelayedVehicleSpeedIncreasePercentage != delayedVehicleSpeedIncreasePercentage || hasRidingEntityUpdate;
+		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || manualNotch != oldManualNotch || oldDelayedVehicleSpeedIncreasePercentage != delayedVehicleSpeedIncreasePercentage || isCurrentlyManual != oldIsCurrentlyManual || hasRidingEntityUpdate;
 		oldStoppingPoint = stoppingPoint;
 		oldDoorTarget = doorTarget;
+		oldManualNotch = manualNotch;
 		oldDelayedVehicleSpeedIncreasePercentage = delayedVehicleSpeedIncreasePercentage;
+		oldIsCurrentlyManual = isCurrentlyManual;
 		hasRidingEntityUpdate = false;
 		return needsUpdate;
 	}
@@ -382,6 +403,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		}
 	}
 
+	boolean containsDriver() {
+		return ridingEntities.stream().anyMatch(VehicleRidingEntity::isDriver);
+	}
+
 	void removeRidingEntitiesIf(Predicate<VehicleRidingEntity> predicate) {
 		if (ridingEntities.removeIf(predicate)) {
 			hasRidingEntityUpdate = true;
@@ -392,6 +417,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		if (ridingEntities.addAll(vehicleRidingEntitiesToAdd)) {
 			hasRidingEntityUpdate = true;
 		}
+	}
+
+	boolean hasRidingEntity(UUID uuid) {
+		return ridingEntities.stream().anyMatch(vehicleRidingEntity -> vehicleRidingEntity.uuid.equals(uuid));
 	}
 
 	public static VehicleExtraData create(
@@ -408,7 +437,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		final double newDeceleration = Siding.roundAcceleration(deceleration);
 		final double totalDistance = path.isEmpty() ? 0 : repeatInfinitely && repeatIndex2 < path.size() ? Utilities.getElement(path, (int) repeatIndex2).getStartDistance() : Utilities.getElement(path, -1).getEndDistance();
 		final double defaultPosition = (newRailLength + newTotalVehicleLength) / 2;
-		return new VehicleExtraData(sidingId, newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, newDeceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path);
+		return new VehicleExtraData(sidingId, newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, newDeceleration, isManualAllowed, Math.max(Utilities.kilometersPerHourToMetersPerMillisecond(1), maxManualSpeed), manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path);
 	}
 
 	private static ObjectArrayList<PathData> createPathData(ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, boolean repeatInfinitely, PathData defaultPathData) {

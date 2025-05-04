@@ -7,10 +7,10 @@ import java.util.UUID;
 
 public class VehicleRidingEntity extends VehicleRidingEntitySchema {
 
-	public UUID uuid;
+	public final UUID uuid;
 
-	public VehicleRidingEntity(UUID uuid, long ridingCar, double x, double y, double z, boolean isOnGangway) {
-		super(uuid.toString(), ridingCar, x, y, z, isOnGangway);
+	public VehicleRidingEntity(UUID uuid, long ridingCar, double x, double y, double z, boolean isOnGangway, boolean isDriver, boolean manualAccelerate, boolean manualBrake, boolean manualToggleDoors) {
+		super(uuid.toString(), ridingCar, x, y, z, isOnGangway, isDriver, manualAccelerate, manualBrake, manualToggleDoors);
 		this.uuid = uuid;
 	}
 
@@ -42,5 +42,21 @@ public class VehicleRidingEntity extends VehicleRidingEntitySchema {
 
 	public boolean isOnVehicle() {
 		return ridingCar >= 0;
+	}
+
+	public boolean isDriver() {
+		return isDriver;
+	}
+
+	public boolean manualAccelerate() {
+		return manualAccelerate;
+	}
+
+	public boolean manualBrake() {
+		return manualBrake;
+	}
+
+	public boolean manualToggleDoors() {
+		return manualToggleDoors;
 	}
 }

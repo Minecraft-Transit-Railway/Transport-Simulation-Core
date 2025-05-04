@@ -139,6 +139,18 @@ public final class Siding extends SidingSchema implements Utilities {
 		return transportMode.ordinal();
 	}
 
+	public boolean getEarlyVehicleIncreaseDwellTime() {
+		return earlyVehicleIncreaseDwellTime;
+	}
+
+	public double getMaxManualSpeed() {
+		return maxManualSpeed;
+	}
+
+	public int getManualToAutomaticTime() {
+		return (int) manualToAutomaticTime;
+	}
+
 	public double getAcceleration() {
 		return acceleration;
 	}
@@ -181,6 +193,18 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public void setDelayedVehicleReduceDwellTimePercentage(int delayedVehicleReduceDwellTimePercentage) {
 		this.delayedVehicleReduceDwellTimePercentage = Utilities.clamp(delayedVehicleReduceDwellTimePercentage, 0, 100);
+	}
+
+	public void setEarlyVehicleIncreaseDwellTime(boolean earlyVehicleIncreaseDwellTime) {
+		this.earlyVehicleIncreaseDwellTime = earlyVehicleIncreaseDwellTime;
+	}
+
+	public void setMaxManualSpeed(double maxManualSpeed) {
+		this.maxManualSpeed = maxManualSpeed;
+	}
+
+	public void setManualToAutomaticTime(int manualToAutomaticTime) {
+		this.manualToAutomaticTime = manualToAutomaticTime;
 	}
 
 	public void setAcceleration(double newAcceleration) {
@@ -267,7 +291,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			if (vehicle.getIsOnRoute()) {
 				if (!getIsUnlimited()) {
 					final long departureIndex = vehicle.getDepartureIndex();
-					if (departureIndex < 0 || departureIndex >= departures.size() || visitedDepartureIndices.contains(departureIndex)) {
+					if (departureIndex < 0 && !getIsManual() || departureIndex >= departures.size() || visitedDepartureIndices.contains(departureIndex)) {
 						trainsToRemove.add(vehicle);
 					} else {
 						visitedDepartureIndices.add(departureIndex);

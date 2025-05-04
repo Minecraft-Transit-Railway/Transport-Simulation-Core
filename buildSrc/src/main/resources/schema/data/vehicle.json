@@ -25,9 +25,6 @@
 		"reversed": {
 			"type": "boolean"
 		},
-		"isCurrentlyManual": {
-			"type": "boolean"
-		},
 		"departureIndex": {
 			"type": "integer",
 			"default": -1

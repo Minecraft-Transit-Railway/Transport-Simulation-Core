@@ -22,9 +22,13 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	/**
 	 * The amount of time to start up a vehicle again if blocked by a signal or another vehicle in front.
 	 */
-	private long stoppingCoolDown;
+	private long stoppingCooldown;
 	private long deviation;
-	private int manualNotch;
+	/**
+	 * The time until the vehicle switches from manual to automatic
+	 */
+	private long manualCooldown;
+	private long doorCooldown;
 
 	public final VehicleExtraData vehicleExtraData;
 	private final Siding siding;
@@ -33,6 +37,8 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	 */
 	private final boolean isClientside;
 
+	public static final int MANUAL_NOTCH_BOUND = 7;
+	public static final int MANUAL_NOTCH_RATIO = 5;
 	public static final int DOOR_MOVE_TIME = 3200;
 	private static final int DOOR_DELAY = 1000;
 
@@ -40,7 +46,6 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		super(transportMode, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
-		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
 		this.isClientside = !(data instanceof Simulator);
 	}
 
@@ -48,7 +53,6 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		super(readerBase, data);
 		this.siding = siding;
 		this.vehicleExtraData = vehicleExtraData;
-		isCurrentlyManual = vehicleExtraData.getIsManualAllowed();
 		this.isClientside = !(data instanceof Simulator);
 		updateData(readerBase);
 	}
@@ -86,24 +90,6 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		return !getIsOnRoute() || railProgress < vehicleExtraData.getTotalVehicleLength() + vehicleExtraData.getRailLength();
 	}
 
-	public boolean changeSpeedManual(boolean isAccelerate) {
-		if (isCurrentlyManual) {
-			manualNotch += isAccelerate ? 1 : -1;
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public boolean toggleDoorsManual() {
-		if (isCurrentlyManual) {
-			vehicleExtraData.toggleDoors();
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	public void initVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
 		writeVehiclePositions(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress), vehiclePositions);
 	}
@@ -112,23 +98,32 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		final int currentIndex;
 		final double oldElapsedDwellTime = elapsedDwellTime;
 		final double oldSpeed = speed;
+		final boolean previousIsManual = isCurrentlyManual();
+		manualCooldown = vehicleExtraData.containsDriver() ? vehicleExtraData.getManualToAutomaticTime() : Math.max(0, manualCooldown - millisElapsed);
+		doorCooldown = vehicleExtraData.getDoorMultiplier() > 0 ? DOOR_MOVE_TIME : Math.max(0, doorCooldown - millisElapsed);
 
 		if (getIsOnRoute()) {
 			if (vehicleExtraData.getRepeatIndex2() == 0 && railProgress >= vehicleExtraData.getTotalDistance() - (vehicleExtraData.getRailLength() - vehicleExtraData.getTotalVehicleLength()) / 2) {
 				// if not repeat infinitely and the vehicle is reaching the end
 				currentIndex = 0;
-				manualNotch = 0;
+				if (!isClientside) {
+					vehicleExtraData.setManualNotch(0);
+				}
 				simulateInDepot();
 			} else {
 				// if vehicle is on route normally
 				currentIndex = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress);
-				if (speed <= 0) {
-					// if vehicle is stopped (at a platform or waiting for a signal)
-					speed = 0;
-					simulateAutomaticStopped(millisElapsed, vehiclePositions, currentIndex);
+				if (isCurrentlyManual()) {
+					simulateMoving(millisElapsed, vehiclePositions, currentIndex);
 				} else {
-					// if vehicle is moving normally
-					simulateAutomaticMoving(millisElapsed, vehiclePositions, currentIndex);
+					if (speed <= 0) {
+						// if vehicle is stopped (at a platform or waiting for a signal)
+						speed = 0;
+						simulateAutomaticStopped(millisElapsed, vehiclePositions, currentIndex);
+					} else {
+						// if vehicle is moving normally
+						simulateMoving(millisElapsed, vehiclePositions, currentIndex);
+					}
 				}
 			}
 		} else {
@@ -136,7 +131,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			simulateInDepot();
 		}
 
-		stoppingCoolDown = Math.max(0, stoppingCoolDown - millisElapsed);
+		stoppingCooldown = Math.max(0, stoppingCooldown - millisElapsed);
 
 		if (vehiclePositions != null) {
 			writeVehiclePositions(currentIndex, vehiclePositions.get(1));
@@ -152,8 +147,14 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			}
 		}
 
-		if (!isClientside && data instanceof Simulator) {
-			vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> !((Simulator) data).isRiding(vehicleRidingEntity.uuid, id));
+		if (!isClientside) {
+			if (data instanceof Simulator) {
+				vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> !((Simulator) data).isRiding(vehicleRidingEntity.uuid, id));
+			}
+			vehicleExtraData.setIsCurrentlyManual(isCurrentlyManual());
+			if (previousIsManual != isCurrentlyManual()) {
+				resetNextStoppingIndex();
+			}
 		}
 	}
 
@@ -164,13 +165,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		elapsedDwellTime = 0;
 		speed = Siding.ACCELERATION_DEFAULT;
 		vehicleExtraData.closeDoors();
-		nextStoppingIndex = vehicleExtraData.immutablePath.size() - 1;
-		for (int i = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress); i < vehicleExtraData.immutablePath.size(); i++) {
-			if (vehicleExtraData.immutablePath.get(i).getDwellTime() > 0) {
-				nextStoppingIndex = i;
-				break;
-			}
-		}
+		resetNextStoppingIndex();
 	}
 
 	public long getDepartureIndex() {
@@ -208,15 +203,36 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		if (!isClientside && data instanceof Simulator) {
 			final ObjectOpenHashSet<UUID> uuidToRemove = new ObjectOpenHashSet<>();
 			final ObjectOpenHashSet<VehicleRidingEntity> vehicleRidingEntitiesToAdd = new ObjectOpenHashSet<>();
+
 			vehicleRidingEntities.forEach(vehicleRidingEntity -> {
 				uuidToRemove.add(vehicleRidingEntity.uuid);
+
 				if (vehicleRidingEntity.isOnVehicle()) {
 					vehicleRidingEntitiesToAdd.add(vehicleRidingEntity);
 					((Simulator) data).ride(vehicleRidingEntity.uuid, id);
 				} else {
 					((Simulator) data).stopRiding(vehicleRidingEntity.uuid);
 				}
+
+				if (vehicleExtraData.getIsManualAllowed() && vehicleRidingEntity.isDriver()) {
+					final int manualNotch = vehicleExtraData.getManualNotch();
+					if (vehicleRidingEntity.manualToggleDoors()) {
+						if (speed > 0) {
+							vehicleExtraData.closeDoors();
+						} else {
+							vehicleExtraData.toggleDoors();
+						}
+					}
+
+					final boolean doorsOpen = vehicleExtraData.getDoorMultiplier() > 0 || doorCooldown > 0;
+					if (vehicleRidingEntity.manualAccelerate()) {
+						vehicleExtraData.setManualNotch(Math.min(manualNotch + 1, doorsOpen ? 0 : MANUAL_NOTCH_BOUND));
+					} else if (vehicleRidingEntity.manualBrake()) {
+						vehicleExtraData.setManualNotch(Utilities.clamp(manualNotch - 1, -MANUAL_NOTCH_BOUND, doorsOpen ? 0 : MANUAL_NOTCH_BOUND));
+					}
+				}
 			});
+
 			vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> uuidToRemove.contains(vehicleRidingEntity.uuid));
 			vehicleExtraData.addRidingEntities(vehicleRidingEntitiesToAdd);
 		}
@@ -231,7 +247,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		sidingDepartureTime = -1;
 		vehicleExtraData.closeDoors();
 
-		if (isCurrentlyManual && manualNotch > 0) {
+		if (isCurrentlyManual() && vehicleExtraData.getManualNotch() > 0) {
 			startUp(-1, -1);
 		}
 	}
@@ -247,7 +263,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		}
 
 		vehicleExtraData.setStoppingPoint(railProgress);
-		stoppingCoolDown = 0;
+		stoppingCooldown = 0;
 
 		if (railProgress == pathData.getStartDistance()) {
 			// Stopped behind a node
@@ -259,7 +275,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			final long doorCloseTime = Math.max(totalDwellMillis / 2, totalDwellMillis - DOOR_MOVE_TIME - DOOR_DELAY);
 			final boolean railClear = railBlockedDistance(currentIndex, nextStartDistance + (isOpposite ? vehicleExtraData.getTotalVehicleLength() : 0), 0, vehiclePositions, elapsedDwellTime >= doorCloseTime, false) < 0;
 
-			if (Utilities.isBetween(elapsedDwellTime, DOOR_DELAY, doorCloseTime)) {
+			if (totalDwellMillis > 0 && Utilities.isBetween(elapsedDwellTime, DOOR_DELAY, doorCloseTime)) {
 				vehicleExtraData.openDoors();
 			} else {
 				vehicleExtraData.closeDoors();
@@ -270,7 +286,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 				if (deviation > 0) {
 					deviationAdjustment = Math.min(deviation, Math.max(0, doorCloseTime - elapsedDwellTime) * siding.getDelayedVehicleReduceDwellTimePercentage() / 100);
 				} else {
-					deviationAdjustment = Math.max(deviation, -millisElapsed * siding.getDelayedVehicleReduceDwellTimePercentage() / 100);
+					deviationAdjustment = siding.getEarlyVehicleIncreaseDwellTime() ? Math.max(deviation, -millisElapsed * siding.getDelayedVehicleReduceDwellTimePercentage() / 100) : 0;
 				}
 				deviation -= deviationAdjustment;
 			} else {
@@ -299,7 +315,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		}
 	}
 
-	private void simulateAutomaticMoving(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, int currentIndex) {
+	private void simulateMoving(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, int currentIndex) {
 		final double newAcceleration = vehicleExtraData.getAcceleration() * millisElapsed;
 		final double newDeceleration = vehicleExtraData.getDeceleration() * millisElapsed;
 		final double safeStoppingDistance = 0.5 * speed * speed / vehicleExtraData.getDeceleration();
@@ -313,7 +329,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			} else {
 				vehicleExtraData.closeDoors();
 			}
-		} else if (isClientside || stoppingCoolDown > 0) {
+		} else if (isClientside || stoppingCooldown > 0) {
 			stoppingPoint = vehicleExtraData.getStoppingPoint();
 		} else if (railBlockedDistance < 0) {
 			if (nextStoppingIndex >= vehicleExtraData.immutablePath.size() - 1) {
@@ -323,7 +339,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			}
 		} else {
 			stoppingPoint = railBlockedDistance + railProgress;
-			stoppingCoolDown = 1000;
+			stoppingCooldown = 1000;
 		}
 
 		vehicleExtraData.setStoppingPoint(stoppingPoint);
@@ -336,25 +352,54 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		if (stoppingDistance < safeStoppingDistance) {
 			speed = stoppingDistance <= 0 ? Siding.ACCELERATION_DEFAULT : Math.max(speed - (0.5 * speed * speed / stoppingDistance) * millisElapsed, Siding.ACCELERATION_DEFAULT);
 		} else {
-			final double railSpeed = getRailSpeed(currentIndex);
-			if (speed < railSpeed) {
-				speed = Math.min(speed + newAcceleration, railSpeed);
-			} else if (speed > railSpeed) {
-				speed = Math.max(speed - newDeceleration, railSpeed);
-			}
+			if (isCurrentlyManual()) {
+				if (speed > vehicleExtraData.getMaxManualSpeed()) {
+					speed = Math.max(speed - newDeceleration, vehicleExtraData.getMaxManualSpeed());
+				} else {
+					final int manualNotch = vehicleExtraData.getManualNotch();
+					if (manualNotch > 0) {
+						if (speed == 0) {
+							startUp(-1, -1);
+						} else {
+							speed = Math.min(speed + newAcceleration * manualNotch / MANUAL_NOTCH_RATIO, vehicleExtraData.getMaxManualSpeed());
+						}
+					} else if (manualNotch < 0) {
+						speed = Math.max(speed + newDeceleration * manualNotch / MANUAL_NOTCH_RATIO, 0);
+					}
+				}
+			} else {
+				final double railSpeed = getRailSpeed(currentIndex);
+				if (speed < railSpeed) {
+					speed = Math.min(speed + newAcceleration, railSpeed);
+				} else if (speed > railSpeed) {
+					speed = Math.max(speed - newDeceleration, railSpeed);
+				}
 
-			if (deviation > 0 && siding != null) {
-				deviation -= siding.getDelayedVehicleSpeedIncreasePercentage() * millisElapsed / 100;
-				vehicleExtraData.setDelayedVehicleSpeedIncreasePercentage(siding.getDelayedVehicleSpeedIncreasePercentage());
+				if (deviation > 0 && siding != null) {
+					deviation -= siding.getDelayedVehicleSpeedIncreasePercentage() * millisElapsed / 100;
+					vehicleExtraData.setDelayedVehicleSpeedIncreasePercentage(siding.getDelayedVehicleSpeedIncreasePercentage());
+				}
 			}
 		}
 
+		final double oldRailProgress = railProgress;
 		railProgress += getAdjustedSpeed() * millisElapsed;
 		if (railProgress >= stoppingPoint) {
 			railProgress = stoppingPoint;
 			speed = 0;
 		} else if (vehicleExtraData.getRepeatIndex2() > 0 && railProgress >= vehicleExtraData.getTotalDistance()) {
 			railProgress = vehicleExtraData.immutablePath.get(vehicleExtraData.getRepeatIndex1()).getStartDistance() + railProgress - vehicleExtraData.getTotalDistance();
+		}
+
+		if (isCurrentlyManual()) {
+			final PathData currentPathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex);
+			if (currentPathData != null && oldRailProgress < currentPathData.getEndDistance() && railProgress >= currentPathData.getEndDistance()) {
+				final PathData nextPathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex + 1);
+				if (nextPathData != null && currentPathData.isOppositeRail(nextPathData)) {
+					railProgress += vehicleExtraData.getTotalVehicleLength();
+					reversed = !reversed;
+				}
+			}
 		}
 	}
 
@@ -370,6 +415,22 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		}
 
 		return railSpeed;
+	}
+
+	private boolean isCurrentlyManual() {
+		return isClientside ? vehicleExtraData.getIsCurrentlyManual() : manualCooldown > 0;
+	}
+
+	private void resetNextStoppingIndex() {
+		nextStoppingIndex = vehicleExtraData.immutablePath.size() - 1;
+		if (!isCurrentlyManual()) {
+			for (int i = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress); i < vehicleExtraData.immutablePath.size(); i++) {
+				if (vehicleExtraData.immutablePath.get(i).getDwellTime() > 0) {
+					nextStoppingIndex = i;
+					break;
+				}
+			}
+		}
 	}
 
 	/**
@@ -419,10 +480,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 				final boolean needsUpdate = vehicleExtraData.checkForUpdate();
 				// TODO for continuous movement, maybe only send the path once rather than sending the entire path for each vehicle
 				final int pathUpdateIndex = transportMode.continuousMovement ? 0 : Math.max(0, index + 1);
-				((Simulator) data).clients.values().forEach(client -> {
+				((Simulator) data).clients.forEach((uuid, client) -> {
 					final Position position = client.getPosition();
 					final double updateRadius = client.getUpdateRadius();
-					if ((minMaxPositions[0] == null || minMaxPositions[1] == null) ? siding.area.inArea(position, updateRadius) : Utilities.isBetween(position, minMaxPositions[0], minMaxPositions[1], updateRadius)) {
+					if ((minMaxPositions[0] == null || minMaxPositions[1] == null) ? siding.area.inArea(position, updateRadius) : Utilities.isBetween(position, minMaxPositions[0], minMaxPositions[1], updateRadius) || !closeToDepot() && vehicleExtraData.hasRidingEntity(uuid)) {
 						client.update(this, needsUpdate, pathUpdateIndex);
 					}
 				});

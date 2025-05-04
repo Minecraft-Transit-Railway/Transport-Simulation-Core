@@ -113,6 +113,14 @@
 		"doorTarget": {
 			"type": "boolean"
 		},
+		"isCurrentlyManual": {
+			"type": "boolean"
+		},
+		"manualNotch": {
+			"type": "integer",
+			"minimum": -2,
+			"maximum": 2
+		},
 		"railLength": {
 			"type": "number",
 			"minimum": 0

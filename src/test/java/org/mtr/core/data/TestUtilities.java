@@ -126,7 +126,7 @@ public interface TestUtilities {
 	}
 
 	static Client randomClient() {
-		return new Client(randomString());
+		return new Client(UUID.randomUUID());
 	}
 
 	static Depot randomDepot() {
@@ -214,7 +214,7 @@ public interface TestUtilities {
 	}
 
 	static VehicleRidingEntity randomVehicleRidingEntity() {
-		return new VehicleRidingEntity(UUID.randomUUID(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextBoolean());
+		return new VehicleRidingEntity(UUID.randomUUID(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean());
 	}
 
 	static Vehicle randomVehicle() {

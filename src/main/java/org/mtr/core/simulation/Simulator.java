@@ -26,7 +26,7 @@ public class Simulator extends Data implements Utilities {
 	private boolean isTimeMoving;
 	private long lastSetGameMillisMidnight;
 
-	public final Object2ObjectOpenHashMap<String, Client> clients = new Object2ObjectOpenHashMap<>();
+	public final Object2ObjectOpenHashMap<UUID, Client> clients = new Object2ObjectOpenHashMap<>();
 	public final String dimension;
 	public final String[] dimensions;
 
