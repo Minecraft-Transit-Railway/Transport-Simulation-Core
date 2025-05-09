@@ -20,7 +20,8 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	private int stopIndex = -1;
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
-	private long oldManualNotch;
+	private long oldPowerLevel;
+	private double oldSpeedTarget;
 	private double oldDelayedVehicleSpeedIncreasePercentage;
 	private boolean oldIsCurrentlyManual;
 	private boolean hasRidingEntityUpdate;
@@ -217,28 +218,32 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		return doorTarget ? 1 : -1;
 	}
 
-	public boolean getIsCurrentlyManual() {
-		return isCurrentlyManual;
+	public double getStoppingPoint() {
+		return stoppingPoint;
 	}
 
-	public int getManualNotch() {
-		return (int) manualNotch;
+	public int getPowerLevel() {
+		return (int) powerLevel;
+	}
+
+	public double getSpeedTarget() {
+		return speedTarget;
+	}
+
+	public boolean getIsCurrentlyManual() {
+		return isCurrentlyManual;
 	}
 
 	public double getTotalVehicleLength() {
 		return totalVehicleLength;
 	}
 
-	public double getDelayedVehicleSpeedIncreasePercentage() {
-		return delayedVehicleSpeedIncreasePercentage;
-	}
-
 	public double getMaxManualSpeed() {
 		return maxManualSpeed;
 	}
 
-	protected double getStoppingPoint() {
-		return stoppingPoint;
+	public boolean getIsManualAllowed() {
+		return isManualAllowed;
 	}
 
 	protected double getRailLength() {
@@ -251,10 +256,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	protected int getRepeatIndex2() {
 		return (int) repeatIndex2;
-	}
-
-	protected boolean getIsManualAllowed() {
-		return isManualAllowed;
 	}
 
 	protected long getManualToAutomaticTime() {
@@ -273,16 +274,16 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		this.stoppingPoint = stoppingPoint;
 	}
 
-	protected void setDelayedVehicleSpeedIncreasePercentage(double delayedVehicleSpeedIncreasePercentage) {
-		this.delayedVehicleSpeedIncreasePercentage = delayedVehicleSpeedIncreasePercentage;
+	protected void setPowerLevel(int powerLevel) {
+		this.powerLevel = powerLevel;
+	}
+
+	protected void setSpeedTarget(double speedTarget) {
+		this.speedTarget = speedTarget;
 	}
 
 	protected void setIsCurrentlyManual(boolean isCurrentlyManual) {
 		this.isCurrentlyManual = isCurrentlyManual;
-	}
-
-	protected void setManualNotch(int manualNotch) {
-		this.manualNotch = manualNotch;
 	}
 
 	protected void toggleDoors() {
@@ -298,11 +299,11 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	}
 
 	protected boolean checkForUpdate() {
-		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || manualNotch != oldManualNotch || oldDelayedVehicleSpeedIncreasePercentage != delayedVehicleSpeedIncreasePercentage || isCurrentlyManual != oldIsCurrentlyManual || hasRidingEntityUpdate;
+		final boolean needsUpdate = Math.abs(stoppingPoint - oldStoppingPoint) > 0.01 || doorTarget != oldDoorTarget || powerLevel != oldPowerLevel || Math.abs(speedTarget - oldSpeedTarget) > 0.01 || isCurrentlyManual != oldIsCurrentlyManual || hasRidingEntityUpdate;
 		oldStoppingPoint = stoppingPoint;
 		oldDoorTarget = doorTarget;
-		oldManualNotch = manualNotch;
-		oldDelayedVehicleSpeedIncreasePercentage = delayedVehicleSpeedIncreasePercentage;
+		oldPowerLevel = powerLevel;
+		oldSpeedTarget = speedTarget;
 		oldIsCurrentlyManual = isCurrentlyManual;
 		hasRidingEntityUpdate = false;
 		return needsUpdate;

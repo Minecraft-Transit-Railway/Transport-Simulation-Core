@@ -41,9 +41,6 @@
 		},
 		"speedLimit": {
 			"type": "integer"
-		},
-		"canAccelerate": {
-			"type": "boolean"
 		}
 	},
 	"required": [

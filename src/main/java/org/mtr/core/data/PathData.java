@@ -2,6 +2,7 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.core.generated.data.PathDataSchema;
 import org.mtr.core.path.SidingPathFinder;
@@ -28,7 +29,6 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		shape = oldPathData.shape;
 		verticalRadius = oldPathData.verticalRadius;
 		speedLimit = oldPathData.speedLimit;
-		canAccelerate = oldPathData.canAccelerate;
 	}
 
 	public PathData(@Nullable Rail rail, long savedRailBaseId, long dwellTime, long stopIndex, double startDistance, double endDistance, Position startPosition, Angle startAngle, Position endPosition, Angle endAngle) {
@@ -38,8 +38,6 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		if (rail != null) {
 			shape = rail.railMath.getShape();
 			verticalRadius = rail.railMath.getVerticalRadius();
-			speedLimit = getSpeedLimitKilometersPerHour();
-			canAccelerate = canAccelerate();
 		}
 	}
 
@@ -99,15 +97,11 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	}
 
 	public double getSpeedLimitMetersPerMillisecond() {
-		return getRail().getSpeedLimitMetersPerMillisecond(reversePositions);
+		return Utilities.kilometersPerHourToMetersPerMillisecond(getSpeedLimitKilometersPerHour());
 	}
 
 	public long getSpeedLimitKilometersPerHour() {
-		return getRail().getSpeedLimitKilometersPerHour(reversePositions);
-	}
-
-	public boolean canAccelerate() {
-		return getRail().canAccelerate();
+		return Math.max(1, speedLimit);
 	}
 
 	public double getRailLength() {
@@ -144,24 +138,56 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return getRail().getSignalColors();
 	}
 
-	public void writePathCache(Data data) {
+	private void writePathCache(Data data) {
 		rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
 		if (rail == null) {
 			rail = defaultRail();
 		} else {
 			shape = rail.railMath.getShape();
 			verticalRadius = rail.railMath.getVerticalRadius();
-			speedLimit = getSpeedLimitKilometersPerHour();
-			canAccelerate = canAccelerate();
 		}
 	}
 
 	private Rail defaultRail() {
 		final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
-		return Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), shape, verticalRadius, new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0, false, false, canAccelerate, false, false, TransportMode.TRAIN);
+		return Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), shape, verticalRadius, new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0, false, false, true, false, false, TransportMode.TRAIN);
 	}
 
-	public static void writePathCache(ObjectArrayList<PathData> path, Data data) {
-		path.forEach(pathData -> pathData.writePathCache(data));
+	public static void writePathCache(ObjectList<PathData> path, Data data, TransportMode transportMode) {
+		for (int i = 0; i < path.size(); i++) {
+			final PathData pathData = path.get(i);
+			pathData.writePathCache(data);
+			pathData.speedLimit = getRailSpeed(path, i, transportMode.defaultSpeedKilometersPerHour);
+		}
+	}
+
+	/**
+	 * Gets the rail speed on a path section. If {@link Rail#canAccelerate()} for the rail is {@code false}, (such as platform or turnback), search before and after for a rail with a speed.
+	 *
+	 * @param path                          the current path
+	 * @param currentIndex                  the index of the current rail
+	 * @param defaultSpeedKilometersPerHour the default value if searching fails
+	 * @return the speed in km/h
+	 */
+	private static long getRailSpeed(ObjectList<PathData> path, int currentIndex, long defaultSpeedKilometersPerHour) {
+		for (int offset = 0; offset <= Math.max(currentIndex, path.size() - currentIndex - 1); offset++) {
+			for (int sign = -1; sign <= 1; sign += 2) {
+				final PathData pathData = Utilities.getElement(path, currentIndex + sign * offset);
+
+				if (pathData == null) {
+					break;
+				}
+
+				if (pathData.getRail().canAccelerate()) {
+					return pathData.getRail().getSpeedLimitKilometersPerHour(pathData.reversePositions);
+				}
+
+				if (offset == 0) {
+					break;
+				}
+			}
+		}
+
+		return defaultSpeedKilometersPerHour;
 	}
 }

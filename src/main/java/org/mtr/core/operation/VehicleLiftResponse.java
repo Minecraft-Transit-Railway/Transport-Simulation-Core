@@ -7,15 +7,18 @@ import org.mtr.core.generated.operation.VehicleLiftResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 
 import javax.annotation.Nonnull;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
 public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 
+	public final UUID uuid;
 	private final Data data;
 
-	public VehicleLiftResponse(String clientId, Data data) {
-		super(clientId);
+	public VehicleLiftResponse(UUID uuid, Data data) {
+		super(uuid.toString());
+		this.uuid = uuid;
 		this.data = data;
 	}
 
@@ -23,16 +26,13 @@ public final class VehicleLiftResponse extends VehicleLiftResponseSchema {
 		super(readerBase);
 		this.data = data;
 		updateData(readerBase);
+		uuid = UUID.fromString(clientId);
 	}
 
 	@Nonnull
 	@Override
 	protected Data liftsToUpdateDataParameter() {
 		return data;
-	}
-
-	public String getClientId() {
-		return clientId;
 	}
 
 	public void iterateVehiclesToUpdate(Consumer<VehicleUpdate> consumer) {

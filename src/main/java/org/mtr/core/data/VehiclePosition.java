@@ -11,20 +11,22 @@ public class VehiclePosition {
 		blockedSegments.add(new BlockedSegment(startDistance, endDistance, id));
 	}
 
-	public double getOverlap(double startDistance, double endDistance, long id) {
-		double maxOverlap = -1;
+	public double getClosestOverlap(double startDistance, double endDistance, boolean reversePositions, long id) {
+		double closestOverlap = Double.MAX_VALUE;
+		boolean valueSet = false;
 
 		for (final BlockedSegment blockedSegment : blockedSegments) {
 			if (id != blockedSegment.id && Utilities.isIntersecting(startDistance, endDistance, blockedSegment.startDistance, blockedSegment.endDistance)) {
-				final boolean startInside = Utilities.isBetween(startDistance, blockedSegment.startDistance, blockedSegment.endDistance);
-				final boolean endInside = Utilities.isBetween(endDistance, blockedSegment.startDistance, blockedSegment.endDistance);
-				final boolean blockedStartInside = Utilities.isBetween(blockedSegment.startDistance, startDistance, endDistance);
-				final boolean blockedEndInside = Utilities.isBetween(blockedSegment.endDistance, startDistance, endDistance);
-				return Math.max(maxOverlap, startInside && endInside || blockedStartInside && blockedEndInside ? endDistance - startDistance : startInside ? blockedSegment.endDistance - startDistance : endInside ? endDistance - blockedSegment.startDistance : -1);
+				if (reversePositions) {
+					closestOverlap = Math.min(closestOverlap, Math.max(0, endDistance - blockedSegment.endDistance));
+				} else {
+					closestOverlap = Math.min(closestOverlap, Math.max(0, blockedSegment.startDistance - startDistance));
+				}
+				valueSet = true;
 			}
 		}
 
-		return maxOverlap;
+		return valueSet ? closestOverlap : -1;
 	}
 
 	private static class BlockedSegment {

@@ -5,6 +5,8 @@ import org.mtr.core.generated.operation.PlayerPresentResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 
+import java.util.UUID;
+
 public class PlayerPresentResponse extends PlayerPresentResponseSchema {
 
 	public PlayerPresentResponse(String playerDimension) {
@@ -16,11 +18,12 @@ public class PlayerPresentResponse extends PlayerPresentResponseSchema {
 		updateData(readerBase);
 	}
 
-	public void verify(Simulator simulator, String clientId) {
+	public void verify(Simulator simulator, UUID uuid) {
 		if (!playerDimension.equals(simulator.dimension)) {
 			simulator.run(() -> {
-				simulator.clients.remove(clientId);
-				Main.LOGGER.info("Removing player {}", clientId);
+				if (simulator.clients.removeIf(client -> client.uuid.equals(uuid))) {
+					Main.LOGGER.info("Removing player {}", uuid);
+				}
 			});
 		}
 	}

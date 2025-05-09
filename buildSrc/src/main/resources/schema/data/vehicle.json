@@ -18,7 +18,11 @@
 			"type": "integer",
 			"minimum": 0
 		},
-		"nextStoppingIndex": {
+		"nextStoppingIndexAto": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"nextStoppingIndexManual": {
 			"type": "integer",
 			"minimum": 0
 		},

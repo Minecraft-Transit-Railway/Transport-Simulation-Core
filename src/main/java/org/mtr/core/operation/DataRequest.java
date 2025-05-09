@@ -85,7 +85,21 @@ public final class DataRequest extends DataRequestSchema {
 			}
 		});
 
-		simulator.clients.computeIfAbsent(uuid, key -> new Client(uuid)).setPositionAndUpdateRadius(clientPosition, requestRadius);
+		boolean createClient = true;
+		for (final Client client : simulator.clients) {
+			if (client.uuid.equals(uuid)) {
+				client.setPositionAndUpdateRadius(clientPosition, requestRadius);
+				createClient = false;
+				break;
+			}
+		}
+
+		if (createClient) {
+			final Client client = new Client(uuid);
+			client.setPositionAndUpdateRadius(clientPosition, requestRadius);
+			simulator.clients.add(client);
+		}
+
 		return dataResponse;
 	}
 

@@ -162,7 +162,7 @@ public final class Rail extends RailSchema {
 
 	public void tick(Simulator simulator) {
 		final boolean needsUpdate = !Utilities.sameItems(preBlockedVehicleIds.keySet(), preBlockedVehicleIdsOld.keySet()) || !Utilities.sameItems(currentlyBlockedVehicleIds.keySet(), currentlyBlockedVehicleIdsOld.keySet());
-		simulator.clients.values().forEach(client -> {
+		simulator.clients.forEach(client -> {
 			if (closeTo(client.getPosition(), client.getUpdateRadius())) {
 				client.update(this, needsUpdate);
 			}

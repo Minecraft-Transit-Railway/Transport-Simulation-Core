@@ -9,8 +9,8 @@ public class VehicleRidingEntity extends VehicleRidingEntitySchema {
 
 	public final UUID uuid;
 
-	public VehicleRidingEntity(UUID uuid, long ridingCar, double x, double y, double z, boolean isOnGangway, boolean isDriver, boolean manualAccelerate, boolean manualBrake, boolean manualToggleDoors) {
-		super(uuid.toString(), ridingCar, x, y, z, isOnGangway, isDriver, manualAccelerate, manualBrake, manualToggleDoors);
+	public VehicleRidingEntity(UUID uuid, long ridingCar, double x, double y, double z, boolean isOnGangway, boolean isDriver, boolean manualAccelerate, boolean manualBrake, boolean manualToggleDoors, boolean manualToggleAto) {
+		super(uuid.toString(), ridingCar, x, y, z, isOnGangway, isDriver, manualAccelerate, manualBrake, manualToggleDoors, manualToggleAto);
 		this.uuid = uuid;
 	}
 
@@ -58,5 +58,9 @@ public class VehicleRidingEntity extends VehicleRidingEntitySchema {
 
 	public boolean manualToggleDoors() {
 		return manualToggleDoors;
+	}
+
+	public boolean manualToggleAto() {
+		return manualToggleAto;
 	}
 }

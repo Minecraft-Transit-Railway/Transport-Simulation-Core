@@ -26,7 +26,7 @@ public class Simulator extends Data implements Utilities {
 	private boolean isTimeMoving;
 	private long lastSetGameMillisMidnight;
 
-	public final Object2ObjectOpenHashMap<UUID, Client> clients = new Object2ObjectOpenHashMap<>();
+	public final ObjectArraySet<Client> clients = new ObjectArraySet<>();
 	public final String dimension;
 	public final String[] dimensions;
 
@@ -265,7 +265,7 @@ public class Simulator extends Data implements Utilities {
 			}
 
 			sidings.forEach(siding -> siding.simulateTrain(millisElapsed, vehiclePositions.get(siding.getTransportModeOrdinal())));
-			clients.forEach((clientId, client) -> client.sendUpdates(this));
+			clients.forEach(client -> client.sendUpdates(this));
 
 			if (autoSave) {
 				save(true);

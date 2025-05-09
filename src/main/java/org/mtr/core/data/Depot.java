@@ -82,7 +82,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	public void writePathCache() {
-		PathData.writePathCache(path, data);
+		PathData.writePathCache(path, data, transportMode);
 		savedRails.forEach(Siding::writePathCache);
 	}
 
@@ -187,6 +187,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		SidingPathFinder.findPathTick(path, sidingPathFinders, cruisingAltitude, () -> {
 			if (!platformsInRoute.isEmpty()) {
 				lastGeneratedFailedSidingCount = 0;
+				PathData.writePathCache(path, data, transportMode);
 				savedRails.forEach(siding -> {
 					siding.generateRoute(Utilities.getElement(platformsInRoute, 0).platform, repeatInfinitely ? null : Utilities.getElement(platformsInRoute, -1).platform, platformsInRoute.size(), cruisingAltitude);
 					generatingSidingIds.add(siding.getId());

@@ -91,7 +91,7 @@ public class Lift extends LiftSchema implements Utilities {
 		}
 
 		if (data instanceof Simulator) {
-			((Simulator) data).clients.values().forEach(client -> {
+			((Simulator) data).clients.forEach(client -> {
 				if (Utilities.isBetween(client.getPosition(), minPosition, maxPosition, client.getUpdateRadius())) {
 					client.update(this, needsUpdate);
 				}

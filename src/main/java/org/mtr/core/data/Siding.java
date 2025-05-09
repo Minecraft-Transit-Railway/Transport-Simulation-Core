@@ -511,8 +511,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	void writePathCache() {
-		PathData.writePathCache(pathSidingToMainRoute, data);
-		PathData.writePathCache(pathMainRouteToSiding, data);
+		PathData.writePathCache(pathSidingToMainRoute, data, transportMode);
+		PathData.writePathCache(pathMainRouteToSiding, data, transportMode);
 	}
 
 	long getRepeatInterval(long defaultAmount) {
@@ -554,6 +554,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			area.sidingPathGenerationFailed();
 		}
 		if (sidingPathFinderSidingToMainRoute.isEmpty() && sidingPathFinderMainRouteToSiding.isEmpty()) {
+			writePathCache();
 			generatePathDistancesAndTimeSegments();
 			if (area != null) {
 				area.finishGeneratingPath(id);
@@ -738,19 +739,33 @@ public final class Siding extends SidingSchema implements Utilities {
 				}
 
 				final PathData pathData = path.get(i);
-				final double railSpeed = pathData.getRail().canAccelerate() ? pathData.getSpeedLimitMetersPerMillisecond() : Math.max(speed, transportMode.defaultSpeedMetersPerMillisecond);
 				final double currentDistance = pathData.getEndDistance();
 
 				while (railProgress < currentDistance) {
 					final int speedChange;
-					if (speed > railSpeed || nextStoppingDistance - railProgress + 1 < 0.5 * speed * speed / deceleration) {
+					if (nextStoppingDistance - railProgress + 1 < 0.5 * speed * speed / deceleration) {
+						// Needs to stop ahead
 						speed = Math.max(speed - deceleration, deceleration);
 						speedChange = -1;
-					} else if (speed < railSpeed) {
-						speed = Math.min(speed + acceleration, railSpeed);
-						speedChange = 1;
 					} else {
-						speedChange = 0;
+						final double upcomingSlowerSpeed = getUpcomingSlowerSpeed(path, i, railProgress, speed, deceleration);
+						if (upcomingSlowerSpeed >= 0 && speed > upcomingSlowerSpeed) {
+							// Slower rail ahead
+							speed = Math.max(speed - deceleration, upcomingSlowerSpeed);
+							speedChange = -1;
+						} else {
+							// Check current rail speed
+							final double railSpeed = pathData.getSpeedLimitMetersPerMillisecond();
+							if (railSpeed < speed) {
+								speed = Math.max(speed - deceleration, railSpeed);
+								speedChange = -1;
+							} else if (railSpeed > speed) {
+								speed = Math.min(speed + acceleration, railSpeed);
+								speedChange = 1;
+							} else {
+								speedChange = 0;
+							}
+						}
 					}
 
 					if (timeSegments.isEmpty() || Utilities.getElement(timeSegments, -1).speedChange != speedChange) {
@@ -829,6 +844,38 @@ public final class Siding extends SidingSchema implements Utilities {
 	public static double roundAcceleration(double acceleration) {
 		final double tempAcceleration = Utilities.round(acceleration, 8);
 		return tempAcceleration <= 0 ? ACCELERATION_DEFAULT : Utilities.clamp(tempAcceleration, MIN_ACCELERATION, MAX_ACCELERATION);
+	}
+
+	/**
+	 * Finds an upcoming slower rail speed given the current position and speed. A new speed is only returned if the vehicle needs to slow down immediately.
+	 *
+	 * @return the new slower speed or -1 if no change
+	 */
+	public static double getUpcomingSlowerSpeed(ObjectList<PathData> path, int currentIndex, double railProgress, double currentSpeed, double deceleration) {
+		final double stoppingDistance = 0.5 * currentSpeed * currentSpeed / deceleration;
+		int index = currentIndex + 1;
+		double railSpeed = -1;
+		double bestDistance = 0;
+
+		while (true) {
+			final PathData pathData = Utilities.getElement(path, index);
+			if (pathData == null) {
+				return -1;
+			}
+
+			final double newRailSpeed = pathData.getSpeedLimitMetersPerMillisecond();
+			final double distance = pathData.getStartDistance() - railProgress;
+			if (newRailSpeed < currentSpeed && distance >= bestDistance && distance <= 0.5 * (currentSpeed * currentSpeed - newRailSpeed * newRailSpeed) / deceleration) {
+				railSpeed = newRailSpeed;
+				bestDistance = distance;
+			}
+
+			if (pathData.getEndDistance() >= railProgress + stoppingDistance) {
+				return railSpeed;
+			}
+
+			index++;
+		}
 	}
 
 	private static class RoutePlatformInfo {

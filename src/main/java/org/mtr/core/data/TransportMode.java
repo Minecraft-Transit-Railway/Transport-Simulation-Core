@@ -14,6 +14,7 @@ public enum TransportMode {
 	public final boolean hasPitchDescending;
 	public final boolean hasRouteTypeVariation;
 	public final int stoppingSpace;
+	public final long defaultSpeedKilometersPerHour;
 	public final double defaultSpeedMetersPerMillisecond;
 
 	TransportMode(int maxLength, boolean continuousMovement, boolean hasPitchAscending, boolean hasPitchDescending, boolean hasRouteTypeVariation, int stoppingSpace) {
@@ -23,6 +24,7 @@ public enum TransportMode {
 		this.hasPitchDescending = hasPitchDescending;
 		this.hasRouteTypeVariation = hasRouteTypeVariation;
 		this.stoppingSpace = stoppingSpace;
-		defaultSpeedMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(continuousMovement ? 2 : 20);
+		defaultSpeedKilometersPerHour = continuousMovement ? 2 : 20;
+		defaultSpeedMetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(defaultSpeedKilometersPerHour);
 	}
 }
