@@ -162,9 +162,11 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			elapsedDwellTime = 0;
 			speed = Siding.ACCELERATION_DEFAULT;
 			atoOverride = false;
+			vehicleExtraData.setSpeedTarget(speed);
 
 			// Next stopping index
 			nextStoppingIndexAto = nextStoppingIndexManual = vehicleExtraData.immutablePath.size() - 1;
+			vehicleExtraData.setStoppingPoint(vehicleExtraData.getTotalDistance());
 			for (int i = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress); i < vehicleExtraData.immutablePath.size(); i++) {
 				final PathData pathData = vehicleExtraData.immutablePath.get(i);
 				if (pathData.getDwellTime() > 0) {
@@ -173,10 +175,12 @@ public class Vehicle extends VehicleSchema implements Utilities {
 						// Find the next turnback
 						if (i < vehicleExtraData.immutablePath.size() - 1 && vehicleExtraData.immutablePath.get(i + 1).isOppositeRail(pathData)) {
 							nextStoppingIndexManual = i;
+							vehicleExtraData.setStoppingPoint(pathData.getEndDistance());
 							break;
 						}
 					} else {
 						nextStoppingIndexAto = nextStoppingIndexManual = i;
+						vehicleExtraData.setStoppingPoint(pathData.getEndDistance());
 						break;
 					}
 				}
