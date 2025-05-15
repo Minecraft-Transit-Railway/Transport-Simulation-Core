@@ -163,33 +163,12 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			speed = Siding.ACCELERATION_DEFAULT;
 			atoOverride = false;
 			vehicleExtraData.setSpeedTarget(speed);
-
-			// Next stopping index
-			nextStoppingIndexAto = nextStoppingIndexManual = vehicleExtraData.immutablePath.size() - 1;
-			vehicleExtraData.setStoppingPoint(vehicleExtraData.getTotalDistance());
-			for (int i = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress); i < vehicleExtraData.immutablePath.size(); i++) {
-				final PathData pathData = vehicleExtraData.immutablePath.get(i);
-				if (pathData.getDwellTime() > 0) {
-					if (vehicleExtraData.getIsManualAllowed()) {
-						nextStoppingIndexAto = Math.min(nextStoppingIndexAto, i);
-						// Find the next turnback
-						if (i < vehicleExtraData.immutablePath.size() - 1 && vehicleExtraData.immutablePath.get(i + 1).isOppositeRail(pathData)) {
-							nextStoppingIndexManual = i;
-							vehicleExtraData.setStoppingPoint(pathData.getEndDistance());
-							break;
-						}
-					} else {
-						nextStoppingIndexAto = nextStoppingIndexManual = i;
-						vehicleExtraData.setStoppingPoint(pathData.getEndDistance());
-						break;
-					}
-				}
-			}
+			setNextStoppingIndex();
 
 			// Calculate deviation speed adjustment
 			updateDeviation();
-			if (deviation > 0 && nextStoppingIndexManual < vehicleExtraData.immutablePath.size() - 1 && siding != null && siding.getDelayedVehicleSpeedIncreasePercentage() > 0) {
-				final double endRailProgress = vehicleExtraData.immutablePath.get((int) nextStoppingIndexManual).getEndDistance();
+			if (deviation > 0 && nextStoppingIndexAto < vehicleExtraData.immutablePath.size() - 1 && siding != null && siding.getDelayedVehicleSpeedIncreasePercentage() > 0) {
+				final double endRailProgress = vehicleExtraData.immutablePath.get((int) nextStoppingIndexAto).getEndDistance();
 				final double distance = endRailProgress - railProgress;
 				final double scheduledDuration = getTimeAlongRoute(endRailProgress) - getTimeAlongRoute(railProgress);
 				final double expectedDuration = Math.max(1, scheduledDuration - deviation);
@@ -275,6 +254,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> uuidToRemove.contains(vehicleRidingEntity.uuid));
 			vehicleExtraData.addRidingEntities(vehicleRidingEntitiesToAdd);
 		}
+	}
+
+	long getSidingDepartureTime() {
+		return sidingDepartureTime;
 	}
 
 	private void simulateInDepot() {
@@ -486,7 +469,8 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	private double getPathStoppingPoint() {
 		final double stoppingPointByStoppingIndex;
 		final PathData pathDataAto = Utilities.getElement(vehicleExtraData.immutablePath, (int) nextStoppingIndexAto);
-		final int nextStoppingIndex = (int) (isCurrentlyManual() || pathDataAto != null && railProgress > pathDataAto.getEndDistance() ? nextStoppingIndexManual : nextStoppingIndexAto);
+		final boolean pastAtoStoppingPoint = pathDataAto != null && railProgress > pathDataAto.getEndDistance();
+		final int nextStoppingIndex = (int) (isCurrentlyManual() || pastAtoStoppingPoint ? nextStoppingIndexManual : nextStoppingIndexAto);
 
 		if (nextStoppingIndex >= vehicleExtraData.immutablePath.size() - 1) {
 			// Set the stopping point to the end of the whole journey
@@ -494,6 +478,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		} else {
 			// Set the stopping point to the next expected platform or turnback
 			stoppingPointByStoppingIndex = vehicleExtraData.immutablePath.get(nextStoppingIndex).getEndDistance();
+		}
+
+		if (pastAtoStoppingPoint) {
+			setNextStoppingIndex();
 		}
 
 		return stoppingPointByStoppingIndex;
@@ -504,6 +492,29 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			Main.LOGGER.warn("Vehicle#isCurrentlyManual should only be called on the server side!");
 		}
 		return !atoOverride && manualCooldown > 0;
+	}
+
+	private void setNextStoppingIndex() {
+		nextStoppingIndexAto = nextStoppingIndexManual = vehicleExtraData.immutablePath.size() - 1;
+		vehicleExtraData.setStoppingPoint(vehicleExtraData.getTotalDistance());
+		for (int i = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress); i < vehicleExtraData.immutablePath.size(); i++) {
+			final PathData pathData = vehicleExtraData.immutablePath.get(i);
+			if (pathData.getDwellTime() > 0) {
+				if (vehicleExtraData.getIsManualAllowed()) {
+					nextStoppingIndexAto = Math.min(nextStoppingIndexAto, i);
+					// Find the next turnback
+					if (i < vehicleExtraData.immutablePath.size() - 1 && vehicleExtraData.immutablePath.get(i + 1).isOppositeRail(pathData)) {
+						nextStoppingIndexManual = i;
+						vehicleExtraData.setStoppingPoint(pathData.getEndDistance());
+						break;
+					}
+				} else {
+					nextStoppingIndexAto = nextStoppingIndexManual = i;
+					vehicleExtraData.setStoppingPoint(pathData.getEndDistance());
+					break;
+				}
+			}
+		}
 	}
 
 	/**

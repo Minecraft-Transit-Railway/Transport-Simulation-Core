@@ -297,8 +297,13 @@ public final class Siding extends SidingSchema implements Utilities {
 						visitedDepartureIndices.add(departureIndex);
 					}
 				}
+
+				if (getIsManual() && departures.isEmpty()) {
+					departures.add(vehicle.getSidingDepartureTime() - MILLIS_PER_DAY);
+				}
 			} else {
 				trainsAtDepot++;
+
 				if (trainsAtDepot > 1) {
 					trainsToRemove.add(vehicle);
 				} else if (!pathSidingToMainRoute.isEmpty() && !getIsManual()) {
@@ -312,6 +317,10 @@ public final class Siding extends SidingSchema implements Utilities {
 							vehicle.startUp(departureIndex, departures.getLong(departureIndex));
 						}
 					}
+				}
+
+				if (getIsManual()) {
+					departures.clear();
 				}
 			}
 		}
@@ -573,7 +582,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			final long timeAlongRoute = vehicleTimesAlongRoute.getOrDefault(departureIndex, -1);
 			predicted = timeAlongRoute >= 0;
 			final long repeatInterval = getRepeatInterval(MILLIS_PER_DAY);
-			deviation = predicted ? Utilities.circularDifference(currentMillis - repeatInterval * departureOffset - departures.getLong(departureIndex), timeAlongRoute, repeatInterval) : 0;
+			deviation = predicted ? Utilities.circularDifference(currentMillis - repeatInterval * departureOffset - departures.getLong(getIsManual() ? 0 : departureIndex), timeAlongRoute, repeatInterval) : 0;
 		}
 
 		return new BooleanLongImmutablePair(predicted, deviation);
@@ -598,7 +607,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				for (int departureIndex = 0; departureIndex < departures.size(); departureIndex++) {
 					final long departure = departures.getLong(departureIndex);
 					long departureOffset = (currentMillis - (transportMode.continuousMovement ? 0 : millsBefore) - repeatInterval / 2 - stopTime.endTime - departure) / repeatInterval + 1;
-					final BooleanLongImmutablePair predictedAndDeviation = getPredictedAndDeviation(currentMillis, departureIndex, departureOffset);
+					final BooleanLongImmutablePair predictedAndDeviation = getPredictedAndDeviation(currentMillis, getIsManual() ? -1 : departureIndex, departureOffset);
 					final boolean predicted = predictedAndDeviation.leftBoolean();
 					final long deviation = predictedAndDeviation.rightLong();
 
@@ -619,7 +628,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 						if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
 							break;
-						} else if (!transportMode.continuousMovement) {
+						} else if (!transportMode.continuousMovement && !getIsManual()) {
 							final boolean outOfRange = scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter;
 							final boolean missedDeparture = !predicted && scheduledArrivalTime - stopTime.startTime + MILLIS_PER_SECOND < currentMillis;
 							if (outOfRange || missedDeparture) {
@@ -627,9 +636,9 @@ public final class Siding extends SidingSchema implements Utilities {
 							}
 						}
 
-						arrivalConsumer.accept(trip, stopTime.tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset - 1);
+						arrivalConsumer.accept(trip, stopTime.tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, getIsManual() ? -1 : departureIndex, departureOffset - 1);
 
-						if (transportMode.continuousMovement) {
+						if (transportMode.continuousMovement || getIsManual()) {
 							break;
 						}
 					}
