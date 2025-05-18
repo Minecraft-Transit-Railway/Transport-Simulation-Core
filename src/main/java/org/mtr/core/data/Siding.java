@@ -100,7 +100,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		tick();
 		generatePathDistancesAndTimeSegments();
 		if (area != null && defaultPathData != null) {
-			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
+			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(area.getId(), id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
 		}
 		// Automatically clamp acceleration and deceleration values
 		setAcceleration(acceleration);
@@ -326,7 +326,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
-			vehicles.add(new Vehicle(VehicleExtraData.create(id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data));
+			vehicles.add(new Vehicle(VehicleExtraData.create(area.getId(), id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data));
 		}
 
 		if (!trainsToRemove.isEmpty()) {
@@ -628,11 +628,15 @@ public final class Siding extends SidingSchema implements Utilities {
 
 						if (scheduledArrivalTime > currentMillis + millisAfter + repeatInterval / 2) {
 							break;
-						} else if (!transportMode.continuousMovement && !getIsManual()) {
+						} else if (!transportMode.continuousMovement) {
 							final boolean outOfRange = scheduledDepartureTime + deviation < currentMillis - millsBefore || scheduledArrivalTime + deviation > currentMillis + millisAfter;
 							final boolean missedDeparture = !predicted && scheduledArrivalTime - stopTime.startTime + MILLIS_PER_SECOND < currentMillis;
 							if (outOfRange || missedDeparture) {
-								continue;
+								if (getIsManual()) {
+									break;
+								} else {
+									continue;
+								}
 							}
 						}
 

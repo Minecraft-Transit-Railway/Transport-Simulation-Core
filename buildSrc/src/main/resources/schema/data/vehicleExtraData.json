@@ -5,6 +5,9 @@
 		"SerializedDataBase"
 	],
 	"properties": {
+		"depotId": {
+			"type": "integer"
+		},
 		"sidingId": {
 			"type": "integer"
 		},
@@ -185,6 +188,7 @@
 		}
 	},
 	"required": [
+		"depotId",
 		"sidingId",
 		"railLength",
 		"totalVehicleLength",
