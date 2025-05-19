@@ -200,6 +200,11 @@ public final class Rail extends RailSchema {
 		return returnSet;
 	}
 
+	public void copySignalColors(Rail rail) {
+		signalColors.clear();
+		signalColors.addAll(rail.signalColors);
+	}
+
 	public void iteratePreBlockedSignalColors(LongConsumer consumer) {
 		preBlockedVehicleIds.keySet().forEach(consumer);
 	}

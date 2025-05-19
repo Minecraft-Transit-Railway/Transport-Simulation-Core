@@ -155,6 +155,9 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		} else if (isValid) {
 			if (isRail) {
 				dataSet.remove(existingData);
+				if (existingData instanceof Rail) {
+					((Rail) newData).copySignalColors((Rail) existingData);
+				}
 				dataSet.add(newData);
 				dataToUpdate.add(newData);
 			} else {
