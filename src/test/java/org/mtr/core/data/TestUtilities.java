@@ -214,7 +214,7 @@ public interface TestUtilities {
 	}
 
 	static VehicleRidingEntity randomVehicleRidingEntity() {
-		return new VehicleRidingEntity(UUID.randomUUID(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean());
+		return new VehicleRidingEntity(UUID.randomUUID(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean());
 	}
 
 	static Vehicle randomVehicle() {

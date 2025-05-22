@@ -37,6 +37,9 @@
 		},
 		"manualToggleAto": {
 			"type": "boolean"
+		},
+		"doorOverride": {
+			"type": "boolean"
 		}
 	},
 	"required": [
@@ -50,6 +53,7 @@
 		"manualAccelerate",
 		"manualBrake",
 		"manualToggleDoors",
-		"manualToggleAto"
+		"manualToggleAto",
+		"doorOverride"
 	]
 }

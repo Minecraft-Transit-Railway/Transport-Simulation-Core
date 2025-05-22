@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.booleans.BooleanBooleanImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -22,7 +23,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	private boolean oldDoorTarget;
 	private long oldPowerLevel;
 	private double oldSpeedTarget;
-	private double oldDelayedVehicleSpeedIncreasePercentage;
 	private boolean oldIsCurrentlyManual;
 	private boolean hasRidingEntityUpdate;
 
@@ -408,8 +408,21 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		}
 	}
 
-	boolean containsDriver() {
-		return ridingEntities.stream().anyMatch(VehicleRidingEntity::isDriver);
+	BooleanBooleanImmutablePair containsDriverAndDoorOverride() {
+		boolean containsDriver = false;
+		boolean doorOverride = false;
+		for (final VehicleRidingEntity vehicleRidingEntity : ridingEntities) {
+			if (vehicleRidingEntity.isDriver()) {
+				containsDriver = true;
+			}
+			if (vehicleRidingEntity.getDoorOverride()) {
+				doorOverride = true;
+			}
+			if (containsDriver && doorOverride) {
+				break;
+			}
+		}
+		return new BooleanBooleanImmutablePair(containsDriver, doorOverride);
 	}
 
 	void removeRidingEntitiesIf(Predicate<VehicleRidingEntity> predicate) {

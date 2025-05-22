@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import org.mtr.core.Main;
 import org.mtr.legacy.data.DataFixer;
+import org.mtr.libraries.org.msgpack.core.MessageTypeException;
 import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
 import org.mtr.libraries.org.msgpack.value.Value;
 
@@ -22,7 +23,7 @@ public final class MessagePackReader extends ReaderBase {
 		this.map = new Object2ObjectArrayMap<>();
 	}
 
-	public MessagePackReader(MessageUnpacker messageUnpacker) {
+	public MessagePackReader(MessageUnpacker messageUnpacker) throws MessageTypeException {
 		map = new Object2ObjectArrayMap<>();
 		try {
 			final int size = messageUnpacker.unpackMapHeader();
@@ -31,6 +32,9 @@ public final class MessagePackReader extends ReaderBase {
 			}
 		} catch (Exception e) {
 			Main.LOGGER.error("", e);
+			if (e instanceof MessageTypeException) {
+				throw (MessageTypeException) e;
+			}
 		}
 	}
 
