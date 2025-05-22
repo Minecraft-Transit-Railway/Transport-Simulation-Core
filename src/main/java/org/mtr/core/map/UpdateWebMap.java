@@ -3,7 +3,6 @@ package org.mtr.core.map;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.core.Main;
 import org.mtr.core.data.AreaBase;
-import org.mtr.core.data.Position;
 import org.mtr.core.data.SavedRailBase;
 import org.mtr.core.tool.Utilities;
 
@@ -40,19 +39,16 @@ public interface UpdateWebMap {
 
 	static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void iterateAreas(ObjectArraySet<T> areas, AreaCallback areaCallback) {
 		areas.forEach(area -> {
-			final int x1 = (int) area.getMinX();
-			final int z1 = (int) area.getMinZ();
-			final int x2 = (int) area.getMaxX();
-			final int z2 = (int) area.getMaxZ();
-			final Position center = area.getCenter();
-			if (center != null) {
-				areaCallback.areaCallback(area.getHexId() + "_" + System.currentTimeMillis(), Utilities.formatName(area.getName()), new Color(area.getColor()), x1, z1, x2, z2, (int) center.getX(), (int) center.getZ());
-			}
+			final double x1 = area.getMinX();
+			final double z1 = area.getMinZ();
+			final double x2 = area.getMaxX() + 1;
+			final double z2 = area.getMaxZ() + 1;
+			areaCallback.areaCallback(area.getHexId() + "_" + System.currentTimeMillis(), Utilities.formatName(area.getName()), new Color(area.getColor()), x1, z1, x2, z2, (x1 + x2) / 2, (z1 + z2) / 2);
 		});
 	}
 
 	@FunctionalInterface
 	interface AreaCallback {
-		void areaCallback(String id, String name, Color color, int areaCorner1X, int areaCorner1Z, int areaCorner2X, int areaCorner2Z, int areaX, int areaZ);
+		void areaCallback(String id, String name, Color color, double areaCorner1X, double areaCorner1Z, double areaCorner2X, double areaCorner2Z, double areaX, double areaZ);
 	}
 }
