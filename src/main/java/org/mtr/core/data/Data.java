@@ -4,6 +4,8 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
+import org.mtr.core.map.UpdateDynmap;
+import org.mtr.core.map.UpdateSquaremap;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.simulation.Simulator;
 
@@ -130,6 +132,21 @@ public abstract class Data {
 					}
 				});
 			});
+
+			if (this instanceof Simulator) {
+				try {
+					UpdateSquaremap.updateSquaremap((Simulator) this);
+				} catch (NoClassDefFoundError ignored) {
+				} catch (Exception e) {
+					Main.LOGGER.error("", e);
+				}
+				try {
+					UpdateDynmap.updateDynmap((Simulator) this);
+				} catch (NoClassDefFoundError ignored) {
+				} catch (Exception e) {
+					Main.LOGGER.error("", e);
+				}
+			}
 		} catch (Exception e) {
 			Main.LOGGER.error("", e);
 		}

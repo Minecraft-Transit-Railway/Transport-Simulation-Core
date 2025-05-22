@@ -11,6 +11,7 @@ version rootProject.properties.version
 
 repositories {
 	mavenCentral()
+	maven { url = "https://repo.mikeprimm.com/" }
 	flatDir { dirs "libs" }
 }
 
@@ -22,6 +23,9 @@ dependencies {
 	implementation "commons-io:commons-io:+"
 	implementation "org.apache.logging.log4j:log4j-core:2.+"
 	compileOnly "com.google.code.findbugs:jsr305:+"
+	compileOnly "xyz.jpenilla:squaremap-api:+"
+	compileOnly "net.kyori:adventure-api:+"
+	compileOnly "us.dynmap:DynmapCoreAPI:3.7-beta-6"
 	testImplementation "org.junit.jupiter:junit-jupiter-api:+"
 	testImplementation "org.junit.platform:junit-platform-launcher:+"
 	testImplementation "org.apache.httpcomponents:httpclient:+"

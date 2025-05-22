@@ -30,11 +30,10 @@ public final class MessagePackReader extends ReaderBase {
 			for (int i = 0; i < size; i++) {
 				DataFixer.readerBaseConvertKey(messageUnpacker.unpackString(), messageUnpacker.unpackValue(), map);
 			}
+		} catch (MessageTypeException e) {
+			throw e;
 		} catch (Exception e) {
 			Main.LOGGER.error("", e);
-			if (e instanceof MessageTypeException) {
-				throw (MessageTypeException) e;
-			}
 		}
 	}
 
