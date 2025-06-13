@@ -1,5 +1,6 @@
 package org.mtr.core.operation;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.mtr.core.data.*;
@@ -58,11 +59,18 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 		stations.forEach(station -> update(station, data.stations, data.stationIdMap.get(station.getId())));
 		platforms.forEach(platform -> update(platform, data.platforms, data.platformIdMap.get(platform.getId())));
 		sidings.forEach(siding -> update(siding, data.sidings, data.sidingIdMap.get(siding.getId())));
-		routes.forEach(route -> update(route, data.routes, data.routeIdMap.get(route.getId())));
+		final LongArrayList hiddenRouteIds = new LongArrayList();
+		routes.forEach(route -> {
+			update(route, data.routes, data.routeIdMap.get(route.getId()));
+			if (route.getHidden()) {
+				hiddenRouteIds.add(route.getId());
+			}
+		});
 		depots.forEach(depot -> update(depot, data.depots, data.depotIdMap.get(depot.getId())));
 		rails.forEach(rail -> update(rail, data.rails, data.railIdMap.get(rail.getHexId())));
 		if (data instanceof ClientData) {
 			simplifiedRoutes.forEach(simplifiedRoute -> update(simplifiedRoute, ((ClientData) data).simplifiedRoutes, ((ClientData) data).simplifiedRoutes.stream().filter(existingSimplifiedRoute -> existingSimplifiedRoute.getId() == simplifiedRoute.getId()).findFirst().orElse(null)));
+			((ClientData) data).simplifiedRoutes.removeIf(simplifiedRoute -> hiddenRouteIds.contains(simplifiedRoute.getId()));
 		}
 		data.sync();
 	}

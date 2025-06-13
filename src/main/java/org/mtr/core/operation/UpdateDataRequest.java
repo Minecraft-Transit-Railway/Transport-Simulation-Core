@@ -125,7 +125,10 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 
 		updateDataResponse.getStations().forEach(station -> station.savedRails.forEach(platform -> platform.routes.forEach(route -> SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), route))));
 		updateDataResponse.getPlatforms().forEach(platform -> platform.routes.forEach(route -> SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), route)));
-		updateDataResponse.getRoutes().forEach(route -> SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), route));
+		updateDataResponse.getRoutes().forEach(route -> {
+			SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), route);
+			route.getRoutePlatforms().forEach(routePlatformData -> routePlatformData.platform.routes.forEach(platformRoute -> SimplifiedRoute.addToList(updateDataResponse.getSimplifiedRoutes(), platformRoute)));
+		});
 
 		return updateDataResponse;
 	}

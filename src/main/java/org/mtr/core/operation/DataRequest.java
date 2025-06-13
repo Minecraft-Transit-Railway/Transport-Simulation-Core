@@ -121,7 +121,7 @@ public final class DataRequest extends DataRequestSchema {
 			}
 			addedPlatformIds.add(platform.getId());
 			platform.routes.forEach(route -> {
-				if (!addedRouteIds.contains(route.getId())) {
+				if (!route.getHidden() && !addedRouteIds.contains(route.getId())) {
 					if (existingSimplifiedRouteIds.contains(route.getId())) {
 						dataResponse.addRoute(route.getId());
 					} else {
