@@ -683,8 +683,8 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		final double value1;
 		final double value2;
 		final double clamp = Utilities.clamp(Math.min(Math.abs(clampedValue - lowerBound), Math.abs(clampedValue - railProgress)), 0.1, 1);
-		value1 = Utilities.clamp(clampedValue + (reversed ? -clamp : clamp), lowerBound, railProgress);
-		value2 = Utilities.clamp(clampedValue - (reversed ? -clamp : clamp), lowerBound, railProgress);
+		value1 = Utilities.clamp(clampedValue + (reversed ? -clamp : clamp), lowerBound, railProgress - 0.001);
+		value2 = Utilities.clamp(clampedValue - (reversed ? -clamp : clamp), lowerBound, railProgress - 0.001);
 		final Vector position1 = getPosition(value1, overrideY);
 		final Vector position2 = getPosition(value2, overrideY);
 		return position1 == null || position2 == null ? new ObjectObjectImmutablePair<>(new Vector(value1, 0, 0), new Vector(value2, 0, 0)) : new ObjectObjectImmutablePair<>(position1, position2);
