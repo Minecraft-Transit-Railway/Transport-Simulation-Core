@@ -1,17 +1,13 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from "@angular/core";
-import {MatSelectModule} from "@angular/material/select";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
-import {MatIcon} from "@angular/material/icon";
-import {MatTooltipModule} from "@angular/material/tooltip";
 import {ThemeService} from "../../service/theme.service";
+import {TooltipModule} from "primeng/tooltip";
 
 @Component({
 	selector: "app-route-display",
 	imports: [
-		MatSelectModule,
 		FormatColorPipe,
-		MatIcon,
-		MatTooltipModule,
+		TooltipModule,
 	],
 	templateUrl: "./route-display.component.html",
 	styleUrl: "./route-display.component.css",

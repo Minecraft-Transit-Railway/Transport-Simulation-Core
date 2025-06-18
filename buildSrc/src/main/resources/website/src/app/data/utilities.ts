@@ -17,7 +17,7 @@ export function pushIfNotExists(array: string[], element: string) {
 	}
 }
 
-export function setIfUndefined<T>(map: { [key: string]: T }, key: string, createInstance: () => T) {
+export function setIfUndefined<T>(map: Record<string, T>, key: string, createInstance: () => T) {
 	if (!(key in map)) {
 		map[key] = createInstance();
 	}
@@ -27,7 +27,7 @@ export function arrayAverage(array: number[]) {
 	return array.reduce((previousTotal, currentValue) => previousTotal + currentValue, 0) / array.length;
 }
 
-export function getFromArray<T>(map: { [key: string]: T }, key: string, consumer: (data: T) => void) {
+export function getFromArray<T>(map: Record<string, T>, key: string, consumer: (data: T) => void) {
 	if (key in map) {
 		consumer(map[key]);
 	}

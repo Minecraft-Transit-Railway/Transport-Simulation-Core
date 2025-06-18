@@ -1,20 +1,8 @@
-<mat-form-field subscriptSizing="dynamic">
-	<mat-label>{{ label }}</mat-label>
-	<input matInput type="search" aria-label="Search" [formControl]="searchBox" [matAutocomplete]="auto" (input)="onTextChanged()"/>
-</mat-form-field>
-
-<mat-autocomplete #auto="matAutocomplete">
-	@for (station of searchedStations$ | async; track $index) {
-		<mat-option (click)="onClickStation(station)">
-			<app-data-list-entry [icons]="station.icons" [title]="[station.name | formatName, '']" [subtitles]="[]" [color]="station.color | formatColor" [useLightColor]="false" [clickable]="false"/>
-		</mat-option>
-	}
-	@if (hasStations && hasRoutes) {
-		<mat-divider/>
-	}
-	@for (route of searchedRoutes$ | async; track $index) {
-		<mat-option (click)="onClickRoute(route)">
-			<app-data-list-entry [icons]="route.icons" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="[]" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="false"/>
-		</mat-option>
-	}
-</mat-autocomplete>
+<p-float-label variant="in" [formGroup]="parentFormGroup">
+	<p-auto-complete inputId="autocomplete" [formControlName]="childFormControlName" [forceSelection]="true" [suggestions]="data" [group]="true" [optionValue]="getName" [optionLabel]="getName" (completeMethod)="onTextChanged($event)" (onSelect)="onSelect($event)" (onClear)="textCleared.emit()" [showClear]="true" [fluid]="true">
+		<ng-template let-item #item>
+			<app-data-list-entry [icons]="item.value.icons" [title]="[item.value.name | formatName, item.value.number]" [subtitles]="[]" [color]="item.value.color | formatColor" [useLightColor]="false" [clickable]="false"/>
+		</ng-template>
+	</p-auto-complete>
+	<label for="autocomplete">{{ label }}</label>
+</p-float-label>

@@ -1,5 +1,6 @@
 import {Pipe, PipeTransform} from "@angular/core";
 import {Station} from "../entity/station";
+import {SearchData} from "../entity/searchData";
 
 @Pipe({
 	name: "simplifyStations",
@@ -8,7 +9,7 @@ import {Station} from "../entity/station";
 })
 export class SimplifyStationsPipe implements PipeTransform {
 
-	transform(stations: Station[]): { key: string, icons: string[], color: number, name: string, number: string }[] {
-		return stations.map(station => ({key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: ""}));
+	transform(stations: Station[]): SearchData[] {
+		return stations.map(station => ({key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: "", isStation: true}));
 	}
 }

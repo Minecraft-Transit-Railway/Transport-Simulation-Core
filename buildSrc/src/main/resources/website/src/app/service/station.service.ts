@@ -7,6 +7,7 @@ import {DimensionService} from "./dimension.service";
 import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
 import {Station} from "../entity/station";
+import {arrRemove} from "rxjs/internal/util/arrRemove";
 
 const REFRESH_INTERVAL = 3000;
 const MAX_ARRIVALS = 5;
@@ -30,7 +31,7 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 			maxCountPerPlatform: MAX_ARRIVALS,
 		})), (data: { currentTime: number, data: { arrivals: DataResponse[] } }) => {
 			this.arrivals.length = 0;
-			const routes: { [key: string]: { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string } } = {};
+			const routes: Record<string, { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }> = {};
 			this.hasTerminating = false;
 
 			data.data.arrivals.forEach(arrival => {
@@ -63,7 +64,7 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 
 	public setStation(stationId: string, zoomToStation: boolean) {
 		this.select(stationId);
-		const newRoutes: { [key: string]: { name: string, variations: string[], number: string, color: number, typeIcon: string } } = {};
+		const newRoutes: Record<string, { name: string, variations: string[], number: string, color: number, typeIcon: string }> = {};
 		this.dataService.routes.forEach(({name, number, color, type, routePlatforms}) => {
 			if (routePlatforms.some(routePlatform => routePlatform.station.id === this.getSelectedData()?.id)) {
 				const key = SimplifyRoutesPipe.getRouteKey({name, number, color});
@@ -100,7 +101,7 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 	public getArrivals() {
 		const newArrivals: Arrival[] = [];
 		this.arrivals.forEach(arrival => {
-			if (newArrivals.length < 10 && (arrival.isContinuous || arrival.getDepartureTime() >= 0) && (this.filterArrivalRoutes.length == 0 || this.filterArrivalRoutes.includes(arrival.key)) && (this.filterArrivalShowTerminating || !arrival.isTerminating)) {
+			if (newArrivals.length < 10 && (arrival.isContinuous || arrival.getDepartureTime() >= 0) && (this.filterArrivalRoutes.length === 0 || this.filterArrivalRoutes.includes(arrival.key)) && (this.filterArrivalShowTerminating || !arrival.isTerminating)) {
 				newArrivals.push(arrival);
 			}
 		});
@@ -111,10 +112,19 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 		return this.hasTerminating;
 	}
 
-	public updateArrivalFilter(filterArrivalRoutes: string[], filterArrivalShowTerminating: boolean) {
-		this.resetArrivalFilter();
-		filterArrivalRoutes.forEach(routeKey => this.filterArrivalRoutes.push(routeKey));
+	public updateArrivalFilter(filterArrivalShowTerminating: boolean, toggleRouteKey?: string) {
+		if (toggleRouteKey) {
+			if (this.filterArrivalRoutes.includes(toggleRouteKey)) {
+				arrRemove(this.filterArrivalRoutes, toggleRouteKey);
+			} else {
+				this.filterArrivalRoutes.push(toggleRouteKey);
+			}
+		}
 		this.filterArrivalShowTerminating = filterArrivalShowTerminating;
+	}
+
+	public routeFiltered(routeKey: string) {
+		return this.filterArrivalRoutes.includes(routeKey);
 	}
 
 	public resetArrivalFilter() {
@@ -160,8 +170,8 @@ export class Arrival {
 	readonly departure: number;
 	readonly isContinuous: boolean;
 	readonly key: string;
-	private arrivalDifference: number = 0;
-	private departureDifference: number = 0;
+	private arrivalDifference = 0;
+	private departureDifference = 0;
 
 	constructor(dataService: MapDataService, timeOffset: number, dataResponse: DataResponse) {
 		this.destination = dataResponse.destination;
@@ -173,7 +183,7 @@ export class Arrival {
 		this.routeNumber = dataResponse.routeNumber;
 		this.routeColor = dataResponse.routeColor;
 		const tempRouteType = dataService.routes.find(route => route.name === dataResponse.routeName)?.type;
-		this.routeTypeIcon = tempRouteType == undefined ? "" : ROUTE_TYPES[tempRouteType].icon;
+		this.routeTypeIcon = tempRouteType === undefined ? "" : ROUTE_TYPES[tempRouteType].icon;
 		this.circularState = dataResponse.circularState;
 		this.platformName = dataResponse.platformName;
 		this.cars = dataResponse.cars.map(car => car.vehicleId);

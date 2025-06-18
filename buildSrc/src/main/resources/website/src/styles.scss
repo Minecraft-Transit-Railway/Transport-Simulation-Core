@@ -1,31 +1,29 @@
+@use "primeicons/primeicons.css";
+
 * {
+	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
 	margin: 0;
 	padding: 0;
 	user-select: none;
+	--p-drawer-content-padding: 0;
+	--p-tabs-tabpanel-padding: 0;
+}
+
+:root {
+	--background-color: var(--p-surface-50);
+	--light-color: var(--p-surface-400);
+}
+
+:root.dark-theme {
+	--background-color: var(--p-surface-950);
+	--light-color: var(--p-surface-600);
 }
 
 html, body {
-	background: var(--mat-sys-surface);
-	color: var(--mat-sys-on-surface);
+	background: var(--background-color);
 	overflow: hidden;
 	width: 100%;
 	height: 100%;
-}
-
-div {
-	font-family: "Noto Sans", "Noto Serif TC", "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", sans-serif;
-}
-
-.light-theme {
-	color-scheme: light;
-}
-
-.dark-theme {
-	color-scheme: dark;
-}
-
-.grayscale {
-	filter: grayscale(1);
 }
 
 .column {
@@ -101,6 +99,11 @@ div {
 	padding-right: 0.5em;
 }
 
-mat-icon {
-	min-width: 1em;
+.clickable {
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.clickable:hover {
+	background: var(--p-button-text-primary-hover-background);
 }

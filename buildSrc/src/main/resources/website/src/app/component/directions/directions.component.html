@@ -1,37 +1,39 @@
-<div class="column wrapper">
-	<div class="column gap padding-sides">
+<div class="column wrapper" [formGroup]="formGroup">
+	<div class="column padding-sides">
 		<div class="row gap-small center">
-			<div class="column gap spacing">
-				<app-search #startStationSearch label="Start Station" [includeRoutes]="false" [setText]="setStartStationText" (stationClicked)="onClickStation($event, true)" (textCleared)="onClickStation(undefined, true)"/>
-				<app-search #endStationSearch label="End Station" [includeRoutes]="false" [setText]="setEndStationText" (stationClicked)="onClickStation($event, false)" (textCleared)="onClickStation(undefined, false)"/>
+			<div class="column gap-small spacing">
+				<app-search label="Start Station" [parentFormGroup]="formGroup" childFormControlName="startStation" [includeRoutes]="false" (stationClicked)="onClickStation($event, true)" (textCleared)="onClickStation(undefined, true)"/>
+				<app-search label="End Station" [parentFormGroup]="formGroup" childFormControlName="endStation" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (textCleared)="onClickStation(undefined, false)"/>
 			</div>
-			<button mat-icon-button (click)="swapStations(startStationSearch, endStationSearch)" [disabled]="!startStationSearch.getText() && !endStationSearch.getText()" matTooltip="Swap Stations">
-				<mat-icon>swap_vert</mat-icon>
-			</button>
+			<p-button icon="pi pi-arrow-right-arrow-left" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" pTooltip="Swap Stations"/>
 		</div>
-		<mat-divider/>
-		<mat-form-field subscriptSizing="dynamic">
-			<mat-label>Maximum Walking Distance (m)</mat-label>
-			<input matInput #maxWalkingDistance type="number" aria-label="Maximum Walking Distance (m)" min="0" max="1000000000" [value]="getDefaultMaxWalkingDistance()" (input)="updateMaxWalkingDistance(maxWalkingDistance.value)"/>
-		</mat-form-field>
-		<div class="row gap center">
-			<mat-checkbox class="grayscale spacing" #refresh [formControl]="automaticRefresh">Automatic Refresh</mat-checkbox>
-			<button mat-icon-button (click)="refreshDirections()" [disabled]="refresh.checked || !isValid()" matTooltip="Refresh Directions">
-				<mat-icon>refresh</mat-icon>
-			</button>
+		<p-divider/>
+		<div class="column gap-small">
+			<p-float-label variant="in">
+				<p-input-number inputId="max-walking-distance" formControlName="maxWalkingDistance" min="0" max="1000000000" (onInput)="updateMaxWalkingDistance()" [fluid]="true"/>
+				<label for="max-walking-distance">Maximum Walking Distance (m)</label>
+			</p-float-label>
+			<div class="row center">
+				<div class="row gap-small center">
+					<p-checkbox inputId="refresh" [binary]="true" formControlName="automaticRefresh"/>
+					<label for="refresh">Automatic Refresh</label>
+				</div>
+				<div class="spacing"></div>
+				<p-button icon="pi pi-refresh" [rounded]="true" [text]="true" (click)="refreshDirections()" [disabled]="cannotManuallyRefresh()" pTooltip="Refresh Directions"/>
+			</div>
 		</div>
 	</div>
 	@if (isLoading()) {
 		<div class="column center wrapper">
 			<div class="spacing"></div>
-			<mat-spinner class="grayscale"/>
+			<p-progress-spinner/>
 			<div class="spacing"></div>
 		</div>
 	} @else {
 		@if (isValid() && getDirections().length === 0) {
 			<div class="column center wrapper">
 				<div class="spacing"></div>
-				<mat-icon class="big-icon">remove_road</mat-icon>
+				<div class="material-icons big-icon">remove_road</div>
 				<div>No directions found.</div>
 				<div class="spacing"></div>
 			</div>
@@ -49,7 +51,7 @@
 							<div class="row center">
 								<app-data-list-entry class="spacing" [icons]="[getCircularIcon(direction.route)]" [title]="[getRouteName(direction.route), '']" [subtitles]="[[getRouteDestination(direction.route), '']]" [useLightColor]="true" [clickable]="false"/>
 								<div class="row center gray">
-									<mat-icon inline>schedule</mat-icon>
+									<div class="material-icons">schedule</div>
 									<div>&nbsp;{{ getDuration(direction) }}</div>
 								</div>
 							</div>
@@ -57,7 +59,7 @@
 							<div class="row center">
 								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getDistanceLabel(direction), '']" [subtitles]="[]" [useLightColor]="true" [clickable]="false"/>
 								<div class="row center gray">
-									<mat-icon inline>schedule</mat-icon>
+									<div class="material-icons">schedule</div>
 									<div>&nbsp;{{ getDuration(direction) }}</div>
 								</div>
 							</div>
@@ -65,14 +67,18 @@
 					</app-route-display>
 					@if (direction.intermediateRoutePlatforms.length > 0) {
 						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[]">
-							<mat-expansion-panel class="expansion-panel-margin">
-								<mat-expansion-panel-header>{{ direction.intermediateRoutePlatforms.length }} intermediate station{{ direction.intermediateRoutePlatforms.length > 1 ? 's' : '' }}</mat-expansion-panel-header>
-								<div class="column gap-small">
-									@for (intermediateRoutePlatform of direction.intermediateRoutePlatforms; track $index) {
-										<div>{{ intermediateRoutePlatform.station.name | formatName }}</div>
-									}
-								</div>
-							</mat-expansion-panel>
+							<p-accordion [multiple]="true" value="0">
+								<p-accordion-panel>
+									<p-accordion-header>{{ direction.intermediateRoutePlatforms.length }} intermediate station{{ direction.intermediateRoutePlatforms.length > 1 ? 's' : '' }}</p-accordion-header>
+									<p-accordion-content>
+										<div class="column gap-small">
+											@for (intermediateRoutePlatform of direction.intermediateRoutePlatforms; track $index) {
+												<div>{{ intermediateRoutePlatform.station.name | formatName }}</div>
+											}
+										</div>
+									</p-accordion-content>
+								</p-accordion-panel>
+							</p-accordion>
 						</app-route-display>
 					}
 					@if ($index === $count - 1) {

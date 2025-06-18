@@ -8,11 +8,19 @@ export class ThemeService {
 
 	constructor(private readonly mapDataService: MapDataService) {
 		this.darkTheme = getCookie("dark_theme") === "true";
+		this.setTheme(this.darkTheme);
 	}
 
 	public setTheme(isDarkTheme: boolean) {
 		this.darkTheme = isDarkTheme;
 		setCookie("dark_theme", isDarkTheme.toString());
+
+		const element = document.querySelector("html");
+		if (element) {
+			element.classList.add(isDarkTheme ? "dark-theme" : "light-theme");
+			element.classList.remove(isDarkTheme ? "light-theme" : "dark-theme");
+		}
+
 		setTimeout(() => this.mapDataService.drawMap.emit(), 0);
 	}
 

@@ -24,17 +24,16 @@ export abstract class DataServiceBase<T> {
 		const observable = this.sendData();
 		if (observable) {
 			const currentId = this.formatId();
-			const instance = this;
 			observable.pipe(catchError(error => {
-				if (currentId == instance.formatId()) {
+				if (currentId === this.formatId()) {
 					console.error(error);
-					instance.scheduleData();
+					this.scheduleData();
 				} else {
 					console.log("skipped");
 				}
 				return EMPTY;
 			})).subscribe(data => {
-				if (currentId == this.formatId()) {
+				if (currentId === this.formatId()) {
 					this.loading = false;
 					this.processData(data);
 					this.dataProcessed.emit();
@@ -48,8 +47,7 @@ export abstract class DataServiceBase<T> {
 
 	private scheduleData() {
 		clearTimeout(this.timeoutId);
-		const instance = this;
-		this.timeoutId = setTimeout(() => instance.getDataInternal(), this.refreshInterval) as unknown as number;
+		this.timeoutId = setTimeout(() => this.getDataInternal(), this.refreshInterval) as unknown as number;
 	}
 
 	private formatId() {

@@ -1,31 +1,33 @@
 import {Component, EventEmitter, Output} from "@angular/core";
-import {MatSelectModule} from "@angular/material/select";
 import {RouteKeyService, RouteVariationService} from "../../service/route.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
-import {MatIconModule} from "@angular/material/icon";
-import {MatTooltipModule} from "@angular/material/tooltip";
 import {ROUTE_TYPES} from "../../data/routeType";
-import {MatCheckbox} from "@angular/material/checkbox";
 import {TitleComponent} from "../title/title.component";
-import {MatDividerModule} from "@angular/material/divider";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {TooltipModule} from "primeng/tooltip";
+import {CheckboxModule} from "primeng/checkbox";
+import {DividerModule} from "primeng/divider";
+import {SelectModule} from "primeng/select";
+import {FloatLabelModule} from "primeng/floatlabel";
+import {FormsModule} from "@angular/forms";
 
 @Component({
 	selector: "app-route-panel",
 	imports: [
-		MatSelectModule,
+		FloatLabelModule,
+		SelectModule,
+		CheckboxModule,
+		DividerModule,
+		TooltipModule,
 		FormatNamePipe,
+		FormatTimePipe,
 		RouteDisplayComponent,
 		DataListEntryComponent,
-		FormatTimePipe,
-		MatIconModule,
-		MatTooltipModule,
-		MatCheckbox,
 		TitleComponent,
-		MatDividerModule,
+		FormsModule,
 	],
 	templateUrl: "./route-panel.component.html",
 	styleUrl: "./route-panel.component.css",
@@ -34,24 +36,24 @@ export class RoutePanelComponent {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<void>();
-	protected dropdownValue = "";
+	protected dropdownValue?: { name: string; id: string; };
 
 	constructor(private readonly routeVariationService: RouteVariationService, private readonly routeKeyService: RouteKeyService, private readonly formatTimePipe: FormatTimePipe) {
 		routeKeyService.selectionChanged.subscribe(() => {
-			this.dropdownValue = Math.random().toString();
-			setTimeout(() => this.dropdownValue = "id_0", 0);
+			this.dropdownValue = {name: Math.random().toString(), id: Math.random().toString()};
+			setTimeout(() => {
+				const dropdownRoutes = this.getDropdownRoutes();
+				this.dropdownValue = dropdownRoutes ? dropdownRoutes[0] : undefined;
+			}, 0);
 		});
 	}
 
-	getNames() {
-		return this.routeVariationService.getNames().map(name => name.split("||")[1] ?? "(Untitled)");
+	getDropdownRoutes() {
+		return this.routeKeyService.getSelectedData()?.map(route => ({name: route.name.split("||")[1] ?? "(Untitled)", id: route.id}));
 	}
 
 	selectRoute(id: string) {
-		const routeVariations = this.routeKeyService.getSelectedData();
-		if (routeVariations) {
-			this.routeVariationService.select(routeVariations[parseInt(id.split("_")[1])].id);
-		}
+		this.routeVariationService.select(id);
 	}
 
 	getRouteName() {
@@ -71,7 +73,7 @@ export class RoutePanelComponent {
 
 	getRouteDepots() {
 		const route = this.routeVariationService.getSelectedData();
-		return route ? route.depots : [];
+		return route ? [...new Set(route.depots)].sort() : [];
 	}
 
 	getVehicleIcons(vehicles: { deviation: number, percentage: number }[], displayHeight: number) {

@@ -22,8 +22,8 @@
 			<div class="circle" [style.border-color]="isDarkTheme() ? 'white' : 'black'" [style.background-color]="isDarkTheme() ? 'black' : 'white'"></div>
 		}
 		@for (icon of icons; track $index) {
-			<div [class]="'icon ' + (icon.offset === 0 ? '' : 'light')" [style.top]="(icon.offset + getHeight() / 2 - 12) + 'px'" [matTooltip]="icon.tooltip">
-				<mat-icon>{{ icon.icon }}</mat-icon>
+			<div [class]="'icon ' + (icon.offset === 0 ? '' : 'light')" [style.top]="(icon.offset + getHeight() / 2 - 12) + 'px'" [pTooltip]="icon.tooltip" tooltipPosition="left">
+				<div class="material-icons">{{ icon.icon }}</div>
 			</div>
 		}
 	</div>

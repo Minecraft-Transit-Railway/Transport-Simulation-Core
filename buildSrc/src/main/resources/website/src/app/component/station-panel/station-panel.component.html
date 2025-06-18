@@ -2,73 +2,79 @@
 	<div class="column gap padding-sides">
 		<app-title [name]="getStation()?.name ?? ''" [color]="getStationColor()"/>
 		<div class="row gap-small center">
-			<div class="row gap center" matTooltip="Location">
-				<mat-icon>my_location</mat-icon>
+			<div class="row gap center" pTooltip="Location" tooltipPosition="left">
+				<div class="material-icons">my_location</div>
 				<div>({{ getCoordinatesText() }})</div>
 			</div>
 			<div class="row center">
-				<button mat-icon-button (click)="copyLocation(copyIconButton)" matTooltip="Copy Location">
-					<mat-icon #copyIconButton>content_copy</mat-icon>
-				</button>
-				<button mat-icon-button (click)="focus()" matTooltip="Focus on Map">
-					<mat-icon>filter_center_focus</mat-icon>
-				</button>
+				<p-button #copyIconButton icon="pi pi-copy" [rounded]="true" [text]="true" (click)="copyLocation(copyIconButton)" pTooltip="Copy Location" tooltipPosition="bottom"/>
+				<p-button icon="pi pi-expand" [rounded]="true" [text]="true" (click)="focus()" pTooltip="Focus on Map" tooltipPosition="bottom"/>
 			</div>
 		</div>
 		<div class="row gap center">
-			<div class="row gap center" matTooltip="Fare Zones">
-				<mat-icon>sell</mat-icon>
+			<div class="row gap center" pTooltip="Fare Zones" tooltipPosition="left">
+				<div class="material-icons">sell</div>
 				<div>({{ getZoneText() }})</div>
 			</div>
 		</div>
 		<div class="row center">
-			<mat-icon matTooltip="Directions">directions</mat-icon>
-			<button mat-button (click)="openDirections(true)">Start</button>
-			<button mat-button (click)="openDirections(false)">End</button>
+			<div class="material-icons" pTooltip="Directions" tooltipPosition="left">directions</div>
+			<p-button label="Start" variant="text" (click)="openDirections(true)"/>
+			<p-button label="End" variant="text" (click)="openDirections(false)"/>
 		</div>
 	</div>
 
-	<mat-tab-group class="wrapper" (selectedTabChange)="resetArrivalFilter()">
-		<mat-tab label="Arrivals">
-			<ng-template matTabContent>
+	<p-tabs class="wrapper" (valueChange)="resetArrivalFilter()" value="0">
+		<p-tablist>
+			<p-tab value="0">Arrivals</p-tab>
+			<p-tab value="1">Routes</p-tab>
+			@if (getConnections().length > 0) {
+				<p-tab value="2">Connections</p-tab>
+			}
+		</p-tablist>
+
+		<p-tabpanels class="wrapper">
+			<p-tabpanel value="0">
 				@if (isLoading()) {
 					<div class="column gap center">
 						<div></div>
 						<div></div>
-						<mat-spinner class="grayscale"/>
+						<p-progress-spinner/>
 					</div>
 				} @else {
-					<div class="column gap-small padding-top-bottom padding-sides content">
-						<mat-chip-listbox class="chip" #chipList aria-label="Routes" multiple>
+					<div class="column gap padding-top-bottom padding-sides content">
+						<div class="chips gap-small">
 							@for (route of getActiveRoutes(); track $index) {
-								<mat-chip-option [style.box-shadow]="'0 0 0 2px ' + (route.color | formatColor) + ' inset'" [style.height]="(route.textLineCount + 1) + 'em'" [id]="route.key" (selectionChange)="updateArrivalFilter(chipList, showTerminatingCheckbox.checked)">
+								<div class="row center chip clickable" [style.box-shadow]="'inset 0 0 0 ' + (routeFiltered(route.key) ? 4 : 2) + 'px ' + (route.color | formatColor)" (click)="updateArrivalFilter(showTerminatingCheckbox.checked, route.key)">
 									<div class="row gap-small center">
-										<mat-icon>{{ route.typeIcon }}</mat-icon>
+										<div class="material-icons">{{ route.typeIcon }}</div>
 										<div class="column chip-text">
 											@for (name of route.name | splitName; track $index) {
 												<div>{{ name.text }}</div>
 											}
 										</div>
-										@if (route.number !== '') {
-											<mat-divider vertical [style.height]="route.textLineCount + 'em'"/>
-										}
-										@if (route.number !== '') {
-											<div class="column chip-text">
-												@for (number of route.number | splitName; track $index) {
-													<div>{{ number.text }}</div>
-												}
-											</div>
-										}
 									</div>
-								</mat-chip-option>
+									@if (route.number !== '') {
+										<p-divider layout="vertical" [style.height]="route.textLineCount + 'em'"/>
+										<div class="column chip-text">
+											@for (number of route.number | splitName; track $index) {
+												<div>{{ number.text }}</div>
+											}
+										</div>
+									}
+								</div>
 							}
-						</mat-chip-listbox>
-						<mat-checkbox class="grayscale" #showTerminatingCheckbox [style.display]="getHasTerminating() ? '' : 'none'" (change)="updateArrivalFilter(chipList, showTerminatingCheckbox.checked)">Show Terminating</mat-checkbox>
+						</div>
+
+						<div class="row gap-small center" [style.display]="getHasTerminating() ? '' : 'none'">
+							<p-checkbox #showTerminatingCheckbox inputId="showTerminatingCheckbox" [binary]="true" (onChange)="updateArrivalFilter(showTerminatingCheckbox.checked)"/>
+							<label for="showTerminatingCheckbox">Show Terminating</label>
+						</div>
 
 						<div class="column">
 							@for (arrival of getArrivals(); track $index) {
 								<div class="column">
-									<mat-divider/>
+									<p-divider class="small-divider"/>
 									<app-data-list-entry [icons]="[arrival.routeTypeIcon, getCircularStateIcon(arrival.circularState)]" [title]="[arrival.destination | formatName, arrival.getArrivalTime() | formatTime : 'Arrived']" [subtitles]="[
 										[(arrival.routeName | formatName) + ' ' + (arrival.routeNumber | formatName), arrival.isContinuous ? 'Every 8 Seconds' : arrival.arrival | formatDate],
 										['Platform ' + arrival.platformName, arrival.isContinuous ? '' : (arrival.getDeviation() | formatTime :'') + ' ' + arrival.getDeviationString()]
@@ -78,40 +84,57 @@
 						</div>
 					</div>
 				}
-			</ng-template>
-		</mat-tab>
+			</p-tabpanel>
 
-		<mat-tab label="Routes">
-			<ng-template matTabContent>
-				<div class="column gap-small padding-top-bottom padding-sides content">
-					<mat-checkbox class="grayscale" #showDetailsCheckbox>Show Details</mat-checkbox>
+			<p-tabpanel value="1">
+				<div class="column gap padding-top-bottom padding-sides content">
+					<div class="row gap-small center">
+						<p-checkbox #showDetailsCheckbox inputId="showDetailsCheckbox" [binary]="true"/>
+						<label for="showDetailsCheckbox">Show Details</label>
+					</div>
 					<div class="column">
 						@for (route of getRoutes(); track $index) {
 							<div class="column">
-								<mat-divider/>
+								<p-divider class="small-divider"/>
 								<app-data-list-entry [icons]="[route.typeIcon, '']" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
 							</div>
 						}
 					</div>
 				</div>
-			</ng-template>
-		</mat-tab>
+			</p-tabpanel>
 
-		@if (getConnections().length > 0) {
-			<mat-tab label="Connections">
-				<ng-template matTabContent>
+			@if (getConnections().length > 0) {
+				<p-tabpanel value="2">
 					<div class="column padding-top-bottom padding-sides content">
 						@for (connection of getConnections(); track $index) {
 							<div class="column">
 								@if ($index > 0) {
-									<mat-divider/>
+									<p-divider class="small-divider"/>
 								}
 								<app-data-list-entry [icons]="connection.getIcons()" [title]="[connection.name | formatName, '']" [subtitles]="[]" [color]="connection.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(connection.id)"/>
 							</div>
 						}
 					</div>
-				</ng-template>
-			</mat-tab>
-		}
-	</mat-tab-group>
+				</p-tabpanel>
+			}
+		</p-tabpanels>
+	</p-tabs>
 </div>
+
+<p-dialog header="Arrival Details" [visible]="!!dialogData" [modal]="true" [dismissableMask]="true">
+	<div class="column gap">
+		<div class="column">
+			<div class="title">Departure Index</div>
+			<div>{{ dialogData?.departureIndex }}</div>
+		</div>
+		<div class="column">
+			<div class="title">{{ dialogData?.cars?.length }}-Car Vehicle</div>
+			@for (car of dialogData?.cars; track $index) {
+				<div>{{ car }}</div>
+			}
+		</div>
+	</div>
+	<ng-template #footer>
+		<p-button label="Close" (click)="dialogData = undefined"/>
+	</ng-template>
+</p-dialog>
