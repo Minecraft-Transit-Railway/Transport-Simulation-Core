@@ -336,15 +336,16 @@ public class Vehicle extends VehicleSchema implements Utilities {
 				}
 
 				final long deviationAdjustment;
-				if (siding != null && elapsedDwellTime >= DOOR_DELAY + DOOR_MOVE_TIME && elapsedDwellTime < doorCloseTime) {
+				if (siding != null && elapsedDwellTime >= DOOR_DELAY + DOOR_MOVE_TIME && elapsedDwellTime < doorCloseTime && deviation != 0) {
 					if (deviation > 0) {
 						// If delayed
 						deviationAdjustment = Math.min(deviation, (doorCloseTime - elapsedDwellTime) * siding.getDelayedVehicleReduceDwellTimePercentage() / 100);
+						deviation = 0;
 					} else {
 						// If early
 						deviationAdjustment = siding.getEarlyVehicleIncreaseDwellTime() ? Math.max(deviation, -millisElapsed) : 0;
+						deviation -= deviationAdjustment;
 					}
-					deviation -= deviationAdjustment;
 				} else {
 					deviationAdjustment = 0;
 				}
