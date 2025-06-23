@@ -5,6 +5,7 @@
 			<p-select inputId="dropdown" formControlName="dimension" [options]="getDimensions()" (onChange)="setDimension()" [fluid]="true"/>
 			<label for="dropdown">Dimension</label>
 		</p-float-label>
+		<p-button icon="pi pi-directions" label="Find Directions" severity="secondary" (click)="directionsOpened.emit()" [fluid]="true"/>
 	</div>
 	<div class="column content">
 		<div class="column padding-sides">
@@ -26,12 +27,6 @@
 				</div>
 			}
 			<p-divider/>
-			<div>
-				<p-button (click)="directionsOpened.emit()">
-					<div class="material-icons">directions</div>
-					Directions
-				</p-button>
-			</div>
 		</div>
 		<div class="spacing"></div>
 		<div class="row gap-small center padding-sides padding-top-bottom">

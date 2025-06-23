@@ -8,23 +8,26 @@ export class ThemeService {
 
 	constructor(private readonly mapDataService: MapDataService) {
 		this.darkTheme = getCookie("dark_theme") === "true";
-		this.setTheme(this.darkTheme);
+		this.setElementTag();
 	}
 
 	public setTheme(isDarkTheme: boolean) {
 		this.darkTheme = isDarkTheme;
-		setCookie("dark_theme", isDarkTheme.toString());
-
-		const element = document.querySelector("html");
-		if (element) {
-			element.classList.add(isDarkTheme ? "dark-theme" : "light-theme");
-			element.classList.remove(isDarkTheme ? "light-theme" : "dark-theme");
-		}
-
+		this.setElementTag();
 		setTimeout(() => this.mapDataService.drawMap.emit(), 0);
 	}
 
 	public isDarkTheme() {
 		return this.darkTheme;
+	}
+
+	private setElementTag() {
+		setCookie("dark_theme", this.darkTheme.toString());
+
+		const element = document.querySelector("html");
+		if (element) {
+			element.classList.add(this.darkTheme ? "dark-theme" : "light-theme");
+			element.classList.remove(this.darkTheme ? "light-theme" : "dark-theme");
+		}
 	}
 }

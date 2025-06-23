@@ -1,4 +1,4 @@
-import {catchError, EMPTY, Observable} from "rxjs";
+import {Observable} from "rxjs";
 import {DimensionService} from "./dimension.service";
 import {EventEmitter} from "@angular/core";
 
@@ -24,23 +24,25 @@ export abstract class DataServiceBase<T> {
 		const observable = this.sendData();
 		if (observable) {
 			const currentId = this.formatId();
-			observable.pipe(catchError(error => {
-				if (currentId === this.formatId()) {
-					console.error(error);
-					this.scheduleData();
-				} else {
-					console.log("skipped");
-				}
-				return EMPTY;
-			})).subscribe(data => {
-				if (currentId === this.formatId()) {
-					this.loading = false;
-					this.processData(data);
-					this.dataProcessed.emit();
-					this.scheduleData();
-				} else {
-					console.log("skipped");
-				}
+			observable.subscribe({
+				next: data => {
+					if (currentId == this.formatId()) {
+						this.loading = false;
+						this.processData(data);
+						this.dataProcessed.emit();
+						this.scheduleData();
+					} else {
+						console.log("skipped");
+					}
+				},
+				error: error => {
+					if (currentId == this.formatId()) {
+						console.error(error);
+						this.scheduleData();
+					} else {
+						console.log("skipped");
+					}
+				},
 			});
 		}
 	}

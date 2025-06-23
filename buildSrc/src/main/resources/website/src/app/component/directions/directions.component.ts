@@ -66,6 +66,7 @@ export class DirectionsComponent {
 		endTime: number,
 		distance: number,
 	}[] = [];
+	private forceRefresh = false;
 
 	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly mapSelectionService: MapSelectionService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
 		directionsService.directionsPanelOpened.subscribe((stationDetails) => {
@@ -76,7 +77,8 @@ export class DirectionsComponent {
 			}
 		});
 		directionsService.dataProcessed.subscribe(() => {
-			if (this.formGroup.getRawValue().automaticRefresh) {
+			if (this.forceRefresh || this.formGroup.getRawValue().automaticRefresh) {
+				this.forceRefresh = false;
 				this.refreshDirections();
 			}
 		});
@@ -207,6 +209,7 @@ export class DirectionsComponent {
 			const endStation = this.mapDataService.stations.find(station => station.id === data.endStation?.value?.key);
 			if (startStation && endStation) {
 				this.directionsService.selectStations(startStation, endStation, (data.maxWalkingDistance ?? this.directionsService.defaultMaxWalkingDistance).toString());
+				this.forceRefresh = true;
 			} else {
 				this.directionsService.clear();
 			}
