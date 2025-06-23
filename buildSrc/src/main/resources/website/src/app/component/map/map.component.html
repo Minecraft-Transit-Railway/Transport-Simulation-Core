@@ -1,5 +1,5 @@
 <div class="column center loading-background">
-	<mat-spinner class="grayscale"/>
+	<p-progress-spinner/>
 </div>
 <div class="wrapper" #wrapper [style.opacity]="loading ? 0 : 1">
 	<canvas #canvas></canvas>
@@ -17,7 +17,7 @@
 						}
 						<div class="row">
 							@for (icon of textLabel.icons; track $index) {
-								<mat-icon class="station-name icon">{{ icon }}</mat-icon>
+								<div class="material-icons station-name icon">{{ icon }}</div>
 							}
 						</div>
 					</div>

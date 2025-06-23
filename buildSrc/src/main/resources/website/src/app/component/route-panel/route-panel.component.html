@@ -1,25 +1,23 @@
-<div class="column gap-small wrapper">
+<div class="column wrapper">
 	<div class="column gap padding-sides">
 		<app-title [name]="getRouteName()" [color]="getRouteColor()"/>
-		<mat-form-field subscriptSizing="dynamic">
-			<mat-label>Route Variation</mat-label>
-			<mat-select #dropdown (selectionChange)="selectRoute(dropdown.value)" [value]="dropdownValue">
-				@for (name of getNames(); track $index) {
-					<mat-option [value]="'id_' + $index">{{ name | formatName }}</mat-option>
-				}
-			</mat-select>
-		</mat-form-field>
+		<p-float-label variant="in">
+			<p-select inputId="dropdown" [options]="getDropdownRoutes()" optionLabel="name" (onChange)="selectRoute($event.value.id)" [(ngModel)]="dropdownValue" [fluid]="true">
+				<ng-template #item let-route>{{ route.name | formatName }}</ng-template>
+			</p-select>
+			<label for="dropdown">Route Variation</label>
+		</p-float-label>
 		@if (getTotalDurationSeconds()) {
 			<div class="row gap center">
-				<div class="row gap center" matTooltip="Total Duration">
-					<mat-icon>schedule</mat-icon>
-					<div>{{ getTotalDurationSeconds() | formatTime :"" }}</div>
+				<div class="row gap center" pTooltip="Total Duration" tooltipPosition="left">
+					<div class="material-icons">schedule</div>
+					<div>{{ getTotalDurationSeconds() | formatTime : "" }}</div>
 				</div>
 			</div>
 		}
 		<div class="row gap center">
-			<div class="row gap center" matTooltip="Depot(s) For Route">
-				<mat-icon>home</mat-icon>
+			<div class="row gap center" pTooltip="Depot(s) For Route" tooltipPosition="left">
+				<div class="material-icons">home</div>
 				@if (getRouteDepots().length === 0) {
 					<div>(None)</div>
 				} @else {
@@ -31,37 +29,46 @@
 				}
 			</div>
 		</div>
-		<mat-divider/>
 	</div>
 
-	<div class="column padding-sides content">
-		<div class="column" [style.display]="hasDurations() || hasDwellTimes() ? '' : 'none'">
-			<mat-checkbox class="grayscale" #showDurationsCheckbox [style.display]="hasDurations() ? '' : 'none'">Show Travel Times</mat-checkbox>
-			<mat-checkbox class="grayscale" #showDwellTimesCheckbox [style.display]="hasDwellTimes() ? '' : 'none'">Show Dwell Times</mat-checkbox>
+	<div class="padding-sides">
+		<p-divider/>
+	</div>
+
+	<div class="column gap padding-sides content">
+		<div class="row gap-small center" [style.display]="hasDurations() ? '' : 'none'">
+			<p-checkbox #showDurationsCheckbox inputId="showDurationsCheckbox" [binary]="true"/>
+			<label for="showDurationsCheckbox">Show Travel Times</label>
 		</div>
-		@for (stationDetails of getRouteStationDetails(); track $index) {
-			<app-route-display #display1 [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true" [icons]="getVehicleIcons(stationDetails.vehicles, display1.getHeight() + display2.getHeight())">
-				<div class="row center">
-					<app-data-list-entry class="spacing" [icons]="[]" [title]="[stationDetails.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(stationDetails.id)"/>
-					@if (showDwellTimesCheckbox.checked && stationDetails.dwellTimeSeconds) {
-						<div class="row center duration" matTooltip="Dwell Time">
-							<mat-icon inline>hourglass_empty</mat-icon>
-							<div>&nbsp;{{ stationDetails.dwellTimeSeconds | formatTime :"" }}</div>
+		<div class="row gap-small center" [style.display]="hasDwellTimes() ? '' : 'none'">
+			<p-checkbox #showDwellTimesCheckbox inputId="showDwellTimesCheckbox" [binary]="true"/>
+			<label for="showDwellTimesCheckbox">Show Dwell Times</label>
+		</div>
+		<div class="column">
+			@for (stationDetails of getRouteStationDetails(); track $index) {
+				<app-route-display #display1 [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true" [icons]="getVehicleIcons(stationDetails.vehicles, display1.getHeight() + display2.getHeight())">
+					<div class="row center">
+						<app-data-list-entry class="spacing" [icons]="[]" [title]="[stationDetails.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(stationDetails.id)"/>
+						@if (showDwellTimesCheckbox.checked && stationDetails.dwellTimeSeconds) {
+							<div class="row center duration" pTooltip="Dwell Time">
+								<div class="material-icons">hourglass_empty</div>
+								<div>&nbsp;{{ stationDetails.dwellTimeSeconds | formatTime :"" }}</div>
+							</div>
+						}
+					</div>
+				</app-route-display>
+				<app-route-display #display2 [colorAbove]="getRouteColor()" [colorBelow]="getRouteColor()" [isStation]="false" [icons]="[]" [style.display]="$index < $count - 1? '' : 'none'">
+					@if (showDurationsCheckbox.checked && stationDetails.durationSeconds) {
+						<div class="row">
+							<div class="spacing"></div>
+							<div class="row center duration" pTooltip="Travel Time">
+								<div class="material-icons">{{ getRouteIcon() }}</div>
+								<div>&nbsp;{{ stationDetails.durationSeconds | formatTime :"" }}</div>
+							</div>
 						</div>
 					}
-				</div>
-			</app-route-display>
-			<app-route-display #display2 [colorAbove]="getRouteColor()" [colorBelow]="getRouteColor()" [isStation]="false" [icons]="[]" [style.display]="$index < $count - 1? '' : 'none'">
-				@if (showDurationsCheckbox.checked && stationDetails.durationSeconds) {
-					<div class="row">
-						<div class="spacing"></div>
-						<div class="row center duration" matTooltip="Travel Time">
-							<mat-icon inline>{{ getRouteIcon() }}</mat-icon>
-							<div>&nbsp;{{ stationDetails.durationSeconds | formatTime :"" }}</div>
-						</div>
-					</div>
-				}
-			</app-route-display>
-		}
+				</app-route-display>
+			}
+		</div>
 	</div>
 </div>

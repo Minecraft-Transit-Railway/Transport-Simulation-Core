@@ -19,7 +19,7 @@ const REFRESH_INTERVAL = 30000;
 export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO }> {
 	public readonly routes: Route[] = [];
 	public readonly stations: Station[] = [];
-	public readonly routeTypeVisibility: { [key: string]: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED" } = {};
+	public readonly routeTypeVisibility: Record<string, "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED"> = {};
 	public interchangeStyle: "DOTTED" | "HOLLOW";
 	public readonly stationConnections: StationConnection[] = [];
 	public readonly lineConnections: LineConnection[] = [];
@@ -37,8 +37,8 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			this.stations.length = 0;
 
 			// Write routes
-			const routeIdMap: { [key: string]: { routeDTO: RouteDTO, route: Route } } = {};
-			const stationIdToPosition: { [key: string]: { x: number[], y: number[], z: number[] } } = {};
+			const routeIdMap: Record<string, { routeDTO: RouteDTO, route: Route }> = {};
+			const stationIdToPosition: Record<string, { x: number[], y: number[], z: number[] }> = {};
 			const availableRouteTypes: string[] = [];
 			data.routes.forEach(routeDTO => {
 				if (routeDTO.stations.length > 1 && !routeDTO.hidden) {
@@ -56,7 +56,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			});
 
 			// Write stations
-			const stationIdMap: { [key: string]: { stationDTO: StationDTO, station: Station } } = {};
+			const stationIdMap: Record<string, { stationDTO: StationDTO, station: Station }> = {};
 			data.stations.forEach(stationDTO => getFromArray(stationIdToPosition, stationDTO.id, position => {
 				const station = new Station(stationDTO, arrayAverage(position.x), arrayAverage(position.y), arrayAverage(position.z));
 				this.stations.push(station);
@@ -129,9 +129,9 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		this.lineConnections.length = 0;
 		this.stationConnections.length = 0;
 
-		const lineConnectionsOneWay: { [key: string]: { forwards: boolean, backwards: boolean } } = {};
-		const stationRoutes: { [key: string]: { [key: string]: number[] } } = {};
-		const stationGroups: { [key: string]: { [key: string]: string[] } } = {};
+		const lineConnectionsOneWay: Record<string, { forwards: boolean, backwards: boolean }> = {};
+		const stationRoutes: Record<string, Record<string, number[]>> = {};
+		const stationGroups: Record<string, Record<string, string[]>> = {};
 		const getKeyAndReverseFromStationIds = (stationId1: string, stationId2: string): [string, boolean] => {
 			const reverse = stationId1 > stationId2;
 			return [`${reverse ? stationId2 : stationId1}_${reverse ? stationId1 : stationId2}`, reverse];
@@ -175,15 +175,15 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			}
 		});
 
-		const lineConnections: { [key: string]: { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string, stationId2: string, length: number } } = {};
-		const stationConnections: { [key: string]: { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string | undefined, stationId2: string | undefined, sizeRatio: number, start45: boolean } } = {};
+		const lineConnections: Record<string, { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string, stationId2: string, length: number }> = {};
+		const stationConnections: Record<string, { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string | undefined, stationId2: string | undefined, sizeRatio: number, start45: boolean }> = {};
 		let closestDistance: number;
 		let maxLineConnectionLength = 1;
 
 		this.stations.forEach(station => {
 			if (station.id in stationRoutes) {
 				const combinedGroups: string[][] = [];
-				const stationDirection: { [key: string]: 0 | 1 | 2 | 3 } = {};
+				const stationDirection: Record<string, 0 | 1 | 2 | 3> = {};
 				setIfUndefined(stationGroups, station.id, () => ({}));
 
 				Object.values(stationGroups[station.id]).forEach(routeColors1 => {
@@ -239,8 +239,8 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 					routeColors.sort();
 					setIfUndefined(lineConnections, key, () => ({
 						lineConnectionParts: routeColors.map(() => Object.create(null)),
-						direction1: 0 as 0,
-						direction2: 0 as 0,
+						direction1: 0 as const,
+						direction2: 0 as const,
 						stationId1: "",
 						stationId2: "",
 						x1: undefined, x2: undefined,
@@ -265,7 +265,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 						lineConnectionDetails.oneWay = forwards && backwards ? 0 : forwards ? 1 : -1;
 					}
 
-					if (lineConnection.x1 != undefined && lineConnection.z1 != undefined && lineConnection.x2 != undefined && lineConnection.z2 != undefined) {
+					if (lineConnection.x1 !== undefined && lineConnection.z1 !== undefined && lineConnection.x2 !== undefined && lineConnection.z2 !== undefined) {
 						const lineConnectionLength = Math.abs(lineConnection.x2 - lineConnection.x1) + Math.abs(lineConnection.z2 - lineConnection.z1);
 						lineConnection.length = lineConnectionLength;
 						maxLineConnectionLength = Math.max(maxLineConnectionLength, lineConnectionLength);
@@ -318,7 +318,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		});
 
 		Object.values(stationConnections).forEach(stationConnection => {
-			if (stationConnection.x1 != undefined && stationConnection.x2 != undefined && stationConnection.z1 != undefined && stationConnection.z2 != undefined && stationConnection.stationId1 && stationConnection.stationId2) {
+			if (stationConnection.x1 !== undefined && stationConnection.x2 !== undefined && stationConnection.z1 !== undefined && stationConnection.z2 !== undefined && stationConnection.stationId1 && stationConnection.stationId2) {
 				this.stationConnections.push({
 					x1: stationConnection.x1,
 					x2: stationConnection.x2,

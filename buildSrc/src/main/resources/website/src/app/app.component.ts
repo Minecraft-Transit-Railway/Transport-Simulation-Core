@@ -1,30 +1,26 @@
 import {Component} from "@angular/core";
 import {MapComponent} from "./component/map/map.component";
-import {MatButtonModule} from "@angular/material/button";
-import {SearchComponent} from "./component/search/search.component";
 import {StationPanelComponent} from "./component/station-panel/station-panel.component";
 import {StationService} from "./service/station.service";
-import {SidenavComponent} from "./component/sidenav/sidenav.component";
+import {DrawerComponent} from "./component/drawer/drawer.component";
 import {DirectionsComponent} from "./component/directions/directions.component";
-import {MatTooltipModule} from "@angular/material/tooltip";
-import {MatIconModule} from "@angular/material/icon";
 import {MainPanelComponent} from "./component/panel/main-panel.component";
 import {RouteKeyService} from "./service/route.service";
 import {RoutePanelComponent} from "./component/route-panel/route-panel.component";
 import {ThemeService} from "./service/theme.service";
 import {DirectionsService} from "./service/directions.service";
+import {ButtonModule} from "primeng/button";
+import {TooltipModule} from "primeng/tooltip";
 
 @Component({
 	selector: "app-root",
 	imports: [
 		MapComponent,
-		MatButtonModule,
-		MatIconModule,
-		SearchComponent,
+		ButtonModule,
+		TooltipModule,
 		StationPanelComponent,
-		SidenavComponent,
+		DrawerComponent,
 		DirectionsComponent,
-		MatTooltipModule,
 		MainPanelComponent,
 		RoutePanelComponent,
 	],
@@ -40,7 +36,7 @@ export class AppComponent {
 		return document.title;
 	}
 
-	onClickMain(sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+	onClickMain(sideMain: DrawerComponent, sideStation: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
 		sideMain.open();
 		sideStation.close();
 		sideDirections.close();
@@ -50,7 +46,7 @@ export class AppComponent {
 		this.onCloseRoute();
 	}
 
-	onClickStation(stationId: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent, zoomToStation: boolean) {
+	onClickStation(stationId: string, sideMain: DrawerComponent, sideStation: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent, zoomToStation: boolean) {
 		this.stationService.setStation(stationId, zoomToStation);
 		sideMain.close();
 		sideStation.open();
@@ -60,7 +56,7 @@ export class AppComponent {
 		this.onCloseRoute();
 	}
 
-	onClickRoute(routeKey: string, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+	onClickRoute(routeKey: string, sideMain: DrawerComponent, sideStation: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
 		this.routeKeyService.select(routeKey);
 		sideMain.close();
 		sideStation.close();
@@ -70,7 +66,7 @@ export class AppComponent {
 		this.onCloseDirections();
 	}
 
-	onOpenDirections(stationDetails: { stationId: string, isStartStation: boolean } | undefined, sideMain: SidenavComponent, sideStation: SidenavComponent, sideDirections: SidenavComponent, sideRoute: SidenavComponent) {
+	onOpenDirections(stationDetails: { stationId: string, isStartStation: boolean } | undefined, sideMain: DrawerComponent, sideStation: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
 		this.directionsService.directionsPanelOpened.emit(stationDetails);
 		sideMain.close();
 		sideStation.close();

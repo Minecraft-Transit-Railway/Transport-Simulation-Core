@@ -127,7 +127,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 		stoppingCooldown = Math.max(0, stoppingCooldown - millisElapsed);
 
-		if (vehiclePositions != null) {
+		if (vehiclePositions != null && vehiclePositions.size() > 1) {
 			writeVehiclePositions(currentIndex, vehiclePositions.get(1));
 		}
 

@@ -1,5 +1,5 @@
 canvas {
-	background: var(--mat-sys-surface);
+	background: var(--background-color);
 	position: absolute;
 	transition: opacity 0.2s;
 	width: 100%;
@@ -14,21 +14,21 @@ canvas {
 }
 
 .label:hover {
-	color: #777777;
+	color: var(--p-button-primary-hover-background);
 }
 
 .station-name {
 	font-size: 0.6em;
 	line-height: 1.2em;
 	white-space: nowrap;
-	text-shadow: -2px -2px 0 var(--mat-sys-surface),
-	0 -2px 0 var(--mat-sys-surface),
-	2px -2px 0 var(--mat-sys-surface),
-	2px 0 0 var(--mat-sys-surface),
-	2px 2px 0 var(--mat-sys-surface),
-	0 2px 0 var(--mat-sys-surface),
-	-2px 2px 0 var(--mat-sys-surface),
-	-2px 0 0 var(--mat-sys-surface);
+	text-shadow: -2px -2px 0 var(--background-color),
+	0 -2px 0 var(--background-color),
+	2px -2px 0 var(--background-color),
+	2px 0 0 var(--background-color),
+	2px 2px 0 var(--background-color),
+	0 2px 0 var(--background-color),
+	-2px 2px 0 var(--background-color),
+	-2px 0 0 var(--background-color);
 }
 
 .station-name.cjk {
@@ -45,7 +45,7 @@ canvas {
 }
 
 .loading-background {
-	background-color: var(--mat-sys-surface);
+	background-color: var(--background-color);
 	justify-content: center;
 	position: absolute;
 	width: 100%;

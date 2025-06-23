@@ -31,5 +31,4 @@ bin/
 generated/
 **/website/.gitignore
 **/website/src/app/entity/generated/
-**/website/src/assets/
 log4j2.properties

@@ -1,3 +1,8 @@
+::ng-deep .p-select-option {
+	white-space: normal !important;
+	word-break: break-word;
+}
+
 .duration {
-	color: rgba(127, 127, 127, 80%);
+	color: var(--light-color);
 }

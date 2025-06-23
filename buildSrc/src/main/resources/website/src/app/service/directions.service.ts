@@ -123,8 +123,8 @@ export class DirectionsService extends SelectableDataServiceBase<{
 		endPosition: { x: number, y: number, z: number },
 		maxWalkingDistance: number,
 		directionsCompleted: EventEmitter<{ route?: Route, targetPosition: { x: number, y: number, z: number }, departureTime: number, travelTime: number }[]>,
-		routePlatformsCache: { station?: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number } } }[],
-		directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
+		routePlatformsCache: { station?: Station, routePlatforms: Record<string, { x: number, y: number, z: number }> }[],
+		directionsCache: Record<string, Record<string, { targetPosition: { x: number, y: number, z: number }, connections: Record<string, { route?: Route, departureTimes: number[], travelTime: number }> }>>,
 		setTimeout: (callback: () => void) => void,
 	) {
 		const startPositionKey = DeparturesService.getPositionKey(startPosition);
@@ -148,8 +148,8 @@ export class DirectionsService extends SelectableDataServiceBase<{
 					break;
 				}
 
-				const positionCache1: { station?: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number } } } = routePlatformsCache[index1];
-				const positionCache2: { station?: Station, routePlatforms: { [positionKey: string]: { x: number, y: number, z: number } } } = routePlatformsCache[index2];
+				const positionCache1: { station?: Station, routePlatforms: Record<string, { x: number, y: number, z: number }> } = routePlatformsCache[index1];
+				const positionCache2: { station?: Station, routePlatforms: Record<string, { x: number, y: number, z: number }> } = routePlatformsCache[index2];
 
 				// Cache walking distances between platforms if the stations are close together, if the stations are overlapping, or if the positions are start or end positions
 				if (
@@ -192,9 +192,9 @@ export class DirectionsService extends SelectableDataServiceBase<{
 		startPosition: { x: number, y: number, z: number },
 		endPosition: { x: number, y: number, z: number },
 		directionsCompleted: EventEmitter<{ route?: Route, targetPosition: { x: number, y: number, z: number }, departureTime: number, travelTime: number }[]>,
-		directionsCache: { [positionKey: string]: { [targetPositionKey: string]: { targetPosition: { x: number, y: number, z: number }, connections: { [routeId: string]: { route?: Route, departureTimes: number[], travelTime: number } } } } },
+		directionsCache: Record<string, Record<string, { targetPosition: { x: number, y: number, z: number }, connections: Record<string, { route?: Route, departureTimes: number[], travelTime: number }> }>>,
 		directions: { route?: Route, targetPosition: { x: number, y: number, z: number }, departureTime: number, travelTime: number }[],
-		globalPositionTimes: { [positionKey: string]: number },
+		globalPositionTimes: Record<string, number>,
 		startTime: number,
 		endTime: number,
 		iterations: number,
@@ -208,7 +208,7 @@ export class DirectionsService extends SelectableDataServiceBase<{
 		}[] = [{targetPosition: startPosition, departureTime: startTime, travelTime: 0}];
 		const startPositionKey = DeparturesService.getPositionKey(startPosition);
 		const endPositionKey = DeparturesService.getPositionKey(endPosition);
-		const localPositionTimes: { [positionKey: string]: number } = {};
+		const localPositionTimes: Record<string, number> = {};
 		globalPositionTimes[startPositionKey] = 0;
 		const travelTimeLimit = Math.round(DeparturesService.getDistance(startPosition, endPosition) / WALKING_SPEED);
 		let totalTravelTime = 0;

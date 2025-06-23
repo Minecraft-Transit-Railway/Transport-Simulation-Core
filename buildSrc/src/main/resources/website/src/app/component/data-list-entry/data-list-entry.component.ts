@@ -1,13 +1,11 @@
 import {Component, EventEmitter, Input, Output} from "@angular/core";
-import {MatIconModule} from "@angular/material/icon";
-import {MatRipple} from "@angular/material/core";
 import {NgTemplateOutlet} from "@angular/common";
+import {RippleModule} from "primeng/ripple";
 
 @Component({
 	selector: "app-data-list-entry",
 	imports: [
-		MatIconModule,
-		MatRipple,
+		RippleModule,
 		NgTemplateOutlet,
 	],
 	templateUrl: "./data-list-entry.component.html",

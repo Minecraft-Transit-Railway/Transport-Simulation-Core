@@ -1,23 +1,18 @@
-<app-sidenav [class]="isDarkTheme() ? 'dark-theme' : 'light-theme'" #sideRoute (closed)="onCloseRoute()">
-	<app-sidenav #sideDirections (closed)="onCloseDirections()">
-		<app-sidenav #sideStation (closed)="onCloseStation()">
-			<app-sidenav #sideMain>
-				<app-map (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, false)"/>
-				<button mat-fab class="button-corner" aria-label="Menu" (click)="onClickMain(sideMain, sideStation, sideDirections, sideRoute)" matTooltip="Menu">
-					<mat-icon>menu</mat-icon>
-				</button>
-				<div sidenav class="column gap wrapper">
-					<app-search class="padding-sides" label="Search for anything..." [includeRoutes]="true" (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
-					<app-main-panel class="wrapper" (directionsOpened)="onOpenDirections(undefined, sideMain, sideStation, sideDirections, sideRoute)"/>
-				</div>
-				<div title>{{ getTitle() }}</div>
-			</app-sidenav>
-			<app-station-panel sidenav (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)" (directionsOpened)="onOpenDirections($event, sideMain, sideStation, sideDirections, sideRoute)"/>
-			<div title>Station Details</div>
-		</app-sidenav>
-		<app-directions sidenav/>
-		<div title>Directions</div>
-	</app-sidenav>
-	<app-route-panel sidenav (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
-	<div title>Route Details</div>
-</app-sidenav>
+<app-drawer #sideMain [title]="getTitle()">
+	<app-main-panel class="wrapper" (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)" (directionsOpened)="onOpenDirections(undefined, sideMain, sideStation, sideDirections, sideRoute)"/>
+</app-drawer>
+
+<app-drawer #sideStation title="Station Details" (closed)="onCloseStation()">
+	<app-station-panel (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)" (directionsOpened)="onOpenDirections($event, sideMain, sideStation, sideDirections, sideRoute)"/>
+</app-drawer>
+
+<app-drawer #sideDirections title="Directions" (closed)="onCloseDirections()">
+	<app-directions/>
+</app-drawer>
+
+<app-drawer #sideRoute title="Route Details" (closed)="onCloseRoute()">
+	<app-route-panel (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
+</app-drawer>
+
+<app-map (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, false)"/>
+<p-button class="button-corner" icon="pi pi-bars" [rounded]="true" [text]="true" [raised]="true" size="large" (click)="onClickMain(sideMain, sideStation, sideDirections, sideRoute)" pTooltip="Menu" tooltipPosition="left"/>

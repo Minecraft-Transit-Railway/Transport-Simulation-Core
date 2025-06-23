@@ -1,42 +1,56 @@
 import {Component, EventEmitter, Output} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
-import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
-import {ReactiveFormsModule} from "@angular/forms";
-import {MatIconModule} from "@angular/material/icon";
-import {MatSelectModule} from "@angular/material/select";
+import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {DimensionService} from "../../service/dimension.service";
-import {MatTooltipModule} from "@angular/material/tooltip";
-import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 import {ThemeService} from "../../service/theme.service";
-import {setCookie} from "../../data/utilities";
-import {MatDividerModule} from "@angular/material/divider";
-import {MatButtonModule} from "@angular/material/button";
+import {FloatLabelModule} from "primeng/floatlabel";
+import {SelectModule} from "primeng/select";
+import {SelectButtonModule} from "primeng/selectbutton";
+import {TooltipModule} from "primeng/tooltip";
+import {DividerModule} from "primeng/divider";
+import {ButtonModule} from "primeng/button";
+import {ToggleSwitchModule} from "primeng/toggleswitch";
+import {VisibilityToggleComponent} from "../visibility-toggle/visibility-toggle.component";
+import {InterchangeStyleToggleComponent} from "../interchange-style-toggle/interchange-style-toggle.component";
+import {SearchComponent} from "../search/search.component";
 
 @Component({
 	selector: "app-main-panel",
 	imports: [
-		MatButtonToggleModule,
+		FloatLabelModule,
+		SelectModule,
+		SelectButtonModule,
+		ButtonModule,
+		ToggleSwitchModule,
+		DividerModule,
+		TooltipModule,
+		FormsModule,
 		ReactiveFormsModule,
-		MatIconModule,
-		MatSelectModule,
-		MatTooltipModule,
-		MatSlideToggleModule,
-		MatDividerModule,
-		MatButtonModule,
+		SearchComponent,
+		VisibilityToggleComponent,
+		InterchangeStyleToggleComponent,
 	],
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.css",
 })
 export class MainPanelComponent {
-	@Output() directionsOpened = new EventEmitter<void>;
-	protected dropdownValue = "";
+	@Output() stationClicked = new EventEmitter<string>();
+	@Output() routeClicked = new EventEmitter<string>();
+	@Output() directionsOpened = new EventEmitter<void>();
+
+	protected readonly formGroup = new FormGroup({
+		search: new FormControl(""),
+		dimension: new FormControl(""),
+		dimension1: new FormControl<"HIDDEN" | "SOLID" | "HOLLOW" | "DASHED">("HIDDEN"),
+		themeToggle: new FormControl(this.themeService.isDarkTheme()),
+	});
 	protected readonly routeTypes: [string, RouteType][] = [];
 
 	constructor(private readonly mapDataService: MapDataService, private readonly dimensionService: DimensionService, private readonly themeService: ThemeService) {
 		mapDataService.dataProcessed.subscribe(() => {
-			if (!this.dropdownValue) {
-				this.dropdownValue = dimensionService.getDimensions()[0];
+			if (!this.formGroup.getRawValue().dimension) {
+				this.formGroup.patchValue({dimension: dimensionService.getDimensions()[0]});
 			}
 			this.routeTypes.length = 0;
 			Object.entries(ROUTE_TYPES).forEach(([routeTypeKey, routeType]) => {
@@ -47,43 +61,32 @@ export class MainPanelComponent {
 		});
 	}
 
-	setVisibility(routeTypeKey: string, value: string) {
-		this.mapDataService.routeTypeVisibility[routeTypeKey] = value as "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED";
-		this.mapDataService.updateData();
-		Object.entries(this.mapDataService.routeTypeVisibility).forEach(([newRouteTypeKey, visibility]) => setCookie(`visibility_${newRouteTypeKey}`, visibility));
-	}
-
-	getVisibility(routeTypeKey: string): "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED" {
-		return this.mapDataService.routeTypeVisibility[routeTypeKey];
-	}
-
-	setInterchangeStyle(value: string) {
-		this.mapDataService.interchangeStyle = value as "DOTTED" | "HOLLOW";
-		this.mapDataService.drawMap.emit();
-		setCookie("interchange_style", value);
-	}
-
 	hasInterchanges() {
 		return this.mapDataService.stationConnections.length > 0;
-	}
-
-	getInterchangeStyle(): "DOTTED" | "HOLLOW" {
-		return this.mapDataService.interchangeStyle;
 	}
 
 	getDimensions() {
 		return this.dimensionService.getDimensions();
 	}
 
-	setDimension(dimension: string) {
-		this.mapDataService.setDimension(dimension);
+	setDimension() {
+		const data = this.formGroup.getRawValue();
+		if (data.dimension) {
+			this.mapDataService.setDimension(data.dimension);
+		}
+	}
+
+	clickStation(id: string) {
+		this.stationClicked.emit(id);
+		this.formGroup.patchValue({search: undefined});
+	}
+
+	clickRoute(id: string) {
+		this.routeClicked.emit(id);
+		this.formGroup.patchValue({search: undefined});
 	}
 
 	changeTheme(isDarkTheme: boolean) {
 		this.themeService.setTheme(isDarkTheme);
-	}
-
-	isDarkTheme() {
-		return this.themeService.isDarkTheme();
 	}
 }

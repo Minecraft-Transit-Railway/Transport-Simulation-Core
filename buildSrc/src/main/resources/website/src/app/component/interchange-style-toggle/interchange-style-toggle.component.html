@@ -1,0 +1,5 @@
+<p-select-button [options]="interchangeStyleOptions" [ngModel]="getInterchangeStyle()" (onChange)="setInterchangeStyle($event)">
+	<ng-template #item let-item>
+		<div class="material-icons" [pTooltip]="item.tooltip" tooltipPosition="bottom">{{ item.icon }}</div>
+	</ng-template>
+</p-select-button>

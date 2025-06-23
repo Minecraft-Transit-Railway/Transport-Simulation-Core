@@ -21,6 +21,7 @@ import org.mtr.legacy.data.DataFixer;
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Random;
+import java.util.function.BiConsumer;
 import java.util.function.LongConsumer;
 
 public final class Siding extends SidingSchema implements Utilities {
@@ -376,6 +377,10 @@ public final class Siding extends SidingSchema implements Utilities {
 				break;
 			}
 		}
+	}
+
+	public void iterateVehiclesAndRidingEntities(BiConsumer<VehicleExtraData, VehicleRidingEntity> consumer) {
+		vehicles.forEach(vehicle -> vehicle.vehicleExtraData.iterateRidingEntities(vehicleRidingEntity -> consumer.accept(vehicle.vehicleExtraData, vehicleRidingEntity)));
 	}
 
 	public void getArrivals(long currentMillis, Platform platform, long count, ObjectArrayList<ArrivalResponse> arrivalResponseList) {

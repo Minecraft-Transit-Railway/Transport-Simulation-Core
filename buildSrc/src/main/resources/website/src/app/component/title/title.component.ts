@@ -12,6 +12,6 @@ import {FormatColorPipe} from "../../pipe/formatColorPipe";
 	styleUrl: "./title.component.css",
 })
 export class TitleComponent {
-	@Input({required: true}) name: string = "";
+	@Input({required: true}) name = "";
 	@Input({required: true}) color?: number;
 }

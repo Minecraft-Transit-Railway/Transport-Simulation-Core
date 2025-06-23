@@ -11,13 +11,14 @@
 }
 
 .line.thin {
-	background-color: #777777;
+	background-color: var(--light-color);
 	left: 32px;
 	position: absolute;
 	width: 2px;
 }
 
 .line.middle {
+	box-sizing: unset;
 	height: 100%;
 	padding: 16px 0;
 	top: -8px;
@@ -52,7 +53,7 @@
 }
 
 .icon.light {
-	color: rgba(127, 127, 127, 80%);
+	color: var(--light-color);
 }
 
 .full {

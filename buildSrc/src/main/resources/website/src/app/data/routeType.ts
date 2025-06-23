@@ -3,7 +3,7 @@ export class RouteType {
 	}
 }
 
-export const ROUTE_TYPES: { [key: string]: RouteType } = {
+export const ROUTE_TYPES: Record<string, RouteType> = {
 	train_normal: new RouteType("directions_railway", "Train"),
 	train_light_rail: new RouteType("tram", "Light Rail"),
 	train_high_speed: new RouteType("train", "High Speed"),

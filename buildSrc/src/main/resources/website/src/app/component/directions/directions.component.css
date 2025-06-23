@@ -1,5 +1,5 @@
-.expansion-panel-margin {
-	margin-left: 8px;
+.p-accordionpanel {
+	--p-accordion-panel-border-width: 0;
 }
 
 .big-icon {
@@ -8,7 +8,7 @@
 }
 
 .gray {
-	color: rgba(127, 127, 127, 80%);
+	color: var(--light-color);
 }
 
 .no-wrap {

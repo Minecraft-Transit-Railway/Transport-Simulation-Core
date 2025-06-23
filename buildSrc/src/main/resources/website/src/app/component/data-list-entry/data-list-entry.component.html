@@ -1,5 +1,5 @@
 @if (clickable) {
-	<div matRipple class="column padding-top-bottom-small clickable {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
+	<div pRipple class="column padding-top-bottom-small clickable {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
 		<div *ngTemplateOutlet="content"></div>
 	</div>
 } @else {
@@ -13,7 +13,7 @@
 		<div class="row center">
 			@for (icon of icons; track $index) {
 				@if (icon) {
-					<mat-icon class="icon">{{ icon }}</mat-icon>
+					<div class="material-icons">{{ icon }}</div>
 				}
 			}
 			<div>{{ title[0] }}</div>

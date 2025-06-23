@@ -1,9 +1,7 @@
 import * as THREE from "three";
 import {AfterViewInit, Component, ElementRef, EventEmitter, Output, ViewChild} from "@angular/core";
 import SETTINGS from "../../utility/settings";
-import {MatProgressSpinner} from "@angular/material/progress-spinner";
 import {MapDataService} from "../../service/map-data.service";
-import {MatIcon} from "@angular/material/icon";
 import {connectStations, connectWith45} from "../../utility/drawing";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
 import {LineMaterial} from "three/examples/jsm/lines/LineMaterial.js";
@@ -15,6 +13,7 @@ import {SplitNamePipe} from "../../pipe/splitNamePipe";
 import {ThemeService} from "../../service/theme.service";
 import {MapSelectionService} from "../../service/map-selection.service";
 import {DeparturesService} from "../../service/departures.service";
+import {ProgressSpinnerModule} from "primeng/progressspinner";
 
 const blackColor = 0x000000;
 const whiteColor = 0xFFFFFF;
@@ -33,8 +32,7 @@ const animationDuration = 2000;
 @Component({
 	selector: "app-map",
 	imports: [
-		MatProgressSpinner,
-		MatIcon,
+		ProgressSpinnerModule,
 		SplitNamePipe,
 	],
 	templateUrl: "./map.component.html",
@@ -45,7 +43,7 @@ export class MapComponent implements AfterViewInit {
 	@ViewChild("wrapper") private readonly wrapperRef!: ElementRef<HTMLDivElement>;
 	@ViewChild("canvas") private readonly canvasRef!: ElementRef<HTMLCanvasElement>;
 	@ViewChild("stats") private readonly statsRef!: ElementRef<HTMLDivElement>;
-	loading: boolean = true;
+	loading = true;
 	readonly textLabels: TextLabel[] = [];
 
 	private readonly canvas: () => HTMLCanvasElement;
@@ -111,7 +109,7 @@ export class MapComponent implements AfterViewInit {
 					this.camera.right = clientWidth / 2;
 					this.camera.top = clientHeight / 2;
 					this.camera.bottom = -clientHeight / 2;
-					(this.camera as any).aspect = clientWidth / clientHeight;
+					(this.camera as unknown as { aspect: number }).aspect = clientWidth / clientHeight;
 					lineMaterialStationConnectionThin.resolution.set(clientWidth, clientHeight);
 					lineMaterialStationConnectionThick.resolution.set(clientWidth, clientHeight);
 					lineMaterialNormal.resolution.set(clientWidth, clientHeight);
@@ -280,10 +278,10 @@ export class MapComponent implements AfterViewInit {
 				connectWith45(points, x1, z1, x2, z2, start45);
 				positions.push(points[0][0], -points[0][1], -10000);
 				MapComponent.setColor(color, colors);
-				for (let i = 0; i < points.length; i++) {
-					positions.push(points[i][0], -points[i][1], -offset + adjustZ);
+				points.forEach(point => {
+					positions.push(point[0], -point[1], -offset + adjustZ);
 					MapComponent.setColor(color, colors);
-				}
+				});
 				positions.push(points[points.length - 1][0], -points[points.length - 1][1], -10000);
 				MapComponent.setColor(color, colors);
 			};
@@ -398,7 +396,7 @@ export class MapComponent implements AfterViewInit {
 						const [hollowArrowPaddingX, hollowArrowPaddingY] = trig45(-angle + 2, 1.5 * Math.SQRT2 * SETTINGS.scale / this.camera.zoom);
 
 						for (let j = 0; j < arrowCount; j++) {
-							const offset = distance == 0 ? 0 : (padding + scaledArrowSpacing * (j + 0.5)) / distance;
+							const offset = distance === 0 ? 0 : (padding + scaledArrowSpacing * (j + 0.5)) / distance;
 							const x = point1X + differenceX * offset;
 							const y = point1Y + differenceY * offset;
 							if (hollow) {
@@ -492,8 +490,8 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	private getBackgroundColor() {
-		const backgroundColorComponents = getComputedStyle(document.body).getPropertyValue("--mat-sys-surface").match(/#[a-f\d]+/g)?.map(value => parseInt(value.substring(1), 16));
-		return backgroundColorComponents ? backgroundColorComponents[this.themeService.isDarkTheme() ? 1 : 0] : 0;
+		const backgroundColorComponents = getComputedStyle(document.body).getPropertyValue("--background-color").match(/#[a-f\d]+/g)?.map(value => parseInt(value.substring(1), 16));
+		return backgroundColorComponents ? backgroundColorComponents[0] : 0;
 	}
 
 	private isDarkTheme() {

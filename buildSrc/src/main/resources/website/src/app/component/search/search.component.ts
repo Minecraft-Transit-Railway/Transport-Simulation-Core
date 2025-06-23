@@ -1,17 +1,17 @@
-import {Component, EventEmitter, Input, OnInit, Output} from "@angular/core";
-import {AsyncPipe} from "@angular/common";
-import {MatAutocomplete, MatAutocompleteTrigger, MatOption} from "@angular/material/autocomplete";
-import {MatDivider} from "@angular/material/divider";
-import {MatFormField, MatLabel} from "@angular/material/form-field";
-import {MatInput} from "@angular/material/input";
-import {FormControl, ReactiveFormsModule} from "@angular/forms";
-import {map, Observable} from "rxjs";
+import {Component, EventEmitter, Input, Output} from "@angular/core";
+import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MapDataService} from "../../service/map-data.service";
 import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
+import {AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent} from "primeng/autocomplete";
+import {DividerModule} from "primeng/divider";
+import {FloatLabelModule} from "primeng/floatlabel";
+import {InputTextModule} from "primeng/inputtext";
+import {SelectItemGroup} from "primeng/api";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
+import {SearchData} from "../../entity/searchData";
 
 
 const maxResults = 50;
@@ -19,79 +19,90 @@ const maxResults = 50;
 @Component({
 	selector: "app-search",
 	imports: [
-		AsyncPipe,
-		MatAutocomplete,
-		MatDivider,
-		MatOption,
-		MatAutocompleteTrigger,
-		MatFormField,
-		MatInput,
-		MatLabel,
-		ReactiveFormsModule,
+		FloatLabelModule,
+		InputTextModule,
+		AutoCompleteModule,
+		DividerModule,
+		FormsModule,
 		FormatNamePipe,
-		DataListEntryComponent,
 		FormatColorPipe,
+		DataListEntryComponent,
+		ReactiveFormsModule,
 	],
 	templateUrl: "./search.component.html",
 	styleUrl: "./search.component.css",
 })
-export class SearchComponent implements OnInit {
+export class SearchComponent {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() textCleared = new EventEmitter<void>();
-	@Input({required: true}) label!: string;
-	@Input({required: true}) includeRoutes!: boolean;
+	@Input({required: true}) label = "";
+	@Input({required: true}) parentFormGroup!: FormGroup;
+	@Input({required: true}) childFormControlName = "";
+	@Input({required: true}) includeRoutes = true;
 	@Input() setText!: EventEmitter<string>;
-	searchBox = new FormControl("");
-	searchedStations$ = new Observable<{ key: string, icons: string[], color: number, name: string, number: string }[]>();
-	searchedRoutes$ = new Observable<{ key: string, icons: string[], color: number, name: string, number: string }[]>();
-	hasStations = false;
-	hasRoutes = false;
 
-	constructor(private readonly dataService: MapDataService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe, private readonly formatNamePipe: FormatNamePipe) {
+	protected data: SelectItemGroup[] = [];
+
+	constructor(private readonly dataService: MapDataService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
 	}
 
-	ngOnInit() {
-		const filter = (getList: () => { key: string, icons: string[], color: number, name: string, number: string }[], setHasData: (value: boolean) => void): Observable<{ key: string, icons: string[], color: number, name: string, number: string }[]> => this.searchBox.valueChanges.pipe(map(value => {
-			if (value == null || value === "") {
-				return [];
-			} else {
-				const matches: { key: string, icons: string[], color: number, name: string, number: string, index: number }[] = [];
-				getList().forEach(({key, icons, color, name, number}) => {
-					const index = name.toLowerCase().indexOf(value.toLowerCase());
+	onTextChanged(event: AutoCompleteCompleteEvent) {
+		this.data = [];
+
+		if (event.query === "") {
+			this.textCleared.emit();
+		} else {
+			const filter = (list: SearchData[]): { value: { key: string, icons: string[], color: number, name: string, number: string, isStation: boolean } }[] => {
+				const matches: { value: SearchData, index: number }[] = [];
+				list.forEach(({key, icons, color, name, number, isStation}) => {
+					const index = name.toLowerCase().indexOf(event.query.toLowerCase());
 					if (index >= 0) {
-						matches.push({key, icons, color, name, number, index});
+						matches.push({value: {key, icons, color, name, number, isStation}, index});
 					}
 				});
-				const result: { key: string, icons: string[], color: number, name: string, number: string }[] = matches.sort((match1, match2) => {
+				const result: { value: SearchData }[] = matches.sort((match1, match2) => {
 					const indexDifference = match1.index - match2.index;
-					return indexDifference === 0 ? match1.name.localeCompare(match2.name) : indexDifference;
+					return indexDifference === 0 ? match1.value.name.localeCompare(match2.value.name) : indexDifference;
 				});
-				setHasData(result.length > 0);
 				return result.slice(0, maxResults);
+			};
+
+			const searchedStations = filter(this.simplifyStationsPipe.transform(this.dataService.stations));
+			const searchedRoutes = filter(this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes) : []);
+
+			if (searchedStations.length > 0) {
+				this.data.push({
+					label: "Stations",
+					items: searchedStations,
+				});
 			}
-		}));
 
-		this.searchedStations$ = filter(() => this.simplifyStationsPipe.transform(this.dataService.stations), value => this.hasStations = value);
-		this.searchedRoutes$ = filter(() => this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes) : [], value => this.hasRoutes = value);
-		this.setText?.subscribe(text => this.searchBox.setValue(text));
-	}
-
-	onClickStation(station: { key: string, name: string }) {
-		this.stationClicked.emit(station.key);
-	}
-
-	onClickRoute(route: { key: string, name: string }) {
-		this.routeClicked.emit(route.key);
-	}
-
-	onTextChanged() {
-		if (this.searchBox.getRawValue() === "") {
-			this.textCleared.emit();
+			if (searchedRoutes.length > 0) {
+				this.data.push({
+					label: "Routes",
+					items: searchedRoutes,
+				});
+			}
 		}
 	}
 
+	onSelect(event: AutoCompleteSelectEvent) {
+		if (event?.value?.value) {
+			if (event.value.value.isStation) {
+				this.stationClicked.emit(event.value.value.key);
+			} else {
+				this.routeClicked.emit(event.value.value.key);
+			}
+		}
+	}
+
+	getName(entry: { value?: { name?: string } }) {
+		const name = entry?.value?.name;
+		return name ? name.replaceAll("|", " ") : "";
+	}
+
 	getText() {
-		return this.searchBox.getRawValue() ?? "";
+		return "";
 	}
 }

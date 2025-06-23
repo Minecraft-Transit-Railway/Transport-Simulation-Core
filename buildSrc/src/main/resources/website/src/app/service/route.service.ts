@@ -73,7 +73,7 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 				cumulativeTime += halfDuration;
 				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
 					const difference = departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
-					this.routeStationDetails[routeStationIndex + 1].vehicles.push({deviation: departures[departureIndex].deviation, percentage: -difference / halfDuration});
+					this.routeStationDetails[routeStationIndex + 1].vehicles.push({deviation: departures[departureIndex].deviation, percentage: Math.max(0, Math.min(1, -difference / halfDuration))});
 					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
 					if (departureIndex >= departures.length) {
@@ -84,7 +84,7 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 				cumulativeTime += halfDuration;
 				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
 					const difference = departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
-					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: departures[departureIndex].deviation, percentage: 1 - difference / halfDuration});
+					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: departures[departureIndex].deviation, percentage: Math.max(0, Math.min(1, 1 - difference / halfDuration))});
 					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
 					if (departureIndex >= departures.length) {
@@ -93,10 +93,6 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 				}
 			}
 		}, 100);
-	}
-
-	public getNames() {
-		return this.routeKeyService.getSelectedData()?.map(route => route.name) ?? [];
 	}
 
 	public getTotalDurationSeconds() {
@@ -112,7 +108,7 @@ export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 			mapSelectionService.selectedStationConnections.length = 0;
 			mapSelectionService.selectedStations.length = 0;
 			const selectedRouteVariations: Route[] = [];
-			const tempStationConnections: { [key: string]: { stationIds: [string, string], routeColor: number } } = {};
+			const tempStationConnections: Record<string, { stationIds: [string, string], routeColor: number }> = {};
 			let mapUpdated = false;
 
 			mapDataService.routes.forEach(route => {
