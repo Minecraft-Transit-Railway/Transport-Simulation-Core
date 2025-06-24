@@ -5,7 +5,9 @@
 				<app-search label="Start Station" [parentFormGroup]="formGroup" childFormControlName="startStation" [includeRoutes]="false" (stationClicked)="onClickStation($event, true)" (textCleared)="onClickStation(undefined, true)"/>
 				<app-search label="End Station" [parentFormGroup]="formGroup" childFormControlName="endStation" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (textCleared)="onClickStation(undefined, false)"/>
 			</div>
-			<p-button icon="pi pi-arrow-right-arrow-left" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" pTooltip="Swap Stations"/>
+			<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" pTooltip="Swap Stations">
+				<div class="material-icons">swap_vert</div>
+			</button>
 		</div>
 		<p-divider/>
 		<div class="column gap-small">
@@ -19,7 +21,9 @@
 					<label for="refresh">Automatic Refresh</label>
 				</div>
 				<div class="spacing"></div>
-				<p-button icon="pi pi-refresh" [rounded]="true" [text]="true" (click)="refreshDirections()" [disabled]="cannotManuallyRefresh()" pTooltip="Refresh Directions"/>
+				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="refreshDirections()" [disabled]="cannotManuallyRefresh()" pTooltip="Refresh Directions">
+					<div class="material-icons">refresh</div>
+				</button>
 			</div>
 		</div>
 	</div>
@@ -67,18 +71,20 @@
 					</app-route-display>
 					@if (direction.intermediateRoutePlatforms.length > 0) {
 						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[]">
-							<p-accordion [multiple]="true" value="0">
-								<p-accordion-panel>
-									<p-accordion-header>{{ direction.intermediateRoutePlatforms.length }} intermediate station{{ direction.intermediateRoutePlatforms.length > 1 ? 's' : '' }}</p-accordion-header>
-									<p-accordion-content>
-										<div class="column gap-small">
-											@for (intermediateRoutePlatform of direction.intermediateRoutePlatforms; track $index) {
-												<div>{{ intermediateRoutePlatform.station.name | formatName }}</div>
-											}
-										</div>
-									</p-accordion-content>
-								</p-accordion-panel>
-							</p-accordion>
+							<div class="intermediate-stations">
+								<p-accordion [multiple]="true" value="0">
+									<p-accordion-panel>
+										<p-accordion-header>{{ direction.intermediateRoutePlatforms.length }} intermediate station{{ direction.intermediateRoutePlatforms.length > 1 ? 's' : '' }}</p-accordion-header>
+										<p-accordion-content>
+											<div class="column gap-small">
+												@for (intermediateRoutePlatform of direction.intermediateRoutePlatforms; track $index) {
+													<div>{{ intermediateRoutePlatform.station.name | formatName }}</div>
+												}
+											</div>
+										</p-accordion-content>
+									</p-accordion-panel>
+								</p-accordion>
+							</div>
 						</app-route-display>
 					}
 					@if ($index === $count - 1) {

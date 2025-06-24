@@ -4,12 +4,29 @@
 <div class="wrapper" #wrapper [style.opacity]="loading ? 0 : 1">
 	<canvas #canvas></canvas>
 	<div>
+		@for (clientGroupOnRoute of clientGroupsOnRoute; track $index) {
+			<div class="row label" [style.transform]="'translate(-50%,0) translate(' + clientGroupOnRoute.x + 'px, ' + clientGroupOnRoute.y + 'px)'" [style.gap]="clientGroupOnRoute.clientImagePadding + 'px'">
+				@for (client of clientGroupOnRoute.clients; track $index) {
+					<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="clientImageSize" [height]="clientImageSize" [alt]="client.name" [pTooltip]="client.name" tooltipPosition="top"/>
+				}
+			</div>
+		}
 		@for (textLabel of textLabels; track $index) {
 			<div class="column center label" [style.transform]="'translate(-50%,0) translate(' + textLabel.x + 'px, ' + textLabel.y + 'px)'"
 				 (mousedown)="stationClicked.emit(textLabel.id)"
 				 (mouseenter)="textLabel.hoverOverride = true"
 				 (mouseleave)="textLabel.hoverOverride = false">
-				<div [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'"></div>
+				<div class="column center" [style.width]="textLabel.stationWidth + 'px'" [style.height]="textLabel.stationHeight + 'px'">
+					@if (textLabel.clients) {
+						<div class="spacing"></div>
+						<div class="row" [style.gap]="textLabel.clientImagePadding + 'px'">
+							@for (client of textLabel.clients; track $index) {
+								<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="clientImageSize" [height]="clientImageSize" [alt]="client.name" [pTooltip]="client.name" tooltipPosition="top"/>
+							}
+						</div>
+						<div class="spacing"></div>
+					}
+				</div>
 				@if (textLabel.shouldRenderText || textLabel.hoverOverride) {
 					<div class="column center">
 						@for (textLabelPart of textLabel.text | splitName; track $index) {

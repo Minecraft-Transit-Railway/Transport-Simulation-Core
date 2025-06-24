@@ -7,8 +7,12 @@
 				<div>({{ getCoordinatesText() }})</div>
 			</div>
 			<div class="row center">
-				<p-button #copyIconButton icon="pi pi-copy" [rounded]="true" [text]="true" (click)="copyLocation(copyIconButton)" pTooltip="Copy Location" tooltipPosition="bottom"/>
-				<p-button icon="pi pi-expand" [rounded]="true" [text]="true" (click)="focus()" pTooltip="Focus on Map" tooltipPosition="bottom"/>
+				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="copyLocation(icon)" pTooltip="Copy Location" tooltipPosition="bottom">
+					<div class="material-icons" #icon>content_copy</div>
+				</button>
+				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" pTooltip="Focus on Map" tooltipPosition="bottom">
+					<div class="material-icons">filter_center_focus</div>
+				</button>
 			</div>
 		</div>
 		<div class="row gap center">
@@ -19,8 +23,8 @@
 		</div>
 		<div class="row center">
 			<div class="material-icons" pTooltip="Directions" tooltipPosition="left">directions</div>
-			<p-button label="Start" variant="text" (click)="openDirections(true)"/>
-			<p-button label="End" variant="text" (click)="openDirections(false)"/>
+			<p-button label="Start" variant="text" (onClick)="openDirections(true)"/>
+			<p-button label="End" variant="text" (onClick)="openDirections(false)"/>
 		</div>
 	</div>
 
@@ -55,7 +59,7 @@
 										</div>
 									</div>
 									@if (route.number !== '') {
-										<p-divider layout="vertical" [style.height]="route.textLineCount + 'em'"/>
+										<p-divider layout="vertical" [style.height]="route.textLineCount + 'rem'"/>
 										<div class="column chip-text">
 											@for (number of route.number | splitName; track $index) {
 												<div>{{ number.text }}</div>
@@ -135,6 +139,6 @@
 		</div>
 	</div>
 	<ng-template #footer>
-		<p-button label="Close" (click)="dialogData = undefined"/>
+		<p-button label="Close" (onClick)="dialogData = undefined"/>
 	</ng-template>
 </p-dialog>

@@ -3,8 +3,8 @@
 }
 
 .big-icon {
-	font-size: 4em;
-	height: 1em;
+	font-size: 4rem;
+	height: 1rem;
 }
 
 .gray {
@@ -13,4 +13,9 @@
 
 .no-wrap {
 	white-space: nowrap;
+}
+
+.intermediate-stations {
+	padding-left: 8px;
+	padding-top: 18px;
 }

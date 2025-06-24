@@ -1,10 +1,10 @@
 @if (clickable) {
 	<div pRipple class="column padding-top-bottom-small clickable {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
-		<div *ngTemplateOutlet="content"></div>
+		<div [ngTemplateOutlet]="content"></div>
 	</div>
 } @else {
 	<div class="column padding-top-bottom-small {{useLightColor ? 'light-color' : ''}}" (click)="entryClicked.emit()">
-		<div *ngTemplateOutlet="content"></div>
+		<div [ngTemplateOutlet]="content"></div>
 	</div>
 }
 

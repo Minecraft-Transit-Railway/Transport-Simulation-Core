@@ -8,14 +8,13 @@ import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 import {TitleComponent} from "../title/title.component";
 import {Station} from "../../entity/station";
 import {TooltipModule} from "primeng/tooltip";
-import {Button, ButtonModule} from "primeng/button";
+import {ButtonModule} from "primeng/button";
 import {TabsModule} from "primeng/tabs";
 import {CheckboxModule} from "primeng/checkbox";
 import {DividerModule} from "primeng/divider";
 import {DialogModule} from "primeng/dialog";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {ChipModule} from "primeng/chip";
-import {PrimeIcons} from "primeng/api";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormatDatePipe} from "../../pipe/formatDatePipe";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
@@ -125,11 +124,11 @@ export class StationPanelComponent {
 		return this.stationService.isLoading();
 	}
 
-	copyLocation(copyIconButton: Button) {
-		copyIconButton.icon = PrimeIcons.CHECK;
+	copyLocation(icon: HTMLDivElement) {
+		icon.innerText = "check";
 		const station = this.stationService.getSelectedData();
 		navigator.clipboard.writeText(station === undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();
-		setTimeout(() => copyIconButton.icon = PrimeIcons.COPY, 1000);
+		setTimeout(() => icon.innerText = "content_copy", 1000);
 	}
 
 	focus() {

@@ -18,8 +18,8 @@ canvas {
 }
 
 .station-name {
-	font-size: 0.6em;
-	line-height: 1.2em;
+	font-size: 0.6rem;
+	line-height: 1.2rem;
 	white-space: nowrap;
 	text-shadow: -2px -2px 0 var(--background-color),
 	0 -2px 0 var(--background-color),
@@ -32,7 +32,7 @@ canvas {
 }
 
 .station-name.cjk {
-	font-size: 1.2em;
+	font-size: 1.2rem;
 }
 
 .station-name.text {
@@ -40,7 +40,7 @@ canvas {
 }
 
 .station-name.icon {
-	font-size: 1.2em;
+	font-size: 1.2rem;
 	width: unset;
 }
 

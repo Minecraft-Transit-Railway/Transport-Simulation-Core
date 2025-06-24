@@ -1,14 +1,14 @@
 .name {
-	font-size: 1.5em;
+	font-size: 1.5rem;
 	font-weight: 600;
 	text-align: center;
 }
 
 .name.cjk {
-	font-size: 3em;
+	font-size: 3rem;
 }
 
 .color-bar {
-	border-radius: 0.2em;
-	height: 0.4em;
+	border-radius: 0.2rem;
+	height: 0.4rem;
 }

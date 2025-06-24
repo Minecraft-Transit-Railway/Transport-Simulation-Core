@@ -30,6 +30,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 	public readonly mapLoading = new EventEmitter<void>();
 	public readonly drawMap = new EventEmitter<void>();
 	public readonly animateMap = new EventEmitter<{ x: number, z: number }>();
+	public readonly animateClient = new EventEmitter<string>();
 
 	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
 		super(() => this.httpClient.get<{ data: StationsAndRoutesDTO }>(this.getUrl("stations-and-routes")), ({data}) => {
@@ -114,6 +115,10 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		this.mapLoading.emit();
 		this.dimensionService.setDimension(dimension);
 		this.fetchData("");
+	}
+
+	public clickClient(id: string) {
+		this.animateClient.emit(id);
 	}
 
 	public getCenterX() {

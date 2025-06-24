@@ -5,7 +5,12 @@
 			<p-select inputId="dropdown" formControlName="dimension" [options]="getDimensions()" (onChange)="setDimension()" [fluid]="true"/>
 			<label for="dropdown">Dimension</label>
 		</p-float-label>
-		<p-button icon="pi pi-directions" label="Find Directions" severity="secondary" (click)="directionsOpened.emit()" [fluid]="true"/>
+		<button pButton class="icon-button" severity="secondary" (click)="directionsOpened.emit()" [fluid]="true">
+			<div class="row gap-small">
+				<div class="material-icons">directions</div>
+				<div>Find Directions</div>
+			</div>
+		</button>
 	</div>
 	<div class="column content">
 		<div class="column padding-sides">
@@ -27,6 +32,25 @@
 				</div>
 			}
 			<p-divider/>
+			<p-accordion [multiple]="true">
+				<p-accordion-panel>
+					<p-accordion-header>Players ({{ getAllClients().length }})</p-accordion-header>
+					<p-accordion-content>
+						@if (getAllClients().length === 0) {
+							<div>There are no players online.</div>
+						} @else {
+							<div class="column gap-small">
+								@for (client of getAllClients(); track $index) {
+									<div class="row gap-small center clickable" (click)="clickClient(client.id)">
+										<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="24" [height]="24" [alt]="client.name"/>
+										<div>{{ client.name }}</div>
+									</div>
+								}
+							</div>
+						}
+					</p-accordion-content>
+				</p-accordion-panel>
+			</p-accordion>
 		</div>
 		<div class="spacing"></div>
 		<div class="row gap-small center padding-sides padding-top-bottom">

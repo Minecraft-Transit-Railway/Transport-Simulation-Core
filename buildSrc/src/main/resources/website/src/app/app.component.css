@@ -1,5 +1,17 @@
 .button-corner {
+	background-color: var(--background-color);
 	position: absolute;
-	right: 2em;
-	bottom: 2em;
+	right: 2rem;
+	bottom: 2rem;
+	width: 3rem;
+	height: 3rem;
+}
+
+::ng-deep .p-accordionheader {
+	padding-left: 0 !important;
+	padding-top: 0 !important;
+}
+
+::ng-deep .p-accordioncontent-content {
+	padding-left: 0 !important;
 }

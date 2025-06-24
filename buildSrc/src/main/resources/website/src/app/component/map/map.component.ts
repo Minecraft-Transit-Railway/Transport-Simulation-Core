@@ -12,14 +12,18 @@ import {rotate, trig45} from "../../data/utilities";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
 import {ThemeService} from "../../service/theme.service";
 import {MapSelectionService} from "../../service/map-selection.service";
-import {DeparturesService} from "../../service/departures.service";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
+import {ClientsService} from "../../service/clients.service";
+import {TooltipModule} from "primeng/tooltip";
+import {NgOptimizedImage} from "@angular/common";
 
 const blackColor = 0x000000;
 const whiteColor = 0xFFFFFF;
 const grayColorLight = 0xDDDDDD;
 const grayColorDark = 0x222222;
 const arrowSpacing = 80;
+const clientImageSize = 32;
+const clientImagePadding = 5;
 const materialWithVertexColors = new THREE.MeshBasicMaterial({vertexColors: true});
 const lineMaterialStationConnectionThin = new LineMaterial({color: 0xFFFFFF, linewidth: 4 * SETTINGS.scale, vertexColors: true});
 const lineMaterialStationConnectionThick = new LineMaterial({color: 0xFFFFFF, linewidth: 8 * SETTINGS.scale, vertexColors: true});
@@ -32,8 +36,10 @@ const animationDuration = 2000;
 @Component({
 	selector: "app-map",
 	imports: [
+		TooltipModule,
 		ProgressSpinnerModule,
 		SplitNamePipe,
+		NgOptimizedImage,
 	],
 	templateUrl: "./map.component.html",
 	styleUrls: ["./map.component.css"],
@@ -44,7 +50,22 @@ export class MapComponent implements AfterViewInit {
 	@ViewChild("canvas") private readonly canvasRef!: ElementRef<HTMLCanvasElement>;
 	@ViewChild("stats") private readonly statsRef!: ElementRef<HTMLDivElement>;
 	loading = true;
+	readonly clientGroupsOnRoute: {
+		clients: { id: string, name: string }[],
+		clientImagePadding: number,
+		x: number,
+		y: number,
+	}[] = [];
 	readonly textLabels: TextLabel[] = [];
+	readonly clientImageSize = clientImageSize;
+
+	private clientPositions: Record<string, { x: number, y: number }> = {};
+
+	private readonly clientGroupsOnRouteRaw: {
+		clients: { id: string, name: string }[],
+		x: number,
+		y: number,
+	}[] = [];
 
 	private readonly canvas: () => HTMLCanvasElement;
 	private readonly scene = new THREE.Scene();
@@ -58,8 +79,9 @@ export class MapComponent implements AfterViewInit {
 	private lineGeometryNormalDashed: LineGeometry | undefined;
 	private lineGeometryThin: LineGeometry | undefined;
 	private lineGeometryThinDashed: LineGeometry | undefined;
+	private pointsForLineConnection: Record<string, [number, number, boolean][]> = {};
 
-	constructor(private readonly mapDataService: MapDataService, private readonly mapSelectionService: MapSelectionService, private readonly departuresService: DeparturesService, private readonly themeService: ThemeService) {
+	constructor(private readonly mapDataService: MapDataService, private readonly mapSelectionService: MapSelectionService, private readonly clientService: ClientsService, private readonly themeService: ThemeService) {
 		this.canvas = () => this.canvasRef.nativeElement;
 		this.mapDataService.mapLoading.subscribe(() => this.loading = true);
 	}
@@ -206,50 +228,106 @@ export class MapComponent implements AfterViewInit {
 			animationTargetY = -z;
 			animationStartTime = Date.now();
 		});
+
+		this.mapDataService.animateClient.subscribe(id => {
+			const client = this.clientPositions[id];
+			if (client) {
+				animationStartX = this.camera.position.x;
+				animationStartY = this.camera.position.y;
+				animationTargetX = client.x;
+				animationTargetY = client.y;
+				animationStartTime = Date.now();
+			}
+		});
+
+		this.clientService.dataProcessed.subscribe(() => {
+			this.createStationBlobs();
+			draw();
+		});
 	}
 
 	private createStationBlobs() {
 		const positions: number[] = [];
 		const colors: number[] = [];
 		const backgroundColor = this.getBackgroundColor();
+		const newClientImagePadding = clientImagePadding * SETTINGS.scale / this.camera.zoom / 2;
+		const newClientImageSize = clientImageSize * SETTINGS.scale / this.camera.zoom / 2;
+		this.clientPositions = {};
+		this.clientGroupsOnRouteRaw.length = 0;
+
+		const createShape = (radius: number, newWidth: number, newHeight: number) => {
+			const newRadius = radius * SETTINGS.scale / this.camera.zoom;
+			const shape = new THREE.Shape();
+			const toRadians = (angle: number) => angle * Math.PI / 180;
+			shape.moveTo(-newWidth, newHeight + newRadius);
+			shape.arc(0, -newRadius, newRadius, toRadians(90), toRadians(180));
+			shape.lineTo(-newWidth - newRadius, -newHeight);
+			shape.arc(newRadius, 0, newRadius, toRadians(180), toRadians(270));
+			shape.lineTo(newWidth, -newHeight - newRadius);
+			shape.arc(0, newRadius, newRadius, toRadians(270), toRadians(360));
+			shape.lineTo(newWidth + newRadius, newHeight);
+			shape.arc(-newRadius, 0, newRadius, toRadians(0), toRadians(90));
+			shape.lineTo(-newWidth, newHeight + newRadius);
+			return shape;
+		};
+
+		const processShape = (x: number, y: number, radius: number, newWidth: number, newHeight: number, newRotate: boolean, offset: number, color: number) => {
+			const shapePoints = createShape(radius, newWidth, newHeight).getPoints(2);
+			for (let i = 1; i < shapePoints.length; i++) {
+				positions.push(x, y, offset);
+				const point1 = new THREE.Vector2(shapePoints[i - 1].x + x, shapePoints[i - 1].y + y).rotateAround(new THREE.Vector2(x, y), newRotate ? Math.PI / 4 : 0);
+				positions.push(point1.x, point1.y, offset);
+				const point2 = new THREE.Vector2(shapePoints[i].x + x, shapePoints[i].y + y).rotateAround(new THREE.Vector2(x, y), newRotate ? Math.PI / 4 : 0);
+				positions.push(point2.x, point2.y, offset);
+				MapComponent.setColor(color, colors, 3);
+			}
+		};
 
 		this.mapDataService.stationsForMap.forEach(({station, rotate, width, height}) => {
 			const {id, x, z} = station;
-			const newWidth = width * 3 * SETTINGS.scale / this.camera.zoom;
-			const newHeight = height * 3 * SETTINGS.scale / this.camera.zoom;
-
-			const createShape = (radius: number) => {
-				const newRadius = radius * SETTINGS.scale / this.camera.zoom;
-				const shape = new THREE.Shape();
-				const toRadians = (angle: number) => angle * Math.PI / 180;
-				shape.moveTo(-newWidth, newHeight + newRadius);
-				shape.arc(0, -newRadius, newRadius, toRadians(90), toRadians(180));
-				shape.lineTo(-newWidth - newRadius, -newHeight);
-				shape.arc(newRadius, 0, newRadius, toRadians(180), toRadians(270));
-				shape.lineTo(newWidth, -newHeight - newRadius);
-				shape.arc(0, newRadius, newRadius, toRadians(270), toRadians(360));
-				shape.lineTo(newWidth + newRadius, newHeight);
-				shape.arc(-newRadius, 0, newRadius, toRadians(0), toRadians(90));
-				shape.lineTo(-newWidth, newHeight + newRadius);
-				return shape;
-			};
-
-			const processShape = (radius: number, offset: number, color: number) => {
-				const shapePoints = createShape(radius).getPoints(2);
-				for (let i = 1; i < shapePoints.length; i++) {
-					positions.push(x, -z, offset);
-					const point1 = new THREE.Vector2(shapePoints[i - 1].x + x, shapePoints[i - 1].y - z).rotateAround(new THREE.Vector2(x, -z), rotate ? Math.PI / 4 : 0);
-					positions.push(point1.x, point1.y, offset);
-					const point2 = new THREE.Vector2(shapePoints[i].x + x, shapePoints[i].y - z).rotateAround(new THREE.Vector2(x, -z), rotate ? Math.PI / 4 : 0);
-					positions.push(point2.x, point2.y, offset);
-					MapComponent.setColor(color, colors, 3);
-				}
-			};
-
 			const stationSelected = this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStations.includes(id);
 			const adjustZ = stationSelected ? 20 : 0;
-			processShape(7, adjustZ - 1, this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, stationSelected));
-			processShape(5, adjustZ, this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, stationSelected));
+			const newWidth = width * 3 * SETTINGS.scale / this.camera.zoom;
+			const newHeight = height * 3 * SETTINGS.scale / this.camera.zoom;
+			processShape(x, -z, 7, newWidth, newHeight, rotate, adjustZ - 1, this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, stationSelected));
+			processShape(x, -z, 5, newWidth, newHeight, rotate, adjustZ, this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, stationSelected));
+
+			const clientGroups = this.clientService.getClientGroupsForStation()[id];
+			if (clientGroups) {
+				const clientCount = clientGroups.clients.length;
+				const newClientImageWidth = newClientImageSize * clientCount + newClientImagePadding * (clientCount - 1);
+				processShape(x, -z, 7, newClientImageWidth, newClientImageSize, false, adjustZ - 1, this.getColor(blackColor, whiteColor, grayColorLight, grayColorDark, stationSelected));
+				processShape(x, -z, 5, newClientImageWidth, newClientImageSize, false, adjustZ, this.getColor(whiteColor, blackColor, backgroundColor, backgroundColor, stationSelected));
+			}
+		});
+
+		Object.values(this.clientService.allClients).forEach(({id, rawX, rawZ}) => this.clientPositions[id] = {x: rawX, y: -rawZ});
+		Object.entries(this.clientService.getClientGroupsForRoute()).forEach(([routeKey, {clients, x, z, route, routeStationId1, routeStationId2}]) => {
+			const points = this.pointsForLineConnection[routeKey];
+			if (points) {
+				let closestX = 0;
+				let closestY = 0;
+				let shortestDistance = Number.MAX_SAFE_INTEGER;
+				for (let i = 1; i < points.length; i++) {
+					const [x1, z1] = points[i - 1];
+					const [x2, z2] = points[i];
+					const {closestPoint, distance} = MapComponent.closestPointAndDistanceToSegment(x1, -z1, x2, -z2, x, -z);
+					if (distance < shortestDistance) {
+						shortestDistance = distance;
+						closestX = closestPoint.x;
+						closestY = closestPoint.y;
+					}
+				}
+
+				const color = route?.color ?? 0;
+				const lineSelected = this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStationConnections.some(stationConnection => stationConnection.routeColor === color && stationConnection.stationIds[0] === routeStationId1 && stationConnection.stationIds[1] === routeStationId2);
+				const adjustZ = lineSelected ? 18 : -2;
+				const clientCount = clients.length;
+				const newClientImageWidth = newClientImageSize * clientCount + newClientImagePadding * (clientCount - 1);
+				processShape(closestX, closestY, 5, newClientImageWidth, newClientImageSize, false, adjustZ, this.getColor(color, color, grayColorLight, grayColorDark, lineSelected));
+				clients.forEach(({id}) => this.clientPositions[id] = {x: closestX, y: closestY});
+				this.clientGroupsOnRouteRaw.push({clients, x: closestX, y: closestY});
+			}
 		});
 
 		if (this.stationGeometry) {
@@ -302,6 +380,8 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	private createLines(refreshDashedLines: () => void) {
+		this.pointsForLineConnection = {};
+
 		lineMaterialNormalDashed.dashSize = 8 * SETTINGS.scale / this.camera.zoom;
 		lineMaterialNormalDashed.gapSize = 4 * SETTINGS.scale / this.camera.zoom;
 		lineMaterialThinDashed.dashSize = 16 * SETTINGS.scale / this.camera.zoom;
@@ -383,6 +463,8 @@ export class MapComponent implements AfterViewInit {
 							MapComponent.setColor(backgroundColor, (dashed ? colorsThinDashed : colorsThin));
 						}
 					});
+
+					this.pointsForLineConnection[ClientsService.getRouteConnectionKey(stationId1, stationId2, colorInt)] = points;
 				}
 
 				if (oneWayPoints.length >= 2) {
@@ -439,32 +521,63 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	private updateLabels() {
+		const halfCanvasWidth = this.canvas().clientWidth / 2;
+		const halfCanvasHeight = this.canvas().clientHeight / 2;
 		this.textLabels.length = 0;
 		let renderedTextCount = 0;
+
 		this.mapDataService.stationsForMap.forEach(({station, rotate, width, height}) => {
 			const {id, name, getIcons, x, z} = station;
-			const newWidth = width * 3 * SETTINGS.scale;
-			const newHeight = height * 3 * SETTINGS.scale;
-			const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
-			const textOffset = (rotate ? rotatedSize : newHeight) + 9 * SETTINGS.scale;
-			const icons = getIcons(type => this.mapDataService.routeTypeVisibility[type] === "HIDDEN");
 			const canvasX = (x - this.camera.position.x) * this.camera.zoom;
 			const canvasY = (z + this.camera.position.y) * this.camera.zoom;
-			const halfCanvasWidth = this.canvas().clientWidth / 2;
-			const halfCanvasHeight = this.canvas().clientHeight / 2;
-			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && renderedTextCount < SETTINGS.maxText * 2 && (this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStations.includes(id))) {
-				this.textLabels.push(new TextLabel(
+			const clientGroup = this.clientService.getClientGroupsForStation()[id];
+
+			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && (clientGroup || renderedTextCount < SETTINGS.maxText * 2) && (this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStations.includes(id))) {
+				const newWidth = width * 3 * SETTINGS.scale;
+				const newHeight = height * 3 * SETTINGS.scale;
+				const clientsHeight = clientGroup ? clientImageSize * SETTINGS.scale / 2 : 0;
+				const clientsWidth = clientGroup ? clientsHeight * clientGroup.clients.length + clientImagePadding * SETTINGS.scale * (clientGroup.clients.length - 1) / 2 : 0;
+				const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
+				const textOffset = Math.max(rotate ? rotatedSize : newHeight, clientsHeight) + 9 * SETTINGS.scale;
+				const icons = getIcons(type => this.mapDataService.routeTypeVisibility[type] === "HIDDEN");
+				this.textLabels.push({
+					hoverOverride: false,
 					id,
-					name,
+					text: name,
 					icons,
-					renderedTextCount < SETTINGS.maxText,
-					canvasX + halfCanvasWidth,
-					canvasY + halfCanvasHeight - textOffset,
-					(rotate ? rotatedSize : newWidth) * 2 + 18 * SETTINGS.scale,
-					(rotate ? rotatedSize : newHeight) * 2 + 18 * SETTINGS.scale,
-				));
+					shouldRenderText: !!clientGroup || renderedTextCount < SETTINGS.maxText,
+					clients: clientGroup?.clients,
+					clientImagePadding: clientImagePadding * SETTINGS.scale,
+					x: canvasX + halfCanvasWidth,
+					y: canvasY + halfCanvasHeight - textOffset,
+					stationWidth: Math.max(rotate ? rotatedSize : newWidth, clientsWidth) * 2 + 18 * SETTINGS.scale,
+					stationHeight: Math.max(rotate ? rotatedSize : newHeight, clientsHeight) * 2 + 18 * SETTINGS.scale,
+				});
 				renderedTextCount++;
 			}
+		});
+
+		this.clientGroupsOnRoute.length = 0;
+		this.clientGroupsOnRouteRaw.forEach(({clients, x, y}) => {
+			const canvasX = (x - this.camera.position.x) * this.camera.zoom;
+			const canvasY = (-y + this.camera.position.y) * this.camera.zoom;
+			this.clientGroupsOnRoute.push({
+				clients,
+				clientImagePadding: clientImagePadding * SETTINGS.scale,
+				x: canvasX + halfCanvasWidth,
+				y: canvasY + halfCanvasHeight - clientImageSize * SETTINGS.scale / 2,
+			});
+		});
+
+		this.clientService.allClientsNotInStationOrRoute.forEach(({id, name, rawX, rawZ}) => {
+			const canvasX = (rawX - this.camera.position.x) * this.camera.zoom;
+			const canvasY = (rawZ + this.camera.position.y) * this.camera.zoom;
+			this.clientGroupsOnRoute.push({
+				clients: [{id, name}],
+				clientImagePadding: clientImagePadding * SETTINGS.scale,
+				x: canvasX + halfCanvasWidth,
+				y: canvasY + halfCanvasHeight - clientImageSize * SETTINGS.scale / 2,
+			});
 		});
 	}
 
@@ -506,20 +619,41 @@ export class MapComponent implements AfterViewInit {
 			colors.push(r / 0xFF, g / 0xFF, b / 0xFF);
 		}
 	}
+
+	// Thanks ChatGPT
+	private static closestPointAndDistanceToSegment(x1: number, y1: number, x2: number, y2: number, pointX: number, pointY: number): { closestPoint: { x: number, y: number }, distance: number } {
+		const dx = x2 - x1;
+		const dy = y2 - y1;
+
+		// Handle case where segment is a single point
+		if (dx === 0 && dy === 0) {
+			return {closestPoint: {x: x1, y: y1}, distance: Math.hypot(pointX - x1, pointY - y1)};
+		}
+
+		// Compute projection scalar t
+		const t = ((pointX - x1) * dx + (pointY - y1) * dy) / (dx * dx + dy * dy);
+
+		// Clamp t to [0, 1] to restrict to the segment
+		const tClamped = Math.max(0, Math.min(1, t));
+
+		// Compute closest point on the segment
+		const closestX = x1 + tClamped * dx;
+		const closestY = y1 + tClamped * dy;
+
+		return {closestPoint: {x: closestX, y: closestY}, distance: Math.hypot(pointX - closestX, pointY - closestY)};
+	}
 }
 
 class TextLabel {
 	public hoverOverride = false;
-
-	constructor(
-		public readonly id: string,
-		public readonly text: string,
-		public readonly icons: string[],
-		public readonly shouldRenderText: boolean,
-		public readonly x: number,
-		public readonly y: number,
-		public readonly stationWidth: number,
-		public readonly stationHeight: number,
-	) {
-	}
+	public readonly id: string = "";
+	public readonly text: string = "";
+	public readonly icons: string[] = [];
+	public readonly shouldRenderText: boolean = false;
+	public readonly clients?: { id: string, name: string }[];
+	public readonly clientImagePadding: number = 0;
+	public readonly x: number = 0;
+	public readonly y: number = 0;
+	public readonly stationWidth: number = 0;
+	public readonly stationHeight: number = 0;
 }

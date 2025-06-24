@@ -6,13 +6,13 @@
 .chip {
 	border-radius: var(--p-button-border-radius);
 	transition: box-shadow 0.2s;
-	padding: 0.5em;
+	padding: 0.5rem;
 }
 
 .chip-text {
-	font-size: 0.8em;
+	font-size: 0.8rem;
 	font-weight: 600;
-	line-height: 1.2em;
+	line-height: 1.2rem;
 }
 
 .small-divider {
