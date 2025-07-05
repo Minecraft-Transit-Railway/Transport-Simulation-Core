@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
+import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.MessagePackReader;
 import org.mtr.core.serializer.MessagePackWriter;
 import org.mtr.core.serializer.ReaderBase;
@@ -252,7 +253,7 @@ public final class DataFixer {
 		CABLE_CAR(30, false, true, true, Rail.Shape.CABLE),
 		CABLE_CAR_STATION(2, false, true, true, Rail.Shape.QUADRATIC),
 		RUNWAY(300, false, true, false, Rail.Shape.QUADRATIC),
-		AIRPLANE_DUMMY(900, false, true, false, Rail.Shape.QUADRATIC),
+		AIRPLANE_DUMMY(SidingPathFinder.AIRPLANE_SPEED, false, true, false, Rail.Shape.QUADRATIC),
 		NONE(0, false, false, true, Rail.Shape.QUADRATIC);
 
 		public final int speedLimitKilometersPerHour;

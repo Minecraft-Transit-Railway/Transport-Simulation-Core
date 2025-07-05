@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.VehicleSchema;
+import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
@@ -665,7 +666,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			return null;
 		} else {
 			final Vector vector = pathData.getPosition(value - pathData.getStartDistance());
-			if (transportMode == TransportMode.AIRPLANE && pathData.getSpeedLimitKilometersPerHour() == 900 && pathData.isDescending()) {
+			if (transportMode == TransportMode.AIRPLANE && pathData.getSpeedLimitKilometersPerHour() == SidingPathFinder.AIRPLANE_SPEED && pathData.isDescending()) {
 				if (overrideY.isEmpty()) {
 					overrideY.add(vector.y);
 					return vector;

@@ -21,7 +21,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 	private final Object2ObjectOpenHashMap<Position, Rail> runwaysInbound;
 	private final ObjectOpenHashSet<Position> runwaysOutbound;
 
-	public static final int AIRPLANE_SPEED = 900;
+	public static final int AIRPLANE_SPEED = 300;
 	private static final int MAX_AIRPLANE_TURN_ARC = 128;
 
 	public SidingPathFinder(Data data, U startSavedRail, W endSavedRail, int stopIndex) {
