@@ -255,7 +255,8 @@ public class Simulator extends Data implements Utilities {
 				vehiclePositionsForTransportMode.add(new Object2ObjectAVLTreeMap<>());
 			});
 
-			rails.forEach(rail -> rail.tick(this));
+			rails.forEach(rail -> rail.tick1(this));
+			rails.forEach(rail -> rail.tick2(millisElapsed));
 			depots.forEach(Depot::tick);
 
 			// Try setting a siding's default path data

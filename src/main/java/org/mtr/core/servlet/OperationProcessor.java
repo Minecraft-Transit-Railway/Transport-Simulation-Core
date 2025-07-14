@@ -22,6 +22,7 @@ public final class OperationProcessor {
 	public static final String ARRIVALS = "arrivals";
 	public static final String SET_TIME = "set_time";
 	public static final String UPDATE_RIDING_ENTITIES = "update_riding_entities";
+	public static final String BLOCK_RAILS = "block_rails";
 	public static final String PRESS_LIFT = "press_lift";
 	public static final String NEARBY_STATIONS = "nearby_stations";
 	public static final String NEARBY_DEPOTS = "nearby_depots";
@@ -59,6 +60,9 @@ public final class OperationProcessor {
 				return null;
 			case UPDATE_RIDING_ENTITIES:
 				return new UpdateVehicleRidingEntities(jsonReader).update(simulator);
+			case BLOCK_RAILS:
+				new BlockRails(jsonReader).blockRails(simulator);
+				return null;
 			case PRESS_LIFT:
 				new PressLift(jsonReader).pressLift(simulator);
 				return null;

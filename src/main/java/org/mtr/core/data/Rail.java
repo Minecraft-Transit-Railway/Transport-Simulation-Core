@@ -2,6 +2,7 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.generated.data.RailSchema;
@@ -11,6 +12,8 @@ import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 
 public final class Rail extends RailSchema {
+
+	private long manualBlockCooldown;
 
 	public final double speedLimit1MetersPerMillisecond;
 	public final double speedLimit2MetersPerMillisecond;
@@ -22,7 +25,10 @@ public final class Rail extends RailSchema {
 	private final Long2LongAVLTreeMap currentlyBlockedVehicleIds = new Long2LongAVLTreeMap();
 	private final Long2LongAVLTreeMap preBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
 	private final Long2LongAVLTreeMap currentlyBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
+	private final LongArrayList manualBlockColors = new LongArrayList();
 	private final boolean reversePositions;
+
+	private static final int MANUAL_BLOCK_DURATION = 1000;
 
 	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, ObjectArrayList<String> styles, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode) {
 		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, styles, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canConnectRemotely, canHaveSignal, transportMode);
@@ -160,7 +166,7 @@ public final class Rail extends RailSchema {
 		return Utilities.isBetween(position, railMath.minX, railMath.minY, railMath.minZ, railMath.maxX, railMath.maxY, railMath.maxZ, radius);
 	}
 
-	public void tick(Simulator simulator) {
+	public void tick1(Simulator simulator) {
 		final boolean needsUpdate = !Utilities.sameItems(preBlockedVehicleIds.keySet(), preBlockedVehicleIdsOld.keySet()) || !Utilities.sameItems(currentlyBlockedVehicleIds.keySet(), currentlyBlockedVehicleIdsOld.keySet());
 		simulator.clients.forEach(client -> {
 			if (closeTo(client.getPosition(), client.getUpdateRadius())) {
@@ -175,6 +181,15 @@ public final class Rail extends RailSchema {
 		currentlyBlockedVehicleIdsOld.clear();
 		currentlyBlockedVehicleIdsOld.putAll(currentlyBlockedVehicleIds);
 		currentlyBlockedVehicleIds.clear();
+	}
+
+	public void tick2(long millisElapsed) {
+		if (manualBlockCooldown > 0) {
+			if (isNotBlocked(preBlockedVehicleIds, 0) && isNotBlocked(currentlyBlockedVehicleIds, 0) && isNotBlocked(preBlockedVehicleIdsOld, 0) && isNotBlocked(currentlyBlockedVehicleIdsOld, 0)) {
+				manualBlockColors.forEach(color -> reserveRail(0, color, new ObjectOpenHashSet<>(), this, true));
+			}
+			manualBlockCooldown = Math.max(0, manualBlockCooldown - millisElapsed);
+		}
 	}
 
 	public void checkOrCreateSavedRail(Data data, ObjectArrayList<Platform> platformsToAdd, ObjectArrayList<Siding> sidingsToAdd) {
@@ -232,6 +247,15 @@ public final class Rail extends RailSchema {
 			styles.add("default");
 			stylesMigratedLegacy = true;
 		}
+	}
+
+	/**
+	 * Manually block a rail for one second (not with a vehicle). This should be called externally.
+	 */
+	public void blockRail(LongArrayList colors) {
+		manualBlockCooldown = MANUAL_BLOCK_DURATION;
+		manualBlockColors.clear();
+		manualBlockColors.addAll(colors.isEmpty() ? signalColors : colors);
 	}
 
 	boolean isBlocked(long vehicleId, BlockReservation blockReservation) {
