@@ -96,7 +96,7 @@ public final class Station extends StationSchema {
 				colorToRouteMap.forEach((color, routes) -> {
 					Collections.sort(routes);
 					if (oneRouteFromEachColor != null) {
-						oneRouteFromEachColor.add(routes.get(0));
+						oneRouteFromEachColor.add(routes.getFirst());
 					}
 				});
 				stationToColorToRoutesMap.put(stationMapper.apply(station), colorToRouteMap);

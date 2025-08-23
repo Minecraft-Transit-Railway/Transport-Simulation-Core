@@ -25,10 +25,10 @@ public class LatLon {
 	}
 
 	public static double metersToLat(double meters) {
-		return Utilities.clamp(MAX_LAT * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LAT, MAX_LAT);
+		return Math.clamp(MAX_LAT * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LAT, MAX_LAT);
 	}
 
 	public static double metersToLon(double meters) {
-		return Utilities.clamp(MAX_LON * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LON, MAX_LON);
+		return Math.clamp(MAX_LON * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LON, MAX_LON);
 	}
 }

@@ -41,6 +41,10 @@ public final class Platform extends PlatformSchema {
 		anglesFromDepot.put(depotId, angle);
 	}
 
+	public String getStationName() {
+		return area == null ? "" : area.getName();
+	}
+
 	public Stop getOBAStopElement(IntAVLTreeSet routesUsed) {
 		Angle angle = null;
 		for (final Angle checkAngle : anglesFromDepot.values()) {

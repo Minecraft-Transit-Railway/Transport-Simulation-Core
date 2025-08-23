@@ -18,8 +18,8 @@ public final class GenerateByLift {
 	public void generate() {
 		final ObjectArrayList<Lift> liftsToModify = UpdateDataRequest.getAndRemoveMatchingLifts(data, lift);
 		liftsToModify.add(lift);
-		liftsToModify.get(0).setFloors(lift);
-		data.lifts.add(liftsToModify.get(0));
+		liftsToModify.getFirst().setFloors(lift);
+		data.lifts.add(liftsToModify.getFirst());
 		data.sync();
 	}
 }

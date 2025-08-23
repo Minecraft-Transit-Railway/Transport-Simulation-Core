@@ -63,7 +63,7 @@ public abstract class PathFinder<T> {
 					completed = true;
 					Main.LOGGER.debug("Found the best path after {} iteration(s)", iterations);
 				} else {
-					tempData.remove(tempData.size() - 1);
+					tempData.removeLast();
 				}
 			} else {
 				final long totalDuration = elapsedTime + bestDuration + bestWaitingTime;

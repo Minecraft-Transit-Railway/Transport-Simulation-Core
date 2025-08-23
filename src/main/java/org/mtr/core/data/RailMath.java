@@ -2,7 +2,6 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import org.mtr.core.tool.Angle;
-import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
 public class RailMath {
@@ -235,7 +234,7 @@ public class RailMath {
 	public Vector getPosition(double rawValue, boolean reverse) {
 		final double count1 = Math.abs(tEnd1 - tStart1);
 		final double count2 = Math.abs(tEnd2 - tStart2);
-		final double clampedValue = Utilities.clamp(rawValue, 0, count1 + count2);
+		final double clampedValue = Math.clamp(rawValue, 0, count1 + count2);
 		final double value = reverse ? count1 + count2 - clampedValue : clampedValue;
 		final double y = getPositionY(value);
 

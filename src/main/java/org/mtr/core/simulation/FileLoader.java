@@ -125,7 +125,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 	private int writeDirtyDataToFile(ObjectImmutableList<ObjectArrayList<String>> checkFilesToDelete, ObjectArrayList<T> dirtyData, Function<T, String> getFileName, boolean useReducedHash) {
 		int filesWritten = 0;
 		while (!dirtyData.isEmpty()) {
-			final T data = dirtyData.remove(0);
+			final T data = dirtyData.removeFirst();
 
 			if (data != null && data.isValid()) {
 				final String fileName = getFileName.apply(data);

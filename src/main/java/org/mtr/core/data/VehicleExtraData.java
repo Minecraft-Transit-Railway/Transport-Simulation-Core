@@ -52,7 +52,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 		for (int i = pathUpdateIndex; i <= path.size(); i++) {
 			if (i == path.size() && !path.isEmpty()) {
-				newVehicleExtraData.path.add(0, path.get(0));
+				newVehicleExtraData.path.add(0, path.getFirst());
 			} else {
 				final PathData pathData = path.get(i);
 				if (i == pathUpdateIndex || pathData.getStartDistance() <= stoppingPoint) {

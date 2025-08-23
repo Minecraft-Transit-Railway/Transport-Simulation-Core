@@ -95,7 +95,7 @@ public class Trip implements Utilities {
 
 		singleElement.set(new TripDetails(
 				getTripId(departureIndex, departureOffset),
-				siding.getOBATripStatus(currentMillis, stopTimes.get(0), departureIndex, departureOffset, "", ""),
+				siding.getOBATripStatus(currentMillis, stopTimes.getFirst(), departureIndex, departureOffset, "", ""),
 				schedule,
 				siding.getOBAFrequencyElement(currentMillis)
 		));

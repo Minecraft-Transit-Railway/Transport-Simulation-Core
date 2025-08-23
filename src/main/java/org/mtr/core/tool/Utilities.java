@@ -23,7 +23,8 @@ public interface Utilities {
 
 	int HOURS_PER_DAY = 24;
 	int MILLIS_PER_SECOND = 1000;
-	int MILLIS_PER_HOUR = 60 * 60 * MILLIS_PER_SECOND;
+	int MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+	int MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
 	int MILLIS_PER_DAY = HOURS_PER_DAY * MILLIS_PER_HOUR;
 
 	static boolean isBetween(double value, double value1, double value2) {
@@ -50,22 +51,6 @@ public interface Utilities {
 
 	static boolean isIntersecting(double value1, double value2, double value3, double value4) {
 		return isBetween(value3, value1, value2) || isBetween(value4, value1, value2) || isBetween(value1, value3, value4) || isBetween(value2, value3, value4);
-	}
-
-	static int clamp(int value, int min, int max) {
-		return Math.min(max, Math.max(min, value));
-	}
-
-	static long clamp(long value, long min, long max) {
-		return Math.min(max, Math.max(min, value));
-	}
-
-	static float clamp(float value, float min, float max) {
-		return Math.min(max, Math.max(min, value));
-	}
-
-	static double clamp(double value, double min, double max) {
-		return Math.min(max, Math.max(min, value));
 	}
 
 	static double round(double value, int decimalPlaces) {
@@ -154,7 +139,7 @@ public interface Utilities {
 					return lowIndex < 0 ? -1 : lowIndex;
 				}
 
-				index = Utilities.clamp((lowIndex + highIndex) / 2, 0, listSize - 1);
+				index = Math.clamp((lowIndex + highIndex) / 2, 0, listSize - 1);
 			}
 		}
 	}

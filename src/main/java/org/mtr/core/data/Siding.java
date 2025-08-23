@@ -189,11 +189,11 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void setDelayedVehicleSpeedIncreasePercentage(int delayedVehicleSpeedIncreasePercentage) {
-		this.delayedVehicleSpeedIncreasePercentage = Utilities.clamp(delayedVehicleSpeedIncreasePercentage, 0, 100);
+		this.delayedVehicleSpeedIncreasePercentage = Math.clamp(delayedVehicleSpeedIncreasePercentage, 0, 100);
 	}
 
 	public void setDelayedVehicleReduceDwellTimePercentage(int delayedVehicleReduceDwellTimePercentage) {
-		this.delayedVehicleReduceDwellTimePercentage = Utilities.clamp(delayedVehicleReduceDwellTimePercentage, 0, 100);
+		this.delayedVehicleReduceDwellTimePercentage = Math.clamp(delayedVehicleReduceDwellTimePercentage, 0, 100);
 	}
 
 	public void setEarlyVehicleIncreaseDwellTime(boolean earlyVehicleIncreaseDwellTime) {
@@ -241,7 +241,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		SidingPathFinder.findPathTick(pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, area == null ? 0 : area.getCruisingAltitude(), () -> {
 			if (area != null) {
 				if (SidingPathFinder.overlappingPaths(area.getPath(), pathMainRouteToSiding)) {
-					pathMainRouteToSiding.remove(0);
+					pathMainRouteToSiding.removeFirst();
 				}
 			}
 			finishGeneratingPath(false);
@@ -377,6 +377,10 @@ public final class Siding extends SidingSchema implements Utilities {
 				break;
 			}
 		}
+	}
+
+	public String getDepotName() {
+		return area == null ? "" : area.getName();
 	}
 
 	public void iterateVehiclesAndRidingEntities(BiConsumer<VehicleExtraData, VehicleRidingEntity> consumer) {
@@ -543,10 +547,6 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 	}
 
-	private String getDepotName() {
-		return area == null ? "" : area.getName();
-	}
-
 	private int matchDeparture() {
 		final long repeatInterval = getRepeatInterval(0);
 		final long offset = departures.isEmpty() || repeatInterval == 0 ? 0 : (data.getCurrentMillis() - departures.getLong(0)) / repeatInterval * repeatInterval;
@@ -693,18 +693,18 @@ public final class Siding extends SidingSchema implements Utilities {
 			final double totalVehicleLength = getTotalVehicleLength(vehicleCars);
 
 			if (SidingPathFinder.overlappingPaths(pathSidingToMainRoute, pathMainRoute)) {
-				final PathData pathData = pathMainRoute.remove(0);
+				final PathData pathData = pathMainRoute.removeFirst();
 				if (area.getRepeatInfinitely() && !overlappingFromRepeating) {
 					pathMainRoute.add(pathData);
 				}
 			} else {
 				if (area.getRepeatInfinitely() && overlappingFromRepeating) {
-					pathSidingToMainRoute.add(pathMainRoute.remove(0));
+					pathSidingToMainRoute.add(pathMainRoute.removeFirst());
 				}
 			}
 
 			if (SidingPathFinder.overlappingPaths(pathMainRoute, pathMainRouteToSiding)) {
-				pathMainRouteToSiding.remove(0);
+				pathMainRouteToSiding.removeFirst();
 			}
 
 			SidingPathFinder.generatePathDataDistances(pathSidingToMainRoute, 0);
@@ -731,7 +731,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				for (int j = 0; j < route.getRoutePlatforms().size(); j++) {
 					final long platformId = route.getRoutePlatforms().get(j).platform.getId();
 					if (j == 0 && !routePlatformInfoList.isEmpty() && Utilities.getElement(routePlatformInfoList, -1).platformId == platformId) {
-						routePlatformInfoList.remove(routePlatformInfoList.size() - 1);
+						routePlatformInfoList.removeLast();
 					}
 					routePlatformInfoList.add(new RoutePlatformInfo(route, i, platformId, route.getDestination(j)));
 				}
@@ -800,7 +800,7 @@ public final class Siding extends SidingSchema implements Utilities {
 					final long endTime = Math.round(time);
 
 					while (!routePlatformInfoList.isEmpty()) {
-						final RoutePlatformInfo routePlatformInfo = routePlatformInfoList.get(0);
+						final RoutePlatformInfo routePlatformInfo = routePlatformInfoList.getFirst();
 
 						if (routePlatformInfo.platformId != pathData.getSavedRailBaseId()) {
 							break;
@@ -826,7 +826,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 						writeRouteDuration = newStartTime -> routePlatformInfo.route.durations.add(newStartTime - endTime);
 						tripStopIndex++;
-						routePlatformInfoList.remove(0);
+						routePlatformInfoList.removeFirst();
 					}
 				} else {
 					time += pathData.getDwellTime();
@@ -861,7 +861,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 	public static double roundAcceleration(double acceleration) {
 		final double tempAcceleration = Utilities.round(acceleration, 8);
-		return tempAcceleration <= 0 ? ACCELERATION_DEFAULT : Utilities.clamp(tempAcceleration, MIN_ACCELERATION, MAX_ACCELERATION);
+		return tempAcceleration <= 0 ? ACCELERATION_DEFAULT : Math.clamp(tempAcceleration, MIN_ACCELERATION, MAX_ACCELERATION);
 	}
 
 	/**

@@ -122,7 +122,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> void findPathTick(ObjectArrayList<PathData> path, ObjectArrayList<SidingPathFinder<T, U, V, W>> sidingPathFinders, long cruisingAltitude, Runnable callbackSuccess, BiConsumer<U, W> callbackFail) {
 		if (!sidingPathFinders.isEmpty()) {
 			Utilities.loopUntilTimeout(() -> {
-				final SidingPathFinder<T, U, V, W> sidingPathFinder = sidingPathFinders.get(0);
+				final SidingPathFinder<T, U, V, W> sidingPathFinder = sidingPathFinders.getFirst();
 				final ObjectArrayList<PathData> tempPath = sidingPathFinder.tick(cruisingAltitude);
 
 				if (tempPath != null) {
@@ -133,10 +133,10 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 						return 0;
 					} else {
 						if (overlappingPaths(path, tempPath)) {
-							tempPath.remove(0);
+							tempPath.removeFirst();
 						}
 						path.addAll(tempPath);
-						sidingPathFinders.remove(0);
+						sidingPathFinders.removeFirst();
 						if (sidingPathFinders.isEmpty()) {
 							callbackSuccess.run();
 							return 0;
@@ -165,7 +165,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 		if (path.isEmpty() || newPath.isEmpty()) {
 			return false;
 		} else {
-			return Utilities.getElement(path, -1).isSameRail(newPath.get(0));
+			return Utilities.getElement(path, -1).isSameRail(newPath.getFirst());
 		}
 	}
 

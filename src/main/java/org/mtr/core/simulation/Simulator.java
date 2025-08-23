@@ -251,7 +251,7 @@ public class Simulator extends Data implements Utilities {
 
 		try {
 			vehiclePositions.forEach(vehiclePositionsForTransportMode -> {
-				vehiclePositionsForTransportMode.remove(0);
+				vehiclePositionsForTransportMode.removeFirst();
 				vehiclePositionsForTransportMode.add(new Object2ObjectAVLTreeMap<>());
 			});
 
