@@ -119,6 +119,21 @@ public interface Utilities {
 		return result == null ? defaultValue : result;
 	}
 
+	static <T, U extends List<T>> void setElement(@Nullable U collection, int index, T value) {
+		if (collection != null && index < collection.size() && index >= -collection.size()) {
+			collection.set((index < 0 ? collection.size() : 0) + index, value);
+		}
+	}
+
+	@Nullable
+	static <T, U extends List<T>> T removeElement(@Nullable U collection, int index) {
+		if (collection == null || index >= collection.size() || index < -collection.size()) {
+			return null;
+		} else {
+			return collection.remove((index < 0 ? collection.size() : 0) + index);
+		}
+	}
+
 	static <T extends ConditionalList> int getIndexFromConditionalList(List<T> list, double value) {
 		if (list.isEmpty()) {
 			return -1;
