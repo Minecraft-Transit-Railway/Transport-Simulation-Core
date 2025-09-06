@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
+import org.mtr.core.path.DirectionsFinder;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.servlet.MessageQueue;
@@ -29,6 +30,7 @@ public class Simulator extends Data implements Utilities {
 	public final ObjectArraySet<Client> clients = new ObjectArraySet<>();
 	public final String dimension;
 	public final String[] dimensions;
+	public final DirectionsFinder directionsFinder = new DirectionsFinder(this);
 
 	private final FileLoader<Station> fileLoaderStations;
 	private final FileLoader<Platform> fileLoaderPlatforms;

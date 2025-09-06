@@ -12,6 +12,7 @@ import org.mtr.core.map.Clients;
 import org.mtr.core.map.Departures;
 import org.mtr.core.map.StationAndRoutes;
 import org.mtr.core.operation.ArrivalsRequest;
+import org.mtr.core.operation.DirectionsGroupRequest;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
@@ -30,25 +31,14 @@ public final class SystemMapServlet extends ServletBase {
 
 	@Override
 	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse) {
-		final JsonObject response;
-		switch (endpoint) {
-			case "stations-and-routes":
-				response = stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, 30000)).get(simulator);
-				break;
-			case "departures":
-				response = departuresResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getDepartures, 3000)).get(simulator);
-				break;
-			case "arrivals":
-				response = Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));
-				break;
-			case "clients":
-				response = clientsResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getClients, 3000)).get(simulator);
-				break;
-			default:
-				response = new JsonObject();
-				break;
-		}
-		sendResponse.accept(response);
+		sendResponse.accept(switch (endpoint) {
+			case "stations-and-routes" -> stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, 30000)).get(simulator);
+			case "departures" -> departuresResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getDepartures, 3000)).get(simulator);
+			case "arrivals" -> Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));
+			case "clients" -> clientsResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getClients, 3000)).get(simulator);
+			case "directions" -> Utilities.getJsonObjectFromData(new DirectionsGroupRequest(jsonReader).getDirections(simulator));
+			default -> new JsonObject();
+		});
 	}
 
 	private static JsonObject getStationsAndRoutes(Simulator simulator) {
@@ -61,7 +51,7 @@ public final class SystemMapServlet extends ServletBase {
 	private static JsonObject getDepartures(Simulator simulator) {
 		final long currentMillis = System.currentTimeMillis();
 		final Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures = new Object2ObjectAVLTreeMap<>();
-		simulator.sidings.forEach(siding -> siding.getDepartures(currentMillis, departures));
+		simulator.sidings.forEach(siding -> siding.getDeparturesForMap(currentMillis, departures));
 		return Utilities.getJsonObjectFromData(new Departures(currentMillis, departures));
 	}
 

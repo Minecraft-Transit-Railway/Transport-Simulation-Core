@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.booleans.BooleanLongImmutablePair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
@@ -408,44 +409,29 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	/**
-	 * Gets the departure at the last stop of each route. This is used by the online system map for finding directions and showing realtime vehicle positions.
+	 * Gets the departures for the {@link org.mtr.core.path.DirectionsFinder}.
+	 *
+	 * @param currentMillis the current time
+	 * @param departures    the map to be written to, using the route ID mapped to the {@link Route} and departures at the last platform
 	 */
-	public void getDepartures(long currentMillis, Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures) {
-		if (area != null) {
-			for (int i = 0; i < area.routes.size(); i++) {
-				final Route route = area.routes.get(i);
-				final RoutePlatformData routePlatformData = Utilities.getElement(route.getRoutePlatforms(), -1);
-				if (routePlatformData == null) {
-					continue;
-				}
+	public void getDeparturesForDirections(long currentMillis, Long2ObjectOpenHashMap<ObjectObjectImmutablePair<Route, LongArrayList>> departures) {
+		getDeparturesAtEndOfRoute(
+				currentMillis,
+				(trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> departures.computeIfAbsent(trip.route.getId(), key -> new ObjectObjectImmutablePair<>(trip.route, new LongArrayList())).right().add(scheduledDepartureTime + deviation)
+		);
+	}
 
-				final long targetRouteId;
-				final int targetTripStopIndex;
-				final Route nextRoute = Utilities.getElement(area.routes, area.getRepeatInfinitely() && i == area.routes.size() - 1 ? 0 : i + 1);
-				final RoutePlatformData nextRoutePlatformData = nextRoute == null ? null : Utilities.getElement(nextRoute.getRoutePlatforms(), 0);
-				if (nextRoutePlatformData != null && routePlatformData.platform.getId() == nextRoutePlatformData.platform.getId()) {
-					targetRouteId = nextRoute.getId();
-					targetTripStopIndex = 0;
-				} else {
-					targetRouteId = route.getId();
-					targetTripStopIndex = route.getRoutePlatforms().size() - 1;
-				}
-
-				if (transportMode.continuousMovement) {
-					if (!this.departures.isEmpty()) {
-						final Long2ObjectAVLTreeMap<LongArrayList> continuousDepartures = new Long2ObjectAVLTreeMap<>();
-						continuousDepartures.put(0, new LongArrayList());
-						departures.put(route.getHexId(), continuousDepartures);
-					}
-				} else {
-					iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
-						if (trip.route.getId() == targetRouteId && tripStopIndex == targetTripStopIndex) {
-							departures.computeIfAbsent(route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis);
-						}
-					});
-				}
-			}
-		}
+	/**
+	 * Gets the departures for the online system map for showing realtime vehicle positions.
+	 *
+	 * @param currentMillis the current time
+	 * @param departures    the map to be written to, using the {@link Route} hex ID mapped to departures at the last platform for deviation
+	 */
+	public void getDeparturesForMap(long currentMillis, Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures) {
+		getDeparturesAtEndOfRoute(
+				currentMillis,
+				(trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> departures.computeIfAbsent(trip.route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis)
+		);
 	}
 
 	public void getOBAArrivalsAndDeparturesElementsWithTripsUsed(SingleElement<StopWithArrivalsAndDepartures> singleElement, StopWithArrivalsAndDepartures stopWithArrivalsAndDepartures, long currentMillis, Platform platform, int millsBefore, int millisAfter) {
@@ -544,6 +530,41 @@ public final class Siding extends SidingSchema implements Utilities {
 			return ((Simulator) data).getGameMillisPerDay() * area.getRepeatDepartures();
 		} else {
 			return defaultAmount;
+		}
+	}
+
+	/**
+	 * Gets the departures at the last platform of each route. Note that departures are different from arrivals; the dwell time at the last platform is included as well.
+	 */
+	private void getDeparturesAtEndOfRoute(long currentMillis, ArrivalConsumer arrivalConsumer) {
+		if (area != null) {
+			for (int i = 0; i < area.routes.size(); i++) {
+				final Route route = area.routes.get(i);
+				final RoutePlatformData routePlatformData = Utilities.getElement(route.getRoutePlatforms(), -1);
+				if (routePlatformData == null) {
+					continue;
+				}
+
+				final long targetRouteId;
+				final int targetTripStopIndex;
+				final Route nextRoute = Utilities.getElement(area.routes, area.getRepeatInfinitely() && i == area.routes.size() - 1 ? 0 : i + 1);
+				final RoutePlatformData nextRoutePlatformData = nextRoute == null ? null : Utilities.getElement(nextRoute.getRoutePlatforms(), 0);
+				if (nextRoutePlatformData != null && routePlatformData.platform.getId() == nextRoutePlatformData.platform.getId()) {
+					targetRouteId = nextRoute.getId();
+					targetTripStopIndex = 0;
+				} else {
+					targetRouteId = route.getId();
+					targetTripStopIndex = route.getRoutePlatforms().size() - 1;
+				}
+
+				if (!transportMode.continuousMovement) {
+					iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
+						if (trip.route.getId() == targetRouteId && tripStopIndex == targetTripStopIndex) {
+							arrivalConsumer.accept(trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset);
+						}
+					});
+				}
+			}
 		}
 	}
 
