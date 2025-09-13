@@ -1,7 +1,7 @@
-package org.mtr.core.operation;
+package org.mtr.core.map;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.core.generated.operation.DirectionsGroupResponseSchema;
+import org.mtr.core.generated.map.DirectionsGroupResponseSchema;
 
 public final class DirectionsGroupResponse extends DirectionsGroupResponseSchema {
 

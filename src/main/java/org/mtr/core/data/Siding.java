@@ -417,7 +417,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	public void getDeparturesForDirections(long currentMillis, Long2ObjectOpenHashMap<ObjectObjectImmutablePair<Route, LongArrayList>> departures) {
 		getDeparturesAtEndOfRoute(
 				currentMillis,
-				(trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> departures.computeIfAbsent(trip.route.getId(), key -> new ObjectObjectImmutablePair<>(trip.route, new LongArrayList())).right().add(scheduledDepartureTime + deviation)
+				(route, scheduledDepartureTime, deviation) -> departures.computeIfAbsent(route.getId(), key -> new ObjectObjectImmutablePair<>(route, new LongArrayList())).right().add(scheduledDepartureTime + deviation)
 		);
 	}
 
@@ -430,7 +430,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	public void getDeparturesForMap(long currentMillis, Object2ObjectAVLTreeMap<String, Long2ObjectAVLTreeMap<LongArrayList>> departures) {
 		getDeparturesAtEndOfRoute(
 				currentMillis,
-				(trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> departures.computeIfAbsent(trip.route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis)
+				(route, scheduledDepartureTime, deviation) -> departures.computeIfAbsent(route.getHexId(), key -> new Long2ObjectAVLTreeMap<>()).computeIfAbsent(deviation, key -> new LongArrayList()).add(scheduledDepartureTime - currentMillis)
 		);
 	}
 
@@ -536,7 +536,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	/**
 	 * Gets the departures at the last platform of each route. Note that departures are different from arrivals; the dwell time at the last platform is included as well.
 	 */
-	private void getDeparturesAtEndOfRoute(long currentMillis, ArrivalConsumer arrivalConsumer) {
+	private void getDeparturesAtEndOfRoute(long currentMillis, DepartureConsumer departureConsumer) {
 		if (area != null) {
 			for (int i = 0; i < area.routes.size(); i++) {
 				final Route route = area.routes.get(i);
@@ -560,7 +560,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				if (!transportMode.continuousMovement) {
 					iterateArrivals(currentMillis, routePlatformData.platform.getId(), 0, MILLIS_PER_DAY, (trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
 						if (trip.route.getId() == targetRouteId && tripStopIndex == targetTripStopIndex) {
-							arrivalConsumer.accept(trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset);
+							departureConsumer.accept(route, scheduledDepartureTime, deviation);
 						}
 					});
 				}
@@ -970,5 +970,10 @@ public final class Siding extends SidingSchema implements Utilities {
 	@FunctionalInterface
 	private interface ArrivalConsumer {
 		void accept(Trip trip, int tripStopIndex, Trip.StopTime stopTime, long scheduledArrivalTime, long scheduledDepartureTime, boolean predicted, long deviation, int departureIndex, long departureOffset);
+	}
+
+	@FunctionalInterface
+	private interface DepartureConsumer {
+		void accept(Route route, long scheduledDepartureTime, long deviation);
 	}
 }

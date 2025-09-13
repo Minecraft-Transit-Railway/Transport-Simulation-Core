@@ -1,0 +1,45 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"startPositionX": {
+			"type": "integer"
+		},
+		"startPositionY": {
+			"type": "integer"
+		},
+		"startPositionZ": {
+			"type": "integer"
+		},
+		"startStationName": {
+			"type": "string"
+		},
+		"startClientId": {
+			"type": "string"
+		},
+		"endPositionX": {
+			"type": "integer"
+		},
+		"endPositionY": {
+			"type": "integer"
+		},
+		"endPositionZ": {
+			"type": "integer"
+		},
+		"endStationName": {
+			"type": "string"
+		},
+		"endClientId": {
+			"type": "string"
+		},
+		"startTime": {
+			"type": "integer"
+		}
+	},
+	"required": [
+		"startTime"
+	]
+}

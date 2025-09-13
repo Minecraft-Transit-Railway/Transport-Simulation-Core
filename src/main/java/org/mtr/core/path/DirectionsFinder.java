@@ -1,7 +1,7 @@
 package org.mtr.core.path;
 
-import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -9,9 +9,10 @@ import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Route;
-import org.mtr.core.operation.Connection;
-import org.mtr.core.operation.DirectionsRequest;
-import org.mtr.core.operation.DirectionsResponse;
+import org.mtr.core.data.Station;
+import org.mtr.core.map.DirectionsConnection;
+import org.mtr.core.map.DirectionsRequest;
+import org.mtr.core.map.DirectionsResponse;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 
@@ -75,14 +76,18 @@ public final class DirectionsFinder {
 							continue;
 						}
 
-						for (Platform neighborPlatform : cell) {
-							if (neighborPlatform.getId() == platformId) {
+						for (final Platform walkingPlatform : cell) {
+							if (walkingPlatform.getId() == platformId) {
 								continue;
 							}
 
-							final long distance = getDistance(platformMidPosition, neighborPlatform.getMidPosition());
+							final long distance = getDistance(platformMidPosition, walkingPlatform.getMidPosition());
 							if (distance <= maxWalkingDistance) {
-								independentConnections.computeIfAbsent(platformId, key -> new Long2ObjectOpenHashMap<>()).put(neighborPlatform.getId(), new IndependentConnection(0, Math.round(distance / WALKING_SPEED), distance));
+								independentConnections.computeIfAbsent(platformId, key -> new Long2ObjectOpenHashMap<>()).put(walkingPlatform.getId(), new IndependentConnection(
+										null,
+										platformId, walkingPlatform.getId(),
+										Math.round(distance / WALKING_SPEED), distance
+								));
 							}
 						}
 					}
@@ -90,9 +95,16 @@ public final class DirectionsFinder {
 			});
 
 			simulator.routes.forEach(route -> {
-				if (route.getTransportMode().continuousMovement) {
-					processRoute(route, (offsetTimeFromLastDeparture, duration, platform1, platform2) ->
-							independentConnections.computeIfAbsent(platform1.getId(), key -> new Long2ObjectOpenHashMap<>()).put(platform2.getId(), new IndependentConnection(route.getId(), duration, 0)));
+				if (route.getTransportMode().continuousMovement && !route.getHidden()) {
+					processRoute(
+							route,
+							route.getRoutePlatforms().size() - 1,
+							(offsetTimeFromLastDeparture, duration, platform1, platform2) -> independentConnections.computeIfAbsent(platform1.getId(), key -> new Long2ObjectOpenHashMap<>()).put(platform2.getId(), new IndependentConnection(
+									route,
+									platform1.getId(), platform2.getId(),
+									duration, 0
+							))
+					);
 				}
 			});
 		}
@@ -106,14 +118,14 @@ public final class DirectionsFinder {
 			final Long2ObjectOpenHashMap<ObjectObjectImmutablePair<Route, LongArrayList>> tempDepartures = new Long2ObjectOpenHashMap<>();
 			simulator.sidings.forEach(siding -> siding.getDeparturesForDirections(millis, tempDepartures));
 
-			tempDepartures.forEach((routeId, departuresForRoute) -> processRoute(departuresForRoute.left(), (offsetTimeFromLastDeparture, duration, platform1, platform2) -> {
+			tempDepartures.values().forEach(departuresForRoute -> processRoute(departuresForRoute.left(), departuresForRoute.left().getRoutePlatforms().size() - 1, (offsetTimeFromLastDeparture, duration, platform1, platform2) -> {
 				for (final long departureForRoute : departuresForRoute.right()) {
 					final long vehicleArrival1 = departureForRoute - offsetTimeFromLastDeparture;
 					final long vehicleArrival2 = vehicleArrival1 + duration;
 
 					if (vehicleArrival1 >= millis) {
 						routeConnections.add(new Connection(
-								routeId,
+								departuresForRoute.left(),
 								platform1.getId(), platform2.getId(),
 								vehicleArrival1, vehicleArrival2,
 								0
@@ -123,7 +135,7 @@ public final class DirectionsFinder {
 			}));
 
 			// Sort by the start time of each connection
-			routeConnections.sort(Comparator.comparingLong(Connection::getStartTime));
+			routeConnections.sort(Comparator.comparingLong(Connection::startTime));
 		}
 	}
 
@@ -133,51 +145,61 @@ public final class DirectionsFinder {
 		final long millis = System.currentTimeMillis();
 		for (int i = 0; i < directionsRequestCount; i++) {
 			final DirectionsRequest directionsRequest = directionsRequests.get(i);
-			requests[i] = new Request(directionsRequest.getStartPosition(), directionsRequest.getEndPosition(), Math.max(millis, directionsRequest.getStartTime()), new Long2LongOpenHashMap(), new Long2ObjectOpenHashMap<>(), new Long2LongOpenHashMap());
+			requests[i] = new Request(directionsRequest.getStartPosition(simulator), directionsRequest.getEndPosition(simulator), Math.max(millis, directionsRequest.getStartTime()), new Long2ObjectOpenHashMap<>(), new Long2LongOpenHashMap());
 		}
 
-		simulator.platforms.forEach(platform -> {
+		simulator.platforms.forEach(endPlatform -> {
 			for (int i = 0; i < directionsRequestCount; i++) {
 				final Request request = requests[i];
 
 				// Walking from the start position to platforms
-				final long distanceToStart = getDistance(request.startPosition, platform.getMidPosition());
+				final Position endPosition = endPlatform.getMidPosition();
+				final long distanceToStart = getDistance(request.startPosition, endPosition);
 				if (distanceToStart <= maxWalkingDistance) {
 					final long endTime = request.startTime + Math.round(distanceToStart / WALKING_SPEED);
-					request.earliestArrivals.put(platform.getId(), endTime);
-					request.possibleConnections.put(platform.getId(), new Connection(
-							0,
-							START_PLATFORM_ID, platform.getId(),
+					request.earliestConnections.put(endPlatform.getId(), new Connection(
+							null,
+							START_PLATFORM_ID, endPlatform.getId(),
 							request.startTime, endTime,
 							distanceToStart
 					));
-					addIndependentConnectionsBFS(platform.getId(), request.earliestArrivals, request.possibleConnections);
+					addIndependentConnectionsBFS(endPlatform.getId(), request.earliestConnections);
 				}
 
 				// Cache distances of platforms to the end position
-				final long distanceToEnd = getDistance(request.endPosition, platform.getMidPosition());
+				final long distanceToEnd = getDistance(request.endPosition, endPosition);
 				if (distanceToEnd <= maxWalkingDistance) {
-					request.walkingDistancesToEnd.put(platform.getId(), distanceToEnd);
+					request.walkingDistancesToEnd.put(endPlatform.getId(), distanceToEnd);
 				}
 			}
 		});
 
 		// Process connections in order
-		routeConnections.forEach(connection -> {
+		routeConnections.forEach(independentConnection -> {
 			for (final Request request : requests) {
-				if (addConnection(connection, request.earliestArrivals, request.possibleConnections)) {
-					addIndependentConnectionsBFS(connection.getEndPlatformId(), request.earliestArrivals, request.possibleConnections);
+				if (addConnection(independentConnection, request.earliestConnections)) {
+					addIndependentConnectionsBFS(independentConnection.endPlatformId, request.earliestConnections);
 				}
 			}
 		});
 
 		return Arrays.stream(requests).map(request -> {
 			final DirectionsResponse directionsResponse = new DirectionsResponse();
-			Connection current = getEndConnection(request.earliestArrivals, request.walkingDistancesToEnd);
+			Connection current = getEndConnection(request.earliestConnections, request.walkingDistancesToEnd);
 
 			while (current != null) {
-				directionsResponse.add(0, current);
-				current = request.possibleConnections.get(current.getStartPlatformId());
+				final Platform startPlatform = current.startPlatformId == START_PLATFORM_ID ? null : simulator.platformIdMap.get(current.startPlatformId);
+				final Station startStation = startPlatform == null ? null : startPlatform.area;
+				final Platform endPlatform = current.endPlatformId == END_PLATFORM_ID ? null : simulator.platformIdMap.get(current.endPlatformId);
+				final Station endStation = endPlatform == null ? null : endPlatform.area;
+				directionsResponse.getDirectionsConnections().add(0, new DirectionsConnection(
+						current.route == null ? "" : current.route.getHexId(),
+						startStation == null ? "" : startStation.getHexId(), endStation == null ? "" : endStation.getHexId(),
+						startPlatform == null ? "" : startPlatform.getName(), endPlatform == null ? "" : endPlatform.getName(),
+						current.startTime, current.endTime,
+						current.walkingDistance
+				));
+				current = request.earliestConnections.get(current.startPlatformId);
 			}
 
 			return directionsResponse;
@@ -187,7 +209,7 @@ public final class DirectionsFinder {
 	/**
 	 * If a connection has been added, perform iterative walking relaxation (BFS-style) starting from the last platform.
 	 */
-	private void addIndependentConnectionsBFS(long lastPlatformId, Long2LongOpenHashMap earliestArrivals, Long2ObjectOpenHashMap<Connection> possibleConnections) {
+	private void addIndependentConnectionsBFS(long lastPlatformId, Long2ObjectOpenHashMap<Connection> earliestConnections) {
 		final LongArrayList queue = new LongArrayList();
 		queue.add(lastPlatformId);
 		int index = 0;
@@ -197,14 +219,14 @@ public final class DirectionsFinder {
 			final Long2ObjectOpenHashMap<IndependentConnection> independentConnectionsForPlatformId = independentConnections.get(startPlatformId);
 
 			if (independentConnectionsForPlatformId != null) {
-				final long startTime = earliestArrivals.get(startPlatformId);
+				final Connection startConnection = earliestConnections.get(startPlatformId);
 				independentConnectionsForPlatformId.forEach((endPlatformId, independentConnection) -> {
 					if (addConnection(new Connection(
-							independentConnection.routeId,
+							independentConnection.route,
 							startPlatformId, endPlatformId,
-							startTime, startTime + independentConnection.duration,
+							startConnection.endTime, startConnection.endTime + independentConnection.duration,
 							independentConnection.walkingDistance
-					), earliestArrivals, possibleConnections)) {
+					), earliestConnections)) {
 						queue.add(endPlatformId.longValue());
 					}
 				});
@@ -213,21 +235,21 @@ public final class DirectionsFinder {
 	}
 
 	@Nullable
-	private Connection getEndConnection(Long2LongOpenHashMap earliestArrivals, Long2LongOpenHashMap walkingDistancesToEnd) {
+	private Connection getEndConnection(Long2ObjectOpenHashMap<Connection> earliestConnections, Long2LongOpenHashMap walkingDistancesToEnd) {
 		long bestPlatformId = 0;
 		long bestStartTime = 0;
 		long bestEndTime = Long.MAX_VALUE;
 		long bestWalkingDistance = 0;
 
-		for (final Long2LongMap.Entry entry : earliestArrivals.long2LongEntrySet()) {
+		for (final Long2ObjectMap.Entry<Connection> entry : earliestConnections.long2ObjectEntrySet()) {
 			final long platformId = entry.getLongKey();
-			final long time = entry.getLongValue();
+			final long startTime = entry.getValue().startTime;
 			final long distance = walkingDistancesToEnd.getOrDefault(platformId, maxWalkingDistance + 1);
 			if (distance <= maxWalkingDistance) {
-				final long endTime = time + Math.round(distance / WALKING_SPEED);
+				final long endTime = startTime + Math.round(distance / WALKING_SPEED);
 				if (endTime < bestEndTime) {
 					bestPlatformId = platformId;
-					bestStartTime = time;
+					bestStartTime = startTime;
 					bestEndTime = endTime;
 					bestWalkingDistance = distance;
 				}
@@ -238,7 +260,7 @@ public final class DirectionsFinder {
 			return null;
 		} else {
 			return new Connection(
-					0,
+					null,
 					bestPlatformId, END_PLATFORM_ID,
 					bestStartTime, bestEndTime,
 					bestWalkingDistance
@@ -246,20 +268,29 @@ public final class DirectionsFinder {
 		}
 	}
 
-	private static boolean addConnection(Connection connection, Long2LongOpenHashMap earliestArrivals, Long2ObjectOpenHashMap<Connection> possibleConnections) {
-		if (earliestArrivals.getOrDefault(connection.getStartPlatformId(), Long.MAX_VALUE) <= connection.getStartTime() && connection.getEndTime() < earliestArrivals.getOrDefault(connection.getEndPlatformId(), Long.MAX_VALUE)) {
-			earliestArrivals.put(connection.getEndPlatformId(), connection.getEndTime());
-			possibleConnections.put(connection.getEndPlatformId(), connection);
+	private static boolean addConnection(Connection connection, Long2ObjectOpenHashMap<Connection> earliestConnections) {
+		final Connection startConnection = earliestConnections.get(connection.startPlatformId);
+		final Connection endConnection = earliestConnections.get(connection.endPlatformId);
+
+		if (startConnection != null && startConnection.endTime <= connection.startTime && (endConnection == null || connection.endTime < endConnection.endTime) && (startConnection.route != null || connection.route != null)) {
+			earliestConnections.put(connection.endPlatformId, connection);
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	private static void processRoute(Route route, RouteOffsetAndPlatformsCallback callback) {
-		if (route.durations.size() == route.getRoutePlatforms().size() - 1) {
-			long totalOffset = route.getRoutePlatforms().getLast().platform.getDwellTime();
-			for (int i = route.durations.size() - 1; i >= 0; i--) {
+	/**
+	 * Iterates through the route backwards from {@code startIndex}.
+	 *
+	 * @param route      the route to iterate
+	 * @param startIndex the index to begin backwards iteration
+	 * @param callback   a callback with the departure offsets (not arrival)
+	 */
+	private static void processRoute(Route route, int startIndex, RouteOffsetAndPlatformsCallback callback) {
+		if (!route.getHidden() && route.durations.size() == route.getRoutePlatforms().size() - 1) {
+			long totalOffset = route.getRoutePlatforms().get(startIndex).platform.getDwellTime();
+			for (int i = startIndex - 1; i >= 0; i--) {
 				final Platform platform1 = route.getRoutePlatforms().get(i).platform;
 				final Platform platform2 = route.getRoutePlatforms().get(i + 1).platform;
 				final long duration = route.durations.getLong(i);
@@ -283,10 +314,13 @@ public final class DirectionsFinder {
 		return Math.round(Math.sqrt(dx * dx + dy * dy + dz * dz));
 	}
 
-	private record Request(Position startPosition, Position endPosition, long startTime, Long2LongOpenHashMap earliestArrivals, Long2ObjectOpenHashMap<Connection> possibleConnections, Long2LongOpenHashMap walkingDistancesToEnd) {
+	private record Connection(@Nullable Route route, long startPlatformId, long endPlatformId, long startTime, long endTime, long walkingDistance) {
 	}
 
-	private record IndependentConnection(long routeId, long duration, long walkingDistance) {
+	private record Request(Position startPosition, Position endPosition, long startTime, Long2ObjectOpenHashMap<Connection> earliestConnections, Long2LongOpenHashMap walkingDistancesToEnd) {
+	}
+
+	private record IndependentConnection(@Nullable Route route, long startPlatformId, long endPlatformId, long duration, long walkingDistance) {
 	}
 
 	@FunctionalInterface

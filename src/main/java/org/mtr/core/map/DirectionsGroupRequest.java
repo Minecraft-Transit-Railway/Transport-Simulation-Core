@@ -1,15 +1,23 @@
-package org.mtr.core.operation;
+package org.mtr.core.map;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.core.generated.operation.DirectionsGroupRequestSchema;
+import org.mtr.core.generated.map.DirectionsGroupRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 
 public final class DirectionsGroupRequest extends DirectionsGroupRequestSchema {
 
+	public DirectionsGroupRequest(long maxWalkingDistance) {
+		super(maxWalkingDistance);
+	}
+
 	public DirectionsGroupRequest(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
+	}
+
+	public void addDirectionsRequest(DirectionsRequest directionsRequest) {
+		directionsRequests.add(directionsRequest);
 	}
 
 	public DirectionsGroupResponse getDirections(Simulator simulator) {

@@ -6,13 +6,19 @@
 	],
 	"properties": {
 		"routeId": {
-			"type": "integer"
+			"type": "string"
 		},
-		"startPlatformId": {
-			"type": "integer"
+		"startStationId": {
+			"type": "string"
 		},
-		"endPlatformId": {
-			"type": "integer"
+		"endStationId": {
+			"type": "string"
+		},
+		"startPlatformName": {
+			"type": "string"
+		},
+		"endPlatformName": {
+			"type": "string"
 		},
 		"startTime": {
 			"type": "integer"
@@ -26,8 +32,10 @@
 	},
 	"required": [
 		"routeId",
-		"startPlatformId",
-		"endPlatformId",
+		"startStationId",
+		"startPlatformName",
+		"endStationId",
+		"endPlatformName",
 		"startTime",
 		"endTime",
 		"walkingDistance"

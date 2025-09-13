@@ -223,6 +223,20 @@ public class Simulator extends Data implements Utilities {
 		ridingVehicleIds.removeLong(uuid);
 	}
 
+	@Nullable
+	public Platform getNextPlatformOfRidingVehicle(UUID uuid) {
+		final Platform[] platform = {null};
+		sidings.forEach(siding -> siding.iterateVehiclesAndRidingEntities((vehicleExtraData, vehicleRidingEntity) -> {
+			if (vehicleRidingEntity.uuid.equals(uuid)) {
+				final Platform checkPlatform = platformIdMap.get(vehicleExtraData.getThisPlatformId());
+				if (checkPlatform != null) {
+					platform[0] = checkPlatform;
+				}
+			}
+		}));
+		return platform[0];
+	}
+
 	/**
 	 * Simulates the system in one-second intervals until the simulation is all caught up
 	 *
