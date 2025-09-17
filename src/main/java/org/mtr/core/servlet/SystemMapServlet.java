@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.core.Main;
 import org.mtr.core.data.NameColorDataBase;
 import org.mtr.core.map.*;
 import org.mtr.core.operation.ArrivalsRequest;
@@ -58,7 +59,7 @@ public final class SystemMapServlet extends ServletBase {
 		simulator.clients.forEach(client -> {
 			final String clientId = client.uuid.toString();
 			clients.put(clientId, new Client(
-					clientId,
+					clientId, Main.CLIENT_NAME_RESOLVER == null ? "" : Main.CLIENT_NAME_RESOLVER.apply(client.uuid),
 					client.getPosition().getX(), client.getPosition().getZ(),
 					simulator.stations.stream().filter(station -> station.inArea(client.getPosition())).map(NameColorDataBase::getHexId).findFirst().orElse("")
 			));

@@ -1,6 +1,7 @@
 canvas {
 	background: var(--background-color);
 	position: absolute;
+	touch-action: none;
 	transition: opacity 0.2s;
 	width: 100%;
 	height: 100%;
@@ -19,7 +20,7 @@ canvas {
 
 .station-name {
 	font-size: 0.6rem;
-	line-height: 1.2rem;
+	line-height: 1.2em; /* Intentionally em rather than rem to scale line height based on font size */
 	white-space: nowrap;
 	text-shadow: -2px -2px 0 var(--background-color),
 	0 -2px 0 var(--background-color),

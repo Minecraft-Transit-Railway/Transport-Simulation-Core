@@ -8,6 +8,9 @@
 		"id": {
 			"type": "string"
 		},
+		"name": {
+			"type": "string"
+		},
 		"x": {
 			"type": "integer"
 		},
@@ -29,6 +32,7 @@
 	},
 	"required": [
 		"id",
+		"name",
 		"x",
 		"z",
 		"stationId",

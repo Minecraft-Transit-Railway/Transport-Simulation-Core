@@ -38,7 +38,6 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		routeStationId1: string,
 		routeStationId2: string,
 	}> = {};
-	private readonly nameCache: Record<string, string> = {};
 
 	constructor(private readonly httpClient: HttpClient, mapDataService: MapDataService, dimensionService: DimensionService) {
 		super(() => this.httpClient.get<{ data: ClientsDTO }>(this.getUrl("clients")), ({data}) => {
@@ -48,15 +47,7 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 			this.clientGroupsForRoute = {};
 
 			data.clients.forEach(clientDTO => {
-				const client = {id: clientDTO.id, name: "", rawX: clientDTO.x, rawZ: clientDTO.z};
-				if (client.id in this.nameCache) {
-					client.name = this.nameCache[client.id];
-				} else {
-					this.httpClient.get<{ username: string }>(`https://www.mc-heads.net/json/get_user?search&u=${client.id}`).subscribe(({username}) => {
-						this.nameCache[client.id] = username;
-						client.name = username;
-					});
-				}
+				const client = {id: clientDTO.id, name: clientDTO.name, rawX: clientDTO.x, rawZ: clientDTO.z};
 				this.allClients.push(client);
 
 				const route = clientDTO.routeId ? mapDataService.routes.find(route => route.id === clientDTO.routeId) : undefined;

@@ -90,6 +90,7 @@ export class MapComponent implements AfterViewInit {
 	private isInteracting = false;
 	private lastBuiltZoom = 1;
 	private rebuildTimeoutId: number | undefined;
+	private controlEndTimeoutId: number | undefined;
 
 	// Reusable GPU buffers for stations and arrows
 	private stationPositionsBuffer: Float32Array | undefined;
@@ -231,7 +232,10 @@ export class MapComponent implements AfterViewInit {
 		});
 		this.controls.addEventListener("end", () => {
 			this.isInteracting = false;
-			requestRebuild(true);
+			if (this.controlEndTimeoutId !== undefined) {
+				clearTimeout(this.controlEndTimeoutId);
+			}
+			this.controlEndTimeoutId = window.setTimeout(() => requestRebuild(true), 10);
 		});
 
 		this.controls.addEventListener("change", () => draw());
@@ -754,21 +758,25 @@ export class MapComponent implements AfterViewInit {
 		});
 
 		if (this.lineGeometryNormal) {
+			this.lineGeometryNormal.dispose();
 			this.lineGeometryNormal.setPositions(positionsNormal);
 			this.lineGeometryNormal.setColors(colorsNormal);
 		}
 
 		if (this.lineGeometryNormalDashed) {
+			this.lineGeometryNormalDashed.dispose();
 			this.lineGeometryNormalDashed.setPositions(positionsNormalDashed);
 			this.lineGeometryNormalDashed.setColors(colorsNormalDashed);
 		}
 
 		if (this.lineGeometryThin) {
+			this.lineGeometryThin.dispose();
 			this.lineGeometryThin.setPositions(positionsThin);
 			this.lineGeometryThin.setColors(colorsThin);
 		}
 
 		if (this.lineGeometryThinDashed) {
+			this.lineGeometryThinDashed.dispose();
 			this.lineGeometryThinDashed.setPositions(positionsThinDashed);
 			this.lineGeometryThinDashed.setColors(colorsThinDashed);
 		}

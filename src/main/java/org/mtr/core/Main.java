@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +34,9 @@ public class Main {
 	private final Webserver webserver;
 	@Nullable
 	private final ScheduledExecutorService scheduledExecutorService;
+
+	@Nullable
+	public static Function<UUID, String> CLIENT_NAME_RESOLVER;
 
 	public static final Logger LOGGER = LogManager.getLogger("TransportSimulationCore");
 	public static final int MILLISECONDS_PER_TICK = 10;
