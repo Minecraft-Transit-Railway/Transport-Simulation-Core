@@ -117,10 +117,6 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		this.fetchData("");
 	}
 
-	public clickClient(id: string) {
-		this.animateClient.emit(id);
-	}
-
 	public getCenterX() {
 		return this.centerX;
 	}

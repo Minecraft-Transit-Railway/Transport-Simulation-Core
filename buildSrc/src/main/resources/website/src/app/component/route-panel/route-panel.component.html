@@ -7,11 +7,11 @@
 			</p-select>
 			<label for="dropdown">Route Variation</label>
 		</p-float-label>
-		@if (getTotalDurationSeconds()) {
+		@if (getTotalDurationSeconds(); as totalDurationSeconds) {
 			<div class="row gap center">
 				<div class="row gap center" pTooltip="Total Duration" tooltipPosition="left">
 					<div class="material-icons">schedule</div>
-					<div>{{ getTotalDurationSeconds() | formatTime : "" }}</div>
+					<div>{{ totalDurationSeconds | formatTime : "" }}</div>
 				</div>
 			</div>
 		}

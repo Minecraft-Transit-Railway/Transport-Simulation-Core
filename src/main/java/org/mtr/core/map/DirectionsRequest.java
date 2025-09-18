@@ -1,5 +1,6 @@
 package org.mtr.core.map;
 
+import org.mtr.core.data.Client;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Station;
@@ -62,8 +63,15 @@ public final class DirectionsRequest extends DirectionsRequestSchema {
 
 		if (!clientId.isEmpty()) {
 			try {
-				final Platform platform = simulator.getNextPlatformOfRidingVehicle(UUID.fromString(clientId));
-				if (platform != null) {
+				final UUID uuid = UUID.fromString(clientId);
+				final Platform platform = simulator.getNextPlatformOfRidingVehicle(uuid);
+				if (platform == null) {
+					for (final Client client : simulator.clients) {
+						if (client.uuid.equals(uuid)) {
+							return client.getPosition();
+						}
+					}
+				} else {
 					return platform.getMidPosition();
 				}
 			} catch (Exception ignored) {

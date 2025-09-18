@@ -7,7 +7,7 @@
 		@for (clientGroupOnRoute of clientGroupsOnRoute; track $index) {
 			<div class="row label" [style.transform]="'translate(-50%,0) translate(' + clientGroupOnRoute.x + 'px, ' + clientGroupOnRoute.y + 'px)'" [style.gap]="clientGroupOnRoute.clientImagePadding + 'px'">
 				@for (client of clientGroupOnRoute.clients; track $index) {
-					<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="clientImageSize" [height]="clientImageSize" [alt]="client.name" [pTooltip]="client.name" tooltipPosition="top"/>
+					<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="clientImageSize" [height]="clientImageSize" [alt]="client.name" (mousedown)="clientClicked.emit(client.id); $event.stopPropagation()" [pTooltip]="client.name" tooltipPosition="top"/>
 				}
 			</div>
 		}
@@ -21,7 +21,7 @@
 						<div class="spacing"></div>
 						<div class="row" [style.gap]="textLabel.clientImagePadding + 'px'">
 							@for (client of textLabel.clients; track $index) {
-								<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="clientImageSize" [height]="clientImageSize" [alt]="client.name" [pTooltip]="client.name" tooltipPosition="top"/>
+								<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="clientImageSize" [height]="clientImageSize" [alt]="client.name" (mousedown)="clientClicked.emit(client.id); $event.stopPropagation()" [pTooltip]="client.name" tooltipPosition="top"/>
 							}
 						</div>
 						<div class="spacing"></div>

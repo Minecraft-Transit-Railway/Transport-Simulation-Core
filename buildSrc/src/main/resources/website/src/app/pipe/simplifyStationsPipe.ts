@@ -10,6 +10,6 @@ import {SearchData} from "../entity/searchData";
 export class SimplifyStationsPipe implements PipeTransform {
 
 	transform(stations: Station[]): SearchData[] {
-		return stations.map(station => ({key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: "", isStation: true}));
+		return stations.map(station => ({key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: "", type: "station"}));
 	}
 }

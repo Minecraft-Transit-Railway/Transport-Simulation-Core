@@ -2,30 +2,26 @@
 	<div class="column padding-sides">
 		<div class="row gap-small center">
 			<div class="column gap-small spacing">
-				<app-search label="Start Station" [parentFormGroup]="formGroup" childFormControlName="startStation" [includeRoutes]="false" (stationClicked)="onClickStation($event, true)" (textCleared)="onClickStation(undefined, true)"/>
-				<app-search label="End Station" [parentFormGroup]="formGroup" childFormControlName="endStation" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (textCleared)="onClickStation(undefined, false)"/>
+				<app-search label="Start" [parentFormGroup]="formGroup" childFormControlName="startInput" [includeRoutes]="false" (stationClicked)="onClickStation($event, true)" (clientClicked)="onClickClient($event, true)" (textCleared)="onClearInput(true)"/>
+				<app-search label="End" [parentFormGroup]="formGroup" childFormControlName="endInput" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (clientClicked)="onClickClient($event, false)" (textCleared)="onClearInput(false)"/>
 			</div>
 			<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" pTooltip="Swap Stations">
 				<div class="material-icons">swap_vert</div>
 			</button>
 		</div>
 		<p-divider/>
-		<div class="column gap-small">
-			<p-float-label variant="in">
-				<p-input-number inputId="max-walking-distance" formControlName="maxWalkingDistance" min="0" max="1000000000" (onInput)="updateMaxWalkingDistance()" [fluid]="true"/>
-				<label for="max-walking-distance">Maximum Walking Distance (m)</label>
-			</p-float-label>
-			<div class="row center">
-				<div class="row gap-small center">
-					<p-checkbox inputId="refresh" [binary]="true" formControlName="automaticRefresh"/>
-					<label for="refresh">Automatic Refresh</label>
-				</div>
-				<div class="spacing"></div>
-				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="refreshDirections()" [disabled]="cannotManuallyRefresh()" pTooltip="Refresh Directions">
-					<div class="material-icons">refresh</div>
-				</button>
+		<div class="row gap-small center">
+			<div class="spacing">
+				<p-float-label variant="in">
+					<p-input-number inputId="max-walking-distance" formControlName="maxWalkingDistance" min="0" max="1000000000" (onInput)="updateMaxWalkingDistance()" [fluid]="true"/>
+					<label for="max-walking-distance">Maximum Walking Distance (m)</label>
+				</p-float-label>
 			</div>
+			<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="refreshDirections()" [disabled]="cannotManuallyRefresh()" pTooltip="Refresh Directions">
+				<div class="material-icons">refresh</div>
+			</button>
 		</div>
+		<p-divider/>
 	</div>
 	@if (isLoading()) {
 		<div class="column center wrapper">
@@ -46,7 +42,7 @@
 				@for (direction of getDirections(); track $index) {
 					<app-route-display [colorAbove]="$index === 0 ? undefined : getRouteColor($index - 1)" [colorBelow]="getRouteColor($index)" [isStation]="true" [icons]="[]">
 						<div class="row center">
-							<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.startPosition, direction.startRoutePlatform), '']" [subtitles]="[[getPlatformName(direction.startRoutePlatform), '']]" [useLightColor]="false" [clickable]="false"/>
+							<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.startStation), '']" [subtitles]="[[getPlatformName(direction.startPlatformName), '']]" [useLightColor]="false" [clickable]="false"/>
 							<div class="gray no-wrap">{{ direction.startTime | formatDate }}</div>
 						</div>
 					</app-route-display>
@@ -69,16 +65,16 @@
 							</div>
 						}
 					</app-route-display>
-					@if (direction.intermediateRoutePlatforms.length > 0) {
+					@if (direction.intermediateStations.length > 0) {
 						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[]">
 							<div class="intermediate-stations">
 								<p-accordion [multiple]="true" value="0">
 									<p-accordion-panel>
-										<p-accordion-header>{{ direction.intermediateRoutePlatforms.length }} intermediate station{{ direction.intermediateRoutePlatforms.length > 1 ? 's' : '' }}</p-accordion-header>
+										<p-accordion-header>{{ direction.intermediateStations.length }} intermediate station{{ direction.intermediateStations.length > 1 ? 's' : '' }}</p-accordion-header>
 										<p-accordion-content>
 											<div class="column gap-small">
-												@for (intermediateRoutePlatform of direction.intermediateRoutePlatforms; track $index) {
-													<div>{{ intermediateRoutePlatform.station.name | formatName }}</div>
+												@for (intermediateStation of direction.intermediateStations; track $index) {
+													<div>{{ intermediateStation.name | formatName }}</div>
 												}
 											</div>
 										</p-accordion-content>
@@ -90,7 +86,7 @@
 					@if ($index === $count - 1) {
 						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="undefined" [isStation]="true" [icons]="[]">
 							<div class="row center">
-								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.endPosition, direction.endRoutePlatform), '']" [subtitles]="[[getPlatformName(direction.endRoutePlatform), '']]" [useLightColor]="false" [clickable]="false"/>
+								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getStationName(direction.endStation), '']" [subtitles]="[[getPlatformName(direction.endPlatformName), '']]" [useLightColor]="false" [clickable]="false"/>
 								<div class="gray no-wrap">{{ direction.endTime | formatDate }}</div>
 							</div>
 						</app-route-display>

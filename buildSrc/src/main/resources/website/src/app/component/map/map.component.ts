@@ -51,6 +51,7 @@ const simplifyDuringInteraction = true;
 })
 export class MapComponent implements AfterViewInit {
 	@Output() stationClicked = new EventEmitter<string>();
+	@Output() clientClicked = new EventEmitter<string>();
 	@ViewChild("wrapper") private readonly wrapperRef!: ElementRef<HTMLDivElement>;
 	@ViewChild("canvas") private readonly canvasRef!: ElementRef<HTMLCanvasElement>;
 	@ViewChild("stats") private readonly statsRef!: ElementRef<HTMLDivElement>;

@@ -13,7 +13,14 @@
 		<div class="row center">
 			@for (icon of icons; track $index) {
 				@if (icon) {
-					<div class="material-icons">{{ icon }}</div>
+					@if (icon.startsWith("https://")) {
+						<div class="row gap-small">
+							<img [ngSrc]="icon" width="24" height="24" [alt]="icon"/>
+							<div></div>
+						</div>
+					} @else {
+						<div class="material-icons">{{ icon }}</div>
+					}
 				}
 			}
 			<div>{{ title[0] }}</div>

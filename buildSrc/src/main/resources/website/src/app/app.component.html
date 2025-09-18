@@ -1,9 +1,24 @@
 <app-drawer #sideMain [title]="getTitle()">
-	<app-main-panel class="wrapper" (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)" (directionsOpened)="onOpenDirections(undefined, sideMain, sideStation, sideDirections, sideRoute)"/>
+	<app-main-panel
+			class="wrapper"
+			(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
+			(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
+			(clientClicked)="onClickClient($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
+			(directionsOpened)="onOpenDirections(undefined, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
 </app-drawer>
 
 <app-drawer #sideStation title="Station Details" (closed)="onCloseStation()">
-	<app-station-panel (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)" (directionsOpened)="onOpenDirections($event, sideMain, sideStation, sideDirections, sideRoute)"/>
+	<app-station-panel
+			(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
+			(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
+			(directionsOpened)="onOpenDirections($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
+</app-drawer>
+
+<app-drawer #sideClient title="Player" (closed)="onCloseClient()">
+	<app-client-panel
+			(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
+			(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
+			(directionsOpened)="onOpenDirections($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
 </app-drawer>
 
 <app-drawer #sideDirections title="Directions" (closed)="onCloseDirections()">
@@ -11,10 +26,14 @@
 </app-drawer>
 
 <app-drawer #sideRoute title="Route Details" (closed)="onCloseRoute()">
-	<app-route-panel (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, true)" (routeClicked)="onClickRoute($event, sideMain, sideStation, sideDirections, sideRoute)"/>
+	<app-route-panel
+			(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
+			(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
 </app-drawer>
 
-<app-map (stationClicked)="onClickStation($event, sideMain, sideStation, sideDirections, sideRoute, false)"/>
-<button pButton class="button-corner" [rounded]="true" [text]="true" [raised]="true" size="large" (click)="onClickMain(sideMain, sideStation, sideDirections, sideRoute)" pTooltip="Menu" tooltipPosition="left">
+<app-map
+		(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, false)"
+		(clientClicked)="onClickClient($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
+<button pButton class="button-corner" [rounded]="true" [text]="true" [raised]="true" size="large" (click)="onClickMain(sideMain, sideStation, sideClient, sideDirections, sideRoute)" pTooltip="Menu" tooltipPosition="left">
 	<div class="material-icons">menu</div>
 </button>

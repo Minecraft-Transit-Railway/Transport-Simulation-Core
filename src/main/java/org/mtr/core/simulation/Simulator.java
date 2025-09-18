@@ -228,7 +228,7 @@ public class Simulator extends Data implements Utilities {
 		final Platform[] platform = {null};
 		sidings.forEach(siding -> siding.iterateVehiclesAndRidingEntities((vehicleExtraData, vehicleRidingEntity) -> {
 			if (vehicleRidingEntity.uuid.equals(uuid)) {
-				final Platform checkPlatform = platformIdMap.get(vehicleExtraData.getThisPlatformId());
+				final Platform checkPlatform = platformIdMap.get(vehicleExtraData.getNextPlatformId());
 				if (checkPlatform != null) {
 					platform[0] = checkPlatform;
 				}

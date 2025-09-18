@@ -38,6 +38,15 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		routeStationId1: string,
 		routeStationId2: string,
 	}> = {};
+	private clientCache: Record<string, {
+		name: string,
+		rawX: number,
+		rawZ: number,
+		station?: Station,
+		route?: Route,
+		routeStation1?: Station,
+		routeStation2?: Station,
+	}> = {};
 
 	constructor(private readonly httpClient: HttpClient, mapDataService: MapDataService, dimensionService: DimensionService) {
 		super(() => this.httpClient.get<{ data: ClientsDTO }>(this.getUrl("clients")), ({data}) => {
@@ -45,6 +54,7 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 			this.allClientsNotInStationOrRoute.length = 0;
 			this.clientGroupsForStation = {};
 			this.clientGroupsForRoute = {};
+			this.clientCache = {};
 
 			data.clients.forEach(clientDTO => {
 				const client = {id: clientDTO.id, name: clientDTO.name, rawX: clientDTO.x, rawZ: clientDTO.z};
@@ -81,6 +91,16 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 				} else {
 					this.allClientsNotInStationOrRoute.push(client);
 				}
+
+				this.clientCache[clientDTO.id] = {
+					name: clientDTO.name,
+					rawX: clientDTO.x,
+					rawZ: clientDTO.z,
+					station,
+					route,
+					routeStation1: route ? mapDataService.stations.find(station => station.id === clientDTO.routeStationId1) : undefined,
+					routeStation2: route ? mapDataService.stations.find(station => station.id === clientDTO.routeStationId2) : undefined,
+				};
 			});
 		}, REFRESH_INTERVAL, dimensionService);
 		mapDataService.dataProcessed.subscribe(() => this.fetchData(""));
@@ -92,6 +112,10 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 
 	public getClientGroupsForRoute() {
 		return this.clientGroupsForRoute;
+	}
+
+	public getClient(clientId?: string) {
+		return clientId ? this.clientCache[clientId] : undefined;
 	}
 
 	public static getRouteConnectionKey(stationId1: string, stationId2: string, color: number) {

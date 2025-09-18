@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, Output} from "@angular/core";
-import {NgTemplateOutlet} from "@angular/common";
+import {NgOptimizedImage, NgTemplateOutlet} from "@angular/common";
 import {RippleModule} from "primeng/ripple";
 
 @Component({
@@ -7,6 +7,7 @@ import {RippleModule} from "primeng/ripple";
 	imports: [
 		RippleModule,
 		NgTemplateOutlet,
+		NgOptimizedImage,
 	],
 	templateUrl: "./data-list-entry.component.html",
 	styleUrl: "./data-list-entry.component.css",

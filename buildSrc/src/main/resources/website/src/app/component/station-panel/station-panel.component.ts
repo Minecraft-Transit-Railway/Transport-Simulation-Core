@@ -45,7 +45,7 @@ export class StationPanelComponent {
 	protected dialogData?: Arrival;
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<{ stationId: string, isStartStation: boolean }>;
+	@Output() directionsOpened = new EventEmitter<{ stationDetails: { stationId: string, isStartStation: boolean } }>;
 
 	constructor(private readonly dataService: MapDataService, private readonly stationService: StationService) {
 	}
@@ -141,7 +141,7 @@ export class StationPanelComponent {
 	openDirections(isStartStation: boolean) {
 		const station = this.stationService.getSelectedData();
 		if (station) {
-			this.directionsOpened.emit({stationId: station.id, isStartStation});
+			this.directionsOpened.emit({stationDetails: {stationId: station.id, isStartStation}});
 		}
 	}
 

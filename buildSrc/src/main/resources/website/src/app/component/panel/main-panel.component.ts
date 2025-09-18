@@ -16,7 +16,7 @@ import {InterchangeStyleToggleComponent} from "../interchange-style-toggle/inter
 import {SearchComponent} from "../search/search.component";
 import {AccordionModule} from "primeng/accordion";
 import {ClientsService} from "../../service/clients.service";
-import {NgOptimizedImage} from "@angular/common";
+import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 
 @Component({
 	selector: "app-main-panel",
@@ -34,7 +34,8 @@ import {NgOptimizedImage} from "@angular/common";
 		SearchComponent,
 		VisibilityToggleComponent,
 		InterchangeStyleToggleComponent,
-		NgOptimizedImage,
+		DataListEntryComponent,
+
 	],
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.css",
@@ -42,6 +43,7 @@ import {NgOptimizedImage} from "@angular/common";
 export class MainPanelComponent {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
+	@Output() clientClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<void>();
 
 	protected readonly formGroup = new FormGroup({
@@ -85,10 +87,6 @@ export class MainPanelComponent {
 		return this.clientsService.allClients;
 	}
 
-	clickClient(id: string) {
-		this.mapDataService.clickClient(id);
-	}
-
 	clickStation(id: string) {
 		this.stationClicked.emit(id);
 		this.formGroup.patchValue({search: undefined});
@@ -96,6 +94,11 @@ export class MainPanelComponent {
 
 	clickRoute(id: string) {
 		this.routeClicked.emit(id);
+		this.formGroup.patchValue({search: undefined});
+	}
+
+	clickClient(id: string) {
+		this.clientClicked.emit(id);
 		this.formGroup.patchValue({search: undefined});
 	}
 

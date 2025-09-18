@@ -1,6 +1,6 @@
 <div class="column gap wrapper" [formGroup]="formGroup">
 	<div class="column gap-small padding-sides">
-		<app-search label="Search for anything..." [parentFormGroup]="formGroup" childFormControlName="search" [includeRoutes]="true" (stationClicked)="clickStation($event)" (routeClicked)="clickRoute($event)"/>
+		<app-search label="Search for anything..." [parentFormGroup]="formGroup" childFormControlName="search" [includeRoutes]="true" (stationClicked)="clickStation($event)" (routeClicked)="clickRoute($event)" (clientClicked)="clickClient($event)"/>
 		<p-float-label variant="in">
 			<p-select inputId="dropdown" formControlName="dimension" [options]="getDimensions()" (onChange)="setDimension()" [fluid]="true"/>
 			<label for="dropdown">Dimension</label>
@@ -41,10 +41,7 @@
 						} @else {
 							<div class="column gap-small">
 								@for (client of getAllClients(); track $index) {
-									<div class="row gap-small center clickable" (click)="clickClient(client.id)">
-										<img [ngSrc]="'https://mc-heads.net/avatar/' + client.id" [width]="24" [height]="24" [alt]="client.name"/>
-										<div>{{ client.name }}</div>
-									</div>
+									<app-data-list-entry [icons]="['https://mc-heads.net/avatar/' + client.id]" [title]="[client.name, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="clientClicked.emit(client.id)"/>
 								}
 							</div>
 						}

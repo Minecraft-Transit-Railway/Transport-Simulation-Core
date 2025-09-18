@@ -4,5 +4,7 @@
 			<div class="name {{namePart.isCjk ? 'cjk' : ''}}">{{ namePart.text }}</div>
 		}
 	</div>
-	<div class="color-bar" [style.background-color]="color ? (color | formatColor) : 'transparent'"></div>
+	@if (color) {
+		<div class="color-bar" [style.background-color]="color | formatColor"></div>
+	}
 </div>

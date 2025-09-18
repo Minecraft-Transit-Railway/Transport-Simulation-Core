@@ -8,7 +8,7 @@ import {FormatDatePipe} from "../../pipe/formatDatePipe";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
-import {Route, RoutePlatform} from "../../entity/route";
+import {Route} from "../../entity/route";
 import {MapDataService} from "../../service/map-data.service";
 import {MapSelectionService} from "../../service/map-selection.service";
 import {pushIfNotExists} from "../../data/utilities";
@@ -23,6 +23,8 @@ import {DividerModule} from "primeng/divider";
 import {FloatLabelModule} from "primeng/floatlabel";
 import {InputNumberModule} from "primeng/inputnumber";
 import {SearchData} from "../../entity/searchData";
+import {Station} from "../../entity/station";
+import {ClientsService} from "../../service/clients.service";
 
 @Component({
 	selector: "app-directions",
@@ -49,17 +51,16 @@ import {SearchData} from "../../entity/searchData";
 })
 export class DirectionsComponent {
 	protected readonly formGroup = new FormGroup({
-		startStation: new FormControl<{ value: SearchData } | undefined>(undefined),
-		endStation: new FormControl<{ value: SearchData } | undefined>(undefined),
-		automaticRefresh: new FormControl(true),
+		startInput: new FormControl<{ value: SearchData } | undefined>(undefined),
+		endInput: new FormControl<{ value: SearchData } | undefined>(undefined),
 		maxWalkingDistance: new FormControl(this.directionsService.defaultMaxWalkingDistance),
 	});
 	private directionsCache: {
-		startPosition: { x: number, y: number, z: number },
-		startRoutePlatform?: RoutePlatform,
-		endPosition: { x: number, y: number, z: number },
-		endRoutePlatform?: RoutePlatform,
-		intermediateRoutePlatforms: RoutePlatform[],
+		startStation?: Station,
+		endStation?: Station,
+		startPlatformName?: string,
+		endPlatformName?: string,
+		intermediateStations: Station[],
 		route?: Route,
 		icon: string,
 		startTime: number,
@@ -68,43 +69,48 @@ export class DirectionsComponent {
 	}[] = [];
 	private forceRefresh = false;
 
-	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly mapSelectionService: MapSelectionService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
-		directionsService.directionsPanelOpened.subscribe((stationDetails) => {
-			if (stationDetails) {
-				this.onClickStation(stationDetails.stationId, stationDetails.isStartStation);
+	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly clientsService: ClientsService, private readonly mapSelectionService: MapSelectionService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
+		directionsService.directionsPanelOpened.subscribe((directionsSelection) => {
+			if (directionsSelection) {
+				this.onClickData(directionsSelection);
 			} else {
 				this.checkStatus();
 			}
 		});
 		directionsService.dataProcessed.subscribe(() => {
-			if (this.forceRefresh || this.formGroup.getRawValue().automaticRefresh) {
+			if (this.forceRefresh || this.canAutomaticallyRefresh()) {
 				this.forceRefresh = false;
 				this.refreshDirections();
 			}
 		});
 	}
 
-	onClickStation(stationId: string | undefined, isStartStation: boolean) {
-		const station = stationId ? this.mapDataService.stations.find(station => station.id === stationId) : undefined;
-
-		if (isStartStation) {
-			this.formGroup.patchValue({startStation: station ? {value: {key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: "", isStation: true}} : undefined});
-		} else {
-			this.formGroup.patchValue({endStation: station ? {value: {key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: "", isStation: true}} : undefined});
-		}
-
+	onClearInput(isStartInput: boolean) {
+		this.formGroup.patchValue(isStartInput ? {startInput: undefined} : {endInput: undefined});
 		this.checkStatus();
+	}
+
+	onClickStation(stationId: string | undefined, isStartStation: boolean) {
+		if (stationId) {
+			this.onClickData({stationDetails: {stationId, isStartStation}});
+		}
+	}
+
+	onClickClient(clientId: string | undefined, isStartClient: boolean) {
+		if (clientId) {
+			this.onClickData({clientDetails: {clientId, isStartClient}});
+		}
 	}
 
 	swapStations() {
 		const data = this.formGroup.getRawValue();
-		this.formGroup.patchValue({startStation: data.endStation, endStation: data.startStation});
+		this.formGroup.patchValue({startInput: data.endInput, endInput: data.startInput});
 		this.checkStatus();
 	}
 
 	cannotSwap() {
 		const data = this.formGroup.getRawValue();
-		return !data.startStation && !data.endStation;
+		return !data.startInput && !data.endInput;
 	}
 
 	updateMaxWalkingDistance() {
@@ -117,7 +123,7 @@ export class DirectionsComponent {
 
 	isValid() {
 		const data = this.formGroup.getRawValue();
-		return data.startStation && data.endStation && data.startStation !== data.endStation;
+		return data.startInput && data.endInput && data.startInput !== data.endInput;
 	}
 
 	isLoading() {
@@ -131,14 +137,14 @@ export class DirectionsComponent {
 		let mapUpdated = false;
 
 		this.directionsCache.forEach(direction => {
-			if (direction.startRoutePlatform && direction.endRoutePlatform) {
-				const routePlatforms = [direction.startRoutePlatform, ...direction.intermediateRoutePlatforms, direction.endRoutePlatform];
-				for (let i = 1; i < routePlatforms.length; i++) {
-					const routePlatform1 = routePlatforms[i - 1];
-					const routePlatform2 = routePlatforms[i];
-					const reverse = routePlatform1.station.id > routePlatform2.station.id;
-					const newStationId1 = reverse ? routePlatform2.station.id : routePlatform1.station.id;
-					const newStationId2 = reverse ? routePlatform1.station.id : routePlatform2.station.id;
+			if (direction.startStation && direction.endStation) {
+				const stations = [direction.startStation, ...direction.intermediateStations, direction.endStation];
+				for (let i = 1; i < stations.length; i++) {
+					const station1 = stations[i - 1];
+					const station2 = stations[i];
+					const reverse = station1.id > station2.id;
+					const newStationId1 = reverse ? station2.id : station1.id;
+					const newStationId2 = reverse ? station1.id : station2.id;
 
 					if (direction.route) {
 						this.mapSelectionService.selectedStationConnections.push({stationIds: [newStationId1, newStationId2], routeColor: direction.route.color});
@@ -162,15 +168,15 @@ export class DirectionsComponent {
 	}
 
 	cannotManuallyRefresh() {
-		return this.isLoading() || this.formGroup.getRawValue().automaticRefresh || !this.isValid();
+		return this.isLoading() || this.canAutomaticallyRefresh() || !this.isValid();
 	}
 
-	getStationName(position: { x: number, y: number, z: number }, routePlatform?: RoutePlatform) {
-		return routePlatform ? this.formatNamePipe.transform(routePlatform.station.name) : `(${position.x}, ${position.y}, ${position.z})`;
+	getStationName(station?: Station) {
+		return station ? this.formatNamePipe.transform(station.name) : "(Untitled)";
 	}
 
-	getPlatformName(routePlatform?: RoutePlatform) {
-		return routePlatform ? `Platform ${this.formatNamePipe.transform(routePlatform.name)}` : "";
+	getPlatformName(platformName?: string) {
+		return platformName ? `Platform ${this.formatNamePipe.transform(platformName)}` : "";
 	}
 
 	getRouteName(route: Route) {
@@ -198,17 +204,42 @@ export class DirectionsComponent {
 		return SimplifyRoutesPipe.getCircularStateIcon(route.circularState);
 	}
 
-	sameStation(direction: { startRoutePlatform?: RoutePlatform, endRoutePlatform?: RoutePlatform }) {
-		return direction.startRoutePlatform && direction.endRoutePlatform && (direction.startRoutePlatform.station.id === direction.endRoutePlatform.station.id || direction.startRoutePlatform.station.connections.some(station => station.id === direction.endRoutePlatform?.station?.id));
+	sameStation(direction: { startStation?: Station, endStation?: Station }) {
+		return direction.startStation && direction.endStation && (direction.startStation.id === direction.endStation.id || direction.startStation.connections.some(station => station.id === direction.endStation?.id));
+	}
+
+	onClickData(directionsSelection: { stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } }) {
+		const {stationDetails, clientDetails} = directionsSelection;
+
+		if (stationDetails) {
+			const station = stationDetails.stationId ? this.mapDataService.stations.find(station => station.id === stationDetails.stationId) : undefined;
+			if (stationDetails.isStartStation) {
+				this.formGroup.patchValue({startInput: station ? {value: {key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: "", type: "station"}} : undefined});
+			} else {
+				this.formGroup.patchValue({endInput: station ? {value: {key: station.id, icons: station.getIcons(), color: station.color, name: station.name, number: "", type: "station"}} : undefined});
+			}
+		} else if (clientDetails) {
+			const client = this.clientsService.getClient(clientDetails.clientId);
+			if (clientDetails.isStartClient) {
+				this.formGroup.patchValue({startInput: client ? {value: {key: clientDetails.clientId, icons: [], name: client.name, number: "", type: "client"}} : undefined});
+			} else {
+				this.formGroup.patchValue({endInput: client ? {value: {key: clientDetails.clientId, icons: [], name: client.name, number: "", type: "client"}} : undefined});
+			}
+		}
+
+		this.checkStatus();
 	}
 
 	private checkStatus() {
 		if (this.isValid()) {
 			const data = this.formGroup.getRawValue();
-			const startStation = this.mapDataService.stations.find(station => station.id === data.startStation?.value?.key);
-			const endStation = this.mapDataService.stations.find(station => station.id === data.endStation?.value?.key);
-			if (startStation && endStation) {
-				this.directionsService.selectStations(startStation, endStation, (data.maxWalkingDistance ?? this.directionsService.defaultMaxWalkingDistance).toString());
+			const startStation = data.startInput?.value?.type === "station" ? this.mapDataService.stations.find(station => station.id === data.startInput?.value?.key) : undefined;
+			const endStation = data.endInput?.value?.type === "station" ? this.mapDataService.stations.find(station => station.id === data.endInput?.value?.key) : undefined;
+			const startClientId = data.startInput?.value?.type === "client" ? data.startInput?.value?.key : undefined;
+			const endClientId = data.endInput?.value?.type === "client" ? data.endInput?.value?.key : undefined;
+
+			if ((startStation || startClientId) && (endStation || endClientId)) {
+				this.directionsService.selectData(startStation, endStation, startClientId, endClientId, (data.maxWalkingDistance ?? this.directionsService.defaultMaxWalkingDistance).toString());
 				this.forceRefresh = true;
 			} else {
 				this.directionsService.clear();
@@ -216,5 +247,10 @@ export class DirectionsComponent {
 		} else {
 			this.directionsService.clear();
 		}
+	}
+
+	private canAutomaticallyRefresh() {
+		const data = this.formGroup.getRawValue();
+		return data.startInput && data.startInput.value.type === "client" || data.endInput && data.endInput.value.type === "client";
 	}
 }

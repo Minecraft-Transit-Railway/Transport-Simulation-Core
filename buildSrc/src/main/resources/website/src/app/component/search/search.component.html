@@ -1,7 +1,7 @@
 <p-float-label variant="in" [formGroup]="parentFormGroup">
 	<p-auto-complete inputId="autocomplete" [formControlName]="childFormControlName" [forceSelection]="true" [suggestions]="data" [group]="true" [optionValue]="getName" [optionLabel]="getName" (completeMethod)="onTextChanged($event)" (onSelect)="onSelect($event)" (onClear)="textCleared.emit()" [showClear]="true" [fluid]="true">
 		<ng-template let-item #item>
-			<app-data-list-entry [icons]="item.value.icons" [title]="[item.value.name | formatName, item.value.number]" [subtitles]="[]" [color]="item.value.color | formatColor" [useLightColor]="false" [clickable]="false"/>
+			<app-data-list-entry [icons]="item.value.icons" [title]="[item.value.name | formatName, item.value.number]" [subtitles]="[]" [color]="item.value.color ? (item.value.color | formatColor) : ''" [useLightColor]="false" [clickable]="false"/>
 		</ng-template>
 	</p-auto-complete>
 	<label for="autocomplete">{{ label }}</label>

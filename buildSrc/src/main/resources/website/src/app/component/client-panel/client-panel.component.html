@@ -1,0 +1,42 @@
+<div class="column wrapper">
+	<div class="column gap padding-sides">
+		<div class="column gap-small center">
+			@if (getImageSrc(); as src) {
+				<img [ngSrc]="src" width="72" height="72" [alt]="getName()"/>
+			}
+			<app-title [name]="getName()" [color]=""/>
+		</div>
+		<div class="row gap-small center">
+			<div class="row gap center" pTooltip="Location" tooltipPosition="left">
+				<div class="material-icons">my_location</div>
+				<div>({{ getCoordinatesText() }})</div>
+			</div>
+			<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" pTooltip="Focus on Map" tooltipPosition="bottom">
+				<div class="material-icons">filter_center_focus</div>
+			</button>
+		</div>
+		<div class="row center">
+			<div class="material-icons" pTooltip="Directions" tooltipPosition="left">directions</div>
+			<p-button label="Start" variant="text" (onClick)="openDirections(true)"/>
+			<p-button label="End" variant="text" (onClick)="openDirections(false)"/>
+		</div>
+	</div>
+
+	<div class="padding-sides">
+		<p-divider/>
+	</div>
+
+	<div class="column padding-sides content">
+		@if (getRouteDetails(); as routeDetails) {
+			<app-data-list-entry [icons]="[routeDetails.icon]" [title]="[routeDetails.route.name | formatName, routeDetails.route.number | formatName]" [subtitles]="[]" [color]="routeDetails.route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(routeDetails.route.id)"/>
+			<p-divider/>
+			<app-data-list-entry [icons]="routeDetails.routeStation1.getIcons()" [title]="[routeDetails.routeStation1.name | formatName, '']" [subtitles]="[]" [color]="routeDetails.routeStation1.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(routeDetails.routeStation1.id)"/>
+			<app-data-list-entry [icons]="['arrow_downward']" [title]="['', '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+			<app-data-list-entry [icons]="routeDetails.routeStation2.getIcons()" [title]="[routeDetails.routeStation2.name | formatName, '']" [subtitles]="[]" [color]="routeDetails.routeStation2.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(routeDetails.routeStation2.id)"/>
+		} @else {
+			@if (getStation(); as station) {
+				<app-data-list-entry [icons]="station.getIcons()" [title]="[station.name | formatName, '']" [subtitles]="[]" [color]="station.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(station.id)"/>
+			}
+		}
+	</div>
+</div>

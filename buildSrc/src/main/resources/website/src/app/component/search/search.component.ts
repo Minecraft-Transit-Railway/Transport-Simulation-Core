@@ -12,6 +12,7 @@ import {SelectItemGroup} from "primeng/api";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {SearchData} from "../../entity/searchData";
+import {ClientsService} from "../../service/clients.service";
 
 
 const maxResults = 50;
@@ -35,6 +36,7 @@ const maxResults = 50;
 export class SearchComponent {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
+	@Output() clientClicked = new EventEmitter<string>();
 	@Output() textCleared = new EventEmitter<void>();
 	@Input({required: true}) label = "";
 	@Input({required: true}) parentFormGroup!: FormGroup;
@@ -44,7 +46,7 @@ export class SearchComponent {
 
 	protected data: SelectItemGroup[] = [];
 
-	constructor(private readonly dataService: MapDataService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
+	constructor(private readonly dataService: MapDataService, private readonly clientsService: ClientsService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
 	}
 
 	onTextChanged(event: AutoCompleteCompleteEvent) {
@@ -53,12 +55,12 @@ export class SearchComponent {
 		if (event.query === "") {
 			this.textCleared.emit();
 		} else {
-			const filter = (list: SearchData[]): { value: { key: string, icons: string[], color: number, name: string, number: string, isStation: boolean } }[] => {
+			const filter = (list: SearchData[]): { value: { key: string, icons: string[], color?: number, name: string, number: string, type: "station" | "route" | "client" } }[] => {
 				const matches: { value: SearchData, index: number }[] = [];
-				list.forEach(({key, icons, color, name, number, isStation}) => {
+				list.forEach(({key, icons, color, name, number, type}) => {
 					const index = name.toLowerCase().indexOf(event.query.toLowerCase());
 					if (index >= 0) {
-						matches.push({value: {key, icons, color, name, number, isStation}, index});
+						matches.push({value: {key, icons, color, name, number, type}, index});
 					}
 				});
 				const result: { value: SearchData }[] = matches.sort((match1, match2) => {
@@ -70,6 +72,7 @@ export class SearchComponent {
 
 			const searchedStations = filter(this.simplifyStationsPipe.transform(this.dataService.stations));
 			const searchedRoutes = filter(this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes) : []);
+			const searchedClients = filter(this.clientsService.allClients.map(client => ({key: client.id, icons: [`https://mc-heads.net/avatar/${client.id}`], name: client.name, number: "", type: "client"})));
 
 			if (searchedStations.length > 0) {
 				this.data.push({
@@ -84,15 +87,28 @@ export class SearchComponent {
 					items: searchedRoutes,
 				});
 			}
+
+			if (searchedClients.length > 0) {
+				this.data.push({
+					label: "Players",
+					items: searchedClients,
+				});
+			}
 		}
 	}
 
 	onSelect(event: AutoCompleteSelectEvent) {
 		if (event?.value?.value) {
-			if (event.value.value.isStation) {
-				this.stationClicked.emit(event.value.value.key);
-			} else {
-				this.routeClicked.emit(event.value.value.key);
+			switch (event.value.value.type) {
+				case "station":
+					this.stationClicked.emit(event.value.value.key);
+					break;
+				case "route":
+					this.routeClicked.emit(event.value.value.key);
+					break;
+				case "client":
+					this.clientClicked.emit(event.value.value.key);
+					break;
 			}
 		}
 	}
