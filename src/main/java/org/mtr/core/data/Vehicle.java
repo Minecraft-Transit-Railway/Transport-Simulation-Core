@@ -668,10 +668,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			final Vector vector = pathData.getPosition(value - pathData.getStartDistance());
 			if (transportMode == TransportMode.AIRPLANE && pathData.getSpeedLimitKilometersPerHour() == SidingPathFinder.AIRPLANE_SPEED && pathData.isDescending()) {
 				if (overrideY.isEmpty()) {
-					overrideY.add(vector.y);
+					overrideY.add(vector.y());
 					return vector;
 				} else {
-					return new Vector(vector.x, overrideY.getDouble(0), vector.z);
+					return new Vector(vector.x(), overrideY.getDouble(0), vector.z());
 				}
 			} else {
 				return vector;

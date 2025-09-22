@@ -62,8 +62,8 @@ public final class Platform extends PlatformSchema {
 				getHexId(),
 				getHexId(),
 				String.format("%s%s%s%s", stationName, !stationName.isEmpty() && !name.isEmpty() ? " - " : "", name.isEmpty() ? "" : "Platform ", name),
-				latLon.lat,
-				latLon.lon,
+				latLon.lat(),
+				latLon.lon(),
 				EnumHelper.valueOf(StopDirection.NONE, angle == null ? "" : angle.getClosest45().toString())
 		);
 

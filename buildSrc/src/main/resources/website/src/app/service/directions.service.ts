@@ -5,8 +5,8 @@ import {DimensionService} from "./dimension.service";
 import {ROUTE_TYPES} from "../data/routeType";
 import {MapSelectionService} from "./map-selection.service";
 import {HttpClient} from "@angular/common/http";
-import {DirectionsGroupResponseDTO} from "../entity/generated/directionsGroupResponse";
-import {DirectionsGroupRequestDTO} from "../entity/generated/directionsGroupRequest";
+import {DirectionsResponseDTO} from "../entity/generated/directionsResponse";
+import {DirectionsRequestDTO} from "../entity/generated/directionsRequest";
 import {MapDataService} from "./map-data.service";
 import {Station} from "../entity/station";
 import {ClientsService} from "./clients.service";
@@ -14,7 +14,7 @@ import {ClientsService} from "./clients.service";
 const REFRESH_INTERVAL = 3000;
 
 @Injectable({providedIn: "root"})
-export class DirectionsService extends SelectableDataServiceBase<{ currentTime: number, data: DirectionsGroupResponseDTO }, { directionsGroupRequest: DirectionsGroupRequestDTO, startStationId?: string, endStationId?: string }> {
+export class DirectionsService extends SelectableDataServiceBase<{ currentTime: number, data: DirectionsResponseDTO }, { directionsRequest: DirectionsRequestDTO, startStationId?: string, endStationId?: string }> {
 	public readonly directionsPanelOpened = new EventEmitter<{ stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } } | undefined>();
 	public readonly defaultMaxWalkingDistance = 250;
 	private readonly newDirections: {
@@ -44,24 +44,18 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 				endPositionZ,
 				startClientId,
 				endClientId,
-				maxWalkingDistance,
 			} = JSON.parse(selectedData);
 			return (startStationId || startClientId) && (endStationId || endClientId) ? {
-				directionsGroupRequest: {
-					directionsRequests: [
-						{
-							startPositionX: startClientId ? undefined : startPositionX,
-							startPositionY: startClientId ? undefined : startPositionY,
-							startPositionZ: startClientId ? undefined : startPositionZ,
-							startClientId: startClientId ? startClientId : undefined,
-							endPositionX: endClientId ? undefined : endPositionX,
-							endPositionY: endClientId ? undefined : endPositionY,
-							endPositionZ: endClientId ? undefined : endPositionZ,
-							endClientId: endClientId ? endClientId : undefined,
-							startTime: 0,
-						},
-					],
-					maxWalkingDistance: !maxWalkingDistance || isNaN(maxWalkingDistance) ? this.defaultMaxWalkingDistance : maxWalkingDistance,
+				directionsRequest: {
+					startPositionX: startClientId ? undefined : startPositionX,
+					startPositionY: startClientId ? undefined : startPositionY,
+					startPositionZ: startClientId ? undefined : startPositionZ,
+					startClientId: startClientId ? startClientId : undefined,
+					endPositionX: endClientId ? undefined : endPositionX,
+					endPositionY: endClientId ? undefined : endPositionY,
+					endPositionZ: endClientId ? undefined : endPositionZ,
+					endClientId: endClientId ? endClientId : undefined,
+					startTime: 0,
 				},
 				startStationId,
 				endStationId,
@@ -70,10 +64,10 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 			this.newDirections.length = 0;
 			mapSelectionService.reset("directions");
 			clearTimeout(this.directionsTimeoutId);
-		}, ({directionsGroupRequest}) => httpClient.post<{ currentTime: number, data: DirectionsGroupResponseDTO }>(this.getUrl("directions"), JSON.stringify(directionsGroupRequest)), ({data}) => {
+		}, ({directionsRequest}) => httpClient.post<{ currentTime: number, data: DirectionsResponseDTO }>(this.getUrl("directions"), JSON.stringify(directionsRequest)), ({data}) => {
 			this.newDirections.length = 0;
 			const selectedData = this.getSelectedData();
-			const directions = data.directionsResponses[0].connections;
+			const directions = data.connections;
 
 			for (let i = directions[0]?.endStationId === selectedData?.startStationId ? 1 : 0; i < directions.length; i++) {
 				const previousDirection = directions[i - 1];
@@ -116,7 +110,7 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 
 			const firstDirection = this.newDirections[0];
 			const lastDirection = this.newDirections[this.newDirections.length - 1];
-			const directionsRequest = selectedData ? selectedData.directionsGroupRequest.directionsRequests[0] : undefined;
+			const directionsRequest = selectedData ? selectedData.directionsRequest : undefined;
 			if (firstDirection && !firstDirection.startStation) {
 				const startStation = mapDataService.stations.find(station => station.id === selectedData?.startStationId);
 				if (startStation) {

@@ -4,7 +4,7 @@ import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
 import org.mtr.core.data.*;
-import org.mtr.core.path.DirectionsFinder;
+import org.mtr.core.directions.DirectionsFinder;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.servlet.MessageQueue;
@@ -294,6 +294,9 @@ public class Simulator extends Data implements Utilities {
 			// Process queued runs
 			queuedRuns.process(Runnable::run);
 
+			// Directions
+			directionsFinder.tick();
+
 			// Process messages
 			messageQueueC2S.process(queueObject -> queueObject.runCallback(OperationProcessor.process(queueObject.key, queueObject.data, this)));
 		} catch (Throwable e) {
@@ -339,32 +342,6 @@ public class Simulator extends Data implements Utilities {
 		return changedCount > 0 || deletedCount > 0;
 	}
 
-	private static class FileLoaderHolder {
-
-		private final FileLoader<Station> fileLoaderStations;
-		private final FileLoader<Platform> fileLoaderPlatforms;
-		private final FileLoader<Siding> fileLoaderSidings;
-		private final FileLoader<Route> fileLoaderRoutes;
-		private final FileLoader<Depot> fileLoaderDepots;
-		private final FileLoader<Lift> fileLoaderLifts;
-		private final FileLoader<Rail> fileLoaderRails;
-
-		private FileLoaderHolder(
-				FileLoader<Station> fileLoaderStations,
-				FileLoader<Platform> fileLoaderPlatforms,
-				FileLoader<Siding> fileLoaderSidings,
-				FileLoader<Route> fileLoaderRoutes,
-				FileLoader<Depot> fileLoaderDepots,
-				FileLoader<Lift> fileLoaderLifts,
-				FileLoader<Rail> fileLoaderRails
-		) {
-			this.fileLoaderStations = fileLoaderStations;
-			this.fileLoaderPlatforms = fileLoaderPlatforms;
-			this.fileLoaderSidings = fileLoaderSidings;
-			this.fileLoaderRoutes = fileLoaderRoutes;
-			this.fileLoaderDepots = fileLoaderDepots;
-			this.fileLoaderLifts = fileLoaderLifts;
-			this.fileLoaderRails = fileLoaderRails;
-		}
+	private record FileLoaderHolder(FileLoader<Station> fileLoaderStations, FileLoader<Platform> fileLoaderPlatforms, FileLoader<Siding> fileLoaderSidings, FileLoader<Route> fileLoaderRoutes, FileLoader<Depot> fileLoaderDepots, FileLoader<Lift> fileLoaderLifts, FileLoader<Rail> fileLoaderRails) {
 	}
 }

@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.*;
 import org.mtr.core.Main;
+import org.mtr.core.directions.DirectionsFinder;
 import org.mtr.core.generated.data.SidingSchema;
 import org.mtr.core.oba.*;
 import org.mtr.core.operation.ArrivalResponse;
@@ -409,7 +410,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	/**
-	 * Gets the departures for the {@link org.mtr.core.path.DirectionsFinder}.
+	 * Gets the departures for the {@link DirectionsFinder}.
 	 *
 	 * @param currentMillis the current time
 	 * @param departures    the map to be written to, using the route ID mapped to the {@link Route} and departures at the last platform

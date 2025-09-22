@@ -65,8 +65,8 @@ public class RailMath {
 		// 							for case 2, diff = 90 degrees, r = dv
 		//					-> (Circle First) r1 = ( dp - dv / tan(diff) ) / tan (diff/2)
 		// TODO 3. b. If not -> r = very complex one. In this case, we need two circles to connect.
-		final double deltaForward = vecDifferenceRotated.z;
-		final double deltaSide = vecDifferenceRotated.x;
+		final double deltaForward = vecDifferenceRotated.z();
+		final double deltaSide = vecDifferenceRotated.x();
 		if (angle1.isParallel(angle2)) { // 1
 			if (Math.abs(deltaForward) < ACCEPT_THRESHOLD) { // 1. a.
 				h1 = angle1.cos;
@@ -97,8 +97,8 @@ public class RailMath {
 					reverseT1 = deltaForward < 0 != deltaSide < 0;
 					reverseT2 = !reverseT1;
 					tStart1 = getTBounds(xStart, h1, zStart, k1, r1);
-					tEnd1 = getTBounds(xStart + vecDifference.x / 2, h1, zStart + vecDifference.z / 2, k1, r1, tStart1, reverseT1);
-					tStart2 = getTBounds(xStart + vecDifference.x / 2, h2, zStart + vecDifference.z / 2, k2, r2);
+					tEnd1 = getTBounds(xStart + vecDifference.x() / 2, h1, zStart + vecDifference.z() / 2, k1, r1, tStart1, reverseT1);
+					tStart2 = getTBounds(xStart + vecDifference.x() / 2, h2, zStart + vecDifference.z() / 2, k2, r2);
 					tEnd2 = getTBounds(xEnd, h2, zEnd, k2, r2, tStart2, reverseT2);
 					isStraight1 = isStraight2 = false;
 				} else {
@@ -112,8 +112,8 @@ public class RailMath {
 			}
 		} else { // 3.
 			// Check if it needs invert
-			final Angle newAngle1 = vecDifferenceRotated.x < -ACCEPT_THRESHOLD ? angle1.getOpposite() : angle1;
-			final Angle newAngle2 = angle2.cos * vecDifference.x + angle2.sin * vecDifference.z < -ACCEPT_THRESHOLD ? angle2.getOpposite() : angle2;
+			final Angle newAngle1 = vecDifferenceRotated.x() < -ACCEPT_THRESHOLD ? angle1.getOpposite() : angle1;
+			final Angle newAngle2 = angle2.cos * vecDifference.x() + angle2.sin * vecDifference.z() < -ACCEPT_THRESHOLD ? angle2.getOpposite() : angle2;
 			final double angleForward = Math.atan2(deltaForward, deltaSide);
 			final Angle railAngleDifference = newAngle2.sub(newAngle1);
 			final double angleDifference = railAngleDifference.angleRadians;
@@ -290,7 +290,7 @@ public class RailMath {
 			final double y = getPositionY(i + rawValueOffset);
 
 			if (previousCorner1 != null) {
-				callback.renderRail(previousCorner1.x, previousCorner1.z, previousCorner2.x, previousCorner2.z, corner1.x, corner1.z, corner2.x, corner2.z, previousY, y);
+				callback.renderRail(previousCorner1.x(), previousCorner1.z(), previousCorner2.x(), previousCorner2.z(), corner1.x(), corner1.z(), corner2.x(), corner2.z(), previousY, y);
 			}
 
 			previousCorner1 = corner2;

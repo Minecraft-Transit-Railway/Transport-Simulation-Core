@@ -99,7 +99,7 @@ public final class OBAResponse extends ResponseBase<Object> {
 			final ListElement<Stop> listElement = ListElement.create(includeReferences, AGENCY);
 			for (final Platform platform : simulator.platforms) {
 				final LatLon platformLatLon = new LatLon(platform.getMidPosition());
-				if (Utilities.isBetween(platformLatLon.lat - latLon.lat, -latSpan, latSpan) && Utilities.isBetween(platformLatLon.lon - latLon.lon, -lonSpan, lonSpan) && !platform.routeColors.isEmpty()) {
+				if (Utilities.isBetween(platformLatLon.lat() - latLon.lat(), -latSpan, latSpan) && Utilities.isBetween(platformLatLon.lon() - latLon.lon(), -lonSpan, lonSpan) && !platform.routeColors.isEmpty()) {
 					final IntAVLTreeSet colorsUsed = new IntAVLTreeSet();
 					if (listElement.add(platform.getOBAStopElement(colorsUsed))) {
 						colorsUsed.forEach(listElement::addRoute);

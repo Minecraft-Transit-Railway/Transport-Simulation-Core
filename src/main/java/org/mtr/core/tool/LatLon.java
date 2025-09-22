@@ -2,19 +2,11 @@ package org.mtr.core.tool;
 
 import org.mtr.core.data.Position;
 
-public class LatLon {
-
-	public final double lat;
-	public final double lon;
+public record LatLon(double lat, double lon) {
 
 	public static final double MAX_LAT = 90;
 	public static final double MAX_LON = 180;
 	private static final int EARTH_CIRCUMFERENCE_METERS = 40075017;
-
-	public LatLon(double lat, double lon) {
-		this.lat = lat;
-		this.lon = lon;
-	}
 
 	public LatLon(Position position) {
 		this(metersToLat(-position.getZ()), metersToLon(position.getX()));

@@ -40,7 +40,7 @@ public interface Utilities {
 	}
 
 	static boolean isBetween(Position position, Vector position1, Vector position2, double padding) {
-		return isBetween(position, position1.x, position1.y, position1.z, position2.x, position2.y, position2.z, padding);
+		return isBetween(position, position1.x(), position1.y(), position1.z(), position2.x(), position2.y(), position2.z(), padding);
 	}
 
 	static boolean isBetween(Position position, double x1, double y1, double z1, double x2, double y2, double z2, double padding) {

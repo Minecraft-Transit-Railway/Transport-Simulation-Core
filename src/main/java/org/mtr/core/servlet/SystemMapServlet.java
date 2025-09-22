@@ -28,14 +28,17 @@ public final class SystemMapServlet extends ServletBase {
 
 	@Override
 	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse) {
-		sendResponse.accept(switch (endpoint) {
-			case "stations-and-routes" -> stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, 30000)).get(simulator);
-			case "departures" -> departuresResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getDepartures, 3000)).get(simulator);
-			case "arrivals" -> Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));
-			case "clients" -> clientsResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getClients, 3000)).get(simulator);
-			case "directions" -> Utilities.getJsonObjectFromData(new DirectionsGroupRequest(jsonReader).getDirections(simulator));
-			default -> new JsonObject();
-		});
+		if (endpoint.equals("directions")) {
+			simulator.directionsFinder.addRequest(new DirectionsRequest(jsonReader, directionsResponse -> sendResponse.accept(Utilities.getJsonObjectFromData(directionsResponse))));
+		} else {
+			sendResponse.accept(switch (endpoint) {
+				case "stations-and-routes" -> stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, 30000)).get(simulator);
+				case "departures" -> departuresResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getDepartures, 3000)).get(simulator);
+				case "arrivals" -> Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));
+				case "clients" -> clientsResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getClients, 3000)).get(simulator);
+				default -> new JsonObject();
+			});
+		}
 	}
 
 	private static JsonObject getStationsAndRoutes(Simulator simulator) {

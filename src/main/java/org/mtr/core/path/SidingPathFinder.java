@@ -197,7 +197,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 			final Angle rotateAngle = turnRight ? Angle.SEE : Angle.NEE;
 			tempAngle = tempAngle.add(rotateAngle);
 			final Vector posOffset = new Vector(turnArc, 0, 0).rotateY(-oldTempAngle.angleRadians - rotateAngle.angleRadians / 2);
-			tempPos = oldTempPos.offset(Math.round(posOffset.x), Math.round(posOffset.y), Math.round(posOffset.z));
+			tempPos = oldTempPos.offset(Math.round(posOffset.x()), Math.round(posOffset.y()), Math.round(posOffset.z()));
 
 			if (reverse) {
 				tempRailPath.add(0, getAirplanePathData(tempPos, tempAngle.getOpposite(), oldTempPos, oldTempAngle, stopIndex));

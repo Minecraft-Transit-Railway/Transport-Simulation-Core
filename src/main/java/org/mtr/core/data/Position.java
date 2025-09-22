@@ -18,7 +18,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 	}
 
 	public Position(Vector railPosition) {
-		this((long) Math.floor(railPosition.x), (long) Math.floor(railPosition.y), (long) Math.floor(railPosition.z));
+		this((long) Math.floor(railPosition.x()), (long) Math.floor(railPosition.y()), (long) Math.floor(railPosition.z()));
 	}
 
 	public long getX() {

@@ -54,7 +54,7 @@ public final class RailNodeConnection extends RailNodeConnectionSchema {
 	private Angle getAngle(boolean reverse) {
 		final Vector vector1 = getPosition(0, reverse);
 		final Vector vector2 = getPosition(0.1, reverse);
-		return Angle.fromAngle((float) Math.toDegrees(Math.atan2(vector2.z - vector1.z, vector2.x - vector1.x)));
+		return Angle.fromAngle((float) Math.toDegrees(Math.atan2(vector2.z() - vector1.z(), vector2.x() - vector1.x())));
 	}
 
 	private Vector getPosition(double rawValue, boolean reverse) {

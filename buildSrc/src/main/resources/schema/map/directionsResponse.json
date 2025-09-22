@@ -10,6 +10,32 @@
 			"items": {
 				"$ref": "directionsConnection.json"
 			}
+		},
+		"totalRefreshGraphTime": {
+			"type": "integer"
+		},
+		"totalRefreshArrivalsTime": {
+			"type": "integer"
+		},
+		"totalPathFindingTime": {
+			"type": "integer"
+		},
+		"longestRefreshGraphTime": {
+			"type": "integer"
+		},
+		"longestRefreshArrivalsTime": {
+			"type": "integer"
+		},
+		"longestPathFindingTime": {
+			"type": "integer"
 		}
-	}
+	},
+	"required": [
+		"totalRefreshGraphTime",
+		"totalRefreshArrivalsTime",
+		"totalPathFindingTime",
+		"longestRefreshGraphTime",
+		"longestRefreshArrivalsTime",
+		"longestPathFindingTime"
+	]
 }

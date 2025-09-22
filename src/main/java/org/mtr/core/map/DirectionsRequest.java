@@ -10,10 +10,13 @@ import org.mtr.core.simulation.Simulator;
 
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public final class DirectionsRequest extends DirectionsRequestSchema {
 
-	public DirectionsRequest(Position startPosition, Position endPosition, long startTime) {
+	public Consumer<DirectionsResponse> callback;
+
+	public DirectionsRequest(Position startPosition, Position endPosition, long startTime, Consumer<DirectionsResponse> callback) {
 		super(startTime);
 		startPositionX = startPosition.getX();
 		startPositionY = startPosition.getY();
@@ -21,11 +24,13 @@ public final class DirectionsRequest extends DirectionsRequestSchema {
 		endPositionX = endPosition.getX();
 		endPositionY = endPosition.getY();
 		endPositionZ = endPosition.getZ();
+		this.callback = callback;
 	}
 
-	public DirectionsRequest(ReaderBase readerBase) {
+	public DirectionsRequest(ReaderBase readerBase, Consumer<DirectionsResponse> callback) {
 		super(readerBase);
 		updateData(readerBase);
+		this.callback = callback;
 	}
 
 	public Position getStartPosition(Simulator simulator) {
