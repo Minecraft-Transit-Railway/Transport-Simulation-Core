@@ -26,8 +26,8 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 	public readonly stationsForMap: StationForMap[] = [];
 	private centerX = 0;
 	private centerY = 0;
+	private mapLoading = true;
 
-	public readonly mapLoading = new EventEmitter<void>();
 	public readonly drawMap = new EventEmitter<void>();
 	public readonly animateMap = new EventEmitter<{ x: number, z: number }>();
 	public readonly animateClient = new EventEmitter<string>();
@@ -112,7 +112,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 	}
 
 	public setDimension(dimension: string) {
-		this.mapLoading.emit();
+		this.mapLoading = true;
 		this.dimensionService.setDimension(dimension);
 		this.fetchData("");
 	}
@@ -123,6 +123,10 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 
 	public getCenterY() {
 		return this.centerY;
+	}
+
+	public getMapLoading() {
+		return this.mapLoading;
 	}
 
 	public updateData() {
@@ -333,5 +337,6 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		});
 
 		this.drawMap.emit();
+		this.mapLoading = false;
 	}
 }

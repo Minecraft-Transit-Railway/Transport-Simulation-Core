@@ -1,7 +1,7 @@
 <div class="column center loading-background">
 	<p-progress-spinner/>
 </div>
-<div class="wrapper" #wrapper [style.opacity]="loading ? 0 : 1">
+<div class="wrapper" #wrapper [style.opacity]="getLoading() ? 0 : 1">
 	<canvas #canvas></canvas>
 	<div>
 		@for (clientGroupOnRoute of clientGroupsOnRoute; track $index) {

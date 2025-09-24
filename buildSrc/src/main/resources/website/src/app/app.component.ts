@@ -4,7 +4,7 @@ import {StationPanelComponent} from "./component/station-panel/station-panel.com
 import {StationService} from "./service/station.service";
 import {DrawerComponent} from "./component/drawer/drawer.component";
 import {DirectionsComponent} from "./component/directions/directions.component";
-import {MainPanelComponent} from "./component/panel/main-panel.component";
+import {MainPanelComponent} from "./component/main-panel/main-panel.component";
 import {RouteKeyService} from "./service/route.service";
 import {RoutePanelComponent} from "./component/route-panel/route-panel.component";
 import {DirectionsService} from "./service/directions.service";

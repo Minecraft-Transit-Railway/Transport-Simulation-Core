@@ -48,8 +48,8 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		routeStation2?: Station,
 	}> = {};
 
-	constructor(private readonly httpClient: HttpClient, mapDataService: MapDataService, dimensionService: DimensionService) {
-		super(() => this.httpClient.get<{ data: ClientsDTO }>(this.getUrl("clients")), ({data}) => {
+	constructor(httpClient: HttpClient, mapDataService: MapDataService, dimensionService: DimensionService) {
+		super(() => httpClient.get<{ data: ClientsDTO }>(this.getUrl("clients")), ({data}) => {
 			this.allClients.length = 0;
 			this.allClientsNotInStationOrRoute.length = 0;
 			this.clientGroupsForStation = {};
