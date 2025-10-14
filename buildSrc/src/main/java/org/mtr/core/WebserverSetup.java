@@ -20,14 +20,14 @@ public final class WebserverSetup {
 	private static final Logger LOGGER = LogManager.getLogger("WebserverSetup");
 
 	public static void setup(File projectPath, String module, String namespace) {
-		final Path websitePath = projectPath.toPath().resolve("buildSrc/src/main/resources/website/dist/website/browser");
+		final Path websitePath = projectPath.toPath().resolve("website/dist/website/browser");
 		final StringBuilder stringBuilder = new StringBuilder(String.format("package org.mtr.%s%sgenerated;", namespace, namespace.isEmpty() ? "" : "."));
 		stringBuilder.append("@javax.annotation.Nullable public final class WebserverResources{public static String get(String resource){switch(resource.startsWith(\"/\")?resource.substring(1):resource){");
 		iterateFiles(websitePath, stringBuilder);
 		stringBuilder.append("default:return null;}}}");
 		write(projectPath.toPath().resolve(String.format("%ssrc/main/java/org/mtr/%s%sgenerated/WebserverResources.java", module, namespace, namespace.isEmpty() ? "" : "/")), stringBuilder.toString());
 
-		write(projectPath.toPath().resolve("buildSrc/src/main/resources/website/.gitignore"), download("https://raw.githubusercontent.com/angular/angular/refs/heads/main/.gitignore"));
+		write(projectPath.toPath().resolve("website/.gitignore"), download("https://raw.githubusercontent.com/angular/angular/refs/heads/main/.gitignore"));
 	}
 
 	private static void iterateFiles(Path path, StringBuilder stringBuilder) {

@@ -61,7 +61,7 @@ test {
 }
 
 tasks.register("generateTypeScriptSchemaClasses") {
-	Generator.generateTypeScript(project, "schema/map", "buildSrc/src/main/resources/website/src/app/entity/generated")
+	Generator.generateTypeScript(project, "schema/map", "website/src/app/entity/generated")
 }
 
 tasks.register("generateJavaSchemaClasses") {
