@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {AfterViewInit, Component, ElementRef, EventEmitter, Output, ViewChild} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, EventEmitter, inject, Output, ViewChild} from "@angular/core";
 import SETTINGS from "../../utility/settings";
 import {MapDataService} from "../../service/map-data.service";
 import {connectStations, connectWith45} from "../../utility/drawing";
@@ -45,6 +45,11 @@ const animationDuration = 2000;
 	styleUrls: ["./map.component.css"],
 })
 export class MapComponent implements AfterViewInit {
+	private readonly mapDataService = inject(MapDataService);
+	private readonly mapSelectionService = inject(MapSelectionService);
+	private readonly clientsService = inject(ClientsService);
+	private readonly themeService = inject(ThemeService);
+
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() clientClicked = new EventEmitter<string>();
 	@ViewChild("wrapper") private readonly wrapperRef!: ElementRef<HTMLDivElement>;
@@ -82,7 +87,7 @@ export class MapComponent implements AfterViewInit {
 	private lineGeometryThinDashed: LineGeometry | undefined;
 	private pointsForLineConnection: Record<string, [number, number, boolean][]> = {};
 
-	constructor(private readonly mapDataService: MapDataService, private readonly mapSelectionService: MapSelectionService, private readonly clientsService: ClientsService, private readonly themeService: ThemeService) {
+	constructor() {
 		this.canvas = () => this.canvasRef.nativeElement;
 	}
 

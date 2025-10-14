@@ -2,7 +2,7 @@ import {arrayAverage, getCookie, getFromArray, pushIfNotExists, setIfUndefined} 
 import {ROUTE_TYPES} from "../data/routeType";
 import {LineConnection} from "../entity/lineConnection";
 import {StationConnection} from "../entity/stationConnection";
-import {EventEmitter, Injectable} from "@angular/core";
+import {EventEmitter, inject, Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {StationsAndRoutesDTO} from "../entity/generated/stationsAndRoutes";
@@ -17,6 +17,8 @@ const REFRESH_INTERVAL = 30000;
 
 @Injectable({providedIn: "root"})
 export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO }> {
+	private readonly httpClient = inject(HttpClient);
+
 	public readonly routes: Route[] = [];
 	public readonly stations: Station[] = [];
 	public readonly routeTypeVisibility: Record<string, "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED"> = {};
@@ -32,7 +34,9 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 	public readonly animateMap = new EventEmitter<{ x: number, z: number }>();
 	public readonly animateClient = new EventEmitter<string>();
 
-	constructor(private readonly httpClient: HttpClient, dimensionService: DimensionService) {
+	constructor() {
+		const dimensionService = inject(DimensionService);
+
 		super(() => this.httpClient.get<{ data: StationsAndRoutesDTO }>(this.getUrl("stations-and-routes")), ({data}) => {
 			this.routes.length = 0;
 			this.stations.length = 0;

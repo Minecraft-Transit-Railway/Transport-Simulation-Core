@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Output} from "@angular/core";
+import {Component, EventEmitter, inject, Output} from "@angular/core";
 import {RouteKeyService, RouteVariationService} from "../../service/route.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
@@ -33,13 +33,17 @@ import {FormsModule} from "@angular/forms";
 	styleUrl: "./route-panel.component.css",
 })
 export class RoutePanelComponent {
+	private readonly routeVariationService = inject(RouteVariationService);
+	private readonly routeKeyService = inject(RouteKeyService);
+	private readonly formatTimePipe = inject(FormatTimePipe);
+
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<void>();
 	protected dropdownValue?: { name: string; id: string; };
 
-	constructor(private readonly routeVariationService: RouteVariationService, private readonly routeKeyService: RouteKeyService, private readonly formatTimePipe: FormatTimePipe) {
-		routeKeyService.selectionChanged.subscribe(() => {
+	constructor() {
+		this.routeKeyService.selectionChanged.subscribe(() => {
 			this.dropdownValue = {name: Math.random().toString(), id: Math.random().toString()};
 			setTimeout(() => {
 				const dropdownRoutes = this.getDropdownRoutes();

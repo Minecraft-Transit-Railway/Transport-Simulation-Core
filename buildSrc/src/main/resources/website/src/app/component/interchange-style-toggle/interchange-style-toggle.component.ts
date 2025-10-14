@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
@@ -16,6 +16,8 @@ import {FormsModule} from "@angular/forms";
 	styleUrl: "./interchange-style-toggle.component.css",
 })
 export class InterchangeStyleToggleComponent {
+	private readonly mapDataService = inject(MapDataService);
+
 	protected readonly interchangeStyleOptions: { icon: string, value: "DOTTED" | "HOLLOW", tooltip: string }[] = [
 		{
 			icon: "more_horiz",
@@ -28,9 +30,6 @@ export class InterchangeStyleToggleComponent {
 			tooltip: "Hollow",
 		},
 	];
-
-	constructor(private readonly mapDataService: MapDataService) {
-	}
 
 	getInterchangeStyle() {
 		return this.mapDataService.interchangeStyle;

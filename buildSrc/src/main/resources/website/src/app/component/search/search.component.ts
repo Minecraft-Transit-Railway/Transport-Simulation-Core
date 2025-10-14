@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from "@angular/core";
+import {Component, EventEmitter, inject, Input, Output} from "@angular/core";
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MapDataService} from "../../service/map-data.service";
 import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
@@ -34,6 +34,11 @@ const maxResults = 50;
 	styleUrl: "./search.component.css",
 })
 export class SearchComponent {
+	private readonly dataService = inject(MapDataService);
+	private readonly clientsService = inject(ClientsService);
+	private readonly simplifyStationsPipe = inject(SimplifyStationsPipe);
+	private readonly simplifyRoutesPipe = inject(SimplifyRoutesPipe);
+
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() clientClicked = new EventEmitter<string>();
@@ -45,9 +50,6 @@ export class SearchComponent {
 	@Input() setText!: EventEmitter<string>;
 
 	protected data: SelectItemGroup[] = [];
-
-	constructor(private readonly dataService: MapDataService, private readonly clientsService: ClientsService, private readonly simplifyStationsPipe: SimplifyStationsPipe, private readonly simplifyRoutesPipe: SimplifyRoutesPipe) {
-	}
 
 	onTextChanged(event: AutoCompleteCompleteEvent) {
 		this.data = [];

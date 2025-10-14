@@ -13,7 +13,7 @@
 		<div class="row gap-small center">
 			<div class="spacing">
 				<p-float-label variant="in">
-					<p-input-number inputId="max-walking-distance" formControlName="maxWalkingDistance" min="0" max="1000000000" (onInput)="updateMaxWalkingDistance()" [fluid]="true"/>
+					<p-input-number inputId="max-walking-distance" formControlName="maxWalkingDistance" [min]="0" [max]="1000000000" (onInput)="updateMaxWalkingDistance()" [fluid]="true"/>
 					<label for="max-walking-distance">Maximum Walking Distance (m)</label>
 				</p-float-label>
 			</div>

@@ -1,4 +1,4 @@
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {MapDataService} from "./map-data.service";
 import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
 import {DeparturesService} from "./departures.service";
@@ -10,10 +10,15 @@ import {MapSelectionService} from "./map-selection.service";
 
 @Injectable({providedIn: "root"})
 export class RouteVariationService extends SelectableDataServiceBase<void, Route> {
+	private readonly routeKeyService = inject(RouteKeyService);
+
 	public readonly routeStationDetails: { id: string, name: string, duration: number, durationSeconds: number, dwellTime: number, dwellTimeSeconds: number, vehicles: { deviation: number, percentage: number }[] }[] = [];
 	private totalDuration = 0;
 
-	constructor(private readonly routeKeyService: RouteKeyService, departuresService: DeparturesService, dimensionService: DimensionService) {
+	constructor() {
+		const departuresService = inject(DeparturesService);
+		const dimensionService = inject(DimensionService);
+
 		super(routeId => {
 			this.routeStationDetails.length = 0;
 			this.totalDuration = 0;
@@ -44,7 +49,7 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 			}
 		};
 
-		routeKeyService.selectionChanged.subscribe(() => this.select(""));
+		this.routeKeyService.selectionChanged.subscribe(() => this.select(""));
 		departuresService.dataProcessed.subscribe(() => updateDepartures(this.getSelectedData()));
 
 		setInterval(() => {
@@ -103,7 +108,11 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 @Injectable({providedIn: "root"})
 export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 
-	constructor(mapDataService: MapDataService, mapSelectionService: MapSelectionService, dimensionService: DimensionService) {
+	constructor() {
+		const mapDataService = inject(MapDataService);
+		const mapSelectionService = inject(MapSelectionService);
+		const dimensionService = inject(DimensionService);
+
 		super(routeKey => {
 			mapSelectionService.selectedStationConnections.length = 0;
 			mapSelectionService.selectedStations.length = 0;

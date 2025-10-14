@@ -1,4 +1,4 @@
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {MapDataService} from "./map-data.service";
 import {SplitNamePipe} from "../pipe/splitNamePipe";
@@ -14,6 +14,10 @@ const MAX_ARRIVALS = 5;
 
 @Injectable({providedIn: "root"})
 export class StationService extends SelectableDataServiceBase<{ currentTime: number, data: { arrivals: DataResponse[] } }, Station> {
+	private readonly httpClient = inject(HttpClient);
+	private readonly dataService = inject(MapDataService);
+	private readonly splitNamePipe = inject(SplitNamePipe);
+
 	public readonly arrivalsRoutes: { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }[] = [];
 	public readonly routesAtStation: { name: string, variations: string[], number: string, color: number, typeIcon: string }[] = [];
 	private readonly arrivals: Arrival[] = [];
@@ -21,7 +25,9 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 	private readonly filterArrivalRoutes: string[] = [];
 	private filterArrivalShowTerminating = false;
 
-	constructor(private readonly httpClient: HttpClient, private readonly dataService: MapDataService, private readonly splitNamePipe: SplitNamePipe, dimensionService: DimensionService) {
+	constructor() {
+		const dimensionService = inject(DimensionService);
+
 		super(stationId => this.dataService.stations.find(station => station.id === stationId), () => {
 			this.arrivals.length = 0;
 			this.arrivalsRoutes.length = 0;

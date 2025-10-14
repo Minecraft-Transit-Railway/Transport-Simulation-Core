@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Output} from "@angular/core";
+import {Component, EventEmitter, inject, Output} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
@@ -42,13 +42,13 @@ import {SplitNamePipe} from "../../pipe/splitNamePipe";
 	styleUrl: "./station-panel.component.css",
 })
 export class StationPanelComponent {
+	private readonly dataService = inject(MapDataService);
+	private readonly stationService = inject(StationService);
+
 	protected dialogData?: Arrival;
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<{ stationDetails: { stationId: string, isStartStation: boolean } }>;
-
-	constructor(private readonly dataService: MapDataService, private readonly stationService: StationService) {
-	}
 
 	getStation() {
 		return this.stationService.getSelectedData();

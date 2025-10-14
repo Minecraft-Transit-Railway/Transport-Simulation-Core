@@ -1,4 +1,4 @@
-import {EventEmitter, Injectable} from "@angular/core";
+import {EventEmitter, inject, Injectable} from "@angular/core";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
 import {Route} from "../entity/route";
 import {DimensionService} from "./dimension.service";
@@ -31,7 +31,13 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 	}[] = [];
 	private directionsTimeoutId = 0;
 
-	constructor(httpClient: HttpClient, mapDataService: MapDataService, mapSelectionService: MapSelectionService, clientsService: ClientsService, dimensionService: DimensionService) {
+	constructor() {
+		const httpClient = inject(HttpClient);
+		const mapDataService = inject(MapDataService);
+		const mapSelectionService = inject(MapSelectionService);
+		const clientsService = inject(ClientsService);
+		const dimensionService = inject(DimensionService);
+
 		super(selectedData => {
 			const {
 				startStationId,

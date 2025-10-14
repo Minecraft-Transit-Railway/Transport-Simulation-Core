@@ -162,7 +162,7 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 							startConnection.endTime(), startConnection.endTime() + independentConnection.duration(),
 							independentConnection.walkingDistance()
 					), earliestConnections)) {
-						queue.add(endPlatformId.longValue());
+						queue.add(endPlatformId);
 					}
 				});
 			}

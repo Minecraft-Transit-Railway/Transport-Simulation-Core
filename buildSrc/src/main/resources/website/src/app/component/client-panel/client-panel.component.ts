@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Output} from "@angular/core";
+import {Component, EventEmitter, inject, Output} from "@angular/core";
 import {TooltipModule} from "primeng/tooltip";
 import {CheckboxModule} from "primeng/checkbox";
 import {DividerModule} from "primeng/divider";
@@ -36,12 +36,12 @@ import {ROUTE_TYPES} from "../../data/routeType";
 	styleUrl: "./client-panel.component.css",
 })
 export class ClientPanelComponent {
+	private readonly clientService = inject(ClientService);
+	private readonly mapDataService = inject(MapDataService);
+
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<{ clientDetails: { clientId: string, isStartClient: boolean } }>;
-
-	constructor(private readonly clientService: ClientService, private readonly mapDataService: MapDataService) {
-	}
 
 	getName() {
 		return this.clientService.getClient()?.name ?? "";

@@ -261,7 +261,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 
 		platformDirections.forEach((platformId, angle) -> {
-			final Platform platform = data.platformIdMap.get(platformId.longValue());
+			final Platform platform = data.platformIdMap.get(platformId);
 			if (platform != null) {
 				platform.setAngles(id, angle);
 			}

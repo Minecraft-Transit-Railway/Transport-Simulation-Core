@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, ViewChild} from "@angular/core";
+import {AfterViewInit, Component, ElementRef, inject, Input, ViewChild} from "@angular/core";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {ThemeService} from "../../service/theme.service";
 import {TooltipModule} from "primeng/tooltip";
@@ -13,15 +13,14 @@ import {TooltipModule} from "primeng/tooltip";
 	styleUrl: "./route-display.component.css",
 })
 export class RouteDisplayComponent implements AfterViewInit {
+	private readonly themeService = inject(ThemeService);
+
 	@Input() colorAbove?: number;
 	@Input() colorBelow?: number;
 	@Input({required: true}) isStation = false;
 	@Input({required: true}) icons: { icon: string, offset: number, tooltip?: string }[] = [];
 	@ViewChild("text") private readonly textRef!: ElementRef<HTMLDivElement>;
 	private height = 0;
-
-	constructor(private readonly themeService: ThemeService) {
-	}
 
 	ngAfterViewInit(): void {
 		new ResizeObserver(entries => entries.forEach(entry => this.height = entry.target.clientHeight)).observe(this.textRef.nativeElement);

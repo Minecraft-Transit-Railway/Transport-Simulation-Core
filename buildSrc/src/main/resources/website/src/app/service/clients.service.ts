@@ -1,4 +1,4 @@
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {DataServiceBase} from "./data-service-base";
@@ -48,7 +48,11 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		routeStation2?: Station,
 	}> = {};
 
-	constructor(httpClient: HttpClient, mapDataService: MapDataService, dimensionService: DimensionService) {
+	constructor() {
+		const httpClient = inject(HttpClient);
+		const mapDataService = inject(MapDataService);
+		const dimensionService = inject(DimensionService);
+
 		super(() => httpClient.get<{ data: ClientsDTO }>(this.getUrl("clients")), ({data}) => {
 			this.allClients.length = 0;
 			this.allClientsNotInStationOrRoute.length = 0;

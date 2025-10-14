@@ -1,4 +1,4 @@
-import {Component, Input} from "@angular/core";
+import {Component, inject, Input} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
@@ -17,6 +17,8 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 	styleUrl: "./visibility-toggle.component.css",
 })
 export class VisibilityToggleComponent {
+	private readonly mapDataService = inject(MapDataService);
+
 	@Input({required: true}) routeType = "";
 	protected readonly visibilityOptions: { icon: string, value: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED", tooltip: string }[] = [
 		{
@@ -40,9 +42,6 @@ export class VisibilityToggleComponent {
 			tooltip: "Dashed",
 		},
 	];
-
-	constructor(private readonly mapDataService: MapDataService) {
-	}
 
 	getVisibility() {
 		return this.mapDataService.routeTypeVisibility[this.routeType];

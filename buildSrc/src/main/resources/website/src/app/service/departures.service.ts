@@ -1,4 +1,4 @@
-import {EventEmitter, Injectable} from "@angular/core";
+import {EventEmitter, inject, Injectable} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {setIfUndefined} from "../data/utilities";
@@ -14,7 +14,10 @@ export class DeparturesService extends DataServiceBase<{
 	private departures: Record<string, { departureFromNow: number, deviation: number }[]> = {};
 	private lastUpdated = 0;
 
-	constructor(httpClient: HttpClient, dimensionService: DimensionService) {
+	constructor() {
+		const httpClient = inject(HttpClient);
+		const dimensionService = inject(DimensionService);
+
 		super(() => {
 			const cacheCompleted = new EventEmitter<{
 				departures: Record<string, { departureFromNow: number, deviation: number }[]>,

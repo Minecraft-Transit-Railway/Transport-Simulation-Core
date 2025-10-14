@@ -1,12 +1,14 @@
-import {Injectable} from "@angular/core";
+import {inject, Injectable} from "@angular/core";
 import {getCookie, setCookie} from "../data/utilities";
 import {MapDataService} from "./map-data.service";
 
 @Injectable({providedIn: "root"})
 export class ThemeService {
+	private readonly mapDataService = inject(MapDataService);
+
 	private darkTheme: boolean;
 
-	constructor(private readonly mapDataService: MapDataService) {
+	constructor() {
 		this.darkTheme = getCookie("dark_theme") === "true";
 		this.setElementTag();
 	}

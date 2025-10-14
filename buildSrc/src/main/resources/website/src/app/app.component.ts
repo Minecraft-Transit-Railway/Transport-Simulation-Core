@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {MapComponent} from "./component/map/map.component";
 import {StationPanelComponent} from "./component/station-panel/station-panel.component";
 import {StationService} from "./service/station.service";
@@ -30,9 +30,11 @@ import {ClientPanelComponent} from "./component/client-panel/client-panel.compon
 	styleUrls: ["./app.component.css"],
 })
 export class AppComponent {
+	private readonly stationService = inject(StationService);
+	private readonly routeKeyService = inject(RouteKeyService);
+	private readonly clientService = inject(ClientService);
+	private readonly directionsService = inject(DirectionsService);
 
-	constructor(private readonly stationService: StationService, private readonly routeKeyService: RouteKeyService, private readonly clientService: ClientService, private readonly directionsService: DirectionsService) {
-	}
 
 	getTitle() {
 		return document.title;

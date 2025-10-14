@@ -1,4 +1,4 @@
-import {Component} from "@angular/core";
+import {Component, inject} from "@angular/core";
 import {SearchComponent} from "../search/search.component";
 import {DirectionsService} from "../../service/directions.service";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
@@ -50,6 +50,13 @@ import {ClientsService} from "../../service/clients.service";
 	styleUrl: "./directions.component.css",
 })
 export class DirectionsComponent {
+	private readonly directionsService = inject(DirectionsService);
+	private readonly mapDataService = inject(MapDataService);
+	private readonly clientsService = inject(ClientsService);
+	private readonly mapSelectionService = inject(MapSelectionService);
+	private readonly formatNamePipe = inject(FormatNamePipe);
+	private readonly formatTimePipe = inject(FormatTimePipe);
+
 	protected readonly formGroup = new FormGroup({
 		startInput: new FormControl<{ value: SearchData } | undefined>(undefined),
 		endInput: new FormControl<{ value: SearchData } | undefined>(undefined),
@@ -69,15 +76,15 @@ export class DirectionsComponent {
 	}[] = [];
 	private forceRefresh = false;
 
-	constructor(private readonly directionsService: DirectionsService, private readonly mapDataService: MapDataService, private readonly clientsService: ClientsService, private readonly mapSelectionService: MapSelectionService, private readonly formatNamePipe: FormatNamePipe, private readonly formatTimePipe: FormatTimePipe) {
-		directionsService.directionsPanelOpened.subscribe((directionsSelection) => {
+	constructor() {
+		this.directionsService.directionsPanelOpened.subscribe((directionsSelection) => {
 			if (directionsSelection) {
 				this.onClickData(directionsSelection);
 			} else {
 				this.checkStatus();
 			}
 		});
-		directionsService.dataProcessed.subscribe(() => {
+		this.directionsService.dataProcessed.subscribe(() => {
 			if (this.forceRefresh || this.canAutomaticallyRefresh()) {
 				this.forceRefresh = false;
 				this.refreshDirections();
