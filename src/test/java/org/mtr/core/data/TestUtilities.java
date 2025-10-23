@@ -133,12 +133,24 @@ public interface TestUtilities {
 		return new Depot(randomTransportMode(), getDefaultSimulator());
 	}
 
+	static Home randomHome() {
+		return new Home(getDefaultSimulator());
+	}
+
 	static InterchangeRouteNamesForColor randomInterchangeRouteNamesForColor() {
 		return new InterchangeRouteNamesForColor(RANDOM.nextLong());
 	}
 
 	static InterchangeColorsForStationName randomInterchangeColorsForStationName() {
 		return new InterchangeColorsForStationName(randomString());
+	}
+
+	static Landmark randomLandmark() {
+		return new Landmark(getDefaultSimulator());
+	}
+
+	static LandmarkDensity randomLandmarkDensity() {
+		return new LandmarkDensity(RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextBoolean(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong());
 	}
 
 	static Lift randomLift() {
@@ -151,6 +163,14 @@ public interface TestUtilities {
 
 	static LiftInstruction randomLiftInstruction() {
 		return new LiftInstruction(RANDOM.nextInt(), randomEnum(LiftDirection.values()));
+	}
+
+	static Passenger randomPassenger() {
+		return new Passenger();
+	}
+
+	static PassengerDirection randomPassengerDirection() {
+		return new PassengerDirection(RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong());
 	}
 
 	static PathData randomPathData() {
@@ -229,8 +249,20 @@ public interface TestUtilities {
 		return new Depot(readerBase, getDefaultSimulator());
 	}
 
+	static Home newHome(ReaderBase readerBase) {
+		return new Home(readerBase, getDefaultSimulator());
+	}
+
 	static InterchangeRouteNamesForColor newInterchangeRouteNamesForColor(ReaderBase readerBase) {
 		return new InterchangeRouteNamesForColor(readerBase);
+	}
+
+	static Landmark newLandmark(ReaderBase readerBase) {
+		return new Landmark(readerBase, getDefaultSimulator());
+	}
+
+	static LandmarkDensity newLandmarkDensity(ReaderBase readerBase) {
+		return new LandmarkDensity(readerBase);
 	}
 
 	static Lift newLift(ReaderBase readerBase) {
@@ -243,6 +275,14 @@ public interface TestUtilities {
 
 	static LiftInstruction newLiftInstruction(ReaderBase readerBase) {
 		return new LiftInstruction(readerBase);
+	}
+
+	static Passenger newPassenger(ReaderBase readerBase) {
+		return new Passenger(readerBase);
+	}
+
+	static PassengerDirection newPassengerDirection(ReaderBase readerBase) {
+		return new PassengerDirection(readerBase);
 	}
 
 	static PathData newPathData(ReaderBase readerBase) {

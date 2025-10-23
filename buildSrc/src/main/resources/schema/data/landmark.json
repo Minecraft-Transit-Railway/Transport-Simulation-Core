@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaExtends": "SimpleAreaBase",
+	"extends": {
+		"$ref": "areaBase.json"
+	},
+	"properties": {
+		"densities": {
+			"type": "array",
+			"items": {
+				"$ref": "landmarkDensity.json"
+			}
+		}
+	}
+}

@@ -62,6 +62,18 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		return data;
 	}
 
+	@Nonnull
+	@Override
+	protected Data homesDataParameter() {
+		return data;
+	}
+
+	@Nonnull
+	@Override
+	protected Data landmarksDataParameter() {
+		return data;
+	}
+
 	public UpdateDataRequest addStation(Station station) {
 		stations.add(station);
 		return this;
@@ -102,6 +114,16 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		return this;
 	}
 
+	public UpdateDataRequest addHome(Home home) {
+		homes.add(home);
+		return this;
+	}
+
+	public UpdateDataRequest addLandmark(Landmark landmark) {
+		landmarks.add(landmark);
+		return this;
+	}
+
 	public UpdateDataResponse update() {
 		final UpdateDataResponse updateDataResponse = new UpdateDataResponse(data);
 
@@ -116,6 +138,8 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		});
 		rails.forEach(rail -> update(rail, true, data.railIdMap.get(rail.getHexId()), data.rails, updateDataResponse.getRails()));
 		signalModifications.forEach(signalModification -> signalModification.applyModificationToRail(data, updateDataResponse.getRails()));
+		homes.forEach(home -> update(home, true, data.homeIdMap.get(home.getId()), data.homes, updateDataResponse.getHomes()));
+		landmarks.forEach(landmark -> update(landmark, true, data.landmarkIdMap.get(landmark.getId()), data.landmarks, updateDataResponse.getLandmarks()));
 
 		final ObjectArrayList<Siding> sidingsToInit = new ObjectArrayList<>();
 		updateDataResponse.getRails().forEach(rail -> rail.checkOrCreateSavedRail(data, updateDataResponse.getPlatforms(), sidingsToInit));

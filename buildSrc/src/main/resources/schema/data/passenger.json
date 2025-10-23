@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"directions": {
+			"type": "array",
+			"items": {
+				"$ref": "passengerDirection.json"
+			}
+		},
+		"targetLandmark": {
+			"type": "integer"
+		},
+		"landmarkArrivalTime": {
+			"type": "integer"
+		}
+	}
+}

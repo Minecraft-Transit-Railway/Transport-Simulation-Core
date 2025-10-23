@@ -49,6 +49,18 @@
 			"items": {
 				"type": "string"
 			}
+		},
+		"existingHomeIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"existingLandmarkIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
 		}
 	},
 	"required": [

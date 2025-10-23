@@ -5,8 +5,8 @@ import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import org.mtr.core.generated.data.ClientSchema;
+import org.mtr.core.operation.DynamicDataResponse;
 import org.mtr.core.operation.PlayerPresentResponse;
-import org.mtr.core.operation.VehicleLiftResponse;
 import org.mtr.core.operation.VehicleUpdate;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
@@ -64,14 +64,14 @@ public class Client extends ClientSchema {
 	}
 
 	public void sendUpdates(Simulator simulator) {
-		final VehicleLiftResponse vehicleLiftResponse = new VehicleLiftResponse(uuid, simulator);
-		final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, vehicleLiftResponse::addVehicleToUpdate, vehicleLiftResponse::addVehicleToKeep);
-		final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, vehicleLiftResponse::addLiftToUpdate, vehicleLiftResponse::addLiftToKeep);
-		final boolean hasUpdate3 = process(signalBlockUpdates, existingRailIds, keepRailIds, vehicleLiftResponse::addSignalBlockUpdate, railId -> {
+		final DynamicDataResponse dynamicDataResponse = new DynamicDataResponse(uuid, simulator);
+		final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, dynamicDataResponse::addVehicleToUpdate, dynamicDataResponse::addVehicleToKeep);
+		final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, dynamicDataResponse::addLiftToUpdate, dynamicDataResponse::addLiftToKeep);
+		final boolean hasUpdate3 = process(signalBlockUpdates, existingRailIds, keepRailIds, dynamicDataResponse::addSignalBlockUpdate, railId -> {
 		});
 
 		if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
-			simulator.sendMessageS2C(OperationProcessor.VEHICLES_LIFTS, vehicleLiftResponse, playerPresentResponse -> playerPresentResponse.verify(simulator, uuid), PlayerPresentResponse.class);
+			simulator.sendMessageS2C(OperationProcessor.VEHICLES_LIFTS, dynamicDataResponse, playerPresentResponse -> playerPresentResponse.verify(simulator, uuid), PlayerPresentResponse.class);
 		}
 	}
 

@@ -52,6 +52,18 @@
 			"items": {
 				"$ref": "position.json"
 			}
+		},
+		"homeIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"landmarkIds": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
 		}
 	}
 }

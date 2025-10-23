@@ -55,6 +55,18 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 		return data;
 	}
 
+	@Nonnull
+	@Override
+	protected Data homesDataParameter() {
+		return data;
+	}
+
+	@Nonnull
+	@Override
+	protected Data landmarksDataParameter() {
+		return data;
+	}
+
 	public void write() {
 		stations.forEach(station -> update(station, data.stations, data.stationIdMap.get(station.getId())));
 		platforms.forEach(platform -> update(platform, data.platforms, data.platformIdMap.get(platform.getId())));
@@ -72,6 +84,8 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 			simplifiedRoutes.forEach(simplifiedRoute -> update(simplifiedRoute, ((ClientData) data).simplifiedRoutes, ((ClientData) data).simplifiedRoutes.stream().filter(existingSimplifiedRoute -> existingSimplifiedRoute.getId() == simplifiedRoute.getId()).findFirst().orElse(null)));
 			((ClientData) data).simplifiedRoutes.removeIf(simplifiedRoute -> hiddenRouteIds.contains(simplifiedRoute.getId()));
 		}
+		homes.forEach(home -> update(home, data.homes, data.homeIdMap.get(home.getId())));
+		landmarks.forEach(landmark -> update(landmark, data.landmarks, data.landmarkIdMap.get(landmark.getId())));
 		data.sync();
 	}
 
@@ -105,6 +119,14 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 
 	ObjectArrayList<Rail> getRails() {
 		return rails;
+	}
+
+	ObjectArrayList<Home> getHomes() {
+		return homes;
+	}
+
+	ObjectArrayList<Landmark> getLandmarks() {
+		return landmarks;
 	}
 
 	private static <T extends SerializedDataBase> void update(T newData, ObjectSet<T> dataSet, @Nullable T existingData) {

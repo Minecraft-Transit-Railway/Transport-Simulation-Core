@@ -1,0 +1,39 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"startTime": {
+			"type": "integer"
+		},
+		"endTime": {
+			"type": "integer"
+		},
+		"isRealTime": {
+			"type": "boolean"
+		},
+		"minDensity": {
+			"type": "integer"
+		},
+		"maxDensity": {
+			"type": "integer"
+		},
+		"minStayDuration": {
+			"type": "integer"
+		},
+		"maxStayDuration": {
+			"type": "integer"
+		}
+	},
+	"required": [
+		"startTime",
+		"endTime",
+		"isRealTime",
+		"minDensity",
+		"maxDensity",
+		"minStayDuration",
+		"maxStayDuration"
+	]
+}
