@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.data.PassengerDirection;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
 import org.mtr.core.data.Station;
@@ -58,7 +59,8 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 							Math.max(millis, directionsRequest.getStartTime()),
 							new Long2ObjectOpenHashMap<>(),
 							new Long2LongOpenHashMap(),
-							directionsRequest.callback
+							directionsRequest.callback1,
+							directionsRequest.callback2
 					);
 				}
 				directionsRequests.clear();
@@ -103,7 +105,7 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 			return null;
 		} else if (index2 < requests.length) {
 			final Request request = requests[index2];
-			final DirectionsResponse directionsResponse = new DirectionsResponse(
+			final DirectionsResponse directionsResponse = request.callback1() == null ? null : new DirectionsResponse(
 					graph.getTotalRefreshTime(),
 					arrivals.getTotalRefreshTime(),
 					getTotalRefreshTime(),
@@ -111,6 +113,7 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 					arrivals.getLongestRefreshTime(),
 					getLongestRefreshTime()
 			);
+			final ObjectArrayList<PassengerDirection> passengerDirections = request.callback2() == null ? null : new ObjectArrayList<>();
 			Connection current = getEndConnection(request.earliestConnections(), request.walkingDistancesToEnd());
 
 			while (current != null) {
@@ -118,17 +121,36 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 				final Station startStation = startPlatform == null ? null : startPlatform.area;
 				final Platform endPlatform = current.endPlatformId() == END_PLATFORM_ID ? null : simulator.platformIdMap.get(current.endPlatformId());
 				final Station endStation = endPlatform == null ? null : endPlatform.area;
-				directionsResponse.getDirectionsConnections().add(0, new DirectionsConnection(
-						current.route() == null ? "" : current.route().getHexId(),
-						startStation == null ? "" : startStation.getHexId(), endStation == null ? "" : endStation.getHexId(),
-						startPlatform == null ? "" : startPlatform.getName(), endPlatform == null ? "" : endPlatform.getName(),
-						current.startTime(), current.endTime(),
-						current.walkingDistance()
-				));
+
+				if (directionsResponse != null) {
+					directionsResponse.getDirectionsConnections().add(0, new DirectionsConnection(
+							current.route() == null ? "" : current.route().getHexId(),
+							startStation == null ? "" : startStation.getHexId(), endStation == null ? "" : endStation.getHexId(),
+							startPlatform == null ? "" : startPlatform.getName(), endPlatform == null ? "" : endPlatform.getName(),
+							current.startTime(), current.endTime(),
+							current.walkingDistance()
+					));
+				}
+
+				if (passengerDirections != null) {
+					passengerDirections.add(0, new PassengerDirection(
+							current.route() == null ? 0 : current.route().getId(),
+							startPlatform == null ? 0 : startPlatform.getId(),
+							endPlatform == null ? 0 : endPlatform.getId(),
+							current.startTime(), current.endTime()
+					));
+				}
+
 				current = request.earliestConnections().get(current.startPlatformId());
 			}
 
-			request.callback().accept(directionsResponse);
+			if (request.callback1() != null) {
+				request.callback1().accept(directionsResponse);
+			}
+
+			if (request.callback2() != null) {
+				request.callback2().accept(passengerDirections);
+			}
 
 			if (index2 == requests.length - 1) {
 				return 0;

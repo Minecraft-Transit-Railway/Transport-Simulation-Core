@@ -117,7 +117,7 @@ public class PathData extends PathDataSchema implements ConditionalList {
 			return rail.railMath.getPosition(rawValue, reversePositions);
 		} else {
 			// TODO better positioning when vehicle is moving too quickly
-			final double ratio = Math.clamp(rawValue / getRailLength(), 0, 1);
+			final double ratio = Utilities.clampSafe(rawValue / getRailLength(), 0, 1);
 			return new Vector(
 					startPosition.getX() + ratio * (endPosition.getX() - startPosition.getX()) + 0.5,
 					startPosition.getY() + ratio * (endPosition.getY() - startPosition.getY()),

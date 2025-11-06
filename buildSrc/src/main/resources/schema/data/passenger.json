@@ -1,9 +1,10 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"type": "object",
-	"javaImplements": [
-		"SerializedDataBase"
-	],
+	"javaExtends": "NameColorDataBase",
+	"extends": {
+		"$ref": "nameColorDataBase.json"
+	},
 	"properties": {
 		"directions": {
 			"type": "array",
@@ -11,10 +12,22 @@
 				"$ref": "passengerDirection.json"
 			}
 		},
-		"targetLandmark": {
+		"startLandmarkId": {
 			"type": "integer"
 		},
-		"landmarkArrivalTime": {
+		"endLandmarkId": {
+			"type": "integer"
+		},
+		"landmarkVisitStartTime": {
+			"type": "integer"
+		},
+		"landmarkVisitEndTime": {
+			"type": "integer"
+		},
+		"sidingId": {
+			"type": "integer"
+		},
+		"vehicleId": {
 			"type": "integer"
 		}
 	}

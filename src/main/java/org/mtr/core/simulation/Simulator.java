@@ -197,7 +197,7 @@ public class Simulator extends Data implements Utilities {
 	/**
 	 * @return the game hour (0-23)
 	 */
-	public int getHour() {
+	public int getGameHour() {
 		return gameMillisPerDay > 0 ? (int) (gameMillis * HOURS_PER_DAY / gameMillisPerDay) : 0;
 	}
 
@@ -298,6 +298,7 @@ public class Simulator extends Data implements Utilities {
 			}
 
 			lifts.forEach(lift -> lift.tick(millisElapsed));
+			homes.forEach(home -> home.tick(millisElapsed));
 
 			// Process queued runs
 			queuedRuns.process(Runnable::run);

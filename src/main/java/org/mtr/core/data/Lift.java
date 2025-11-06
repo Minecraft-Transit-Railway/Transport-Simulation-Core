@@ -73,7 +73,7 @@ public class Lift extends LiftSchema implements Utilities {
 				if (speed * speed / 2 / Siding.ACCELERATION_DEFAULT > Math.abs(nextInstructionProgress - railProgress)) {
 					speed = Math.max(Math.abs(speed) - Siding.ACCELERATION_DEFAULT * millisElapsed, Siding.ACCELERATION_DEFAULT) * Math.signum(speed);
 				} else {
-					speed = Math.clamp(speed + Siding.ACCELERATION_DEFAULT * millisElapsed * Math.signum(nextInstructionProgress - railProgress), -MAX_SPEED, MAX_SPEED);
+					speed = Utilities.clampSafe(speed + Siding.ACCELERATION_DEFAULT * millisElapsed * Math.signum(nextInstructionProgress - railProgress), -MAX_SPEED, MAX_SPEED);
 				}
 
 				if (Math.abs(railProgress - nextInstructionProgress) <= Math.abs(speed * millisElapsed)) {
@@ -87,7 +87,7 @@ public class Lift extends LiftSchema implements Utilities {
 				}
 			}
 
-			railProgress = Math.clamp(railProgress + speed * millisElapsed, 0, getProgress(Integer.MAX_VALUE));
+			railProgress = Utilities.clampSafe(railProgress + speed * millisElapsed, 0, getProgress(Integer.MAX_VALUE));
 		}
 
 		if (data instanceof Simulator) {
@@ -350,7 +350,7 @@ public class Lift extends LiftSchema implements Utilities {
 	 * @return the distance along the track from the very first floor
 	 */
 	private long getProgress(int floor) {
-		return distances.isEmpty() ? 0 : distances.getLong(Math.clamp(floor, 0, distances.size() - 1));
+		return distances.isEmpty() ? 0 : distances.getLong(Utilities.clampSafe(floor, 0, distances.size() - 1));
 	}
 
 	private <T> T currentFloorCallback(PercentageCallback<T> percentageCallback, T defaultValue) {

@@ -154,7 +154,7 @@ public interface Utilities {
 					return lowIndex < 0 ? -1 : lowIndex;
 				}
 
-				index = Math.clamp((lowIndex + highIndex) / 2, 0, listSize - 1);
+				index = clampSafe((lowIndex + highIndex) / 2, 0, listSize - 1);
 			}
 		}
 	}
@@ -163,6 +163,22 @@ public interface Utilities {
 		final JsonObject jsonObject = new JsonObject();
 		data.serializeData(new JsonWriter(jsonObject));
 		return jsonObject;
+	}
+
+	static int clampSafe(int value, int min, int max) {
+		return Math.min(Math.max(value, min), max);
+	}
+
+	static long clampSafe(long value, long min, long max) {
+		return Math.min(Math.max(value, min), max);
+	}
+
+	static float clampSafe(float value, float min, float max) {
+		return Math.min(Math.max(value, min), max);
+	}
+
+	static double clampSafe(double value, double min, double max) {
+		return Math.min(Math.max(value, min), max);
 	}
 
 	static long circularDifference(long value1, long value2, long totalDegrees) {

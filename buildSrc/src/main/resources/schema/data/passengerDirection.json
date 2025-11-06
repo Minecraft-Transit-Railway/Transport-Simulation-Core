@@ -5,10 +5,7 @@
 		"SerializedDataBase"
 	],
 	"properties": {
-		"sidingId": {
-			"type": "integer"
-		},
-		"vehicleId": {
+		"routeId": {
 			"type": "integer"
 		},
 		"startPlatformId": {
@@ -25,8 +22,7 @@
 		}
 	},
 	"required": [
-		"sidingId",
-		"vehicleId",
+		"routeId",
 		"startPlatformId",
 		"endPlatformId",
 		"startTime",

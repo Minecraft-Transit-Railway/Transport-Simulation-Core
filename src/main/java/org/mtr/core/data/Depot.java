@@ -289,7 +289,7 @@ public final class Depot extends DepotSchema implements Utilities {
 				}
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
-					final long frequency = getFrequency(((Simulator) data).isTimeMoving() ? i : ((Simulator) data).getHour());
+					final long frequency = getFrequency(((Simulator) data).isTimeMoving() ? i : ((Simulator) data).getGameHour());
 					if (frequency == 0) {
 						continue;
 					}

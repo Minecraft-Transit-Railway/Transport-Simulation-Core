@@ -4,7 +4,8 @@ import it.unimi.dsi.fastutil.booleans.BooleanBooleanImmutablePair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
@@ -95,7 +96,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		writeVehiclePositions(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress), vehiclePositions);
 	}
 
-	public void simulate(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, @Nullable Long2LongAVLTreeMap vehicleTimesAlongRoute) {
+	public void simulate(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions, @Nullable Long2ObjectOpenHashMap<LongObjectImmutablePair<Vehicle>> vehicleTimesAlongRoute) {
 		final int currentIndex;
 		final BooleanBooleanImmutablePair containsDriverAndDoorOverride = vehicleExtraData.containsDriverAndDoorOverride();
 		manualCooldown = vehicleExtraData.getIsManualAllowed() && containsDriverAndDoorOverride.leftBoolean() ? vehicleExtraData.getManualToAutomaticTime() : Math.max(0, manualCooldown - millisElapsed);
@@ -135,7 +136,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		if (vehicleTimesAlongRoute != null) {
 			final long timeAlongRoute = getTimeAlongRoute(railProgress);
 			if (timeAlongRoute > 0) {
-				vehicleTimesAlongRoute.put(departureIndex, timeAlongRoute);
+				vehicleTimesAlongRoute.put(departureIndex, new LongObjectImmutablePair<>(timeAlongRoute, this));
 			}
 		}
 
@@ -681,20 +682,20 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 	private ObjectObjectImmutablePair<Vector, Vector> getBogiePositions(double value, DoubleArrayList overrideY) {
 		final double lowerBound = railProgress - vehicleExtraData.getTotalVehicleLength();
-		final double clampedValue = Math.clamp(value, lowerBound, railProgress);
+		final double clampedValue = Utilities.clampSafe(value, lowerBound, railProgress);
 		final double value1;
 		final double value2;
-		final double clamp = Math.clamp(Math.min(Math.abs(clampedValue - lowerBound), Math.abs(clampedValue - railProgress)), 0.1, 1);
-		value1 = Math.clamp(clampedValue + (reversed ? -clamp : clamp), lowerBound, railProgress - 0.001);
-		value2 = Math.clamp(clampedValue - (reversed ? -clamp : clamp), lowerBound, railProgress - 0.001);
+		final double clamp = Utilities.clampSafe(Math.min(Math.abs(clampedValue - lowerBound), Math.abs(clampedValue - railProgress)), 0.1, 1);
+		value1 = Utilities.clampSafe(clampedValue + (reversed ? -clamp : clamp), lowerBound, railProgress - 0.001);
+		value2 = Utilities.clampSafe(clampedValue - (reversed ? -clamp : clamp), lowerBound, railProgress - 0.001);
 		final Vector position1 = getPosition(value1, overrideY);
 		final Vector position2 = getPosition(value2, overrideY);
 		return position1 == null || position2 == null ? new ObjectObjectImmutablePair<>(new Vector(value1, 0, 0), new Vector(value2, 0, 0)) : new ObjectObjectImmutablePair<>(position1, position2);
 	}
 
 	private static DoubleDoubleImmutablePair getBlockedBounds(PathData pathData, double lowerRailProgress, double upperRailProgress) {
-		final double distanceFromStart = Math.clamp(lowerRailProgress, pathData.getStartDistance(), pathData.getEndDistance()) - pathData.getStartDistance();
-		final double distanceToEnd = pathData.getEndDistance() - Math.clamp(upperRailProgress, pathData.getStartDistance(), pathData.getEndDistance());
+		final double distanceFromStart = Utilities.clampSafe(lowerRailProgress, pathData.getStartDistance(), pathData.getEndDistance()) - pathData.getStartDistance();
+		final double distanceToEnd = pathData.getEndDistance() - Utilities.clampSafe(upperRailProgress, pathData.getStartDistance(), pathData.getEndDistance());
 		return new DoubleDoubleImmutablePair(pathData.reversePositions ? distanceToEnd : distanceFromStart, pathData.getEndDistance() - pathData.getStartDistance() - (pathData.reversePositions ? distanceFromStart : distanceToEnd));
 	}
 }

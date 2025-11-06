@@ -149,10 +149,6 @@ public interface TestUtilities {
 		return new Landmark(getDefaultSimulator());
 	}
 
-	static LandmarkDensity randomLandmarkDensity() {
-		return new LandmarkDensity(RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextBoolean(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong());
-	}
-
 	static Lift randomLift() {
 		return new Lift(getDefaultSimulator());
 	}
@@ -166,11 +162,11 @@ public interface TestUtilities {
 	}
 
 	static Passenger randomPassenger() {
-		return new Passenger();
+		return new Passenger(getDefaultSimulator());
 	}
 
 	static PassengerDirection randomPassengerDirection() {
-		return new PassengerDirection(RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong());
+		return new PassengerDirection(RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong());
 	}
 
 	static PathData randomPathData() {
@@ -261,10 +257,6 @@ public interface TestUtilities {
 		return new Landmark(readerBase, getDefaultSimulator());
 	}
 
-	static LandmarkDensity newLandmarkDensity(ReaderBase readerBase) {
-		return new LandmarkDensity(readerBase);
-	}
-
 	static Lift newLift(ReaderBase readerBase) {
 		return new Lift(readerBase, getDefaultSimulator());
 	}
@@ -278,7 +270,7 @@ public interface TestUtilities {
 	}
 
 	static Passenger newPassenger(ReaderBase readerBase) {
-		return new Passenger(readerBase);
+		return new Passenger(readerBase, getDefaultSimulator());
 	}
 
 	static PassengerDirection newPassengerDirection(ReaderBase readerBase) {

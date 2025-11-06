@@ -8,6 +8,12 @@
 	"properties": {
 		"population": {
 			"type": "integer"
+		},
+		"passengers": {
+			"type": "array",
+			"items": {
+				"$ref": "passenger.json"
+			}
 		}
 	}
 }
