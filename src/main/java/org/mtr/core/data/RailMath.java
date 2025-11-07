@@ -16,6 +16,9 @@ public class RailMath {
 
 	private final Rail.Shape shape;
 	private final double verticalRadius;
+	private final double tiltAngle1;
+	private final double tiltAngleMiddle;
+	private final double tiltAngle2;
 	private final double h1;
 	private final double k1;
 	private final double h2;
@@ -46,7 +49,7 @@ public class RailMath {
 	// for straight lines (otherwise):
 	// x = h*T + k*r
 	// z = k*T + h*r
-	public RailMath(Position position1, Angle angle1, Position position2, Angle angle2, Rail.Shape shape, double verticalRadius) {
+	public RailMath(Position position1, Angle angle1, Position position2, Angle angle2, Rail.Shape shape, double verticalRadius, double tiltAngleDegrees1, double tiltAngleDegreesMiddle, double tiltAngleDegrees2) {
 		final long xStart = position1.getX();
 		final long zStart = position1.getZ();
 		final long xEnd = position2.getX();
@@ -82,15 +85,20 @@ public class RailMath {
 					tStart1 = (h1 * xStart - k1 * zStart) / div;
 					tEnd1 = (h1 * xEnd - k1 * zEnd) / div;
 				}
-				h2 = k2 = r2 = 0;
+				h2 = 0;
+				k2 = 0;
+				r2 = 0;
 				reverseT1 = tStart1 > tEnd1;
 				reverseT2 = false;
-				isStraight1 = isStraight2 = true;
-				tStart2 = tEnd2 = 0;
+				isStraight1 = true;
+				isStraight2 = true;
+				tStart2 = 0;
+				tEnd2 = 0;
 			} else { // 1. b
 				if (Math.abs(deltaSide) > ACCEPT_THRESHOLD) {
 					final double radius = (deltaForward * deltaForward + deltaSide * deltaSide) / (4 * deltaForward);
-					r1 = r2 = Math.abs(radius);
+					r1 = Math.abs(radius);
+					r2 = r1;
 					h1 = xStart - radius * angle1.sin;
 					k1 = zStart + radius * angle1.cos;
 					h2 = xEnd - radius * angle2.sin;
@@ -101,14 +109,24 @@ public class RailMath {
 					tEnd1 = getTBounds(xStart + vecDifference.x() / 2, h1, zStart + vecDifference.z() / 2, k1, r1, tStart1, reverseT1);
 					tStart2 = getTBounds(xStart + vecDifference.x() / 2, h2, zStart + vecDifference.z() / 2, k2, r2);
 					tEnd2 = getTBounds(xEnd, h2, zEnd, k2, r2, tStart2, reverseT2);
-					isStraight1 = isStraight2 = false;
+					isStraight1 = false;
+					isStraight2 = false;
 				} else {
 					// Banned node perpendicular to the rail nodes direction
-					h1 = k1 = h2 = k2 = r1 = r2 = 0;
-					tStart1 = tStart2 = tEnd1 = tEnd2 = 0;
+					h1 = 0;
+					k1 = 0;
+					h2 = 0;
+					k2 = 0;
+					r1 = 0;
+					r2 = 0;
+					tStart1 = 0;
+					tStart2 = 0;
+					tEnd1 = 0;
+					tEnd2 = 0;
 					reverseT1 = false;
 					reverseT2 = false;
-					isStraight1 = isStraight2 = true;
+					isStraight1 = true;
+					isStraight2 = true;
 				}
 			}
 		} else { // 3.
@@ -179,19 +197,37 @@ public class RailMath {
 					reverseT2 = tStart2 > tEnd2;
 				} else { // Out of available range
 					// TODO complex one. Normally we don't need it.
-					h1 = k1 = h2 = k2 = r1 = r2 = 0;
-					tStart1 = tStart2 = tEnd1 = tEnd2 = 0;
+					h1 = 0;
+					k1 = 0;
+					h2 = 0;
+					k2 = 0;
+					r1 = 0;
+					r2 = 0;
+					tStart1 = 0;
+					tStart2 = 0;
+					tEnd1 = 0;
+					tEnd2 = 0;
 					reverseT1 = false;
 					reverseT2 = false;
-					isStraight1 = isStraight2 = true;
+					isStraight1 = true;
+					isStraight2 = true;
 				}
 			} else {
 				// TODO 3. b. If not -> r = very complex one. Normally we don't need it.
-				h1 = k1 = h2 = k2 = r1 = r2 = 0;
-				tStart1 = tStart2 = tEnd1 = tEnd2 = 0;
+				h1 = 0;
+				k1 = 0;
+				h2 = 0;
+				k2 = 0;
+				r1 = 0;
+				r2 = 0;
+				tStart1 = 0;
+				tStart2 = 0;
+				tEnd1 = 0;
+				tEnd2 = 0;
 				reverseT1 = false;
 				reverseT2 = false;
-				isStraight1 = isStraight2 = true;
+				isStraight1 = true;
+				isStraight2 = true;
 			}
 		}
 
@@ -199,16 +235,21 @@ public class RailMath {
 		yEnd = position2.getY();
 		this.shape = shape;
 		this.verticalRadius = Math.min(verticalRadius, getMaxVerticalRadius());
+		this.tiltAngle1 = Math.toRadians(tiltAngleDegrees1);
+		this.tiltAngleMiddle = Math.toRadians(tiltAngleDegreesMiddle);
+		this.tiltAngle2 = Math.toRadians(tiltAngleDegrees2);
 
 		// Calculate bounds (for culling)
 		final double[] bounds = new double[]{Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
-		render((x1, z1, x2, z2, x3, z3, x4, z4, y1, y2) -> {
+		render((x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> {
 			bounds[0] = Math.min(x1, bounds[0]);
 			bounds[0] = Math.min(x2, bounds[0]);
 			bounds[0] = Math.min(x3, bounds[0]);
 			bounds[0] = Math.min(x4, bounds[0]);
 			bounds[1] = Math.min(y1, bounds[1]);
 			bounds[1] = Math.min(y2, bounds[1]);
+			bounds[1] = Math.min(y3, bounds[1]);
+			bounds[1] = Math.min(y4, bounds[1]);
 			bounds[2] = Math.min(z1, bounds[2]);
 			bounds[2] = Math.min(z2, bounds[2]);
 			bounds[2] = Math.min(z3, bounds[2]);
@@ -219,6 +260,8 @@ public class RailMath {
 			bounds[3] = Math.max(x4, bounds[3]);
 			bounds[4] = Math.max(y1, bounds[4]);
 			bounds[4] = Math.max(y2, bounds[4]);
+			bounds[4] = Math.max(y3, bounds[4]);
+			bounds[4] = Math.max(y4, bounds[4]);
 			bounds[5] = Math.max(z1, bounds[5]);
 			bounds[5] = Math.max(z2, bounds[5]);
 			bounds[5] = Math.max(z3, bounds[5]);
@@ -240,9 +283,9 @@ public class RailMath {
 		final double y = getPositionY(value);
 
 		if (value <= count1) {
-			return getPositionXZ(h1, k1, r1, (reverseT1 ? -1 : 1) * value + tStart1, 0, isStraight1).add(0, y, 0);
+			return getPositionXZ(h1, k1, r1, (reverseT1 ? -1 : 1) * value + tStart1, y, 0, isStraight1);
 		} else {
-			return getPositionXZ(h2, k2, r2, (reverseT2 ? -1 : 1) * (value - count1) + tStart2, 0, isStraight2).add(0, y, 0);
+			return getPositionXZ(h2, k2, r2, (reverseT2 ? -1 : 1) * (value - count1) + tStart2, y, 0, isStraight2);
 		}
 	}
 
@@ -268,35 +311,45 @@ public class RailMath {
 		return Math.floor((length * length + height * height) * 100 / Math.abs(4 * height)) / 100;
 	}
 
+	public boolean hasTwoSegments() {
+		return tStart1 != tEnd1 && tStart2 != tEnd2;
+	}
+
 	public void render(RenderRail callback, double interval, float offsetRadius1, float offsetRadius2) {
-		renderSegment(h1, k1, r1, tStart1, tEnd1, 0, interval, offsetRadius1, offsetRadius2, reverseT1, isStraight1, callback);
-		renderSegment(h2, k2, r2, tStart2, tEnd2, Math.abs(tEnd1 - tStart1), interval, offsetRadius1, offsetRadius2, reverseT2, isStraight2, callback);
+		renderSegment(h1, k1, r1, tStart1, tEnd1, tiltAngle1, hasTwoSegments() ? tiltAngleMiddle : tiltAngle2, 0, interval, offsetRadius1, offsetRadius2, reverseT1, isStraight1, callback);
+		renderSegment(h2, k2, r2, tStart2, tEnd2, hasTwoSegments() ? tiltAngleMiddle : tiltAngle1, tiltAngle2, Math.abs(tEnd1 - tStart1), interval, offsetRadius1, offsetRadius2, reverseT2, isStraight2, callback);
 	}
 
 	boolean isValid() {
 		return h1 != 0 || k1 != 0 || h2 != 0 || k2 != 0 || r1 != 0 || r2 != 0 || tStart1 != 0 || tStart2 != 0 || tEnd1 != 0 || tEnd2 != 0;
 	}
 
-	private void renderSegment(double h, double k, double r, double tStart, double tEnd, double rawValueOffset, double interval, float offsetRadius1, float offsetRadius2, boolean reverseT, boolean isStraight, RenderRail callback) {
+	private void renderSegment(double h, double k, double r, double tStart, double tEnd, double tiltAngle1, double tiltAngle2, double rawValueOffset, double interval, float offsetRadius1, float offsetRadius2, boolean reverseT, boolean isStraight, RenderRail callback) {
 		final double count = Math.abs(tEnd - tStart);
 		final double increment = count < 0.5 || interval <= 0 ? 0.5 : count / Math.round(count) * interval;
 		Vector previousCorner1 = null;
 		Vector previousCorner2 = null;
-		double previousY = 0;
 
 		for (double i = 0; i < count + increment - 0.1; i += increment) {
 			final double t = (reverseT ? -1 : 1) * i + tStart;
-			final Vector corner1 = getPositionXZ(h, k, r, t, offsetRadius2, isStraight);
-			final Vector corner2 = offsetRadius2 == offsetRadius1 ? corner1 : getPositionXZ(h, k, r, t, offsetRadius1, isStraight);
 			final double y = getPositionY(i + rawValueOffset);
+			final double tiltAngle = tiltAngle1 * (1 - i / count) + tiltAngle2 * (i / count);
+			final Vector center = getPositionXZ(h, k, r, t, y, 0, isStraight);
+			final Vector corner1 = offsetRadius2 == 0 ? center : applyTiltAngleOffset(getPositionXZ(h, k, r, t, y, offsetRadius2, isStraight), center, -tiltAngle * (reverseT ? -1 : 1));
+			final Vector corner2 = offsetRadius1 == 0 ? center : applyTiltAngleOffset(getPositionXZ(h, k, r, t, y, offsetRadius1, isStraight), center, tiltAngle * (reverseT ? -1 : 1));
 
 			if (previousCorner1 != null) {
-				callback.renderRail(previousCorner1.x(), previousCorner1.z(), previousCorner2.x(), previousCorner2.z(), corner1.x(), corner1.z(), corner2.x(), corner2.z(), previousY, y);
+				callback.renderRail(
+						previousCorner1.x(), previousCorner1.y(), previousCorner1.z(),
+						previousCorner2.x(), previousCorner2.y(), previousCorner2.z(),
+						corner1.x(), corner1.y(), corner1.z(),
+						corner2.x(), corner2.y(), corner2.z(),
+						tiltAngle
+				);
 			}
 
 			previousCorner1 = corner2;
 			previousCorner2 = corner1;
-			previousY = y;
 		}
 	}
 
@@ -365,12 +418,18 @@ public class RailMath {
 		return 2 * Math.atan2(Math.sqrt(height * height - 4 * verticalRadius * height + length * length) - length, height - 4 * verticalRadius);
 	}
 
-	private static Vector getPositionXZ(double h, double k, double r, double t, double radiusOffset, boolean isStraight) {
+	private static Vector getPositionXZ(double h, double k, double r, double t, double y, double radiusOffset, boolean isStraight) {
 		if (isStraight) {
-			return new Vector(h * t + k * ((Math.abs(h) >= 0.5 && Math.abs(k) >= 0.5 ? 0 : r) + radiusOffset) + 0.5, 0, k * t + h * (r - radiusOffset) + 0.5);
+			return new Vector(h * t + k * ((Math.abs(h) >= 0.5 && Math.abs(k) >= 0.5 ? 0 : r) + radiusOffset) + 0.5, y, k * t + h * (r - radiusOffset) + 0.5);
 		} else {
-			return new Vector(h + (r + radiusOffset) * Math.cos(t / r) + 0.5, 0, k + (r + radiusOffset) * Math.sin(t / r) + 0.5);
+			return new Vector(h + (r + radiusOffset) * Math.cos(t / r) + 0.5, y, k + (r + radiusOffset) * Math.sin(t / r) + 0.5);
 		}
+	}
+
+	private static Vector applyTiltAngleOffset(Vector corner, Vector center, double tiltAngle) {
+		final Vector offset = new Vector(corner.x() - center.x(), corner.y() - center.y(), corner.z() - center.z());
+		final double angle = Math.atan2(offset.z(), offset.x());
+		return center.add(offset.rotateY(angle).rotateZ(tiltAngle).rotateY(-angle));
 	}
 
 	private static double getTBounds(double x, double h, double z, double k, double r) {
@@ -390,6 +449,6 @@ public class RailMath {
 
 	@FunctionalInterface
 	public interface RenderRail {
-		void renderRail(double x1, double z1, double x2, double z2, double x3, double z3, double x4, double z4, double y1, double y2);
+		void renderRail(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4, double tiltAngle);
 	}
 }

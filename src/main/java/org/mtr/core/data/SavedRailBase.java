@@ -57,9 +57,9 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 			final double[] previousPosition = {0, 0, 0};
 			final double[] closestDistance = {Double.MAX_VALUE};
 
-			rail.railMath.render((x1, z1, x2, z2, x3, z3, x4, z4, y1, y2) -> {
+			rail.railMath.render((x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> {
 				iterateAndCheckDistance(x1, y1, z1, previousPosition, position, closestDistance);
-				iterateAndCheckDistance(x3, y2, z3, previousPosition, position, closestDistance);
+				iterateAndCheckDistance(x3, y3, z3, previousPosition, position, closestDistance);
 			}, 1, 0, 0);
 
 			return closestDistance[0];

@@ -23,6 +23,15 @@
 		"verticalRadius": {
 			"type": "number"
 		},
+		"tiltAngleDegrees1": {
+			"type": "number"
+		},
+		"tiltAngleDegreesMiddle": {
+			"type": "number"
+		},
+		"tiltAngleDegrees2": {
+			"type": "number"
+		},
 		"styles": {
 			"type": "array",
 			"items": {
@@ -73,6 +82,9 @@
 		"angle2",
 		"shape",
 		"verticalRadius",
+		"tiltAngleDegrees1",
+		"tiltAngleDegreesMiddle",
+		"tiltAngleDegrees2",
 		"speedLimit1",
 		"speedLimit2",
 		"isPlatform",

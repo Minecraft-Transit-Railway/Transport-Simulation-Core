@@ -150,7 +150,7 @@ public class PathData extends PathDataSchema implements ConditionalList {
 
 	private Rail defaultRail() {
 		final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
-		return Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), shape, verticalRadius, new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0, false, false, true, false, false, TransportMode.TRAIN);
+		return Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), shape, verticalRadius, 0, 0, 0, new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0, false, false, true, false, false, TransportMode.TRAIN);
 	}
 
 	public static void writePathCache(ObjectList<PathData> path, Data data, TransportMode transportMode) {
