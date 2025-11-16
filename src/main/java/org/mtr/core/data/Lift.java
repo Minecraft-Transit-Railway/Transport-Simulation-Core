@@ -205,9 +205,9 @@ public class Lift extends LiftSchema implements Utilities {
 			final Vector position1 = Utilities.getElement(trackPositions, trackIndex, new Vector(0, 0, 0));
 			final Vector position2 = Utilities.getElement(trackPositions, trackIndex + 1, new Vector(0, 0, 0));
 			return new Vector(
-					getValueFromPercentage(trackPercentage, position1.x(), position2.x()),
-					getValueFromPercentage(trackPercentage, position1.y(), position2.y()),
-					getValueFromPercentage(trackPercentage, position1.z(), position2.z())
+					Utilities.getValueFromPercentage(trackPercentage, position1.x(), position2.x()),
+					Utilities.getValueFromPercentage(trackPercentage, position1.y(), position2.y()),
+					Utilities.getValueFromPercentage(trackPercentage, position1.z(), position2.z())
 			);
 		}, new Vector(0, 0, 0));
 	}
@@ -362,10 +362,6 @@ public class Lift extends LiftSchema implements Utilities {
 			}
 		}
 		return defaultValue;
-	}
-
-	private static double getValueFromPercentage(double percentage, double value1, double value2) {
-		return percentage * (value2 - value1) + value1;
 	}
 
 	@FunctionalInterface

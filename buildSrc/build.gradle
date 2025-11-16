@@ -5,7 +5,7 @@ repositories {
 dependencies {
 	implementation "com.google.code.gson:gson:+"
 	implementation "it.unimi.dsi:fastutil:+"
-	implementation "commons-io:commons-io:+"
+	implementation "commons-io:commons-io:2.+"
 }
 
 java {

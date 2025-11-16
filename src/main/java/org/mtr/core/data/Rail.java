@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -32,32 +33,67 @@ public final class Rail extends RailSchema {
 
 	private static final int MANUAL_BLOCK_DURATION = 1000;
 
-	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, double tiltAngleDegrees1, double tiltAngleDegreesMiddle, double tiltAngleDegrees2, ObjectArrayList<String> styles, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode) {
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2, styles, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, false, canConnectRemotely, canHaveSignal, transportMode);
+	public static Rail newRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, long tiltPoints, double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2, ObjectArrayList<String> styles, long speedLimit1, long speedLimit2, boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode) {
+		return new Rail(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, tiltPoints,
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2,
+				styles, speedLimit1, speedLimit2,
+				isPlatform, isSiding, canAccelerate, false, canConnectRemotely, canHaveSignal, transportMode
+		);
 	}
 
-	public static Rail newTurnBackRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, double tiltAngleDegrees1, double tiltAngleDegreesMiddle, double tiltAngleDegrees2, ObjectArrayList<String> styles, TransportMode transportMode) {
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2, styles, 80, 80, false, false, false, true, false, false, transportMode);
+	public static Rail newTurnBackRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, long tiltPoints, double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2, ObjectArrayList<String> styles, TransportMode transportMode) {
+		return new Rail(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, tiltPoints,
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2,
+				styles, 80, 80,
+				false, false, false, true, false, false, transportMode
+		);
 	}
 
-	public static Rail newPlatformRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, double tiltAngleDegrees1, double tiltAngleDegreesMiddle, double tiltAngleDegrees2, ObjectArrayList<String> styles, TransportMode transportMode) {
-		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2, styles, true, transportMode);
+	public static Rail newPlatformRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, long tiltPoints, double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2, ObjectArrayList<String> styles, TransportMode transportMode) {
+		return newPlatformOrSidingRail(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, tiltPoints,
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2,
+				styles, true, transportMode
+		);
 	}
 
-	public static Rail newSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, double tiltAngleDegrees1, double tiltAngleDegreesMiddle, double tiltAngleDegrees2, ObjectArrayList<String> styles, TransportMode transportMode) {
-		return newPlatformOrSidingRail(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2, styles, false, transportMode);
+	public static Rail newSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, long tiltPoints, double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2, ObjectArrayList<String> styles, TransportMode transportMode) {
+		return newPlatformOrSidingRail(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, tiltPoints,
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2,
+				styles, false, transportMode
+		);
 	}
 
-	private static Rail newPlatformOrSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, double tiltAngleDegrees1, double tiltAngleDegreesMiddle, double tiltAngleDegrees2, ObjectArrayList<String> styles, boolean isPlatform, TransportMode transportMode) {
+	private static Rail newPlatformOrSidingRail(Position position1, Angle angle1, Position position2, Angle angle2, Shape shape, double verticalRadius, long tiltPoints, double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2, ObjectArrayList<String> styles, boolean isPlatform, TransportMode transportMode) {
 		final long speedLimit = isPlatform ? 80 : 40;
-		return new Rail(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2, styles, speedLimit, speedLimit, isPlatform, !isPlatform, false, false, false, true, transportMode);
+		return new Rail(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, tiltPoints,
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2,
+				styles, speedLimit, speedLimit,
+				isPlatform, !isPlatform, false, false, false, true, transportMode
+		);
 	}
 
-	public static Rail copy(Rail rail, Shape newShape, double newVerticalRadius, double newTiltAngleDegrees1, double newTiltAngleDegreesMiddle, double newTiltAngleDegrees2) {
+	public static Rail copy(Rail rail, Shape newShape, double newVerticalRadius, long newTiltPoints, double newTiltAngleDegrees1, double newTiltAngleDistance1a, double newTiltAngleDegrees1a, double newTiltAngleDegrees1b, double newTiltAngleDistance1b, double newTiltAngleDegreesMiddle, double newTiltAngleDistance2b, double newTiltAngleDegrees2b, double newTiltAngleDegrees2a, double newTiltAngleDistance2a, double newTiltAngleDegrees2) {
 		return new Rail(
 				rail.position1, rail.angle1,
 				rail.position2, rail.angle2,
-				newShape, newVerticalRadius, newTiltAngleDegrees1, newTiltAngleDegreesMiddle, newTiltAngleDegrees2, rail.styles, rail.speedLimit1, rail.speedLimit2,
+				newShape, newVerticalRadius, newTiltPoints,
+				newTiltAngleDegrees1, newTiltAngleDistance1a, newTiltAngleDegrees1a, newTiltAngleDegrees1b, newTiltAngleDistance1b, newTiltAngleDegreesMiddle, newTiltAngleDistance2b, newTiltAngleDegrees2b, newTiltAngleDegrees2a, newTiltAngleDistance2a, newTiltAngleDegrees2,
+				rail.styles, rail.speedLimit1, rail.speedLimit2,
 				rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canConnectRemotely, rail.canHaveSignal, rail.transportMode
 		);
 	}
@@ -66,7 +102,9 @@ public final class Rail extends RailSchema {
 		return new Rail(
 				rail.position1, rail.angle1,
 				rail.position2, rail.angle2,
-				rail.shape, rail.verticalRadius, rail.tiltAngleDegrees1, rail.tiltAngleDegreesMiddle, rail.tiltAngleDegrees2, newStyles, rail.speedLimit1, rail.speedLimit2,
+				rail.shape, rail.verticalRadius, rail.tiltPoints,
+				rail.tiltAngleDegrees1, rail.tiltAngleDistance1a, rail.tiltAngleDegrees1a, rail.tiltAngleDegrees1b, rail.tiltAngleDistance1b, rail.tiltAngleDegreesMiddle, rail.tiltAngleDistance2b, rail.tiltAngleDegrees2b, rail.tiltAngleDegrees2a, rail.tiltAngleDistance2a, rail.tiltAngleDegrees2,
+				newStyles, rail.speedLimit1, rail.speedLimit2,
 				rail.isPlatform, rail.isSiding, rail.canAccelerate, rail.canTurnBack, rail.canConnectRemotely, rail.canHaveSignal, rail.transportMode
 		);
 	}
@@ -74,12 +112,31 @@ public final class Rail extends RailSchema {
 	private Rail(
 			Position position1, Angle angle1,
 			Position position2, Angle angle2,
-			Rail.Shape shape, double verticalRadius, double tiltAngleDegrees1, double tiltAngleDegreesMiddle, double tiltAngleDegrees2, ObjectArrayList<String> styles, long speedLimit1, long speedLimit2,
+			Rail.Shape shape, double verticalRadius, long tiltPoints,
+			double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2,
+			ObjectArrayList<String> styles, long speedLimit1, long speedLimit2,
 			boolean isPlatform, boolean isSiding, boolean canAccelerate, boolean canTurnBack, boolean canConnectRemotely, boolean canHaveSignal, TransportMode transportMode
 	) {
-		super(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2, speedLimit1, speedLimit2, isPlatform, isSiding, canAccelerate, canTurnBack, canConnectRemotely, canHaveSignal, transportMode);
+		super(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, tiltPoints,
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2,
+				speedLimit1, speedLimit2,
+				isPlatform, isSiding, canAccelerate, canTurnBack, canConnectRemotely, canHaveSignal, transportMode
+		);
 		reversePositions = position1.compareTo(position2) > 0;
-		railMath = reversePositions ? new RailMath(position2, angle2, position1, angle1, shape, verticalRadius, tiltAngleDegrees2, tiltAngleDegreesMiddle, tiltAngleDegrees1) : new RailMath(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2);
+		railMath = reversePositions ? new RailMath(
+				position2, angle2,
+				position1, angle1,
+				shape, verticalRadius, (int) Utilities.clampSafe(tiltPoints, 2, 7),
+				tiltAngleDegrees2, tiltAngleDistance2a, tiltAngleDegrees2a, tiltAngleDegrees2b, tiltAngleDistance2b, tiltAngleDegreesMiddle, tiltAngleDistance1b, tiltAngleDegrees1b, tiltAngleDegrees1a, tiltAngleDistance1a, tiltAngleDegrees1
+		) : new RailMath(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, (int) Utilities.clampSafe(tiltPoints, 2, 7),
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2
+		);
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
 		speedLimit2MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit2);
 		this.styles.addAll(styles);
@@ -89,7 +146,17 @@ public final class Rail extends RailSchema {
 	public Rail(ReaderBase readerBase) {
 		super(readerBase);
 		reversePositions = position1.compareTo(position2) > 0;
-		railMath = reversePositions ? new RailMath(position2, angle2, position1, angle1, shape, verticalRadius, tiltAngleDegrees2, tiltAngleDegreesMiddle, tiltAngleDegrees1) : new RailMath(position1, angle1, position2, angle2, shape, verticalRadius, tiltAngleDegrees1, tiltAngleDegreesMiddle, tiltAngleDegrees2);
+		railMath = reversePositions ? new RailMath(
+				position2, angle2,
+				position1, angle1,
+				shape, verticalRadius, (int) Utilities.clampSafe(tiltPoints, 2, 7),
+				tiltAngleDegrees2, tiltAngleDistance2a, tiltAngleDegrees2a, tiltAngleDegrees2b, tiltAngleDistance2b, tiltAngleDegreesMiddle, tiltAngleDistance1b, tiltAngleDegrees1b, tiltAngleDegrees1a, tiltAngleDistance1a, tiltAngleDegrees1
+		) : new RailMath(
+				position1, angle1,
+				position2, angle2,
+				shape, verticalRadius, (int) Utilities.clampSafe(tiltPoints, 2, 7),
+				tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, tiltAngleDegrees2
+		);
 		speedLimit1MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit1);
 		speedLimit2MetersPerMillisecond = Utilities.kilometersPerHourToMetersPerMillisecond(speedLimit2);
 		updateData(readerBase);
@@ -132,16 +199,56 @@ public final class Rail extends RailSchema {
 		return position1.equals(startPosition) ? angle1 : angle2;
 	}
 
+	public int getTiltPoints() {
+		return (int) Utilities.clampSafe(tiltPoints, 2, 7);
+	}
+
 	public double getTiltAngleDegrees1() {
 		return tiltAngleDegrees1;
 	}
 
+	public double getTiltAngleDistance1a() {
+		return tiltAngleDistance1a;
+	}
+
+	public double getTiltAngleDegrees1a() {
+		return tiltAngleDegrees1a;
+	}
+
+	public double getTiltAngleDegrees1b() {
+		return tiltAngleDegrees1b;
+	}
+
+	public double getTiltAngleDistance1b() {
+		return tiltAngleDistance1b;
+	}
+
 	public double getTiltAngleDegreesMiddle() {
-		return railMath.hasTwoSegments() ? tiltAngleDegreesMiddle : 0;
+		return tiltAngleDegreesMiddle;
+	}
+
+	public double getTiltAngleDistance2b() {
+		return tiltAngleDistance2b;
+	}
+
+	public double getTiltAngleDegrees2b() {
+		return tiltAngleDegrees2b;
+	}
+
+	public double getTiltAngleDegrees2a() {
+		return tiltAngleDegrees2a;
+	}
+
+	public double getTiltAngleDistance2a() {
+		return tiltAngleDistance2a;
 	}
 
 	public double getTiltAngleDegrees2() {
 		return tiltAngleDegrees2;
+	}
+
+	public ObjectImmutableList<DoubleDoubleImmutablePair> getTiltPointsAndAngles() {
+		return railMath.getTiltPointsAndAngles(reversePositions);
 	}
 
 	public double getSpeedLimitMetersPerMillisecond(boolean reversed) {
@@ -237,7 +344,10 @@ public final class Rail extends RailSchema {
 			break;
 		}
 
-		return Rail.copy(this, shape, verticalRadius, newRail1 == null ? tiltAngleDegrees1 : newRail1.tiltAngleDegrees1, tiltAngleDegreesMiddle, newRail2 == null ? tiltAngleDegrees2 : newRail2.tiltAngleDegrees2);
+		return Rail.copy(
+				this, shape, verticalRadius, tiltPoints,
+				newRail1 == null ? tiltAngleDegrees1 : newRail1.tiltAngleDegrees1, tiltAngleDistance1a, tiltAngleDegrees1a, tiltAngleDegrees1b, tiltAngleDistance1b, tiltAngleDegreesMiddle, tiltAngleDistance2b, tiltAngleDegrees2b, tiltAngleDegrees2a, tiltAngleDistance2a, newRail2 == null ? tiltAngleDegrees2 : newRail2.tiltAngleDegrees2
+		);
 	}
 
 	/**
@@ -388,7 +498,10 @@ public final class Rail extends RailSchema {
 			final boolean sameAngle = (useOpposite ? rail.angle2 : rail.angle1) == angle;
 			final double expectedTiltAngleDegrees = (rail.reversePositions == useOpposite == sameAngle ? 1 : -1) * tiltAngleDegrees;
 			if (expectedTiltAngleDegrees != (useOpposite ? rail.tiltAngleDegrees2 : rail.tiltAngleDegrees1)) {
-				return Rail.copy(rail, rail.shape, rail.verticalRadius, useOpposite ? rail.tiltAngleDegrees1 : expectedTiltAngleDegrees, rail.tiltAngleDegreesMiddle, useOpposite ? expectedTiltAngleDegrees : rail.tiltAngleDegrees2);
+				return Rail.copy(
+						rail, rail.shape, rail.verticalRadius, rail.tiltPoints,
+						useOpposite ? rail.tiltAngleDegrees1 : expectedTiltAngleDegrees, rail.tiltAngleDistance1a, rail.tiltAngleDegrees1a, rail.tiltAngleDegrees1b, rail.tiltAngleDistance1b, rail.tiltAngleDegreesMiddle, rail.tiltAngleDistance2b, rail.tiltAngleDegrees2b, rail.tiltAngleDegrees2a, rail.tiltAngleDistance2a, useOpposite ? expectedTiltAngleDegrees : rail.tiltAngleDegrees2
+				);
 			}
 		}
 

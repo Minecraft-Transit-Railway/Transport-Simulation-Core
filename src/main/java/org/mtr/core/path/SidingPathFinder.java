@@ -212,28 +212,21 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 	private static PathData getAirplanePathData(Position position1, Angle angle1, Position position2, Angle angle2, int stopIndex) {
 		return new PathData(Rail.newRail(
 				position1, angle1, position2, angle2,
-				Rail.Shape.QUADRATIC, 0, 0, 0, 0, new ObjectArrayList<>(), AIRPLANE_SPEED, 0,
+				Rail.Shape.QUADRATIC, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				new ObjectArrayList<>(), AIRPLANE_SPEED, 0,
 				false, false, true, false, false, TransportMode.AIRPLANE
 		), 0, 0, stopIndex, position1, position2);
 	}
 
-	protected static class PositionAndAngle {
-
-		private final Position position;
-		@Nullable
-		private final Angle angle;
-
-		private PositionAndAngle(Position position, @Nullable Angle angle) {
-			this.position = position;
-			this.angle = angle;
-		}
+	protected record PositionAndAngle(Position position, @Nullable Angle angle) {
 
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof PositionAndAngle) {
 				return position.equals(((PositionAndAngle) obj).position) && (angle == null || ((PositionAndAngle) obj).angle == null || angle == ((PositionAndAngle) obj).angle);
 			} else {
-				return super.equals(obj);
+				return false;
 			}
 		}
 

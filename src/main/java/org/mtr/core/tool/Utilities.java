@@ -65,6 +65,11 @@ public interface Utilities {
 		return (a + b) / 2;
 	}
 
+	static double getValueFromPercentage(double percentage, double value1, double value2) {
+		final double newPercentage = clampSafe(percentage, 0, 1);
+		return value1 * (1 - newPercentage) + value2 * newPercentage;
+	}
+
 	static String numberToPaddedHexString(long value) {
 		return numberToPaddedHexString(value, Long.SIZE / 4);
 	}
