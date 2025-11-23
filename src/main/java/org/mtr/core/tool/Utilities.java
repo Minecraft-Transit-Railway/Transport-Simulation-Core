@@ -186,23 +186,36 @@ public interface Utilities {
 		return Math.min(Math.max(value, min), max);
 	}
 
+	static long circularClamp(long value, long min, long max, long totalDegrees) {
+		long result = value;
+		while (result < min) {
+			result += totalDegrees;
+		}
+		while (result > max) {
+			result -= totalDegrees;
+		}
+		return result;
+	}
+
+	static double circularClamp(double value, double min, double max, double totalDegrees) {
+		double result = value;
+		while (result < min) {
+			result += totalDegrees;
+		}
+		while (result > max) {
+			result -= totalDegrees;
+		}
+		return result;
+	}
+
 	static long circularDifference(long value1, long value2, long totalDegrees) {
-		long tempValue1 = value1;
 		final long halfTotalDegrees = totalDegrees / 2;
+		return value1 - circularClamp(value2, value1 - halfTotalDegrees, value1 + halfTotalDegrees, totalDegrees);
+	}
 
-		if (tempValue1 - halfTotalDegrees > value2 || tempValue1 + halfTotalDegrees <= value2) {
-			tempValue1 -= (tempValue1 - halfTotalDegrees - value2) / totalDegrees * totalDegrees;
-		}
-
-		while (tempValue1 - halfTotalDegrees > value2) {
-			tempValue1 -= totalDegrees;
-		}
-
-		while (tempValue1 + halfTotalDegrees <= value2) {
-			tempValue1 += totalDegrees;
-		}
-
-		return tempValue1 - value2;
+	static double circularDifference(double value1, double value2, double totalDegrees) {
+		final double halfTotalDegrees = totalDegrees / 2;
+		return value1 - circularClamp(value2, value1 - halfTotalDegrees, value1 + halfTotalDegrees, totalDegrees);
 	}
 
 	static int compare(long value1, long value2, IntSupplier ifZero) {

@@ -313,6 +313,31 @@ public class RailMath {
 		}
 	}
 
+	public double getTiltAngle(double rawValue, boolean reverse) {
+		final double length = getLength();
+		final double clampedValue = Utilities.clampSafe(rawValue, 0, length);
+		final double value = reverse ? length - clampedValue : clampedValue;
+		final ObjectImmutableList<DoubleDoubleImmutablePair> tiltPointsAndAngles = getTiltPointsAndAngles(reverse);
+
+		for (int i = 1; i < tiltPointsAndAngles.size(); i++) {
+			final DoubleDoubleImmutablePair previousTiltPointAndAngle = tiltPointsAndAngles.get(i - 1);
+			final DoubleDoubleImmutablePair thisTiltPointAndAngle = tiltPointsAndAngles.get(i);
+			final double point1 = previousTiltPointAndAngle.leftDouble();
+			final double point2 = thisTiltPointAndAngle.leftDouble();
+			if (i == tiltPointsAndAngles.size() - 1 || value < point2) {
+				final double tiltAngle1 = previousTiltPointAndAngle.rightDouble();
+				final double tiltAngle2 = thisTiltPointAndAngle.rightDouble();
+				return Utilities.circularClamp(Utilities.getValueFromPercentage(
+						(value - point1) / (point2 - point1),
+						tiltAngle1,
+						Utilities.circularClamp(tiltAngle2, tiltAngle1 - Math.PI, tiltAngle1 + Math.PI, 2 * Math.PI)
+				), -Math.PI, Math.PI, 2 * Math.PI) * (reverse ? -1 : 1);
+			}
+		}
+
+		return 0;
+	}
+
 	public double getLength() {
 		return getLength1() + getLength2();
 	}
@@ -443,7 +468,7 @@ public class RailMath {
 		for (double i = 0; i < count + increment - 0.001; i += increment) {
 			final double t = (reverseT ? -1 : 1) * i + tStart;
 			final double y = getPositionY(i + rawValueOffset);
-			final double tiltAngle = getTiltAngle(i + rawValueOffset);
+			final double tiltAngle = getTiltAngle(i + rawValueOffset, false);
 
 			final Vector center = getPosition(h, k, r, t, y, 0, isStraight);
 			final Vector corner1 = offsetRadius2 == 0 ? center : applyTiltAngleOffset(getPosition(h, k, r, t, y, offsetRadius2, isStraight), center, -tiltAngle * (reverseT ? -1 : 1));
@@ -521,22 +546,6 @@ public class RailMath {
 
 				return yChange * offsetValue * offsetValue / (intercept * intercept) + yInitial;
 		}
-	}
-
-	private double getTiltAngle(double value) {
-		final ObjectImmutableList<DoubleDoubleImmutablePair> tiltPointsAndAngles = getTiltPointsAndAngles(false);
-
-		for (int i = 1; i < tiltPointsAndAngles.size(); i++) {
-			final DoubleDoubleImmutablePair previousTiltPointAndAngle = tiltPointsAndAngles.get(i - 1);
-			final DoubleDoubleImmutablePair thisTiltPointAndAngle = tiltPointsAndAngles.get(i);
-			final double point1 = previousTiltPointAndAngle.leftDouble();
-			final double point2 = thisTiltPointAndAngle.leftDouble();
-			if (i == tiltPointsAndAngles.size() - 1 || value < point2) {
-				return Utilities.getValueFromPercentage((value - point1) / (point2 - point1), previousTiltPointAndAngle.rightDouble(), thisTiltPointAndAngle.rightDouble());
-			}
-		}
-
-		return 0;
 	}
 
 	private double getVTheta() {
