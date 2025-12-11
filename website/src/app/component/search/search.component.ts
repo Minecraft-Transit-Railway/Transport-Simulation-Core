@@ -31,7 +31,7 @@ const maxResults = 50;
 		ReactiveFormsModule,
 	],
 	templateUrl: "./search.component.html",
-	styleUrl: "./search.component.css",
+	styleUrl: "./search.component.scss",
 })
 export class SearchComponent {
 	private readonly dataService = inject(MapDataService);
@@ -72,9 +72,9 @@ export class SearchComponent {
 				return result.slice(0, maxResults);
 			};
 
-			const searchedStations = filter(this.simplifyStationsPipe.transform(this.dataService.stations));
-			const searchedRoutes = filter(this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes) : []);
-			const searchedClients = filter(this.clientsService.allClients.map(client => ({key: client.id, icons: [`https://mc-heads.net/avatar/${client.id}`], name: client.name, number: "", type: "client"})));
+			const searchedStations = filter(this.simplifyStationsPipe.transform(this.dataService.stations()));
+			const searchedRoutes = filter(this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes()) : []);
+			const searchedClients = filter(this.clientsService.allClients().map(client => ({key: client.id, icons: [`https://mc-heads.net/avatar/${client.id}`], name: client.name, number: "", type: "client"})));
 
 			if (searchedStations.length > 0) {
 				this.data.push({

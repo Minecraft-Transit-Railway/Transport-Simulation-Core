@@ -11,11 +11,11 @@ import {ButtonModule} from "primeng/button";
 		TooltipModule,
 	],
 	templateUrl: "./drawer.component.html",
-	styleUrl: "./drawer.component.css",
+	styleUrl: "./drawer.component.scss",
 })
 export class DrawerComponent {
 	protected drawerVisible = false;
-	protected drawerPosition = "";
+	protected drawerPosition: "bottom" | "right" = "right";
 	protected drawerStyle = {};
 	@Input({required: true}) title = "";
 	@Output() closed = new EventEmitter<void>;

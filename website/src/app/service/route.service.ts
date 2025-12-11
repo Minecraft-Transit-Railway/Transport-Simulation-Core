@@ -1,4 +1,4 @@
-import {inject, Injectable} from "@angular/core";
+import {inject, Injectable, signal} from "@angular/core";
 import {MapDataService} from "./map-data.service";
 import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
 import {DeparturesService} from "./departures.service";
@@ -12,56 +12,70 @@ import {MapSelectionService} from "./map-selection.service";
 export class RouteVariationService extends SelectableDataServiceBase<void, Route> {
 	private readonly routeKeyService = inject(RouteKeyService);
 
-	public readonly routeStationDetails: { id: string, name: string, duration: number, durationSeconds: number, dwellTime: number, dwellTimeSeconds: number, vehicles: { deviation: number, percentage: number }[] }[] = [];
-	private totalDuration = 0;
+	public readonly routeStationDetails = signal<{ id: string, name: string, duration: number, durationSeconds: number, dwellTime: number, dwellTimeSeconds: number }[]>([]);
+	public readonly routeVehicles = signal<{ deviation: number, percentage: number } [][]>([]);
+	private readonly totalDuration = signal<number>(0);
 
 	constructor() {
 		const departuresService = inject(DeparturesService);
 		const dimensionService = inject(DimensionService);
 
 		super(routeId => {
-			this.routeStationDetails.length = 0;
-			this.totalDuration = 0;
-			const selectedRoutes = this.routeKeyService.getSelectedData();
+			const routeStationDetails: { id: string, name: string, duration: number, durationSeconds: number, dwellTime: number, dwellTimeSeconds: number }[] = [];
+			const routeVehicles: { deviation: number, percentage: number } [][] = [];
+			let totalDuration = 0;
+
+			const selectedRoutes = this.routeKeyService.selectedData();
 			const selectedRoute = selectedRoutes ? selectedRoutes.find(route => route.id === routeId) ?? selectedRoutes[0] : undefined;
+
 			if (selectedRoute) {
 				for (let i = 0; i < selectedRoute.routePlatforms.length; i++) {
 					const {station, dwellTime, duration} = selectedRoute.routePlatforms[i];
-					this.routeStationDetails.push({id: station.id, name: station.name, duration, durationSeconds: Math.round(duration / 1000), dwellTime, dwellTimeSeconds: Math.round(dwellTime / 1000), vehicles: []});
-					this.totalDuration += dwellTime;
+					routeStationDetails.push({id: station.id, name: station.name, duration, durationSeconds: Math.round(duration / 1000), dwellTime, dwellTimeSeconds: Math.round(dwellTime / 1000)});
+					routeVehicles.push([]);
+					totalDuration += dwellTime;
 					if (i < selectedRoute.routePlatforms.length - 1) {
-						this.totalDuration += duration;
+						totalDuration += duration;
 					}
 				}
 			}
+
+			this.routeStationDetails.set(routeStationDetails);
+			this.routeVehicles.set(routeVehicles);
+			this.totalDuration.set(totalDuration);
 			updateDepartures(selectedRoute);
 			return selectedRoute;
 		}, () => {
+			// empty
 		}, () => {
+			// empty
 		}, () => {
+			// empty
 		}, 0, dimensionService);
 
 		const departures: { departureFromNow: number, deviation: number }[] = [];
 		const updateDepartures = (route: Route | undefined) => {
 			departures.length = 0;
 			if (route) {
-				departuresService.getDepartures(route.id, ({departureFromNow}) => departureFromNow <= this.totalDuration).forEach(departure => departures.push(departure));
+				departuresService.getDepartures(route.id, ({departureFromNow}) => departureFromNow <= this.totalDuration()).forEach(departure => departures.push(departure));
 			}
 		};
 
 		this.routeKeyService.selectionChanged.subscribe(() => this.select(""));
-		departuresService.dataProcessed.subscribe(() => updateDepartures(this.getSelectedData()));
+		departuresService.dataProcessed.subscribe(() => updateDepartures(this.selectedData()));
 
 		setInterval(() => {
-			this.routeStationDetails.forEach(({vehicles}) => vehicles.length = 0);
-			let routeStationIndex = this.routeStationDetails.length - 1;
+			const routeVehicles: { deviation: number, percentage: number }[][] = [];
+			this.routeVehicles().forEach(() => routeVehicles.push([]));
+
+			let routeStationIndex = this.routeStationDetails().length - 1;
 			let departureIndex = 0;
 			let cumulativeTime = 0;
 
 			while (routeStationIndex >= 0 && departureIndex < departures.length) {
-				cumulativeTime += this.routeStationDetails[routeStationIndex].dwellTime;
+				cumulativeTime += this.routeStationDetails()[routeStationIndex].dwellTime;
 				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
-					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: departures[departureIndex].deviation, percentage: 0});
+					routeVehicles[routeStationIndex].push({deviation: departures[departureIndex].deviation, percentage: 0});
 					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
 					if (departureIndex >= departures.length) {
@@ -74,11 +88,11 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 					break;
 				}
 
-				const halfDuration = this.routeStationDetails[routeStationIndex].duration / 2;
+				const halfDuration = this.routeStationDetails()[routeStationIndex].duration / 2;
 				cumulativeTime += halfDuration;
 				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
 					const difference = departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
-					this.routeStationDetails[routeStationIndex + 1].vehicles.push({deviation: departures[departureIndex].deviation, percentage: Math.max(0, Math.min(1, -difference / halfDuration))});
+					routeVehicles[routeStationIndex + 1].push({deviation: departures[departureIndex].deviation, percentage: Math.max(-1, Math.min(1, -difference / halfDuration))});
 					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
 					if (departureIndex >= departures.length) {
@@ -89,7 +103,7 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 				cumulativeTime += halfDuration;
 				if (departures[departureIndex].departureFromNow <= cumulativeTime) {
 					const difference = departures[departureIndex].departureFromNow - cumulativeTime + halfDuration;
-					this.routeStationDetails[routeStationIndex].vehicles.push({deviation: departures[departureIndex].deviation, percentage: Math.max(0, Math.min(1, 1 - difference / halfDuration))});
+					routeVehicles[routeStationIndex].push({deviation: departures[departureIndex].deviation, percentage: Math.max(-1, Math.min(1, 1 - difference / halfDuration))});
 					departures[departureIndex].departureFromNow -= 100;
 					departureIndex++;
 					if (departureIndex >= departures.length) {
@@ -97,11 +111,13 @@ export class RouteVariationService extends SelectableDataServiceBase<void, Route
 					}
 				}
 			}
+
+			this.routeVehicles.set(routeVehicles);
 		}, 100);
 	}
 
 	public getTotalDurationSeconds() {
-		return Math.round(this.totalDuration / 1000);
+		return Math.round(this.totalDuration() / 1000);
 	}
 }
 
@@ -118,9 +134,10 @@ export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 			mapSelectionService.selectedStations.length = 0;
 			const selectedRouteVariations: Route[] = [];
 			const tempStationConnections: Record<string, { stationIds: [string, string], routeColor: number }> = {};
+			const routeTypeVisibility = mapDataService.routeTypeVisibility();
 			let mapUpdated = false;
 
-			mapDataService.routes.forEach(route => {
+			mapDataService.routes().forEach(route => {
 				if (SimplifyRoutesPipe.getRouteKey(route) === routeKey) {
 					selectedRouteVariations.push(route);
 
@@ -137,14 +154,15 @@ export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 					}
 
 					// Update map visibility
-					if (mapDataService.routeTypeVisibility[route.type] === "HIDDEN") {
-						mapDataService.routeTypeVisibility[route.type] = "SOLID";
+					if (routeTypeVisibility[route.type] === "HIDDEN") {
+						routeTypeVisibility[route.type] = "SOLID";
 						mapUpdated = true;
 					}
 				}
 			});
 
 			if (mapUpdated) {
+				mapDataService.routeTypeVisibility.set(routeTypeVisibility);
 				mapDataService.updateData();
 			}
 
@@ -153,7 +171,9 @@ export class RouteKeyService extends SelectableDataServiceBase<void, Route[]> {
 			mapSelectionService.select("route");
 			return selectedRouteVariations;
 		}, () => mapSelectionService.reset("route"), () => {
+			// empty
 		}, () => {
+			// empty
 		}, 0, dimensionService);
 	}
 }

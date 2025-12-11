@@ -1,4 +1,4 @@
-import {inject, Injectable} from "@angular/core";
+import {inject, Injectable, signal} from "@angular/core";
 import {MapDataService} from "./map-data.service";
 import {DimensionService} from "./dimension.service";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
@@ -14,7 +14,7 @@ export class ClientService extends SelectableDataServiceBase<string, string> {
 	private readonly mapDataService = inject(MapDataService);
 	private readonly clientsService = inject(ClientsService);
 
-	private client?: {
+	public readonly client = signal<{
 		name: string,
 		rawX: number,
 		rawZ: number,
@@ -22,15 +22,16 @@ export class ClientService extends SelectableDataServiceBase<string, string> {
 		route?: Route,
 		routeStation1?: Station,
 		routeStation2?: Station,
-	};
+	} | undefined>(undefined);
 
 	constructor() {
 		const dimensionService = inject(DimensionService);
 
 		super(clientId => clientId, () => {
+			// empty
 		}, clientId => of(clientId), () => {
+			//empty
 		}, REFRESH_INTERVAL, dimensionService);
-
 		this.clientsService.dataProcessed.subscribe(() => this.updateClient());
 	}
 
@@ -40,11 +41,7 @@ export class ClientService extends SelectableDataServiceBase<string, string> {
 		this.updateClient();
 	}
 
-	public getClient() {
-		return this.client;
-	}
-
 	private updateClient() {
-		this.client = this.clientsService.getClient(this.getSelectedData());
+		this.client.set(this.clientsService.getClient(this.selectedData()));
 	}
 }

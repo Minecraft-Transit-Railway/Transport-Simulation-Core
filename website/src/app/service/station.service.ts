@@ -1,4 +1,4 @@
-import {inject, Injectable} from "@angular/core";
+import {inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {MapDataService} from "./map-data.service";
 import {SplitNamePipe} from "../pipe/splitNamePipe";
@@ -18,31 +18,31 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 	private readonly dataService = inject(MapDataService);
 	private readonly splitNamePipe = inject(SplitNamePipe);
 
-	public readonly arrivalsRoutes: { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }[] = [];
-	public readonly routesAtStation: { name: string, variations: string[], number: string, color: number, typeIcon: string }[] = [];
-	private readonly arrivals: Arrival[] = [];
-	private hasTerminating = false;
+	public readonly arrivalsRoutes = signal<{ key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }[]>([]);
+	public readonly routesAtStation = signal<{ name: string, variations: string[], number: string, color: number, typeIcon: string }[]>([]);
+	public readonly arrivals = signal<Arrival[]>([]);
+	public readonly hasTerminating = signal<boolean>(false);
 	private readonly filterArrivalRoutes: string[] = [];
 	private filterArrivalShowTerminating = false;
 
 	constructor() {
 		const dimensionService = inject(DimensionService);
 
-		super(stationId => this.dataService.stations.find(station => station.id === stationId), () => {
-			this.arrivals.length = 0;
-			this.arrivalsRoutes.length = 0;
-			this.routesAtStation.length = 0;
+		super(stationId => this.dataService.stations().find(station => station.id === stationId), () => {
+			this.arrivals.set([]);
+			this.arrivalsRoutes.set([]);
+			this.routesAtStation.set([]);
 		}, selectedStation => this.httpClient.post<{ currentTime: number, data: { arrivals: DataResponse[] } }>(this.getUrl("arrivals"), JSON.stringify({
 			stationIdsHex: [selectedStation.id],
 			maxCountPerPlatform: MAX_ARRIVALS,
 		})), (data: { currentTime: number, data: { arrivals: DataResponse[] } }) => {
-			this.arrivals.length = 0;
+			const arrivals: Arrival[] = [];
 			const routes: Record<string, { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }> = {};
-			this.hasTerminating = false;
+			let hasTerminating = false;
 
 			data.data.arrivals.forEach(arrival => {
 				const newArrival = new Arrival(this.dataService, Date.now() - data.currentTime, arrival);
-				this.arrivals.push(newArrival);
+				arrivals.push(newArrival);
 				routes[newArrival.key] = {
 					key: newArrival.key,
 					name: newArrival.routeName,
@@ -52,27 +52,32 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 					typeIcon: newArrival.routeTypeIcon,
 				};
 				if (newArrival.isTerminating) {
-					this.hasTerminating = true;
+					hasTerminating = true;
 				}
 			});
 
-			this.arrivals.sort((arrival1, arrival2) => arrival1.arrival - arrival2.arrival);
+			arrivals.sort((arrival1, arrival2) => arrival1.arrival - arrival2.arrival);
 			const newRoutes = Object.values(routes);
 			SimplifyRoutesPipe.sortRoutes(newRoutes);
+			let arrivalsRoutes: { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }[] = this.arrivalsRoutes();
 
 			if (JSON.stringify(newRoutes) !== JSON.stringify(this.arrivalsRoutes)) {
-				this.arrivalsRoutes.length = 0;
-				newRoutes.forEach(route => this.arrivalsRoutes.push(route));
+				arrivalsRoutes = [];
+				newRoutes.forEach(route => arrivalsRoutes.push(route));
 			}
+
+			this.arrivalsRoutes.set(arrivalsRoutes);
+			this.arrivals.set(arrivals);
+			this.hasTerminating.set(hasTerminating);
 		}, REFRESH_INTERVAL, dimensionService);
-		setInterval(() => this.arrivals.forEach(arrival => arrival.calculateValues()), 100);
+		setInterval(() => this.arrivals().forEach(arrival => arrival.calculateValues()), 100);
 	}
 
 	public setStation(stationId: string, zoomToStation: boolean) {
 		this.select(stationId);
 		const newRoutes: Record<string, { name: string, variations: string[], number: string, color: number, typeIcon: string }> = {};
-		this.dataService.routes.forEach(({name, number, color, type, routePlatforms}) => {
-			if (routePlatforms.some(routePlatform => routePlatform.station.id === this.getSelectedData()?.id)) {
+		this.dataService.routes().forEach(({name, number, color, type, routePlatforms}) => {
+			if (routePlatforms.some(routePlatform => routePlatform.station.id === this.selectedData()?.id)) {
 				const key = SimplifyRoutesPipe.getRouteKey({name, number, color});
 				const variation = name.split("||")[1];
 				if (key in newRoutes) {
@@ -82,20 +87,23 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 				}
 			}
 		});
+
+		const routesAtStation = this.routesAtStation();
 		Object.values(newRoutes).forEach(route => {
 			route.variations.sort();
-			this.routesAtStation.push(route);
+			routesAtStation.push(route);
 		});
-		SimplifyRoutesPipe.sortRoutes(this.routesAtStation);
+		SimplifyRoutesPipe.sortRoutes(routesAtStation);
+		this.routesAtStation.set(routesAtStation);
 
-		this.hasTerminating = false;
+		this.hasTerminating.set(false);
 		this.fetchData(stationId);
 		this.resetArrivalFilter();
 
-		const selectedStation = this.getSelectedData();
+		const selectedStation = this.selectedData();
 		if (selectedStation) {
-			if (selectedStation.routes.every(({type}) => this.dataService.routeTypeVisibility[type] === "HIDDEN")) {
-				selectedStation.routes.forEach(({type}) => this.dataService.routeTypeVisibility[type] = "SOLID");
+			if (selectedStation.routes.every(({type}) => this.dataService.routeTypeVisibility()[type] === "HIDDEN")) {
+				selectedStation.routes.forEach(({type}) => this.dataService.routeTypeVisibility()[type] = "SOLID");
 				this.dataService.updateData();
 			}
 			if (zoomToStation) {
@@ -106,16 +114,12 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 
 	public getArrivals() {
 		const newArrivals: Arrival[] = [];
-		this.arrivals.forEach(arrival => {
-			if (newArrivals.length < 10 && (arrival.isContinuous || arrival.getDepartureTime() >= 0) && (this.filterArrivalRoutes.length === 0 || this.filterArrivalRoutes.includes(arrival.key)) && (this.filterArrivalShowTerminating || !arrival.isTerminating)) {
+		this.arrivals().forEach(arrival => {
+			if (newArrivals.length < 10 && (arrival.isContinuous || arrival.departureTime() >= 0) && (this.filterArrivalRoutes.length === 0 || this.filterArrivalRoutes.includes(arrival.key)) && (this.filterArrivalShowTerminating || !arrival.isTerminating)) {
 				newArrivals.push(arrival);
 			}
 		});
 		return newArrivals;
-	}
-
-	public getHasTerminating() {
-		return this.hasTerminating;
 	}
 
 	public updateArrivalFilter(filterArrivalShowTerminating: boolean, toggleRouteKey?: string) {
@@ -176,8 +180,8 @@ export class Arrival {
 	readonly departure: number;
 	readonly isContinuous: boolean;
 	readonly key: string;
-	private arrivalDifference = 0;
-	private departureDifference = 0;
+	readonly arrivalTime = signal(0);
+	readonly departureTime = signal(0);
 
 	constructor(dataService: MapDataService, timeOffset: number, dataResponse: DataResponse) {
 		this.destination = dataResponse.destination;
@@ -188,7 +192,7 @@ export class Arrival {
 		this.routeName = dataResponse.routeName.split("||")[0];
 		this.routeNumber = dataResponse.routeNumber;
 		this.routeColor = dataResponse.routeColor;
-		const tempRouteType = dataService.routes.find(route => route.name === dataResponse.routeName)?.type;
+		const tempRouteType = dataService.routes().find(route => route.name === dataResponse.routeName)?.type;
 		this.routeTypeIcon = tempRouteType === undefined ? "" : ROUTE_TYPES[tempRouteType].icon;
 		this.circularState = dataResponse.circularState;
 		this.platformName = dataResponse.platformName;
@@ -200,14 +204,6 @@ export class Arrival {
 		this.calculateValues();
 	}
 
-	public getArrivalTime() {
-		return this.arrivalDifference;
-	}
-
-	public getDepartureTime() {
-		return this.departureDifference;
-	}
-
 	public getDeviation() {
 		return this.realtime ? Math.abs(Math.round(this.deviation / 1000)) : -1;
 	}
@@ -217,7 +213,7 @@ export class Arrival {
 	}
 
 	calculateValues() {
-		this.arrivalDifference = Math.round((this.arrival - new Date().getTime()) / 1000);
-		this.departureDifference = Math.round((this.departure - new Date().getTime()) / 1000);
+		this.arrivalTime.set(Math.round((this.arrival - new Date().getTime()) / 1000));
+		this.departureTime.set(Math.round((this.departure - new Date().getTime()) / 1000));
 	}
 }

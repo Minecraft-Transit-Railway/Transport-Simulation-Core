@@ -1,4 +1,4 @@
-import {inject, Injectable} from "@angular/core";
+import {inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {DataServiceBase} from "./data-service-base";
@@ -12,9 +12,9 @@ const REFRESH_INTERVAL = 3000;
 
 @Injectable({providedIn: "root"})
 export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
-	public readonly allClients: { id: string, name: string, rawX: number, rawZ: number }[] = [];
-	public readonly allClientsNotInStationOrRoute: { id: string, name: string, rawX: number, rawZ: number }[] = [];
-	private clientGroupsForStation: Record<string, {
+	public readonly allClients = signal<{ id: string, name: string, rawX: number, rawZ: number }[]>([]);
+	public readonly allClientsNotInStationOrRoute = signal<{ id: string, name: string, rawX: number, rawZ: number }[]>([]);
+	public readonly clientGroupsForStation = signal<Record<string, {
 		clients: {
 			id: string,
 			name: string,
@@ -25,8 +25,8 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		route?: Route,
 		routeStationId1: string,
 		routeStationId2: string,
-	}> = {};
-	private clientGroupsForRoute: Record<string, {
+	}>>({});
+	public readonly clientGroupsForRoute = signal<Record<string, {
 		clients: {
 			id: string,
 			name: string,
@@ -37,8 +37,8 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		route?: Route,
 		routeStationId1: string,
 		routeStationId2: string,
-	}> = {};
-	private clientCache: Record<string, {
+	}>>({});
+	private readonly clientCache = signal<Record<string, {
 		name: string,
 		rawX: number,
 		rawZ: number,
@@ -46,7 +46,7 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		route?: Route,
 		routeStation1?: Station,
 		routeStation2?: Station,
-	}> = {};
+	}>>({});
 
 	constructor() {
 		const httpClient = inject(HttpClient);
@@ -54,20 +54,50 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 		const dimensionService = inject(DimensionService);
 
 		super(() => httpClient.get<{ data: ClientsDTO }>(this.getUrl("clients")), ({data}) => {
-			this.allClients.length = 0;
-			this.allClientsNotInStationOrRoute.length = 0;
-			this.clientGroupsForStation = {};
-			this.clientGroupsForRoute = {};
-			this.clientCache = {};
+			const allClients: { id: string, name: string, rawX: number, rawZ: number }[] = [];
+			const allClientsNotInStationOrRoute: { id: string, name: string, rawX: number, rawZ: number }[] = [];
+			const clientGroupsForStation: Record<string, {
+				clients: {
+					id: string,
+					name: string,
+				}[],
+				x: number,
+				z: number,
+				station?: Station,
+				route?: Route,
+				routeStationId1: string,
+				routeStationId2: string,
+			}> = {};
+			const clientGroupsForRoute: Record<string, {
+				clients: {
+					id: string,
+					name: string,
+				}[],
+				x: number,
+				z: number,
+				station?: Station,
+				route?: Route,
+				routeStationId1: string,
+				routeStationId2: string,
+			}> = {};
+			const clientCache: Record<string, {
+				name: string,
+				rawX: number,
+				rawZ: number,
+				station?: Station,
+				route?: Route,
+				routeStation1?: Station,
+				routeStation2?: Station,
+			}> = {};
 
 			data.clients.forEach(clientDTO => {
 				const client = {id: clientDTO.id, name: clientDTO.name, rawX: clientDTO.x, rawZ: clientDTO.z};
-				this.allClients.push(client);
+				allClients.push(client);
 
-				const route = clientDTO.routeId ? mapDataService.routes.find(route => route.id === clientDTO.routeId) : undefined;
-				const station = (!route || route.routePlatforms.some(({station}) => station.id === clientDTO.stationId)) && clientDTO.stationId ? mapDataService.stations.find(station => station.id === clientDTO.stationId) : undefined;
+				const route = clientDTO.routeId ? mapDataService.routes().find(route => route.id === clientDTO.routeId) : undefined;
+				const station = (!route || route.routePlatforms.some(({station}) => station.id === clientDTO.stationId)) && clientDTO.stationId ? mapDataService.stations().find(station => station.id === clientDTO.stationId) : undefined;
 				if (station) {
-					setIfUndefined(this.clientGroupsForStation, clientDTO.stationId, () => ({
+					setIfUndefined(clientGroupsForStation, clientDTO.stationId, () => ({
 						clients: [],
 						x: station.x,
 						z: station.z,
@@ -76,13 +106,13 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 						routeStationId1: "",
 						routeStationId2: "",
 					}));
-					this.clientGroupsForStation[clientDTO.stationId].clients.push(client);
+					clientGroupsForStation[clientDTO.stationId].clients.push(client);
 				} else if (route) {
 					const reverse = clientDTO.routeStationId1 > clientDTO.routeStationId2;
 					const newRouteStationId1 = reverse ? clientDTO.routeStationId2 : clientDTO.routeStationId1;
 					const newRouteStationId2 = reverse ? clientDTO.routeStationId1 : clientDTO.routeStationId2;
 					const key = ClientsService.getRouteConnectionKey(newRouteStationId1, newRouteStationId2, route.color);
-					setIfUndefined(this.clientGroupsForRoute, key, () => ({
+					setIfUndefined(clientGroupsForRoute, key, () => ({
 						clients: [],
 						x: clientDTO.x,
 						z: clientDTO.z,
@@ -91,35 +121,33 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 						routeStationId1: newRouteStationId1,
 						routeStationId2: newRouteStationId2,
 					}));
-					this.clientGroupsForRoute[key].clients.push(client);
+					clientGroupsForRoute[key].clients.push(client);
 				} else {
-					this.allClientsNotInStationOrRoute.push(client);
+					allClientsNotInStationOrRoute.push(client);
 				}
 
-				this.clientCache[clientDTO.id] = {
+				clientCache[clientDTO.id] = {
 					name: clientDTO.name,
 					rawX: clientDTO.x,
 					rawZ: clientDTO.z,
 					station,
 					route,
-					routeStation1: route ? mapDataService.stations.find(station => station.id === clientDTO.routeStationId1) : undefined,
-					routeStation2: route ? mapDataService.stations.find(station => station.id === clientDTO.routeStationId2) : undefined,
+					routeStation1: route ? mapDataService.stations().find(station => station.id === clientDTO.routeStationId1) : undefined,
+					routeStation2: route ? mapDataService.stations().find(station => station.id === clientDTO.routeStationId2) : undefined,
 				};
 			});
+
+			this.allClients.set(allClients);
+			this.allClientsNotInStationOrRoute.set(allClientsNotInStationOrRoute);
+			this.clientGroupsForStation.set(clientGroupsForStation);
+			this.clientGroupsForRoute.set(clientGroupsForRoute);
+			this.clientCache.set(clientCache);
 		}, REFRESH_INTERVAL, dimensionService);
 		mapDataService.dataProcessed.subscribe(() => this.fetchData(""));
 	}
 
-	public getClientGroupsForStation() {
-		return this.clientGroupsForStation;
-	}
-
-	public getClientGroupsForRoute() {
-		return this.clientGroupsForRoute;
-	}
-
 	public getClient(clientId?: string) {
-		return clientId ? this.clientCache[clientId] : undefined;
+		return clientId ? this.clientCache()[clientId] : undefined;
 	}
 
 	public static getRouteConnectionKey(stationId1: string, stationId2: string, color: number) {

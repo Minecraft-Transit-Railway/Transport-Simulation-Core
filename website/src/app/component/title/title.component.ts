@@ -9,7 +9,7 @@ import {FormatColorPipe} from "../../pipe/formatColorPipe";
 		FormatColorPipe,
 	],
 	templateUrl: "./title.component.html",
-	styleUrl: "./title.component.css",
+	styleUrl: "./title.component.scss",
 })
 export class TitleComponent {
 	@Input({required: true}) name = "";

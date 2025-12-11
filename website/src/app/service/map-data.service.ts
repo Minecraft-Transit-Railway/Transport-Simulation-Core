@@ -2,7 +2,7 @@ import {arrayAverage, getCookie, getFromArray, pushIfNotExists, setIfUndefined} 
 import {ROUTE_TYPES} from "../data/routeType";
 import {LineConnection} from "../entity/lineConnection";
 import {StationConnection} from "../entity/stationConnection";
-import {EventEmitter, inject, Injectable} from "@angular/core";
+import {EventEmitter, inject, Injectable, signal, WritableSignal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {StationsAndRoutesDTO} from "../entity/generated/stationsAndRoutes";
@@ -19,16 +19,16 @@ const REFRESH_INTERVAL = 30000;
 export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO }> {
 	private readonly httpClient = inject(HttpClient);
 
-	public readonly routes: Route[] = [];
-	public readonly stations: Station[] = [];
-	public readonly routeTypeVisibility: Record<string, "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED"> = {};
-	public interchangeStyle: "DOTTED" | "HOLLOW";
-	public readonly stationConnections: StationConnection[] = [];
-	public readonly lineConnections: LineConnection[] = [];
-	public readonly stationsForMap: StationForMap[] = [];
-	private centerX = 0;
-	private centerY = 0;
-	private mapLoading = true;
+	public readonly routes = signal<Route[]>([]);
+	public readonly stations = signal<Station[]>([]);
+	public readonly routeTypeVisibility: WritableSignal<Record<string, "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED">>;
+	public readonly interchangeStyle: WritableSignal<"DOTTED" | "HOLLOW">;
+	public readonly stationConnections = signal<StationConnection[]>([]);
+	public readonly lineConnections = signal<LineConnection[]>([]);
+	public readonly stationsForMap = signal<StationForMap[]>([]);
+	public readonly centerX = signal<number>(0);
+	public readonly centerY = signal<number>(0);
+	public readonly mapLoading = signal<boolean>(true);
 
 	public readonly drawMap = new EventEmitter<void>();
 	public readonly animateMap = new EventEmitter<{ x: number, z: number }>();
@@ -38,8 +38,8 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		const dimensionService = inject(DimensionService);
 
 		super(() => this.httpClient.get<{ data: StationsAndRoutesDTO }>(this.getUrl("stations-and-routes")), ({data}) => {
-			this.routes.length = 0;
-			this.stations.length = 0;
+			const routes: Route[] = [];
+			const stations: Station[] = [];
 
 			// Write routes
 			const routeIdMap: Record<string, { routeDTO: RouteDTO, route: Route }> = {};
@@ -48,7 +48,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			data.routes.forEach(routeDTO => {
 				if (routeDTO.stations.length > 1 && !routeDTO.hidden) {
 					const route = new Route(routeDTO);
-					this.routes.push(route);
+					routes.push(route);
 					routeIdMap[routeDTO.id] = {routeDTO, route};
 					routeDTO.stations.forEach(({id, x, y, z}) => {
 						setIfUndefined(stationIdToPosition, id, () => ({x: [], y: [], z: []}));
@@ -64,15 +64,15 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			const stationIdMap: Record<string, { stationDTO: StationDTO, station: Station }> = {};
 			data.stations.forEach(stationDTO => getFromArray(stationIdToPosition, stationDTO.id, position => {
 				const station = new Station(stationDTO, arrayAverage(position.x), arrayAverage(position.y), arrayAverage(position.z));
-				this.stations.push(station);
+				stations.push(station);
 				stationIdMap[stationDTO.id] = {stationDTO, station};
 			}));
 
 			// Write station connection cache
-			this.stations.forEach(station => getFromArray(stationIdMap, station.id, stationCache => stationCache.stationDTO.connections.forEach(connection => getFromArray(stationIdMap, connection, stationCacheConnection => station.connections.push(stationCacheConnection.station)))));
+			stations.forEach(station => getFromArray(stationIdMap, station.id, stationCache => stationCache.stationDTO.connections.forEach(connection => getFromArray(stationIdMap, connection, stationCacheConnection => station.connections.push(stationCacheConnection.station)))));
 
 			// Write route platform cache and station route cache
-			this.routes.forEach(route => getFromArray(routeIdMap, route.id, routeCache => {
+			routes.forEach(route => getFromArray(routeIdMap, route.id, routeCache => {
 				for (let i = 0; i < routeCache.routeDTO.stations.length; i++) {
 					const routeStationDTO = routeCache.routeDTO.stations[i];
 					getFromArray(stationIdMap, routeStationDTO.id, stationCache => {
@@ -82,61 +82,56 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 				}
 			}));
 
+			this.routes.set(routes);
+			this.stations.set(stations);
+
 			// Update route type visibility
+			const routeTypeVisibility: Record<string, "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED"> = {...this.routeTypeVisibility()};
 			Object.keys(ROUTE_TYPES).forEach(routeType => {
 				if (availableRouteTypes.includes(routeType)) {
-					setIfUndefined(this.routeTypeVisibility, routeType, () => "HIDDEN");
+					setIfUndefined(routeTypeVisibility, routeType, () => "HIDDEN");
 				} else {
-					delete this.routeTypeVisibility[routeType];
+					delete routeTypeVisibility[routeType];
 				}
 			});
 
-			if (availableRouteTypes.length > 0 && Object.values(this.routeTypeVisibility).every(visibility => visibility === "HIDDEN")) {
-				this.routeTypeVisibility[Object.keys(this.routeTypeVisibility)[0]] = "SOLID";
+			if (availableRouteTypes.length > 0 && Object.values(routeTypeVisibility).every(visibility => visibility === "HIDDEN")) {
+				routeTypeVisibility[Object.keys(routeTypeVisibility)[0]] = "SOLID";
 				if (availableRouteTypes.length > 1) {
-					this.routeTypeVisibility[Object.keys(this.routeTypeVisibility)[1]] = "HOLLOW";
+					routeTypeVisibility[Object.keys(routeTypeVisibility)[1]] = "HOLLOW";
 				}
 			}
 
+			this.routeTypeVisibility.set(routeTypeVisibility);
 			this.dimensionService.setDimensions(data.dimensions);
 			this.updateData();
 		}, REFRESH_INTERVAL, dimensionService);
 
-		this.fetchData("");
-
 		const cookieInterchangeStyle = getCookie("interchange_style");
-		this.interchangeStyle = cookieInterchangeStyle === "DOTTED" || cookieInterchangeStyle === "HOLLOW" ? cookieInterchangeStyle : "DOTTED";
+		this.interchangeStyle = signal<"DOTTED" | "HOLLOW">(cookieInterchangeStyle === "DOTTED" || cookieInterchangeStyle === "HOLLOW" ? cookieInterchangeStyle : "DOTTED");
 
+		const routeTypeVisibility: Record<string, "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED"> = {};
 		Object.keys(ROUTE_TYPES).forEach(routeTypeKey => {
 			const visibility = getCookie(`visibility_${routeTypeKey}`);
 			if (visibility === "HIDDEN" || visibility === "SOLID" || visibility === "HOLLOW" || visibility === "DASHED") {
-				this.routeTypeVisibility[routeTypeKey] = visibility;
+				routeTypeVisibility[routeTypeKey] = visibility;
 			}
 		});
+		this.routeTypeVisibility = signal<Record<string, "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED">>(routeTypeVisibility);
+
+		this.fetchData("");
 	}
 
 	public setDimension(dimension: string) {
-		this.mapLoading = true;
+		this.mapLoading.set(true);
 		this.dimensionService.setDimension(dimension);
 		this.fetchData("");
 	}
 
-	public getCenterX() {
-		return this.centerX;
-	}
-
-	public getCenterY() {
-		return this.centerY;
-	}
-
-	public getMapLoading() {
-		return this.mapLoading;
-	}
-
 	public updateData() {
-		this.stationsForMap.length = 0;
-		this.lineConnections.length = 0;
-		this.stationConnections.length = 0;
+		const stationConnections: StationConnection[] = [];
+		const lineConnections: LineConnection[] = [];
+		const stationsForMap: StationForMap[] = [];
 
 		const lineConnectionsOneWay: Record<string, { forwards: boolean, backwards: boolean }> = {};
 		const stationRoutes: Record<string, Record<string, number[]>> = {};
@@ -146,8 +141,8 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			return [`${reverse ? stationId2 : stationId1}_${reverse ? stationId1 : stationId2}`, reverse];
 		};
 
-		this.routes.forEach(({routePlatforms, color, type}) => {
-			if (this.routeTypeVisibility[type] !== "HIDDEN") {
+		this.routes().forEach(({routePlatforms, color, type}) => {
+			if (this.routeTypeVisibility()[type] !== "HIDDEN") {
 				const iterateStations = (iterateForwards: boolean) => {
 					for (let i = 0; i < routePlatforms.length; i++) {
 						const index = iterateForwards ? i : routePlatforms.length - i - 1;
@@ -184,12 +179,14 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			}
 		});
 
-		const lineConnections: Record<string, { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string, stationId2: string, length: number }> = {};
-		const stationConnections: Record<string, { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string | undefined, stationId2: string | undefined, sizeRatio: number, start45: boolean }> = {};
+		const tempLineConnections: Record<string, { lineConnectionParts: { color: string, oneWay: number, offset1: number, offset2: number }[], direction1: 0 | 1 | 2 | 3, direction2: 0 | 1 | 2 | 3, x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string, stationId2: string, length: number }> = {};
+		const tempStationConnections: Record<string, { x1: number | undefined, x2: number | undefined, z1: number | undefined, z2: number | undefined, stationId1: string | undefined, stationId2: string | undefined, sizeRatio: number, start45: boolean }> = {};
 		let closestDistance: number;
 		let maxLineConnectionLength = 1;
+		let centerX = 0;
+		let centerY = 0;
 
-		this.stations.forEach(station => {
+		this.stations().forEach(station => {
 			if (station.id in stationRoutes) {
 				const combinedGroups: string[][] = [];
 				const stationDirection: Record<string, 0 | 1 | 2 | 3> = {};
@@ -239,14 +236,14 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 				const rotate = routesForDirection[1].length + routesForDirection[3].length > routesForDirection[0].length + routesForDirection[2].length;
 				const width = Math.max(Math.max(0, routesForDirection[rotate ? 1 : 0].length - 1), Math.max(0, routesForDirection[rotate ? 0 : 1].length - 1) * Math.SQRT1_2);
 				const height = Math.max(Math.max(0, routesForDirection[rotate ? 3 : 2].length - 1), Math.max(0, routesForDirection[rotate ? 2 : 3].length - 1) * Math.SQRT1_2);
-				this.stationsForMap.push({station, rotate: rotate, routeCount: Object.keys(stationRoutes[station.id]).length, width, height});
+				stationsForMap.push({station, rotate: rotate, routeCount: Object.keys(stationRoutes[station.id]).length, width, height});
 				routesForDirection.forEach(routesForOneDirection => routesForOneDirection.sort());
 
 				Object.entries(stationGroups[station.id]).forEach(groupEntry => {
 					const [stationId, routeColors] = groupEntry;
 					const [key, reverse] = getKeyAndReverseFromStationIds(station.id, stationId);
 					routeColors.sort();
-					setIfUndefined(lineConnections, key, () => ({
+					setIfUndefined(tempLineConnections, key, () => ({
 						lineConnectionParts: routeColors.map(() => Object.create(null)),
 						direction1: 0 as const,
 						direction2: 0 as const,
@@ -258,7 +255,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 					}));
 					const index = reverse ? 2 : 1;
 					const direction = stationDirection[routeColors[0]];
-					const lineConnection = lineConnections[key];
+					const lineConnection = tempLineConnections[key];
 					lineConnection[`direction${index}`] = direction;
 					lineConnection[`stationId${index}`] = station.id;
 					lineConnection[`x${index}`] = station.x;
@@ -284,26 +281,26 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 				const distance = Math.abs(station.x) + Math.abs(station.z);
 				if (closestDistance === undefined || distance < closestDistance) {
 					closestDistance = distance;
-					this.centerX = -station.x;
-					this.centerY = -station.z;
+					centerX = -station.x;
+					centerY = -station.z;
 				}
 
 				station.connections.forEach(connectingStation => {
 					const [key, reverse] = getKeyAndReverseFromStationIds(station.id, connectingStation.id);
-					setIfUndefined(stationConnections, key, () => ({sizeRatio: 0, start45: false}));
-					stationConnections[key][`x${reverse ? 2 : 1}`] = station.x;
-					stationConnections[key][`z${reverse ? 2 : 1}`] = station.z;
-					stationConnections[key][`stationId${reverse ? 2 : 1}`] = station.id;
+					setIfUndefined(tempStationConnections, key, () => ({sizeRatio: 0, start45: false}));
+					tempStationConnections[key][`x${reverse ? 2 : 1}`] = station.x;
+					tempStationConnections[key][`z${reverse ? 2 : 1}`] = station.z;
+					tempStationConnections[key][`stationId${reverse ? 2 : 1}`] = station.id;
 					const sizeRatio = (Math.max(width, height) + 1) / (Math.min(width, height) + 1);
-					if (sizeRatio > stationConnections[key].sizeRatio) {
-						stationConnections[key].sizeRatio = sizeRatio;
-						stationConnections[key].start45 = reverse !== rotate;
+					if (sizeRatio > tempStationConnections[key].sizeRatio) {
+						tempStationConnections[key].sizeRatio = sizeRatio;
+						tempStationConnections[key].start45 = reverse !== rotate;
 					}
 				});
 			}
 		});
 
-		this.stationsForMap.sort((stationForMap1, stationForMap2) => {
+		stationsForMap.sort((stationForMap1, stationForMap2) => {
 			if (stationForMap1.routeCount === stationForMap2.routeCount) {
 				return stationForMap2.station.name.length - stationForMap1.station.name.length;
 			} else {
@@ -311,9 +308,9 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			}
 		});
 
-		Object.values(lineConnections).sort((lineConnection1, lineConnection2) => lineConnection2.length - lineConnection1.length).forEach(lineConnection => {
+		Object.values(tempLineConnections).sort((lineConnection1, lineConnection2) => lineConnection2.length - lineConnection1.length).forEach(lineConnection => {
 			if (lineConnection.x1 !== undefined && lineConnection.x2 !== undefined && lineConnection.z1 !== undefined && lineConnection.z2 !== undefined) {
-				this.lineConnections.push({
+				lineConnections.push({
 					lineConnectionParts: lineConnection.lineConnectionParts,
 					direction1: lineConnection.direction1, direction2: lineConnection.direction2,
 					x1: lineConnection.x1, x2: lineConnection.x2,
@@ -326,9 +323,9 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			}
 		});
 
-		Object.values(stationConnections).forEach(stationConnection => {
+		Object.values(tempStationConnections).forEach(stationConnection => {
 			if (stationConnection.x1 !== undefined && stationConnection.x2 !== undefined && stationConnection.z1 !== undefined && stationConnection.z2 !== undefined && stationConnection.stationId1 && stationConnection.stationId2) {
-				this.stationConnections.push({
+				stationConnections.push({
 					x1: stationConnection.x1,
 					x2: stationConnection.x2,
 					z1: stationConnection.z1,
@@ -340,7 +337,12 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			}
 		});
 
+		this.stationConnections.set(stationConnections);
+		this.lineConnections.set(lineConnections);
+		this.stationsForMap.set(stationsForMap);
+		this.centerX.set(centerX);
+		this.centerY.set(centerY);
 		this.drawMap.emit();
-		this.mapLoading = false;
+		this.mapLoading.set(false);
 	}
 }

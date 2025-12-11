@@ -1,16 +1,17 @@
 // @ts-check
 const eslint = require("@eslint/js");
+const {defineConfig} = require("eslint/config");
 const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
 
-module.exports = tseslint.config(
+module.exports = defineConfig([
 	{
 		files: ["**/*.ts"],
 		extends: [
 			eslint.configs.recommended,
-			...tseslint.configs.recommended,
-			...tseslint.configs.stylistic,
-			...angular.configs.tsRecommended,
+			tseslint.configs.recommended,
+			tseslint.configs.stylistic,
+			angular.configs.tsRecommended,
 		],
 		processor: angular.processInlineTemplates,
 		rules: {
@@ -30,18 +31,23 @@ module.exports = tseslint.config(
 					style: "kebab-case",
 				},
 			],
+		}
+	},
+	{
+		files: ["**/generated/*.ts"],
+		rules: {
 			"@typescript-eslint/no-empty-function": "off",
-		},
+		}
 	},
 	{
 		files: ["**/*.html"],
 		extends: [
-			...angular.configs.templateRecommended,
-			...angular.configs.templateAccessibility,
+			angular.configs.templateRecommended,
+			angular.configs.templateAccessibility,
 		],
 		rules: {
 			"@angular-eslint/template/click-events-have-key-events": "off",
 			"@angular-eslint/template/interactive-supports-focus": "off",
 		},
 	},
-);
+]);

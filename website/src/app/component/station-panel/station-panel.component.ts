@@ -39,7 +39,7 @@ import {SplitNamePipe} from "../../pipe/splitNamePipe";
 		TitleComponent,
 	],
 	templateUrl: "./station-panel.component.html",
-	styleUrl: "./station-panel.component.css",
+	styleUrl: "./station-panel.component.scss",
 })
 export class StationPanelComponent {
 	private readonly dataService = inject(MapDataService);
@@ -51,31 +51,31 @@ export class StationPanelComponent {
 	@Output() directionsOpened = new EventEmitter<{ stationDetails: { stationId: string, isStartStation: boolean } }>;
 
 	getStation() {
-		return this.stationService.getSelectedData();
+		return this.stationService.selectedData();
 	}
 
 	getStationColor() {
-		const station = this.stationService.getSelectedData();
+		const station = this.stationService.selectedData();
 		return station === undefined ? undefined : station.color;
 	}
 
 	getCoordinatesText() {
-		const station = this.stationService.getSelectedData();
+		const station = this.stationService.selectedData();
 		return station === undefined ? "" : `${Math.round(station.x)}, ${Math.round(station.y)}, ${Math.round(station.z)}`;
 	}
 
 	getZoneText() {
-		const station = this.stationService.getSelectedData();
+		const station = this.stationService.selectedData();
 		return station === undefined ? "" : `${station.zone1}, ${station.zone2}, ${station.zone3}`;
 	}
 
 	getConnections(): Station[] {
-		const station = this.stationService.getSelectedData();
+		const station = this.stationService.selectedData();
 		if (station === undefined) {
 			return [];
 		} else {
 			const stations: Station[] = [];
-			this.dataService.stations.forEach(otherStation => {
+			this.dataService.stations().forEach(otherStation => {
 				if (station.connections.some(connectingStation => connectingStation.id === otherStation.id)) {
 					stations.push(otherStation);
 				}
@@ -85,7 +85,7 @@ export class StationPanelComponent {
 	}
 
 	getActiveRoutes() {
-		return this.stationService.arrivalsRoutes;
+		return this.stationService.arrivalsRoutes();
 	}
 
 	getArrivals() {
@@ -93,7 +93,7 @@ export class StationPanelComponent {
 	}
 
 	getRoutes() {
-		return this.stationService.routesAtStation;
+		return this.stationService.routesAtStation();
 	}
 
 	getCircularStateIcon(circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE") {
@@ -117,29 +117,29 @@ export class StationPanelComponent {
 	}
 
 	getHasTerminating() {
-		return this.stationService.getHasTerminating();
+		return this.stationService.hasTerminating();
 	}
 
 	isLoading() {
-		return this.stationService.isLoading();
+		return this.stationService.loading();
 	}
 
 	copyLocation(icon: HTMLDivElement) {
 		icon.innerText = "check";
-		const station = this.stationService.getSelectedData();
+		const station = this.stationService.selectedData();
 		navigator.clipboard.writeText(station === undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();
 		setTimeout(() => icon.innerText = "content_copy", 1000);
 	}
 
 	focus() {
-		const station = this.stationService.getSelectedData();
+		const station = this.stationService.selectedData();
 		if (station) {
 			this.dataService.animateMap.emit({x: station.x, z: station.z});
 		}
 	}
 
 	openDirections(isStartStation: boolean) {
-		const station = this.stationService.getSelectedData();
+		const station = this.stationService.selectedData();
 		if (station) {
 			this.directionsOpened.emit({stationDetails: {stationId: station.id, isStartStation}});
 		}

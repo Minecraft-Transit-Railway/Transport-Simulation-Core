@@ -79,7 +79,7 @@
 							@for (arrival of getArrivals(); track $index) {
 								<div class="column">
 									<p-divider class="small-divider"/>
-									<app-data-list-entry [icons]="[arrival.routeTypeIcon, getCircularStateIcon(arrival.circularState)]" [title]="[arrival.destination | formatName, arrival.getArrivalTime() | formatTime : 'Arrived']" [subtitles]="[
+									<app-data-list-entry [icons]="[arrival.routeTypeIcon, getCircularStateIcon(arrival.circularState)]" [title]="[arrival.destination | formatName, arrival.arrivalTime() | formatTime : 'Arrived']" [subtitles]="[
 										[(arrival.routeName | formatName) + ' ' + (arrival.routeNumber | formatName), arrival.isContinuous ? 'Every 8 Seconds' : arrival.arrival | formatDate],
 										['Platform ' + arrival.platformName, arrival.isContinuous ? '' : (arrival.getDeviation() | formatTime :'') + ' ' + arrival.getDeviationString()]
 									]" [color]="arrival.routeColor | formatColor" [useLightColor]="!arrival.realtime" [clickable]="true" (entryClicked)="showDetails(arrival)"/>

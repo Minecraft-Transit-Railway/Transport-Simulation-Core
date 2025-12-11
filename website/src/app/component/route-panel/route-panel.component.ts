@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output} from "@angular/core";
+import {Component, EventEmitter, inject, Output, signal} from "@angular/core";
 import {RouteKeyService, RouteVariationService} from "../../service/route.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
@@ -30,7 +30,7 @@ import {FormsModule} from "@angular/forms";
 		FormsModule,
 	],
 	templateUrl: "./route-panel.component.html",
-	styleUrl: "./route-panel.component.css",
+	styleUrl: "./route-panel.component.scss",
 })
 export class RoutePanelComponent {
 	private readonly routeVariationService = inject(RouteVariationService);
@@ -40,20 +40,20 @@ export class RoutePanelComponent {
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
 	@Output() directionsOpened = new EventEmitter<void>();
-	protected dropdownValue?: { name: string; id: string; };
+	protected dropdownValue = signal<{ name: string; id: string; } | undefined>(undefined);
 
 	constructor() {
 		this.routeKeyService.selectionChanged.subscribe(() => {
-			this.dropdownValue = {name: Math.random().toString(), id: Math.random().toString()};
+			this.dropdownValue.set({name: Math.random().toString(), id: Math.random().toString()});
 			setTimeout(() => {
 				const dropdownRoutes = this.getDropdownRoutes();
-				this.dropdownValue = dropdownRoutes ? dropdownRoutes[0] : undefined;
+				this.dropdownValue.set(dropdownRoutes ? dropdownRoutes[0] : undefined);
 			}, 0);
 		});
 	}
 
 	getDropdownRoutes() {
-		return this.routeKeyService.getSelectedData()?.map(route => ({name: route.name.split("||")[1] ?? "(Untitled)", id: route.id}));
+		return this.routeKeyService.selectedData()?.map(route => ({name: route.name.split("||")[1] ?? "(Untitled)", id: route.id}));
 	}
 
 	selectRoute(id: string) {
@@ -61,32 +61,40 @@ export class RoutePanelComponent {
 	}
 
 	getRouteName() {
-		const route = this.routeVariationService.getSelectedData();
+		const route = this.routeVariationService.selectedData();
 		return route ? route.name.split("||")[0] : "";
 	}
 
 	getRouteColor() {
-		const route = this.routeVariationService.getSelectedData();
+		const route = this.routeVariationService.selectedData();
 		return route ? route.color : undefined;
 	}
 
 	getRouteIcon() {
-		const route = this.routeVariationService.getSelectedData();
+		const route = this.routeVariationService.selectedData();
 		return route ? ROUTE_TYPES[route.type].icon : undefined;
 	}
 
 	getRouteDepots() {
-		const route = this.routeVariationService.getSelectedData();
+		const route = this.routeVariationService.selectedData();
 		return route ? [...new Set(route.depots)].sort() : [];
 	}
 
-	getVehicleIcons(vehicles: { deviation: number, percentage: number }[], displayHeight: number) {
+	getVehicleIcons(index: number, displayHeight: number) {
 		const icon = this.getRouteIcon() ?? "";
-		return vehicles.map(vehicle => ({icon, offset: vehicle.percentage * displayHeight / 2, tooltip: `${this.formatTimePipe.transform(Math.abs(Math.round(vehicle.deviation / 1000)), "")} ${SimplifyRoutesPipe.getDeviationString(true, vehicle.deviation)}`}));
+		const maxIndex = this.routeVariationService.routeStationDetails().length - 1;
+		return this.routeVariationService.routeVehicles()[index].map(vehicle => {
+			const offset = vehicle.percentage * displayHeight / 2;
+			return {
+				icon,
+				offset: index === 0 ? Math.max(0, offset) : index === maxIndex ? Math.min(offset, 0) : offset,
+				tooltip: `${this.formatTimePipe.transform(Math.abs(Math.round(vehicle.deviation / 1000)), "")} ${SimplifyRoutesPipe.getDeviationString(true, vehicle.deviation)}`,
+			};
+		});
 	}
 
 	getRouteStationDetails() {
-		return this.routeVariationService.routeStationDetails;
+		return this.routeVariationService.routeStationDetails();
 	}
 
 	getTotalDurationSeconds() {
@@ -94,10 +102,10 @@ export class RoutePanelComponent {
 	}
 
 	hasDurations() {
-		return this.routeVariationService.routeStationDetails[0]?.durationSeconds;
+		return this.routeVariationService.routeStationDetails()[0]?.durationSeconds;
 	}
 
 	hasDwellTimes() {
-		return this.routeVariationService.routeStationDetails[0]?.dwellTimeSeconds;
+		return this.routeVariationService.routeStationDetails()[0]?.dwellTimeSeconds;
 	}
 }

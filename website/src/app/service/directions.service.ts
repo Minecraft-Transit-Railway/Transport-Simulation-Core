@@ -1,4 +1,4 @@
-import {EventEmitter, inject, Injectable} from "@angular/core";
+import {EventEmitter, inject, Injectable, signal} from "@angular/core";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
 import {Route} from "../entity/route";
 import {DimensionService} from "./dimension.service";
@@ -16,8 +16,7 @@ const REFRESH_INTERVAL = 3000;
 @Injectable({providedIn: "root"})
 export class DirectionsService extends SelectableDataServiceBase<{ currentTime: number, data: DirectionsResponseDTO }, { directionsRequest: DirectionsRequestDTO, startStationId?: string, endStationId?: string }> {
 	public readonly directionsPanelOpened = new EventEmitter<{ stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } } | undefined>();
-	public readonly defaultMaxWalkingDistance = 250;
-	private readonly newDirections: {
+	public readonly directions = signal<{
 		startStation?: Station,
 		endStation?: Station,
 		startPlatformName?: string,
@@ -28,7 +27,7 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 		startTime: number,
 		endTime: number,
 		distance: number,
-	}[] = [];
+	}[]>([]);
 	private directionsTimeoutId = 0;
 
 	constructor() {
@@ -67,26 +66,37 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 				endStationId,
 			} : undefined;
 		}, () => {
-			this.newDirections.length = 0;
+			this.directions.set([]);
 			mapSelectionService.reset("directions");
 			clearTimeout(this.directionsTimeoutId);
 		}, ({directionsRequest}) => httpClient.post<{ currentTime: number, data: DirectionsResponseDTO }>(this.getUrl("directions"), JSON.stringify(directionsRequest)), ({data}) => {
-			this.newDirections.length = 0;
-			const selectedData = this.getSelectedData();
+			const selectedData = this.selectedData();
 			const directions = data.connections;
+			const newDirections: {
+				startStation?: Station,
+				endStation?: Station,
+				startPlatformName?: string,
+				endPlatformName?: string,
+				intermediateStations: Station[],
+				route?: Route,
+				icon: string,
+				startTime: number,
+				endTime: number,
+				distance: number,
+			}[] = [];
 
 			for (let i = directions[0]?.endStationId === selectedData?.startStationId ? 1 : 0; i < directions.length; i++) {
 				const previousDirection = directions[i - 1];
 				const thisDirection = directions[i];
 				const nextDirection = directions[i + 1];
-				const startStation = thisDirection.startStationId ? mapDataService.stations.find(({id}) => id === thisDirection.startStationId) : undefined;
-				const endStation = thisDirection.endStationId ? mapDataService.stations.find(({id}) => id === thisDirection.endStationId) : undefined;
+				const startStation = thisDirection.startStationId ? mapDataService.stations().find(({id}) => id === thisDirection.startStationId) : undefined;
+				const endStation = thisDirection.endStationId ? mapDataService.stations().find(({id}) => id === thisDirection.endStationId) : undefined;
 				const startPlatformName = thisDirection.startPlatformName ? thisDirection.startPlatformName : undefined;
 				const endPlatformName = thisDirection.endPlatformName ? thisDirection.endPlatformName : undefined;
-				const route = thisDirection.routeId ? mapDataService.routes.find(({id}) => id === thisDirection.routeId) : undefined;
+				const route = thisDirection.routeId ? mapDataService.routes().find(({id}) => id === thisDirection.routeId) : undefined;
 
 				if (i > 0 && previousDirection.routeId === thisDirection.routeId) {
-					const lastNewDirection = this.newDirections[this.newDirections.length - 1];
+					const lastNewDirection = newDirections[newDirections.length - 1];
 					if (lastNewDirection.endStation) {
 						lastNewDirection.intermediateStations.push(lastNewDirection.endStation);
 					}
@@ -95,7 +105,7 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 					lastNewDirection.endTime = thisDirection.endTime;
 				} else {
 					const offsetTime = i === 0 && !route && nextDirection ? nextDirection.startTime - thisDirection.endTime : 0;
-					this.newDirections.push({
+					newDirections.push({
 						startStation,
 						endStation,
 						startPlatformName,
@@ -109,16 +119,17 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 					});
 				}
 
-				if (this.newDirections[this.newDirections.length - 1]?.endStation?.id === selectedData?.endStationId) {
+				if (newDirections[newDirections.length - 1]?.endStation?.id === selectedData?.endStationId) {
 					break;
 				}
 			}
 
-			const firstDirection = this.newDirections[0];
-			const lastDirection = this.newDirections[this.newDirections.length - 1];
+			const firstDirection = newDirections[0];
+			const lastDirection = newDirections[newDirections.length - 1];
 			const directionsRequest = selectedData ? selectedData.directionsRequest : undefined;
+
 			if (firstDirection && !firstDirection.startStation) {
-				const startStation = mapDataService.stations.find(station => station.id === selectedData?.startStationId);
+				const startStation = mapDataService.stations().find(station => station.id === selectedData?.startStationId);
 				if (startStation) {
 					firstDirection.startStation = startStation;
 				} else {
@@ -128,8 +139,9 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 					}
 				}
 			}
+
 			if (lastDirection && !lastDirection.endStation) {
-				const endStation = mapDataService.stations.find(station => station.id === selectedData?.endStationId);
+				const endStation = mapDataService.stations().find(station => station.id === selectedData?.endStationId);
 				if (endStation) {
 					lastDirection.endStation = endStation;
 				} else {
@@ -139,10 +151,12 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 					}
 				}
 			}
+
+			this.directions.set(newDirections);
 		}, REFRESH_INTERVAL, dimensionService);
 	}
 
-	public selectData(startStation: Station | undefined, endStation: Station | undefined, startClientId: string | undefined, endClientId: string | undefined, maxWalkingDistanceString: string) {
+	public selectData(startStation: Station | undefined, endStation: Station | undefined, startClientId: string | undefined, endClientId: string | undefined) {
 		const key = JSON.stringify({
 			startStationId: startStation?.id,
 			endStationId: endStation?.id,
@@ -154,13 +168,9 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 			endPositionZ: endStation?.z,
 			startClientId,
 			endClientId,
-			maxWalkingDistance: parseInt(maxWalkingDistanceString),
+			maxWalkingDistance: 250, // TODO
 		});
 		this.select(key);
 		this.fetchData(key);
-	}
-
-	public getDirections() {
-		return this.newDirections;
 	}
 }

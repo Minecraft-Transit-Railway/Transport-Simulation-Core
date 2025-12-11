@@ -27,7 +27,7 @@ import {ClientPanelComponent} from "./component/client-panel/client-panel.compon
 		RoutePanelComponent,
 	],
 	templateUrl: "./app.component.html",
-	styleUrls: ["./app.component.css"],
+	styleUrl: "./app.component.scss",
 })
 export class AppComponent {
 	private readonly stationService = inject(StationService);

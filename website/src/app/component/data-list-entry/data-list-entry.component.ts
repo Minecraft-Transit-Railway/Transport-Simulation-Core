@@ -10,7 +10,7 @@ import {RippleModule} from "primeng/ripple";
 		NgOptimizedImage,
 	],
 	templateUrl: "./data-list-entry.component.html",
-	styleUrl: "./data-list-entry.component.css",
+	styleUrl: "./data-list-entry.component.scss",
 })
 export class DataListEntryComponent {
 	@Input({required: true}) icons: string[] = [];

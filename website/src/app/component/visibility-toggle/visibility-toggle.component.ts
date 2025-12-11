@@ -14,7 +14,7 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 		ReactiveFormsModule,
 	],
 	templateUrl: "./visibility-toggle.component.html",
-	styleUrl: "./visibility-toggle.component.css",
+	styleUrl: "./visibility-toggle.component.scss",
 })
 export class VisibilityToggleComponent {
 	private readonly mapDataService = inject(MapDataService);
@@ -44,12 +44,12 @@ export class VisibilityToggleComponent {
 	];
 
 	getVisibility() {
-		return this.mapDataService.routeTypeVisibility[this.routeType];
+		return this.mapDataService.routeTypeVisibility()[this.routeType];
 	}
 
 	setVisibility(event: SelectButtonChangeEvent) {
-		this.mapDataService.routeTypeVisibility[this.routeType] = event.value;
+		this.mapDataService.routeTypeVisibility()[this.routeType] = event.value;
 		this.mapDataService.updateData();
-		Object.entries(this.mapDataService.routeTypeVisibility).forEach(([newRouteTypeKey, visibility]) => setCookie(`visibility_${newRouteTypeKey}`, visibility));
+		Object.entries(this.mapDataService.routeTypeVisibility()).forEach(([newRouteTypeKey, visibility]) => setCookie(`visibility_${newRouteTypeKey}`, visibility));
 	}
 }

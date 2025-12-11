@@ -9,19 +9,16 @@
 				<div class="material-icons">swap_vert</div>
 			</button>
 		</div>
-		<p-divider/>
-		<div class="row gap-small center">
-			<div class="spacing">
-				<p-float-label variant="in">
-					<p-input-number inputId="max-walking-distance" formControlName="maxWalkingDistance" [min]="0" [max]="1000000000" (onInput)="updateMaxWalkingDistance()" [fluid]="true"/>
-					<label for="max-walking-distance">Maximum Walking Distance (m)</label>
-				</p-float-label>
-			</div>
-			<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="refreshDirections()" [disabled]="cannotManuallyRefresh()" pTooltip="Refresh Directions">
-				<div class="material-icons">refresh</div>
+		@if (!cannotManuallyRefresh()) {
+			<p-divider/>
+			<button pButton class="icon-button" severity="secondary" (click)="refreshDirections()" [fluid]="true">
+				<div class="row gap-small">
+					<div class="material-icons">refresh</div>
+					<div>Refresh Directions</div>
+				</div>
 			</button>
-		</div>
-		<p-divider/>
+		}
+		<div>&nbsp;</div>
 	</div>
 	@if (isLoading()) {
 		<div class="column center wrapper">

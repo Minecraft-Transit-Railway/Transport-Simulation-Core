@@ -46,7 +46,7 @@
 		</div>
 		<div class="column">
 			@for (stationDetails of getRouteStationDetails(); track $index) {
-				<app-route-display #display1 [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true" [icons]="getVehicleIcons(stationDetails.vehicles, display1.getHeight() + display2.getHeight())">
+				<app-route-display #display1 [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true" [icons]="getVehicleIcons($index, display1.getHeight() + display2.getHeight())">
 					<div class="row center">
 						<app-data-list-entry class="spacing" [icons]="[]" [title]="[stationDetails.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(stationDetails.id)"/>
 						@if (showDwellTimesCheckbox.checked && stationDetails.dwellTimeSeconds) {

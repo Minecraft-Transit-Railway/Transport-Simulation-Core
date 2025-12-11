@@ -38,7 +38,7 @@ import {DataListEntryComponent} from "../data-list-entry/data-list-entry.compone
 
 	],
 	templateUrl: "./main-panel.component.html",
-	styleUrl: "./main-panel.component.css",
+	styleUrl: "./main-panel.component.scss",
 })
 export class MainPanelComponent {
 	private readonly mapDataService = inject(MapDataService);
@@ -66,7 +66,7 @@ export class MainPanelComponent {
 			}
 			this.routeTypes.length = 0;
 			Object.entries(ROUTE_TYPES).forEach(([routeTypeKey, routeType]) => {
-				if (routeTypeKey in this.mapDataService.routeTypeVisibility) {
+				if (routeTypeKey in this.mapDataService.routeTypeVisibility()) {
 					this.routeTypes.push([routeTypeKey, routeType]);
 				}
 			});
@@ -74,7 +74,7 @@ export class MainPanelComponent {
 	}
 
 	hasInterchanges() {
-		return this.mapDataService.stationConnections.length > 0;
+		return this.mapDataService.stationConnections().length > 0;
 	}
 
 	getDimensions() {
@@ -89,7 +89,7 @@ export class MainPanelComponent {
 	}
 
 	getAllClients() {
-		return this.clientsService.allClients;
+		return this.clientsService.allClients();
 	}
 
 	clickStation(id: string) {
