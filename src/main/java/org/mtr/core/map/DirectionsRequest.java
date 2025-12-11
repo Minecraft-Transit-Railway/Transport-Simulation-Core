@@ -1,22 +1,26 @@
 package org.mtr.core.map;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.core.data.*;
 import org.mtr.core.data.Client;
-import org.mtr.core.data.Platform;
-import org.mtr.core.data.Position;
 import org.mtr.core.data.Station;
 import org.mtr.core.generated.map.DirectionsRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 public final class DirectionsRequest extends DirectionsRequestSchema {
 
-	public Consumer<DirectionsResponse> callback;
+	@Nullable
+	public final Consumer<DirectionsResponse> callback1;
+	@Nullable
+	public final Consumer<ObjectArrayList<PassengerDirection>> callback2;
 
-	public DirectionsRequest(Position startPosition, Position endPosition, long startTime, Consumer<DirectionsResponse> callback) {
+	public DirectionsRequest(Position startPosition, Position endPosition, long startTime, @Nullable Consumer<DirectionsResponse> callback1, @Nullable Consumer<ObjectArrayList<PassengerDirection>> callback2) {
 		super(startTime);
 		startPositionX = startPosition.getX();
 		startPositionY = startPosition.getY();
@@ -24,13 +28,15 @@ public final class DirectionsRequest extends DirectionsRequestSchema {
 		endPositionX = endPosition.getX();
 		endPositionY = endPosition.getY();
 		endPositionZ = endPosition.getZ();
-		this.callback = callback;
+		this.callback1 = callback1;
+		this.callback2 = callback2;
 	}
 
-	public DirectionsRequest(ReaderBase readerBase, Consumer<DirectionsResponse> callback) {
+	public DirectionsRequest(ReaderBase readerBase, @Nullable Consumer<DirectionsResponse> callback1, @Nullable Consumer<ObjectArrayList<PassengerDirection>> callback2) {
 		super(readerBase);
 		updateData(readerBase);
-		this.callback = callback;
+		this.callback1 = callback1;
+		this.callback2 = callback2;
 	}
 
 	public Position getStartPosition(Simulator simulator) {

@@ -85,6 +85,26 @@ public final class DataRequest extends DataRequestSchema {
 			}
 		});
 
+		simulator.homes.forEach(home -> {
+			if (home.inArea(clientPosition, requestRadius)) {
+				if (existingHomeIds.contains(home.getId())) {
+					dataResponse.addHome(home.getId());
+				} else {
+					dataResponse.addHome(home);
+				}
+			}
+		});
+
+		simulator.landmarks.forEach(landmark -> {
+			if (landmark.inArea(clientPosition, requestRadius)) {
+				if (existingLandmarkIds.contains(landmark.getId())) {
+					dataResponse.addLandmark(landmark.getId());
+				} else {
+					dataResponse.addLandmark(landmark);
+				}
+			}
+		});
+
 		boolean createClient = true;
 		for (final Client client : simulator.clients) {
 			if (client.uuid.equals(uuid)) {
@@ -110,6 +130,8 @@ public final class DataRequest extends DataRequestSchema {
 		existingSimplifiedRouteIds.addAll(clientData.simplifiedRouteIds);
 		existingDepotIds.addAll(clientData.depotIdMap.keySet());
 		existingRailIds.addAll(clientData.railIdMap.keySet());
+		existingHomeIds.addAll(clientData.homeIdMap.keySet());
+		existingLandmarkIds.addAll(clientData.landmarkIdMap.keySet());
 	}
 
 	private void addPlatform(Platform platform, DataResponse dataResponse, LongAVLTreeSet addedPlatformIds, LongAVLTreeSet addedRouteIds) {

@@ -23,6 +23,42 @@
 		"verticalRadius": {
 			"type": "number"
 		},
+		"tiltPoints": {
+			"type": "integer"
+		},
+		"tiltAngleDegrees1": {
+			"type": "number"
+		},
+		"tiltAngleDistance1a": {
+			"type": "number"
+		},
+		"tiltAngleDegrees1a": {
+			"type": "number"
+		},
+		"tiltAngleDegrees1b": {
+			"type": "number"
+		},
+		"tiltAngleDistance1b": {
+			"type": "number"
+		},
+		"tiltAngleDegreesMiddle": {
+			"type": "number"
+		},
+		"tiltAngleDistance2b": {
+			"type": "number"
+		},
+		"tiltAngleDegrees2b": {
+			"type": "number"
+		},
+		"tiltAngleDegrees2a": {
+			"type": "number"
+		},
+		"tiltAngleDistance2a": {
+			"type": "number"
+		},
+		"tiltAngleDegrees2": {
+			"type": "number"
+		},
 		"styles": {
 			"type": "array",
 			"items": {
@@ -73,6 +109,18 @@
 		"angle2",
 		"shape",
 		"verticalRadius",
+		"tiltPoints",
+		"tiltAngleDegrees1",
+		"tiltAngleDistance1a",
+		"tiltAngleDegrees1a",
+		"tiltAngleDegrees1b",
+		"tiltAngleDistance1b",
+		"tiltAngleDegreesMiddle",
+		"tiltAngleDistance2b",
+		"tiltAngleDegrees2b",
+		"tiltAngleDegrees2a",
+		"tiltAngleDistance2a",
+		"tiltAngleDegrees2",
 		"speedLimit1",
 		"speedLimit2",
 		"isPlatform",

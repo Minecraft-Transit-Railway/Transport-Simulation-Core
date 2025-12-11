@@ -33,12 +33,6 @@
 		"endAngle": {
 			"$ref": "Angle"
 		},
-		"shape": {
-			"$ref": "Rail.Shape"
-		},
-		"verticalRadius": {
-			"type": "number"
-		},
 		"speedLimit": {
 			"type": "integer"
 		}

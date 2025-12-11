@@ -63,6 +63,16 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 		return this;
 	}
 
+	public DeleteDataRequest addHomeId(long homeId) {
+		homeIds.add(homeId);
+		return this;
+	}
+
+	public DeleteDataRequest addLandmarkId(long landmarkId) {
+		landmarkIds.add(landmarkId);
+		return this;
+	}
+
 	public DeleteDataResponse delete(Simulator simulator) {
 		final DeleteDataResponse deleteDataResponse = new DeleteDataResponse();
 		final ObjectArraySet<Position> railNodePositionsToUpdate = new ObjectArraySet<>();
@@ -82,6 +92,8 @@ public final class DeleteDataRequest extends DeleteDataRequestSchema {
 		}));
 		railIds.forEach(railId -> delete(simulator.railIdMap.get(railId), simulator.rails, railId, deleteDataResponse.getRailIds(), railNodePositionsToUpdate));
 		railNodePositions.forEach(railNodePosition -> simulator.positionsToRail.getOrDefault(railNodePosition, new Object2ObjectOpenHashMap<>()).values().forEach(rail -> delete(rail, simulator.rails, rail.getHexId(), deleteDataResponse.getRailIds(), railNodePositionsToUpdate)));
+		homeIds.forEach(homeId -> delete(homeId, simulator.homes, deleteDataResponse.getHomeIds()));
+		landmarkIds.forEach(landmarkId -> delete(landmarkId, simulator.landmarks, deleteDataResponse.getLandmarkIds()));
 
 		simulator.sync();
 		railNodePositionsToUpdate.forEach(railNodePosition -> {

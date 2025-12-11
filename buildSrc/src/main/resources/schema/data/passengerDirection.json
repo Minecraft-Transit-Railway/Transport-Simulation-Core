@@ -1,0 +1,31 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"javaImplements": [
+		"SerializedDataBase"
+	],
+	"properties": {
+		"routeId": {
+			"type": "integer"
+		},
+		"startPlatformId": {
+			"type": "integer"
+		},
+		"endPlatformId": {
+			"type": "integer"
+		},
+		"startTime": {
+			"type": "integer"
+		},
+		"endTime": {
+			"type": "integer"
+		}
+	},
+	"required": [
+		"routeId",
+		"startPlatformId",
+		"endPlatformId",
+		"startTime",
+		"endTime"
+	]
+}

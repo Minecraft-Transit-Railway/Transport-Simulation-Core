@@ -88,6 +88,36 @@
 			"items": {
 				"type": "string"
 			}
+		},
+		"homes": {
+			"type": "array",
+			"items": {
+				"$ref": "home.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		},
+		"homesToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
+		"landmarks": {
+			"type": "array",
+			"items": {
+				"$ref": "landmark.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		},
+		"landmarksToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
 		}
 	}
 }

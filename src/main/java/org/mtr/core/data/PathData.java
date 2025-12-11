@@ -13,12 +13,16 @@ import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
 import javax.annotation.Nullable;
+import java.util.Random;
 
 public class PathData extends PathDataSchema implements ConditionalList {
 
 	@Nullable
 	private Rail rail;
+	private long getRailCacheCooldown = 0;
 	public final boolean reversePositions;
+
+	private static final Random RANDOM = new Random();
 
 	public PathData(Rail rail, long savedRailBaseId, long dwellTime, int stopIndex, Position startPosition, Position endPosition) {
 		this(rail, savedRailBaseId, dwellTime, stopIndex, 0, 0, startPosition, rail.getStartAngle(startPosition), endPosition, rail.getStartAngle(endPosition));
@@ -26,8 +30,6 @@ public class PathData extends PathDataSchema implements ConditionalList {
 
 	public PathData(PathData oldPathData, double startDistance, double endDistance) {
 		this(oldPathData.rail, oldPathData.savedRailBaseId, oldPathData.dwellTime, oldPathData.stopIndex, startDistance, endDistance, oldPathData.startPosition, oldPathData.startAngle, oldPathData.endPosition, oldPathData.endAngle);
-		shape = oldPathData.shape;
-		verticalRadius = oldPathData.verticalRadius;
 		speedLimit = oldPathData.speedLimit;
 	}
 
@@ -35,10 +37,6 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		super(savedRailBaseId, dwellTime, stopIndex, startDistance, endDistance, startPosition, startAngle, endPosition, endAngle);
 		this.rail = rail;
 		reversePositions = startPosition.compareTo(endPosition) > 0;
-		if (rail != null) {
-			shape = rail.railMath.getShape();
-			verticalRadius = rail.railMath.getVerticalRadius();
-		}
 	}
 
 	public PathData(ReaderBase readerBase) {
@@ -112,17 +110,19 @@ public class PathData extends PathDataSchema implements ConditionalList {
 		return endPosition.getY() < startPosition.getY();
 	}
 
-	public Vector getPosition(double rawValue) {
+	public Vehicle.PositionAndTiltAngle getPositionAndTiltAngle(Data data, double rawValue) {
+		writePathCache(data);
+
 		if (rail != null && rail.railMath.isValid()) {
-			return rail.railMath.getPosition(rawValue, reversePositions);
+			return new Vehicle.PositionAndTiltAngle(rail.railMath.getPosition(rawValue, reversePositions), rail.railMath.getTiltAngle(rawValue, reversePositions));
 		} else {
 			// TODO better positioning when vehicle is moving too quickly
-			final double ratio = Math.clamp(rawValue / getRailLength(), 0, 1);
-			return new Vector(
+			final double ratio = Utilities.clampSafe(rawValue / getRailLength(), 0, 1);
+			return new Vehicle.PositionAndTiltAngle(new Vector(
 					startPosition.getX() + ratio * (endPosition.getX() - startPosition.getX()) + 0.5,
 					startPosition.getY() + ratio * (endPosition.getY() - startPosition.getY()),
 					startPosition.getZ() + ratio * (endPosition.getZ() - startPosition.getZ()) + 0.5
-			);
+			), 0);
 		}
 	}
 
@@ -139,18 +139,27 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	}
 
 	private void writePathCache(Data data) {
-		rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
-		if (rail == null) {
-			rail = defaultRail();
-		} else {
-			shape = rail.railMath.getShape();
-			verticalRadius = rail.railMath.getVerticalRadius();
+		final long currentMillis = System.currentTimeMillis();
+		if (currentMillis > getRailCacheCooldown) {
+			rail = Data.tryGet(data.positionsToRail, startPosition, endPosition);
+			if (rail == null) {
+				rail = defaultRail();
+			} else {
+				getRailCacheCooldown = currentMillis + 1000 + RANDOM.nextInt(1000);
+			}
 		}
 	}
 
 	private Rail defaultRail() {
 		final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
-		return Rail.newRail(startPosition, angles.left(), endPosition, angles.right(), shape, verticalRadius, new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0, false, false, true, false, false, TransportMode.TRAIN);
+		return Rail.newRail(
+				startPosition, angles.left(),
+				endPosition, angles.right(),
+				Rail.Shape.QUADRATIC, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0,
+				false, false, true, false, false, TransportMode.TRAIN
+		);
 	}
 
 	public static void writePathCache(ObjectList<PathData> path, Data data, TransportMode transportMode) {

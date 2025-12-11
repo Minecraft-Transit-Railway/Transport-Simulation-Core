@@ -25,6 +25,8 @@ public abstract class Data {
 	public final ObjectArraySet<Depot> depots = new ObjectArraySet<>();
 	public final ObjectArraySet<Lift> lifts = new ObjectArraySet<>();
 	public final ObjectArraySet<Rail> rails = new ObjectArraySet<>();
+	public final ObjectArraySet<Home> homes = new ObjectArraySet<>();
+	public final ObjectArraySet<Landmark> landmarks = new ObjectArraySet<>();
 
 	public final Long2ObjectOpenHashMap<Station> stationIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Platform> platformIdMap = new Long2ObjectOpenHashMap<>();
@@ -33,6 +35,8 @@ public abstract class Data {
 	public final Long2ObjectOpenHashMap<Depot> depotIdMap = new Long2ObjectOpenHashMap<>();
 	public final Long2ObjectOpenHashMap<Lift> liftIdMap = new Long2ObjectOpenHashMap<>();
 	public final Object2ObjectOpenHashMap<String, Rail> railIdMap = new Object2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Home> homeIdMap = new Long2ObjectOpenHashMap<>();
+	public final Long2ObjectOpenHashMap<Landmark> landmarkIdMap = new Long2ObjectOpenHashMap<>();
 
 	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail = new Object2ObjectOpenHashMap<>();
 	public final Object2ObjectOpenHashMap<Position, Rail> runwaysInbound = new Object2ObjectOpenHashMap<>();
@@ -86,6 +90,8 @@ public abstract class Data {
 			mapIds(depotIdMap, depots);
 			mapIds(liftIdMap, lifts);
 			mapIds(railIdMap, rails);
+			mapIds(homeIdMap, homes);
+			mapIds(landmarkIdMap, landmarks);
 
 			mapAreasAndSavedRails(platforms, stations);
 			mapAreasAndSavedRails(sidings, depots);

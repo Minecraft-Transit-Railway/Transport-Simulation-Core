@@ -61,6 +61,24 @@
 			"items": {
 				"$ref": "rail.json"
 			}
+		},
+		"homes": {
+			"type": "array",
+			"items": {
+				"$ref": "home.json",
+				"parameters": [
+					"Data"
+				]
+			}
+		},
+		"landmarks": {
+			"type": "array",
+			"items": {
+				"$ref": "landmark.json",
+				"parameters": [
+					"Data"
+				]
+			}
 		}
 	}
 }

@@ -133,12 +133,20 @@ public interface TestUtilities {
 		return new Depot(randomTransportMode(), getDefaultSimulator());
 	}
 
+	static Home randomHome() {
+		return new Home(getDefaultSimulator());
+	}
+
 	static InterchangeRouteNamesForColor randomInterchangeRouteNamesForColor() {
 		return new InterchangeRouteNamesForColor(RANDOM.nextLong());
 	}
 
 	static InterchangeColorsForStationName randomInterchangeColorsForStationName() {
 		return new InterchangeColorsForStationName(randomString());
+	}
+
+	static Landmark randomLandmark() {
+		return new Landmark(getDefaultSimulator());
 	}
 
 	static Lift randomLift() {
@@ -151,6 +159,14 @@ public interface TestUtilities {
 
 	static LiftInstruction randomLiftInstruction() {
 		return new LiftInstruction(RANDOM.nextInt(), randomEnum(LiftDirection.values()));
+	}
+
+	static Passenger randomPassenger() {
+		return new Passenger(getDefaultSimulator());
+	}
+
+	static PassengerDirection randomPassengerDirection() {
+		return new PassengerDirection(RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextLong());
 	}
 
 	static PathData randomPathData() {
@@ -166,7 +182,7 @@ public interface TestUtilities {
 	}
 
 	static Rail randomRail() {
-		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomPosition(), randomEnum(Angle.values()), randomEnum(Rail.Shape.values()), RANDOM.nextDouble(), randomList(TestUtilities::randomString), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
+		return Rail.newRail(randomPosition(), randomEnum(Angle.values()), randomPosition(), randomEnum(Angle.values()), randomEnum(Rail.Shape.values()), RANDOM.nextDouble(), RANDOM.nextLong(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), RANDOM.nextDouble(), randomList(TestUtilities::randomString), RANDOM.nextLong(), RANDOM.nextLong(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), RANDOM.nextBoolean(), randomTransportMode());
 	}
 
 	static Route randomRoute() {
@@ -229,8 +245,16 @@ public interface TestUtilities {
 		return new Depot(readerBase, getDefaultSimulator());
 	}
 
+	static Home newHome(ReaderBase readerBase) {
+		return new Home(readerBase, getDefaultSimulator());
+	}
+
 	static InterchangeRouteNamesForColor newInterchangeRouteNamesForColor(ReaderBase readerBase) {
 		return new InterchangeRouteNamesForColor(readerBase);
+	}
+
+	static Landmark newLandmark(ReaderBase readerBase) {
+		return new Landmark(readerBase, getDefaultSimulator());
 	}
 
 	static Lift newLift(ReaderBase readerBase) {
@@ -243,6 +267,14 @@ public interface TestUtilities {
 
 	static LiftInstruction newLiftInstruction(ReaderBase readerBase) {
 		return new LiftInstruction(readerBase);
+	}
+
+	static Passenger newPassenger(ReaderBase readerBase) {
+		return new Passenger(readerBase, getDefaultSimulator());
+	}
+
+	static PassengerDirection newPassengerDirection(ReaderBase readerBase) {
+		return new PassengerDirection(readerBase);
 	}
 
 	static PathData newPathData(ReaderBase readerBase) {

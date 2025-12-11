@@ -5,6 +5,7 @@ import org.mtr.core.data.TransportMode;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.EnumHelper;
+import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 import org.mtr.legacy.generated.data.RailNodeConnectionSchema;
 
@@ -60,7 +61,7 @@ public final class RailNodeConnection extends RailNodeConnectionSchema {
 	private Vector getPosition(double rawValue, boolean reverse) {
 		final double count1 = Math.abs(t_end_1 - t_start_1);
 		final double count2 = Math.abs(t_end_2 - t_start_2);
-		final double clampedValue = Math.clamp(rawValue, 0, count1 + count2);
+		final double clampedValue = Utilities.clampSafe(rawValue, 0, count1 + count2);
 		final double value = reverse ? count1 + count2 - clampedValue : clampedValue;
 
 		if (value <= count1) {

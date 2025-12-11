@@ -50,12 +50,26 @@ public final class ListDataResponse extends ListDataResponseSchema {
 		return data;
 	}
 
+	@Nonnull
+	@Override
+	protected Data homesDataParameter() {
+		return data;
+	}
+
+	@Nonnull
+	@Override
+	protected Data landmarksDataParameter() {
+		return data;
+	}
+
 	public ListDataResponse list() {
 		stations.addAll(data.stations);
 		platforms.addAll(data.platforms);
 		sidings.addAll(data.sidings);
 		routes.addAll(data.routes);
 		depots.addAll(data.depots);
+		homes.addAll(data.homes);
+		landmarks.addAll(data.landmarks);
 		return this;
 	}
 
@@ -70,6 +84,10 @@ public final class ListDataResponse extends ListDataResponseSchema {
 		data.routes.addAll(routes);
 		data.depots.clear();
 		data.depots.addAll(depots);
+		data.homes.clear();
+		data.homes.addAll(homes);
+		data.landmarks.clear();
+		data.landmarks.addAll(landmarks);
 		data.sync();
 	}
 }

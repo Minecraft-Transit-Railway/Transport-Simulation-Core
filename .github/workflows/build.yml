@@ -7,21 +7,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@main
-      - name: Validate gradle wrapper
-        uses: gradle/wrapper-validation-action@main
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@main
       - name: Setup JDK 21
         uses: actions/setup-java@main
         with:
           java-version: 21
           distribution: 'zulu'
-      - name: Make gradle wrapper executable
+      - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
       - name: Generate TypeScript schema classes
         run: ./gradlew generateTypeScriptSchemaClasses
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@main
         with:
-          node-version: 20
+          node-version: 24
       - name: Setup Node packages
         run: npm ci --prefix website
       - name: Build Angular
@@ -30,9 +30,6 @@ jobs:
         run: ./gradlew generateJavaSchemaClasses
       - name: Build
         run: ./gradlew build buildSrc:build -x test
-      # Tests don't work for some reason
-      # - name: Run JUnits
-      #   run: ./gradlew test
       - name: Capture main build artifact
         uses: actions/upload-artifact@main
         with:

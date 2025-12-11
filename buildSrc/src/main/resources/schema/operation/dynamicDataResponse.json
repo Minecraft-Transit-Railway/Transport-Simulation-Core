@@ -35,6 +35,18 @@
 				"type": "integer"
 			}
 		},
+		"passengersToUpdate": {
+			"type": "array",
+			"items": {
+				"$ref": "passenger.json"
+			}
+		},
+		"passengersToKeep": {
+			"type": "array",
+			"items": {
+				"type": "integer"
+			}
+		},
 		"signalBlockUpdates": {
 			"type": "array",
 			"items": {

@@ -39,6 +39,8 @@ public class Simulator extends Data implements Utilities {
 	private final FileLoader<Depot> fileLoaderDepots;
 	private final FileLoader<Lift> fileLoaderLifts;
 	private final FileLoader<Rail> fileLoaderRails;
+	private final FileLoader<Home> fileLoaderHomes;
+	private final FileLoader<Landmark> fileLoaderLandmarks;
 	private final FileLoader<Settings> fileLoaderSettings;
 	private final Consumer<Settings> writeSettings;
 	private final MessageQueue<Runnable> queuedRuns = new MessageQueue<>();
@@ -64,7 +66,9 @@ public class Simulator extends Data implements Utilities {
 					new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes", threadedFileLoading),
 					new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", threadedFileLoading),
 					new FileLoader<>(lifts, messagePackHelper -> new Lift(messagePackHelper, this), savePath, "lifts", threadedFileLoading),
-					new FileLoader<>(rails, Rail::new, savePath, "rails", threadedFileLoading)
+					new FileLoader<>(rails, Rail::new, savePath, "rails", threadedFileLoading),
+					new FileLoader<>(homes, messagePackHelper -> new Home(messagePackHelper, this), savePath, "homes", threadedFileLoading),
+					new FileLoader<>(landmarks, messagePackHelper -> new Landmark(messagePackHelper, this), savePath, "landmarks", threadedFileLoading)
 			);
 		});
 		fileLoaderStations = fileLoaderHolderAndDuration.left().fileLoaderStations;
@@ -74,6 +78,8 @@ public class Simulator extends Data implements Utilities {
 		fileLoaderDepots = fileLoaderHolderAndDuration.left().fileLoaderDepots;
 		fileLoaderLifts = fileLoaderHolderAndDuration.left().fileLoaderLifts;
 		fileLoaderRails = fileLoaderHolderAndDuration.left().fileLoaderRails;
+		fileLoaderHomes = fileLoaderHolderAndDuration.left().fileLoaderHomes;
+		fileLoaderLandmarks = fileLoaderHolderAndDuration.left().fileLoaderLandmarks;
 		Main.LOGGER.info("Data loading complete for {} in {} second(s)", dimension, (float) fileLoaderHolderAndDuration.rightLong() / MILLIS_PER_SECOND);
 
 		// Initialize cache
@@ -191,7 +197,7 @@ public class Simulator extends Data implements Utilities {
 	/**
 	 * @return the game hour (0-23)
 	 */
-	public int getHour() {
+	public int getGameHour() {
 		return gameMillisPerDay > 0 ? (int) (gameMillis * HOURS_PER_DAY / gameMillisPerDay) : 0;
 	}
 
@@ -292,6 +298,7 @@ public class Simulator extends Data implements Utilities {
 			}
 
 			lifts.forEach(lift -> lift.tick(millisElapsed));
+			homes.forEach(home -> home.tick(millisElapsed));
 
 			// Process queued runs
 			queuedRuns.process(Runnable::run);
@@ -316,7 +323,9 @@ public class Simulator extends Data implements Utilities {
 			final boolean changed5 = save(fileLoaderDepots, useReducedHash);
 			final boolean changed6 = save(fileLoaderLifts, useReducedHash);
 			final boolean changed7 = save(fileLoaderRails, useReducedHash);
-			return changed1 || changed2 || changed3 || changed4 || changed5 || changed6 || changed7;
+			final boolean changed8 = save(fileLoaderHomes, useReducedHash);
+			final boolean changed9 = save(fileLoaderLandmarks, useReducedHash);
+			return changed1 || changed2 || changed3 || changed4 || changed5 || changed6 || changed7 || changed8 || changed9;
 		});
 		if (changedAndDuration.left() || !useReducedHash) {
 			Main.LOGGER.info("Save complete for {} in {} second(s)", dimension, changedAndDuration.rightLong() / 1000F);
@@ -344,6 +353,16 @@ public class Simulator extends Data implements Utilities {
 		return changedCount > 0 || deletedCount > 0;
 	}
 
-	private record FileLoaderHolder(FileLoader<Station> fileLoaderStations, FileLoader<Platform> fileLoaderPlatforms, FileLoader<Siding> fileLoaderSidings, FileLoader<Route> fileLoaderRoutes, FileLoader<Depot> fileLoaderDepots, FileLoader<Lift> fileLoaderLifts, FileLoader<Rail> fileLoaderRails) {
+	private record FileLoaderHolder(
+			FileLoader<Station> fileLoaderStations,
+			FileLoader<Platform> fileLoaderPlatforms,
+			FileLoader<Siding> fileLoaderSidings,
+			FileLoader<Route> fileLoaderRoutes,
+			FileLoader<Depot> fileLoaderDepots,
+			FileLoader<Lift> fileLoaderLifts,
+			FileLoader<Rail> fileLoaderRails,
+			FileLoader<Home> fileLoaderHomes,
+			FileLoader<Landmark> fileLoaderLandmarks
+	) {
 	}
 }

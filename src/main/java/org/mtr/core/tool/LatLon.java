@@ -17,10 +17,10 @@ public record LatLon(double lat, double lon) {
 	}
 
 	public static double metersToLat(double meters) {
-		return Math.clamp(MAX_LAT * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LAT, MAX_LAT);
+		return Utilities.clampSafe(MAX_LAT * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LAT, MAX_LAT);
 	}
 
 	public static double metersToLon(double meters) {
-		return Math.clamp(MAX_LON * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LON, MAX_LON);
+		return Utilities.clampSafe(MAX_LON * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LON, MAX_LON);
 	}
 }

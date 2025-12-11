@@ -28,6 +28,8 @@ public final class DeleteDataResponse extends DeleteDataResponseSchema {
 		data.depots.removeIf(depot -> depotIds.contains(depot.getId()));
 		data.lifts.removeIf(lift -> liftIds.contains(lift.getId()));
 		data.rails.removeIf(rail -> railIds.contains(rail.getHexId()));
+		data.homes.removeIf(home -> homeIds.contains(home.getId()));
+		data.landmarks.removeIf(landmark -> landmarkIds.contains(landmark.getId()));
 		if (data instanceof ClientData) {
 			((ClientData) data).simplifiedRoutes.removeIf(simplifiedRoute -> routeIds.contains(simplifiedRoute.getId()));
 		}
@@ -68,5 +70,13 @@ public final class DeleteDataResponse extends DeleteDataResponseSchema {
 
 	ObjectArrayList<Position> getRailNodePositions() {
 		return railNodePositions;
+	}
+
+	LongArrayList getHomeIds() {
+		return homeIds;
+	}
+
+	LongArrayList getLandmarkIds() {
+		return landmarkIds;
 	}
 }
