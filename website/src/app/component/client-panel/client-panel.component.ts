@@ -14,6 +14,7 @@ import {DataListEntryComponent} from "../data-list-entry/data-list-entry.compone
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {ROUTE_TYPES} from "../../data/routeType";
+import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 
 @Component({
 	selector: "app-client-panel",
@@ -63,6 +64,10 @@ export class ClientPanelComponent {
 		const routeStation1 = client ? client.routeStation1 : undefined;
 		const routeStation2 = client ? client.routeStation2 : undefined;
 		return route && routeStation1 && routeStation2 ? {route, routeStation1, routeStation2, icon: ROUTE_TYPES[route.type].icon} : undefined;
+	}
+	
+	getRouteKey(route: { color: number, name: string, number: string }) {
+		return SimplifyRoutesPipe.getRouteKey(route);
 	}
 
 	getCoordinatesText() {
