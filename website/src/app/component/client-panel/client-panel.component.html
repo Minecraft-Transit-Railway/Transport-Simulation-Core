@@ -28,7 +28,7 @@
 
 	<div class="column padding-sides content">
 		@if (getRouteDetails(); as routeDetails) {
-			<app-data-list-entry [icons]="[routeDetails.icon]" [title]="[routeDetails.route.name | formatName, routeDetails.route.number | formatName]" [subtitles]="[]" [color]="routeDetails.route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(routeDetails.route.id)"/>
+			<app-data-list-entry [icons]="[routeDetails.icon]" [title]="[routeDetails.route.name | formatName, routeDetails.route.number | formatName]" [subtitles]="[]" [color]="routeDetails.route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(routeDetails.route))"/>
 			<p-divider/>
 			<app-data-list-entry [icons]="routeDetails.routeStation1.getIcons()" [title]="[routeDetails.routeStation1.name | formatName, '']" [subtitles]="[]" [color]="routeDetails.routeStation1.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(routeDetails.routeStation1.id)"/>
 			<app-data-list-entry [icons]="['arrow_downward']" [title]="['', '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
