@@ -90,6 +90,7 @@
 		"packageManager": "npm",
 		"schematicCollections": [
 			"angular-eslint"
-		]
+    ],
+    "analytics": false
 	}
 }

@@ -10,14 +10,14 @@
 		@if (getTotalDurationSeconds(); as totalDurationSeconds) {
 			<div class="row gap center">
 				<div class="row gap center" pTooltip="Total Duration" tooltipPosition="left">
-					<div class="material-icons">schedule</div>
+					<i class="iconify" data-icon="mdi:schedule"></i>
 					<div>{{ totalDurationSeconds | formatTime : "" }}</div>
 				</div>
 			</div>
 		}
 		<div class="row gap center">
 			<div class="row gap center" pTooltip="Depot(s) For Route" tooltipPosition="left">
-				<div class="material-icons">home</div>
+				<i class="iconify" data-icon="mdi:home"></i>
 				@if (getRouteDepots().length === 0) {
 					<div>(None)</div>
 				} @else {
@@ -51,7 +51,7 @@
 						<app-data-list-entry class="spacing" [icons]="[]" [title]="[stationDetails.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(stationDetails.id)"/>
 						@if (showDwellTimesCheckbox.checked && stationDetails.dwellTimeSeconds) {
 							<div class="row center duration" pTooltip="Dwell Time">
-								<div class="material-icons">hourglass_empty</div>
+								<i class="iconify" data-icon="mdi:hourglass-empty"></i>
 								<div>&nbsp;{{ stationDetails.dwellTimeSeconds | formatTime :"" }}</div>
 							</div>
 						}
@@ -62,7 +62,7 @@
 						<div class="row">
 							<div class="spacing"></div>
 							<div class="row center duration" pTooltip="Travel Time">
-								<div class="material-icons">{{ getRouteIcon() }}</div>
+								<i class="iconify" data-icon="mdi:{{ getRouteIcon() }}"></i>
 								<div>&nbsp;{{ stationDetails.durationSeconds | formatTime :"" }}</div>
 							</div>
 						</div>

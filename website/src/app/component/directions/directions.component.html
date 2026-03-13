@@ -6,14 +6,14 @@
 				<app-search label="End" [parentFormGroup]="formGroup" childFormControlName="endInput" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (clientClicked)="onClickClient($event, false)" (textCleared)="onClearInput(false)"/>
 			</div>
 			<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" pTooltip="Swap Stations">
-				<div class="material-icons">swap_vert</div>
+				<i class="iconify" data-icon="mdi:swap-vertical"></i>
 			</button>
 		</div>
 		@if (!cannotManuallyRefresh()) {
 			<p-divider/>
 			<button pButton class="icon-button" severity="secondary" (click)="refreshDirections()" [fluid]="true">
 				<div class="row gap-small">
-					<div class="material-icons">refresh</div>
+					<i class="iconify" data-icon="mdi:refresh"></i>
 					<div>Refresh Directions</div>
 				</div>
 			</button>
@@ -30,7 +30,7 @@
 		@if (isValid() && getDirections().length === 0) {
 			<div class="column center wrapper">
 				<div class="spacing"></div>
-				<div class="material-icons big-icon">remove_road</div>
+				<i class="iconify big-icon" data-icon="mdi:road-variant-off"></i>
 				<div>No directions found.</div>
 				<div class="spacing"></div>
 			</div>
@@ -48,7 +48,7 @@
 							<div class="row center">
 								<app-data-list-entry class="spacing" [icons]="[getCircularIcon(direction.route)]" [title]="[getRouteName(direction.route), '']" [subtitles]="[[getRouteDestination(direction.route), '']]" [useLightColor]="true" [clickable]="false"/>
 								<div class="row center gray">
-									<div class="material-icons">schedule</div>
+									<i class="iconify" data-icon="mdi:schedule"></i>
 									<div>&nbsp;{{ getDuration(direction) }}</div>
 								</div>
 							</div>
@@ -56,7 +56,7 @@
 							<div class="row center">
 								<app-data-list-entry class="spacing" [icons]="[]" [title]="[getDistanceLabel(direction), '']" [subtitles]="[]" [useLightColor]="true" [clickable]="false"/>
 								<div class="row center gray">
-									<div class="material-icons">schedule</div>
+									<i class="iconify" data-icon="mdi:schedule"></i>
 									<div>&nbsp;{{ getDuration(direction) }}</div>
 								</div>
 							</div>
