@@ -19,7 +19,7 @@
 							<div></div>
 						</div>
 					} @else {
-						<i class="iconify" data-icon="mdi:{{ icon }}"></i>
+						<i class="iconify" [attr.data-icon]="'mdi:' + icon"></i>
 					}
 				}
 			}
