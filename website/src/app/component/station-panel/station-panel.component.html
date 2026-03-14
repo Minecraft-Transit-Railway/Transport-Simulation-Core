@@ -51,7 +51,7 @@
 							@for (route of getActiveRoutes(); track $index) {
 								<div class="row center chip clickable" [style.box-shadow]="'inset 0 0 0 ' + (routeFiltered(route.key) ? 4 : 2) + 'px ' + (route.color | formatColor)" (click)="updateArrivalFilter(showTerminatingCheckbox.checked, route.key)">
 									<div class="row gap-small center">
-										<i class="iconify" data-icon="mdi:{{ route.typeIcon }}"></i>
+										<i class="iconify" [attr.data-icon]="'mdi:' + route.typeIcon"></i>
 										<div class="column chip-text">
 											@for (name of route.name | splitName; track $index) {
 												<div>{{ name.text }}</div>

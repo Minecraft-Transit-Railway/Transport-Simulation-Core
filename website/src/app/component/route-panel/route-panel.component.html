@@ -62,7 +62,7 @@
 						<div class="row">
 							<div class="spacing"></div>
 							<div class="row center duration" pTooltip="Travel Time">
-								<i class="iconify" data-icon="mdi:{{ getRouteIcon() }}"></i>
+								<i class="iconify" [attr.data-icon]="'mdi:' + getRouteIcon()"></i>
 								<div>&nbsp;{{ stationDetails.durationSeconds | formatTime :"" }}</div>
 							</div>
 						</div>
