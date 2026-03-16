@@ -1,9 +1,10 @@
-import {Component, inject, Input} from "@angular/core";
+import {Component, inject, Input, AfterViewInit} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectButtonChangeEvent, SelectButtonModule} from "primeng/selectbutton";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
 
 @Component({
 	selector: "app-visibility-toggle",
@@ -16,35 +17,55 @@ import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 	templateUrl: "./visibility-toggle.component.html",
 	styleUrl: "./visibility-toggle.component.scss",
 })
-export class VisibilityToggleComponent {
+export class VisibilityToggleComponent implements AfterViewInit {
 	private readonly mapDataService = inject(MapDataService);
+	private readonly sanitizer = inject(DomSanitizer);
 
 	@Input({required: true}) routeType = "";
 	protected readonly visibilityOptions: { icon: string, value: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED", tooltip: string }[] = [
 		{
-			icon: "visibility_off",
+			icon: "eye-off",
 			value: "HIDDEN",
 			tooltip: "Hidden",
 		},
 		{
-			icon: "horizontal_rule",
+			icon: "minus",
 			value: "SOLID",
 			tooltip: "Solid",
 		},
 		{
-			icon: "drag_handle",
+			icon: "drag-horizontal",
 			value: "HOLLOW",
 			tooltip: "Hollow",
 		},
 		{
-			icon: "more_horiz",
+			icon: "dots-horizontal",
 			value: "DASHED",
 			tooltip: "Dashed",
 		},
 	];
 
+	private iconCache = new Map<string, SafeHtml>();
+
+	ngAfterViewInit(): void {
+		// Trigger Iconify to rebuild with all icons
+		setTimeout(() => {
+			if ((window as unknown as { Iconify?: { build?: () => void } }).Iconify?.build) {
+				(window as unknown as { Iconify: { build: () => void } }).Iconify.build();
+			}
+		}, 0);
+	}
+
 	getVisibility() {
 		return this.mapDataService.routeTypeVisibility()[this.routeType];
+	}
+
+	getVisibilityIcon(icon: string): SafeHtml {
+		if (!this.iconCache.has(icon)) {
+			const iconHtml = `<i class="iconify" data-icon="mdi:${icon}"></i>`;
+			this.iconCache.set(icon, this.sanitizer.bypassSecurityTrustHtml(iconHtml));
+		}
+		return this.iconCache.get(icon)!;
 	}
 
 	setVisibility(event: SelectButtonChangeEvent) {

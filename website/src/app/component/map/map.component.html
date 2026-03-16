@@ -33,8 +33,8 @@
 							<div class="station-name text {{textLabelPart.isCjk?'cjk':''}}">{{ textLabelPart.text }}</div>
 						}
 						<div class="row">
-							@for (icon of textLabel.icons; track $index) {
-								<div class="material-icons station-name icon">{{ icon }}</div>
+							@for (icon of textLabel.icons; track trackByIcon($index, icon)) {
+								<span class="station-name icon" [innerHTML]="getStationIcon(icon)"></span>
 							}
 						</div>
 					</div>
