@@ -22,12 +22,12 @@ export class InterchangeStyleToggleComponent implements AfterViewInit {
 
 	protected readonly interchangeStyleOptions: { icon: string, value: "DOTTED" | "HOLLOW", tooltip: string }[] = [
 		{
-			icon: "dots-horizontal",
+			icon: "more-horiz",
 			value: "DOTTED",
 			tooltip: "Dotted",
 		},
 		{
-			icon: "drag-horizontal",
+			icon: "drag-handle",
 			value: "HOLLOW",
 			tooltip: "Hollow",
 		},
@@ -50,7 +50,7 @@ export class InterchangeStyleToggleComponent implements AfterViewInit {
 
 	getInterchangeStyleIcon(icon: string): SafeHtml {
 		if (!this.iconCache.has(icon)) {
-			const iconHtml = `<i class="iconify" data-icon="mdi:${icon}"></i>`;
+			const iconHtml = `<i class="iconify" data-icon="material-symbols:${icon}"></i>`;
 			this.iconCache.set(icon, this.sanitizer.bypassSecurityTrustHtml(iconHtml));
 		}
 		return this.iconCache.get(icon)!;

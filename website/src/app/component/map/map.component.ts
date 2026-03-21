@@ -277,7 +277,7 @@ export class MapComponent implements AfterViewInit {
 
 	getStationIcon(icon: string): SafeHtml {
 		if (!this.iconCache.has(icon)) {
-			const iconHtml = `<i class="iconify" data-icon="mdi:${icon}"></i>`;
+			const iconHtml = `<i class="iconify" data-icon="material-symbols:${icon}"></i>`;
 			this.iconCache.set(icon, this.sanitizer.bypassSecurityTrustHtml(iconHtml));
 		}
 		return this.iconCache.get(icon)!;

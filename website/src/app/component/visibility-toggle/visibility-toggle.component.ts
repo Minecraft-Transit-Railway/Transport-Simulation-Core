@@ -24,22 +24,22 @@ export class VisibilityToggleComponent implements AfterViewInit {
 	@Input({required: true}) routeType = "";
 	protected readonly visibilityOptions: { icon: string, value: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED", tooltip: string }[] = [
 		{
-			icon: "eye-off",
+			icon: "visibility-off",
 			value: "HIDDEN",
 			tooltip: "Hidden",
 		},
 		{
-			icon: "minus",
+			icon: "horizontal-rule",
 			value: "SOLID",
 			tooltip: "Solid",
 		},
 		{
-			icon: "drag-horizontal",
+			icon: "drag-handle",
 			value: "HOLLOW",
 			tooltip: "Hollow",
 		},
 		{
-			icon: "dots-horizontal",
+			icon: "more-horiz",
 			value: "DASHED",
 			tooltip: "Dashed",
 		},
@@ -62,7 +62,7 @@ export class VisibilityToggleComponent implements AfterViewInit {
 
 	getVisibilityIcon(icon: string): SafeHtml {
 		if (!this.iconCache.has(icon)) {
-			const iconHtml = `<i class="iconify" data-icon="mdi:${icon}"></i>`;
+			const iconHtml = `<i class="iconify" data-icon="material-symbols:${icon}"></i>`;
 			this.iconCache.set(icon, this.sanitizer.bypassSecurityTrustHtml(iconHtml));
 		}
 		return this.iconCache.get(icon)!;
