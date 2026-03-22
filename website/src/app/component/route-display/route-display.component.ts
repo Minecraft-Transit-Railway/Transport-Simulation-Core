@@ -24,6 +24,11 @@ export class RouteDisplayComponent implements AfterViewInit {
 
 	ngAfterViewInit(): void {
 		new ResizeObserver(entries => entries.forEach(entry => this.height.set(entry.target.clientHeight))).observe(this.textRef.nativeElement);
+		setTimeout(() => {
+			if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+				(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
+			}
+		}, 0);
 	}
 
 	getHeight() {

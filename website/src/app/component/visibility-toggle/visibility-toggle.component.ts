@@ -48,10 +48,9 @@ export class VisibilityToggleComponent implements AfterViewInit {
 	private iconCache = new Map<string, SafeHtml>();
 
 	ngAfterViewInit(): void {
-		// Trigger Iconify to rebuild with all icons
 		setTimeout(() => {
-			if ((window as unknown as { Iconify?: { build?: () => void } }).Iconify?.build) {
-				(window as unknown as { Iconify: { build: () => void } }).Iconify.build();
+			if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+				(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
 			}
 		}, 0);
 	}

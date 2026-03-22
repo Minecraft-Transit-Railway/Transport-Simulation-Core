@@ -7,7 +7,7 @@
 		</p-float-label>
 		<button pButton class="icon-button" severity="secondary" (click)="directionsOpened.emit()" [fluid]="true">
 			<div class="row gap-small">
-				<i class="iconify control-icon" data-icon="material-symbols:directions"></i>
+				<i class="iconify" data-icon="material-symbols:directions"></i>
 				<div>Find Directions</div>
 			</div>
 		</button>
@@ -15,9 +15,9 @@
 	<div class="column content">
 		<div class="column padding-sides">
 			<div class="column gap-small">
-				@for (routeType of routeTypes; track trackByRouteType($index, routeType)) {
+				@for (routeType of routeTypes; track $index) {
 					<div class="row gap center">
-						<span class="route-icon" [innerHTML]="getRouteIcon(routeType[1].icon)"></span>
+						<i class="iconify" [attr.data-icon]="'material-symbols:' + routeType[1].icon"></i>
 						<div class="shrink spacing">{{ routeType[1].text }}</div>
 						<app-visibility-toggle [routeType]="routeType[0]"/>
 					</div>

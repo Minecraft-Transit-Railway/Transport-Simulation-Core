@@ -109,4 +109,25 @@ html, body {
 .icon-button {
 	width: 2.5rem;
 	height: 2.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.iconify,
+svg.iconify {
+	font-size: 24px;
+	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	vertical-align: middle;
+	width: 1em;
+	height: 1em;
+	fill: currentColor;
+}
+
+.station-name .iconify,
+.station-name svg.iconify {
+	font-size: inherit;
 }

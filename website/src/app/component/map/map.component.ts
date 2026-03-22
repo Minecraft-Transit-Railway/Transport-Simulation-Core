@@ -96,10 +96,9 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	ngAfterViewInit() {
-		// Trigger Iconify to rebuild with all icons
 		setTimeout(() => {
-			if ((window as unknown as { Iconify?: { build?: () => void } }).Iconify?.build) {
-				(window as unknown as { Iconify: { build: () => void } }).Iconify.build();
+			if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+				(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
 			}
 		}, 0);
 

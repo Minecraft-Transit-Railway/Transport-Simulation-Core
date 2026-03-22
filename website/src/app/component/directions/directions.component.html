@@ -6,7 +6,7 @@
 				<app-search label="End" [parentFormGroup]="formGroup" childFormControlName="endInput" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (clientClicked)="onClickClient($event, false)" (textCleared)="onClearInput(false)"/>
 			</div>
 			<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" pTooltip="Swap Stations">
-				<i class="iconify" data-icon="material-symbols:swap-vertical"></i>
+				<i class="iconify" data-icon="material-symbols:swap-vert"></i>
 			</button>
 		</div>
 		@if (!cannotManuallyRefresh()) {
@@ -30,7 +30,7 @@
 		@if (isValid() && getDirections().length === 0) {
 			<div class="column center wrapper">
 				<div class="spacing"></div>
-				<i class="iconify big-icon" data-icon="material-symbols:road-variant-off"></i>
+				<i class="iconify big-icon" data-icon="material-symbols:remove-road"></i>
 				<div>No directions found.</div>
 				<div class="spacing"></div>
 			</div>
@@ -43,7 +43,7 @@
 							<div class="gray no-wrap">{{ direction.startTime | formatDate }}</div>
 						</div>
 					</app-route-display>
-					<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[{icon: direction.route ? direction.icon : sameStation(direction) ? 'transfer-within-a-station' : 'walk', offset: 0}]">
+					<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[{icon: direction.route ? direction.icon : sameStation(direction) ? 'transfer-within-a-station' : 'directions-walk', offset: 0}]">
 						@if (direction.route) {
 							<div class="row center">
 								<app-data-list-entry class="spacing" [icons]="[getCircularIcon(direction.route)]" [title]="[getRouteName(direction.route), '']" [subtitles]="[[getRouteDestination(direction.route), '']]" [useLightColor]="true" [clickable]="false"/>

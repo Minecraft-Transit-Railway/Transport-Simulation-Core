@@ -73,20 +73,18 @@ export class MainPanelComponent implements AfterViewInit {
 					this.routeTypes.push([routeTypeKey, routeType]);
 				}
 			});
-			// Trigger Iconify to rebuild with new icons
 			setTimeout(() => {
-				if ((window as unknown as { Iconify?: { build?: () => void } }).Iconify?.build) {
-					(window as unknown as { Iconify: { build: () => void } }).Iconify.build();
+				if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+					(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
 				}
 			}, 0);
 		});
 	}
 
 	ngAfterViewInit(): void {
-		// Trigger Iconify to rebuild with all icons
 		setTimeout(() => {
-			if ((window as unknown as { Iconify?: { build?: () => void } }).Iconify?.build) {
-				(window as unknown as { Iconify: { build: () => void } }).Iconify.build();
+			if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+				(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
 			}
 		}, 0);
 	}
