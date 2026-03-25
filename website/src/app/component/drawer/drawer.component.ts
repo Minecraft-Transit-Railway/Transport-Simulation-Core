@@ -1,7 +1,11 @@
-import {Component, EventEmitter, Input, Output} from "@angular/core";
+import {Component, DestroyRef, EventEmitter, inject, Input, NgZone, Output} from "@angular/core";
 import {DrawerModule} from "primeng/drawer";
 import {TooltipModule} from "primeng/tooltip";
 import {ButtonModule} from "primeng/button";
+
+function isVertical(): boolean {
+	return window.innerWidth < window.innerHeight;
+}
 
 @Component({
 	selector: "app-drawer",
@@ -15,14 +19,20 @@ import {ButtonModule} from "primeng/button";
 })
 export class DrawerComponent {
 	protected drawerVisible = false;
-	protected drawerPosition: "bottom" | "right" = "right";
-	protected drawerStyle = {};
+	protected drawerPosition: "bottom" | "right" = isVertical() ? "bottom" : "right";
+	protected drawerStyle: Record<string, string> = isVertical()
+		? {height: "48rem", maxHeight: "80%"}
+		: {width: "24rem", maxWidth: "80%"};
 	@Input({required: true}) title = "";
 	@Output() closed = new EventEmitter<void>;
 
+	private ngZone = inject(NgZone);
+	private destroyRef = inject(DestroyRef);
+
 	constructor() {
-		window.addEventListener("resize", () => this.resize());
-		this.resize();
+		const listener = () => this.ngZone.run(() => this.resize());
+		window.addEventListener("resize", listener);
+		this.destroyRef.onDestroy(() => window.removeEventListener("resize", listener));
 	}
 
 	open() {
@@ -34,7 +44,7 @@ export class DrawerComponent {
 	}
 
 	private resize() {
-		const vertical = window.innerWidth < window.innerHeight;
+		const vertical = isVertical();
 		this.drawerPosition = vertical ? "bottom" : "right";
 		this.drawerStyle = vertical ? {height: "48rem", maxHeight: "80%"} : {width: "24rem", maxWidth: "80%"};
 	}
