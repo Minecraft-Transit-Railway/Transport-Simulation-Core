@@ -109,25 +109,24 @@ html, body {
 .icon-button {
 	width: 2.5rem;
 	height: 2.5rem;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
 }
 
-.iconify,
-svg.iconify {
+.iconify {
 	font-size: 24px;
 	line-height: 1;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+	display: inline-block;
 	vertical-align: middle;
-	width: 1em;
-	height: 1em;
-	fill: currentColor;
 }
 
-.station-name .iconify,
-.station-name svg.iconify {
+.control-icon .iconify,
+.control-icon.iconify {
 	font-size: inherit;
+}
+
+.station-name .iconify {
+	font-size: inherit;
+}
+
+.big-icon.iconify {
+	font-size: 4rem;
 }
