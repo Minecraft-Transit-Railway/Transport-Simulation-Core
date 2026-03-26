@@ -100,7 +100,7 @@
 						@for (route of getRoutes(); track $index) {
 							<div class="column">
 								<p-divider class="small-divider"/>
-								<app-data-list-entry [icons]="[route.typeIcon, '']" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
+								<app-data-list-entry [icons]="[route.typeIcon, getCircularStateIcon(route.circularState)]" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
 							</div>
 						}
 					</div>
