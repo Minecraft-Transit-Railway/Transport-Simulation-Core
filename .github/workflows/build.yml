@@ -1,5 +1,10 @@
 name: Build
-on: [ pull_request, push, workflow_dispatch ]
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   build:
@@ -18,19 +23,25 @@ jobs:
           cache: gradle
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
+      - name: Update Gradle
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+        run: ./gradlew wrapper --gradle-version latest --no-daemon
       - name: Generate TypeScript schema classes
         run: ./gradlew generateTypeScriptSchemaClasses --no-daemon
       - name: Setup Node
         uses: actions/setup-node@main
         with:
           node-version: 24
-      - name: Setup Node packages
+      - name: Install Node packages
         run: npm ci --prefix website
+      - name: Update packages
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+        run: npm run update-all --prefix website
       - name: Build Angular
         run: npm run build --prefix website
       - name: Generate Java schema classes
         run: ./gradlew generateJavaSchemaClasses --no-daemon
-      - name: Build
+      - name: Build JAR
         run: ./gradlew build buildSrc:build -x test --no-daemon
       - name: Capture main build artifact
         uses: actions/upload-artifact@main
@@ -42,3 +53,15 @@ jobs:
         with:
           name: JSON Schema Generator
           path: buildSrc/build/libs/
+      - name: Commit changes
+        uses: iarekylew00t/verified-bot-commit@main
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+        with:
+          message: Update Gradle and Angular
+          files: |
+            gradle/**
+            gradlew
+            gradlew.bat
+            website/package.json
+            website/package-lock.json
+          max-retries: 5
