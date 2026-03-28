@@ -3,6 +3,7 @@ on: [ pull_request, push, workflow_dispatch ]
 
 jobs:
   build:
+    name: Build Java
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -14,10 +15,11 @@ jobs:
         with:
           java-version: 21
           distribution: 'zulu'
+          cache: gradle
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
       - name: Generate TypeScript schema classes
-        run: ./gradlew generateTypeScriptSchemaClasses
+        run: ./gradlew generateTypeScriptSchemaClasses --no-daemon
       - name: Setup Node
         uses: actions/setup-node@main
         with:
@@ -27,9 +29,9 @@ jobs:
       - name: Build Angular
         run: npm run build --prefix website
       - name: Generate Java schema classes
-        run: ./gradlew generateJavaSchemaClasses
+        run: ./gradlew generateJavaSchemaClasses --no-daemon
       - name: Build
-        run: ./gradlew build buildSrc:build -x test
+        run: ./gradlew build buildSrc:build -x test --no-daemon
       - name: Capture main build artifact
         uses: actions/upload-artifact@main
         with:

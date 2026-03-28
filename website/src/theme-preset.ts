@@ -1,5 +1,5 @@
-import {definePreset} from "@primeng/themes";
-import Aura from "@primeng/themes/aura";
+import {definePreset} from "@primeuix/themes";
+import Aura from "@primeuix/themes/aura";
 
 export const myPreset = definePreset(Aura, {
 	semantic: {
@@ -15,16 +15,6 @@ export const myPreset = definePreset(Aura, {
 			800: "{neutral.800}",
 			900: "{neutral.900}",
 			950: "{neutral.950}",
-		},
-	},
-	components: {
-		progressspinner: {
-			root: {
-				colorOne: "{neutral.500}",
-				colorTwo: "{neutral.500}",
-				colorThree: "{neutral.500}",
-				colorFour: "{neutral.500}",
-			},
 		},
 	},
 });
