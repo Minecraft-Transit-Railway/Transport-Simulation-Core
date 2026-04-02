@@ -19,7 +19,7 @@
 							<div></div>
 						</div>
 					} @else {
-						<i class="iconify" [attr.data-icon]="'material-symbols:' + icon"></i>
+						<span [innerHTML]="getIconHtml(icon)"></span>
 					}
 				}
 			}
