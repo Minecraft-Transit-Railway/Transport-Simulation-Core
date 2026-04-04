@@ -33,8 +33,8 @@
 		"@angular/compiler-cli": "^21.2.7",
 		"@eslint/js": "^10.0.1",
 		"angular-eslint": "21.3.1",
-		"baseline-browser-mapping": "^2.10.13",
-		"eslint": "^10.1.0",
+		"baseline-browser-mapping": "^2.10.14",
+		"eslint": "^10.2.0",
 		"typescript-eslint": "8.58.0"
 	}
 }
