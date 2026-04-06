@@ -124,7 +124,7 @@ export class StationPanelComponent {
 		return this.stationService.loading();
 	}
 
-	copyLocation(icon: HTMLDivElement) {
+	copyLocation(icon: HTMLElement) {
 		icon.innerText = "check";
 		const station = this.stationService.selectedData();
 		navigator.clipboard.writeText(station === undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();

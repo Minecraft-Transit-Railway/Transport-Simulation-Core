@@ -19,7 +19,7 @@
 							<div></div>
 						</div>
 					} @else {
-						<div class="material-icons">{{ icon }}</div>
+						<span [innerHTML]="getIconHtml(icon)"></span>
 					}
 				}
 			}

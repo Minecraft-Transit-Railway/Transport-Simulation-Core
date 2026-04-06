@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output} from "@angular/core";
+import {Component, EventEmitter, inject, Output, AfterViewInit} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -17,6 +17,7 @@ import {SearchComponent} from "../search/search.component";
 import {AccordionModule} from "primeng/accordion";
 import {ClientsService} from "../../service/clients.service";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
+import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
 
 @Component({
 	selector: "app-main-panel",
@@ -40,11 +41,13 @@ import {DataListEntryComponent} from "../data-list-entry/data-list-entry.compone
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.scss",
 })
-export class MainPanelComponent {
+export class MainPanelComponent implements AfterViewInit {
 	private readonly mapDataService = inject(MapDataService);
 	private readonly dimensionService = inject(DimensionService);
 	private readonly clientsService = inject(ClientsService);
 	private readonly themeService = inject(ThemeService);
+	private readonly sanitizer = inject(DomSanitizer);
+	private readonly iconCache = new Map<string, SafeHtml>();
 
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
@@ -70,7 +73,20 @@ export class MainPanelComponent {
 					this.routeTypes.push([routeTypeKey, routeType]);
 				}
 			});
+			setTimeout(() => {
+				if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+					(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
+				}
+			}, 0);
 		});
+	}
+
+	ngAfterViewInit(): void {
+		setTimeout(() => {
+			if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+				(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
+			}
+		}, 0);
 	}
 
 	hasInterchanges() {
@@ -105,6 +121,18 @@ export class MainPanelComponent {
 	clickClient(id: string) {
 		this.clientClicked.emit(id);
 		this.formGroup.patchValue({search: undefined});
+	}
+
+	trackByRouteType(index: number, item: [string, RouteType]): string {
+		return item[0];
+	}
+
+	getRouteIcon(icon: string): SafeHtml {
+		if (!this.iconCache.has(icon)) {
+			const iconHtml = `<i class="iconify" data-icon="material-symbols:${icon}"></i>`;
+			this.iconCache.set(icon, this.sanitizer.bypassSecurityTrustHtml(iconHtml));
+		}
+		return this.iconCache.get(icon)!;
 	}
 
 	changeTheme(isDarkTheme: boolean) {
