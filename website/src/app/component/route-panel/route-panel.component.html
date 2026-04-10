@@ -11,14 +11,14 @@
 			@if (getTotalDurationSeconds(); as totalDurationSeconds) {
 				<div class="row gap center">
 					<div class="row gap center" [pTooltip]="t('route.totalDuration')" tooltipPosition="left">
-						<i class="iconify" data-icon="material-symbols:schedule"></i>
+						<iconify-icon icon="material-symbols:schedule" aria-hidden="true"></iconify-icon>
 						<div>{{ totalDurationSeconds | formatTime : "" }}</div>
 					</div>
 				</div>
 			}
 			<div class="row gap center">
 				<div class="row gap center" [pTooltip]="t('route.depotsForRoute')" tooltipPosition="left">
-					<i class="iconify" data-icon="material-symbols:home"></i>
+					<iconify-icon icon="material-symbols:home" aria-hidden="true"></iconify-icon>
 					@if (getRouteDepots().length === 0) {
 						<div>{{ t('common.none') }}</div>
 					} @else {
@@ -52,7 +52,7 @@
 							<app-data-list-entry class="spacing" [icons]="[]" [title]="[stationDetails.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(stationDetails.id)"/>
 							@if (showDwellTimesCheckbox.checked && stationDetails.dwellTimeSeconds) {
 								<div class="row center duration" [pTooltip]="t('route.dwellTime')">
-									<i class="iconify" data-icon="material-symbols:hourglass-empty"></i>
+									<iconify-icon icon="material-symbols:hourglass-empty" aria-hidden="true"></iconify-icon>
 									<div>&nbsp;{{ stationDetails.dwellTimeSeconds | formatTime :"" }}</div>
 								</div>
 							}
@@ -63,7 +63,7 @@
 							<div class="row">
 								<div class="spacing"></div>
 								<div class="row center duration" [pTooltip]="t('route.travelTime')">
-									<i class="iconify" [attr.data-icon]="'material-symbols:' + getRouteIcon()"></i>
+									<iconify-icon [icon]="'material-symbols:' + getRouteIcon()" aria-hidden="true"></iconify-icon>
 									<div>&nbsp;{{ stationDetails.durationSeconds | formatTime :"" }}</div>
 								</div>
 							</div>

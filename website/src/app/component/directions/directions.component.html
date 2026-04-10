@@ -7,14 +7,14 @@
 					<app-search [label]="t('common.end')" [parentFormGroup]="formGroup" childFormControlName="endInput" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (clientClicked)="onClickClient($event, false)" (textCleared)="onClearInput(false)"/>
 				</div>
 				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" [pTooltip]="t('directionsPanel.swap')">
-					<i class="iconify" data-icon="material-symbols:swap-vert"></i>
+					<iconify-icon icon="material-symbols:swap-vert" aria-hidden="true"></iconify-icon>
 				</button>
 			</div>
 			@if (!cannotManuallyRefresh()) {
 				<p-divider/>
 				<button pButton class="icon-button" severity="secondary" (click)="refreshDirections()" [fluid]="true">
 					<div class="row gap-small">
-						<i class="iconify" data-icon="material-symbols:refresh"></i>
+						<iconify-icon icon="material-symbols:refresh" aria-hidden="true"></iconify-icon>
 						<div>{{ t('directionsPanel.refreshDirections') }}</div>
 					</div>
 				</button>
@@ -31,7 +31,7 @@
 			@if (isValid() && getDirections().length === 0) {
 				<div class="column center wrapper">
 					<div class="spacing"></div>
-					<i class="iconify big-icon" data-icon="material-symbols:remove-road"></i>
+					<span class="big-icon"><iconify-icon icon="material-symbols:remove-road" aria-hidden="true"></iconify-icon></span>
 					<div>{{ t('directionsPanel.noDirectionsFound') }}</div>
 					<div class="spacing"></div>
 				</div>
@@ -49,7 +49,7 @@
 								<div class="row center">
 									<app-data-list-entry class="spacing" [icons]="[getCircularIcon(direction.route)]" [title]="[getRouteName(direction.route), '']" [subtitles]="[[getRouteDestination(direction.route), '']]" [useLightColor]="true" [clickable]="false"/>
 									<div class="row center gray">
-										<i class="iconify" data-icon="material-symbols:schedule"></i>
+										<iconify-icon icon="material-symbols:schedule" aria-hidden="true"></iconify-icon>
 										<div>&nbsp;{{ getDuration(direction) }}</div>
 									</div>
 								</div>
@@ -57,7 +57,7 @@
 								<div class="row center">
 									<app-data-list-entry class="spacing" [icons]="[]" [title]="[getDistanceLabel(direction), '']" [subtitles]="[]" [useLightColor]="true" [clickable]="false"/>
 									<div class="row center gray">
-										<i class="iconify" data-icon="material-symbols:schedule"></i>
+										<iconify-icon icon="material-symbols:schedule" aria-hidden="true"></iconify-icon>
 										<div>&nbsp;{{ getDuration(direction) }}</div>
 									</div>
 								</div>

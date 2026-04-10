@@ -23,7 +23,7 @@
 		}
 		@for (icon of icons; track $index) {
 			<div [class]="'icon ' + (icon.offset === 0 ? '' : 'light')" [style.top]="(icon.offset + getHeight() / 2 - 12) + 'px'" [pTooltip]="icon.tooltip" tooltipPosition="left">
-				<span [innerHTML]="getIconHtml(icon.icon)"></span>
+				<iconify-icon [icon]="'material-symbols:' + icon.icon" aria-hidden="true"></iconify-icon>
 			</div>
 		}
 	</div>

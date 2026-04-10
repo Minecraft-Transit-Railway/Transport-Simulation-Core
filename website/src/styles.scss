@@ -111,22 +111,22 @@ html, body {
 	height: 2.5rem;
 }
 
-.iconify {
+iconify-icon {
 	font-size: 24px;
 	line-height: 1;
 	display: inline-block;
 	vertical-align: middle;
 }
 
-.control-icon .iconify,
-.control-icon.iconify {
+.control-icon iconify-icon,
+.control-icon > iconify-icon {
 	font-size: inherit;
 }
 
-.station-name .iconify {
+.station-name iconify-icon {
 	font-size: inherit;
 }
 
-.big-icon.iconify {
+.big-icon > iconify-icon {
 	font-size: 4rem;
 }

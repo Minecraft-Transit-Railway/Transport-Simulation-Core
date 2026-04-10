@@ -12,6 +12,9 @@ import {providePrimeNG} from "primeng/config";
 import {myPreset} from "./theme-preset";
 import {provideTransloco} from "@jsverse/transloco";
 import {TranslocoHttpLoader} from "./transloco-loader";
+import {registerIcons} from "./app/utility/icons";
+
+registerIcons();
 
 bootstrapApplication(AppComponent, {
 	providers: [

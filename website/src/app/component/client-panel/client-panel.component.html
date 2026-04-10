@@ -9,15 +9,15 @@
 			</div>
 			<div class="row gap-small center">
 				<div class="row gap center" [pTooltip]="t('common.location')" tooltipPosition="left">
-					<i class="iconify" data-icon="material-symbols:my-location"></i>
+					<iconify-icon icon="material-symbols:my-location" aria-hidden="true"></iconify-icon>
 					<div>({{ getCoordinatesText() }})</div>
 				</div>
 				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" [pTooltip]="t('common.focusOnMap')" tooltipPosition="bottom">
-					<i class="iconify" data-icon="material-symbols:filter-center-focus"></i>
+					<iconify-icon icon="material-symbols:filter-center-focus" aria-hidden="true"></iconify-icon>
 				</button>
 			</div>
 			<div class="row center">
-				<i class="iconify" data-icon="material-symbols:directions" [pTooltip]="t('common.directions')" tooltipPosition="left"></i>
+				<iconify-icon icon="material-symbols:directions" [pTooltip]="t('common.directions')" tooltipPosition="left" aria-hidden="true"></iconify-icon>
 				<p-button [label]="t('common.start')" variant="text" (onClick)="openDirections(true)"/>
 				<p-button [label]="t('common.end')" variant="text" (onClick)="openDirections(false)"/>
 			</div>

@@ -1,10 +1,9 @@
-import {Component, inject, Input, AfterViewInit} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, inject, Input} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectButtonChangeEvent, SelectButtonModule} from "primeng/selectbutton";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
+import {FormsModule} from "@angular/forms";
 import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
@@ -14,14 +13,13 @@ import {TranslocoDirective} from "@jsverse/transloco";
 		TooltipModule,
 		TranslocoDirective,
 		FormsModule,
-		ReactiveFormsModule,
 	],
 	templateUrl: "./visibility-toggle.component.html",
 	styleUrl: "./visibility-toggle.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class VisibilityToggleComponent implements AfterViewInit {
+export class VisibilityToggleComponent {
 	private readonly mapDataService = inject(MapDataService);
-	private readonly sanitizer = inject(DomSanitizer);
 
 	@Input({required: true}) routeType = "";
 	protected readonly visibilityOptions: { icon: string, value: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED", tooltip: string }[] = [
@@ -47,26 +45,8 @@ export class VisibilityToggleComponent implements AfterViewInit {
 		},
 	];
 
-	private iconCache = new Map<string, SafeHtml>();
-
-	ngAfterViewInit(): void {
-		setTimeout(() => {
-			if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
-				(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
-			}
-		}, 0);
-	}
-
 	getVisibility() {
 		return this.mapDataService.routeTypeVisibility()[this.routeType];
-	}
-
-	getVisibilityIcon(icon: string): SafeHtml {
-		if (!this.iconCache.has(icon)) {
-			const iconHtml = `<i class="iconify" data-icon="material-symbols:${icon}"></i>`;
-			this.iconCache.set(icon, this.sanitizer.bypassSecurityTrustHtml(iconHtml));
-		}
-		return this.iconCache.get(icon)!;
 	}
 
 	setVisibility(event: SelectButtonChangeEvent) {

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output, signal} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
@@ -42,6 +42,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 	],
 	templateUrl: "./station-panel.component.html",
 	styleUrl: "./station-panel.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class StationPanelComponent {
 	private readonly dataService = inject(MapDataService);
@@ -126,11 +127,13 @@ export class StationPanelComponent {
 		return this.stationService.loading();
 	}
 
-	copyLocation(icon: HTMLElement) {
-		icon.innerText = "check";
+	protected readonly copyIcon = signal("material-symbols:content-copy");
+
+	copyLocation() {
+		this.copyIcon.set("material-symbols:check");
 		const station = this.stationService.selectedData();
 		navigator.clipboard.writeText(station === undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();
-		setTimeout(() => icon.innerText = "content_copy", 1000);
+		setTimeout(() => this.copyIcon.set("material-symbols:content-copy"), 1000);
 	}
 
 	focus() {

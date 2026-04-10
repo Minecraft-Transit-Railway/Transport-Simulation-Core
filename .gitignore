@@ -32,5 +32,3 @@ generated/
 website/.gitignore
 website/src/app/entity/generated/
 log4j2.properties
-
-node_modules/

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output, signal} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output, signal} from "@angular/core";
 import {RouteKeyService, RouteVariationService} from "../../service/route.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
@@ -33,6 +33,7 @@ import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
 	],
 	templateUrl: "./route-panel.component.html",
 	styleUrl: "./route-panel.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class RoutePanelComponent {
 	private readonly routeVariationService = inject(RouteVariationService);

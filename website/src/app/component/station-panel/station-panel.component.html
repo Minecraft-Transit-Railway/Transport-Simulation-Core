@@ -4,26 +4,26 @@
 			<app-title [name]="getStation()?.name ?? ''" [color]="getStationColor()"/>
 			<div class="row gap-small center">
 				<div class="row gap center" [pTooltip]="t('common.location')" tooltipPosition="left">
-					<i class="iconify" data-icon="material-symbols:my-location"></i>
+					<iconify-icon icon="material-symbols:my-location" aria-hidden="true"></iconify-icon>
 					<div>({{ getCoordinatesText() }})</div>
 				</div>
 				<div class="row center">
-					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="copyLocation(icon)" [pTooltip]="t('common.copyLocation')" tooltipPosition="bottom">
-						<i class="iconify" #icon data-icon="material-symbols:content-copy"></i>
+					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="copyLocation()" [pTooltip]="t('common.copyLocation')" tooltipPosition="bottom">
+						<iconify-icon [icon]="copyIcon()" aria-hidden="true"></iconify-icon>
 					</button>
 					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" [pTooltip]="t('common.focusOnMap')" tooltipPosition="bottom">
-						<i class="iconify" data-icon="material-symbols:filter-center-focus"></i>
+						<iconify-icon icon="material-symbols:filter-center-focus" aria-hidden="true"></iconify-icon>
 					</button>
 				</div>
 			</div>
 			<div class="row gap center">
 				<div class="row gap center" [pTooltip]="t('station.fareZones')" tooltipPosition="left">
-					<i class="iconify" data-icon="material-symbols:sell"></i>
+					<iconify-icon icon="material-symbols:sell" aria-hidden="true"></iconify-icon>
 					<div>({{ getZoneText() }})</div>
 				</div>
 			</div>
 			<div class="row center">
-				<i class="iconify" data-icon="material-symbols:directions" [pTooltip]="t('common.directions')" tooltipPosition="left"></i>
+				<iconify-icon icon="material-symbols:directions" [pTooltip]="t('common.directions')" tooltipPosition="left" aria-hidden="true"></iconify-icon>
 				<p-button [label]="t('common.start')" variant="text" (onClick)="openDirections(true)"/>
 				<p-button [label]="t('common.end')" variant="text" (onClick)="openDirections(false)"/>
 			</div>
@@ -52,7 +52,7 @@
 								@for (route of getActiveRoutes(); track $index) {
 									<div class="row center chip clickable" [style.box-shadow]="'inset 0 0 0 ' + (routeFiltered(route.key) ? 4 : 2) + 'px ' + (route.color | formatColor)" (click)="updateArrivalFilter(showTerminatingCheckbox.checked, route.key)">
 										<div class="row gap-small center">
-											<i class="iconify" [attr.data-icon]="'material-symbols:' + route.typeIcon"></i>
+											<iconify-icon [icon]="'material-symbols:' + route.typeIcon" aria-hidden="true"></iconify-icon>
 											<div class="column chip-text">
 												@for (name of route.name | splitName; track $index) {
 													<div>{{ name.text }}</div>

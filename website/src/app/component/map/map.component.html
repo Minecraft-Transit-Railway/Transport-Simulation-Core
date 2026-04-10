@@ -50,7 +50,7 @@
 							}
 							<div class="row" aria-hidden="true">
 								@for (icon of textLabel.icons; track trackByIcon($index, icon)) {
-									<span class="station-name icon" [innerHTML]="getStationIcon(icon)"></span>
+									<span class="station-name icon"><iconify-icon [icon]="'material-symbols:' + icon"></iconify-icon></span>
 								}
 							</div>
 						</div>

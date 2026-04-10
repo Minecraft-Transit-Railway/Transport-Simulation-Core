@@ -1,7 +1,7 @@
 <ng-container *transloco="let t">
 	<p-select-button [options]="interchangeStyleOptions" [ngModel]="getInterchangeStyle()" (onChange)="setInterchangeStyle($event)" [allowEmpty]="false">
 		<ng-template #item let-item>
-			<span class="control-icon" [innerHTML]="getInterchangeStyleIcon(item.icon)" [pTooltip]="t(item.tooltip)" tooltipPosition="bottom"></span>
+			<span class="control-icon" [pTooltip]="t(item.tooltip)" tooltipPosition="bottom"><iconify-icon [icon]="'material-symbols:' + item.icon" aria-hidden="true"></iconify-icon></span>
 		</ng-template>
 	</p-select-button>
 </ng-container>

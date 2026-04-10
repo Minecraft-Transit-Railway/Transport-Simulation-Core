@@ -1,4 +1,4 @@
-import {Component, inject, signal} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal} from "@angular/core";
 import {SearchComponent} from "../search/search.component";
 import {DirectionsService} from "../../service/directions.service";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
@@ -50,6 +50,7 @@ import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
 	],
 	templateUrl: "./directions.component.html",
 	styleUrl: "./directions.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class DirectionsComponent {
 	private readonly directionsService = inject(DirectionsService);

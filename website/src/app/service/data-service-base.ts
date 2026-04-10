@@ -8,7 +8,7 @@ export abstract class DataServiceBase<T> {
 	private id = "";
 	private timeoutId = 0;
 
-	protected readonly getUrl = (endpoint: string) => `https://lps.gteh.top/proxy/${endpoint}?dimension=${this.dimensionService.getDimensionIndex()}`;
+	protected readonly getUrl = (endpoint: string) => `${document.location.origin}${document.location.pathname}mtr/api/map/${endpoint}?dimension=${this.dimensionService.getDimensionIndex()}`;
 	protected readonly fetchData = (id: string) => {
 		this.loading.set(true);
 		this.id = id;
