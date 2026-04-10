@@ -2,8 +2,6 @@ import {Pipe, PipeTransform} from "@angular/core";
 
 @Pipe({
 	name: "splitName",
-	pure: true,
-	standalone: true,
 })
 export class SplitNamePipe implements PipeTransform {
 

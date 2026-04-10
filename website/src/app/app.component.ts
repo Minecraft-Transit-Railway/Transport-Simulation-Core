@@ -1,4 +1,4 @@
-import {Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
 import {MapComponent} from "./component/map/map.component";
 import {StationPanelComponent} from "./component/station-panel/station-panel.component";
 import {StationService} from "./service/station.service";
@@ -12,13 +12,16 @@ import {ButtonModule} from "primeng/button";
 import {TooltipModule} from "primeng/tooltip";
 import {ClientService} from "./service/client.service";
 import {ClientPanelComponent} from "./component/client-panel/client-panel.component";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-root",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		MapComponent,
 		ButtonModule,
 		TooltipModule,
+		TranslocoDirective,
 		StationPanelComponent,
 		DrawerComponent,
 		ClientPanelComponent,

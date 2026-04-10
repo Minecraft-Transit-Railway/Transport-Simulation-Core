@@ -39,7 +39,7 @@ export class SimplifyRoutesPipe implements PipeTransform {
 		return circularState === "CLOCKWISE" ? "rotate-right" : circularState === "ANTICLOCKWISE" ? "rotate-left" : "";
 	}
 
-	public static getDeviationString(realtime: boolean, deviation: number) {
-		return realtime ? deviation > 0 ? "delay" : "early" : "Scheduled";
+	public static getDeviationKey(realtime: boolean, deviation: number) {
+		return realtime ? deviation > 0 ? "deviation.delay" : "deviation.early" : "deviation.scheduled";
 	}
 }

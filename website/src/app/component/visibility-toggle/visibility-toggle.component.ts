@@ -5,12 +5,14 @@ import {TooltipModule} from "primeng/tooltip";
 import {SelectButtonChangeEvent, SelectButtonModule} from "primeng/selectbutton";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-visibility-toggle",
 	imports: [
 		SelectButtonModule,
 		TooltipModule,
+		TranslocoDirective,
 		FormsModule,
 		ReactiveFormsModule,
 	],
@@ -26,22 +28,22 @@ export class VisibilityToggleComponent implements AfterViewInit {
 		{
 			icon: "visibility-off",
 			value: "HIDDEN",
-			tooltip: "Hidden",
+			tooltip: "visibility.hidden",
 		},
 		{
 			icon: "horizontal-rule",
 			value: "SOLID",
-			tooltip: "Solid",
+			tooltip: "visibility.solid",
 		},
 		{
 			icon: "drag-handle",
 			value: "HOLLOW",
-			tooltip: "Hollow",
+			tooltip: "visibility.hollow",
 		},
 		{
 			icon: "more-horiz",
 			value: "DASHED",
-			tooltip: "Dashed",
+			tooltip: "visibility.dashed",
 		},
 	];
 

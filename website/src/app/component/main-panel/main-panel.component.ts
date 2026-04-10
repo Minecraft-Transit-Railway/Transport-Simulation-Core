@@ -18,6 +18,7 @@ import {AccordionModule} from "primeng/accordion";
 import {ClientsService} from "../../service/clients.service";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-main-panel",
@@ -30,6 +31,7 @@ import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
 		DividerModule,
 		TooltipModule,
 		AccordionModule,
+		TranslocoDirective,
 		FormsModule,
 		ReactiveFormsModule,
 		SearchComponent,

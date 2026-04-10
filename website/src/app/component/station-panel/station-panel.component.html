@@ -1,144 +1,146 @@
-<div class="column gap wrapper">
-	<div class="column gap padding-sides">
-		<app-title [name]="getStation()?.name ?? ''" [color]="getStationColor()"/>
-		<div class="row gap-small center">
-			<div class="row gap center" pTooltip="Location" tooltipPosition="left">
-				<i class="iconify" data-icon="material-symbols:my-location"></i>
-				<div>({{ getCoordinatesText() }})</div>
+<ng-container *transloco="let t">
+	<div class="column gap wrapper">
+		<div class="column gap padding-sides">
+			<app-title [name]="getStation()?.name ?? ''" [color]="getStationColor()"/>
+			<div class="row gap-small center">
+				<div class="row gap center" [pTooltip]="t('common.location')" tooltipPosition="left">
+					<i class="iconify" data-icon="material-symbols:my-location"></i>
+					<div>({{ getCoordinatesText() }})</div>
+				</div>
+				<div class="row center">
+					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="copyLocation(icon)" [pTooltip]="t('common.copyLocation')" tooltipPosition="bottom">
+						<i class="iconify" #icon data-icon="material-symbols:content-copy"></i>
+					</button>
+					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" [pTooltip]="t('common.focusOnMap')" tooltipPosition="bottom">
+						<i class="iconify" data-icon="material-symbols:filter-center-focus"></i>
+					</button>
+				</div>
+			</div>
+			<div class="row gap center">
+				<div class="row gap center" [pTooltip]="t('station.fareZones')" tooltipPosition="left">
+					<i class="iconify" data-icon="material-symbols:sell"></i>
+					<div>({{ getZoneText() }})</div>
+				</div>
 			</div>
 			<div class="row center">
-				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="copyLocation(icon)" pTooltip="Copy Location" tooltipPosition="bottom">
-					<i class="iconify" #icon data-icon="material-symbols:content-copy"></i>
-				</button>
-				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" pTooltip="Focus on Map" tooltipPosition="bottom">
-					<i class="iconify" data-icon="material-symbols:filter-center-focus"></i>
-				</button>
+				<i class="iconify" data-icon="material-symbols:directions" [pTooltip]="t('common.directions')" tooltipPosition="left"></i>
+				<p-button [label]="t('common.start')" variant="text" (onClick)="openDirections(true)"/>
+				<p-button [label]="t('common.end')" variant="text" (onClick)="openDirections(false)"/>
 			</div>
 		</div>
-		<div class="row gap center">
-			<div class="row gap center" pTooltip="Fare Zones" tooltipPosition="left">
-				<i class="iconify" data-icon="material-symbols:sell"></i>
-				<div>({{ getZoneText() }})</div>
-			</div>
-		</div>
-		<div class="row center">
-			<i class="iconify" data-icon="material-symbols:directions" pTooltip="Directions" tooltipPosition="left"></i>
-			<p-button label="Start" variant="text" (onClick)="openDirections(true)"/>
-			<p-button label="End" variant="text" (onClick)="openDirections(false)"/>
-		</div>
-	</div>
 
-	<p-tabs class="wrapper" (valueChange)="resetArrivalFilter()" value="0">
-		<p-tablist>
-			<p-tab value="0">Arrivals</p-tab>
-			<p-tab value="1">Routes</p-tab>
-			@if (getConnections().length > 0) {
-				<p-tab value="2">Connections</p-tab>
-			}
-		</p-tablist>
+		<p-tabs class="wrapper" (valueChange)="resetArrivalFilter()" value="0">
+			<p-tablist>
+				<p-tab value="0">{{ t('station.arrivals') }}</p-tab>
+				<p-tab value="1">{{ t('station.routes') }}</p-tab>
+				@if (getConnections().length > 0) {
+					<p-tab value="2">{{ t('station.connectingStations') }}</p-tab>
+				}
+			</p-tablist>
 
-		<p-tabpanels class="wrapper">
-			<p-tabpanel value="0">
-				@if (isLoading()) {
-					<div class="column gap center">
-						<div></div>
-						<div></div>
-						<p-progress-spinner/>
-					</div>
-				} @else {
-					<div class="column gap padding-top-bottom padding-sides content">
-						<div class="chips gap-small">
-							@for (route of getActiveRoutes(); track $index) {
-								<div class="row center chip clickable" [style.box-shadow]="'inset 0 0 0 ' + (routeFiltered(route.key) ? 4 : 2) + 'px ' + (route.color | formatColor)" (click)="updateArrivalFilter(showTerminatingCheckbox.checked, route.key)">
-									<div class="row gap-small center">
-										<i class="iconify" [attr.data-icon]="'material-symbols:' + route.typeIcon"></i>
-										<div class="column chip-text">
-											@for (name of route.name | splitName; track $index) {
-												<div>{{ name.text }}</div>
-											}
+			<p-tabpanels class="wrapper">
+				<p-tabpanel value="0">
+					@if (isLoading()) {
+						<div class="column gap center">
+							<div></div>
+							<div></div>
+							<p-progress-spinner/>
+						</div>
+					} @else {
+						<div class="column gap padding-top-bottom padding-sides content">
+							<div class="chips gap-small">
+								@for (route of getActiveRoutes(); track $index) {
+									<div class="row center chip clickable" [style.box-shadow]="'inset 0 0 0 ' + (routeFiltered(route.key) ? 4 : 2) + 'px ' + (route.color | formatColor)" (click)="updateArrivalFilter(showTerminatingCheckbox.checked, route.key)">
+										<div class="row gap-small center">
+											<i class="iconify" [attr.data-icon]="'material-symbols:' + route.typeIcon"></i>
+											<div class="column chip-text">
+												@for (name of route.name | splitName; track $index) {
+													<div>{{ name.text }}</div>
+												}
+											</div>
 										</div>
+										@if (route.number !== '') {
+											<p-divider layout="vertical" [style.height]="route.textLineCount + 'rem'"/>
+											<div class="column chip-text">
+												@for (number of route.number | splitName; track $index) {
+													<div>{{ number.text }}</div>
+												}
+											</div>
+										}
 									</div>
-									@if (route.number !== '') {
-										<p-divider layout="vertical" [style.height]="route.textLineCount + 'rem'"/>
-										<div class="column chip-text">
-											@for (number of route.number | splitName; track $index) {
-												<div>{{ number.text }}</div>
-											}
-										</div>
-									}
-								</div>
-							}
-						</div>
+								}
+							</div>
 
-						<div class="row gap-small center" [style.display]="getHasTerminating() ? '' : 'none'">
-							<p-checkbox #showTerminatingCheckbox inputId="showTerminatingCheckbox" [binary]="true" (onChange)="updateArrivalFilter(showTerminatingCheckbox.checked)"/>
-							<label for="showTerminatingCheckbox">Show Terminating</label>
-						</div>
+							<div class="row gap-small center" [style.display]="getHasTerminating() ? '' : 'none'">
+								<p-checkbox #showTerminatingCheckbox inputId="showTerminatingCheckbox" [binary]="true" (onChange)="updateArrivalFilter(showTerminatingCheckbox.checked)"/>
+								<label for="showTerminatingCheckbox">{{ t('station.showTerminating') }}</label>
+							</div>
 
+							<div class="column">
+								@for (arrival of getArrivals(); track $index) {
+									<div class="column">
+										<p-divider class="small-divider"/>
+										<app-data-list-entry [icons]="[arrival.routeTypeIcon, getCircularStateIcon(arrival.circularState)]" [title]="[arrival.destination | formatName, arrival.arrivalTime() | formatTime : t('station.arrived')]" [subtitles]="[
+											[(arrival.routeName | formatName) + ' ' + (arrival.routeNumber | formatName), arrival.isContinuous ? t('station.everyEightSeconds') : (arrival.arrival | formatDate)],
+											[t('station.platform', {name: arrival.platformName}), arrival.isContinuous ? '' : (arrival.getDeviation() | formatTime :'') + ' ' + t(arrival.getDeviationKey())]
+										]" [color]="arrival.routeColor | formatColor" [useLightColor]="!arrival.realtime" [clickable]="true" (entryClicked)="showDetails(arrival)"/>
+									</div>
+								}
+							</div>
+						</div>
+					}
+				</p-tabpanel>
+
+				<p-tabpanel value="1">
+					<div class="column gap padding-top-bottom padding-sides content">
+						<div class="row gap-small center">
+							<p-checkbox #showDetailsCheckbox inputId="showDetailsCheckbox" [binary]="true"/>
+							<label for="showDetailsCheckbox">{{ t('station.showDetails') }}</label>
+						</div>
 						<div class="column">
-							@for (arrival of getArrivals(); track $index) {
+							@for (route of getRoutes(); track $index) {
 								<div class="column">
 									<p-divider class="small-divider"/>
-									<app-data-list-entry [icons]="[arrival.routeTypeIcon, getCircularStateIcon(arrival.circularState)]" [title]="[arrival.destination | formatName, arrival.arrivalTime() | formatTime : 'Arrived']" [subtitles]="[
-										[(arrival.routeName | formatName) + ' ' + (arrival.routeNumber | formatName), arrival.isContinuous ? 'Every 8 Seconds' : arrival.arrival | formatDate],
-										['Platform ' + arrival.platformName, arrival.isContinuous ? '' : (arrival.getDeviation() | formatTime :'') + ' ' + arrival.getDeviationString()]
-									]" [color]="arrival.routeColor | formatColor" [useLightColor]="!arrival.realtime" [clickable]="true" (entryClicked)="showDetails(arrival)"/>
+									<app-data-list-entry [icons]="[route.typeIcon, '']" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
 								</div>
 							}
 						</div>
 					</div>
-				}
-			</p-tabpanel>
-
-			<p-tabpanel value="1">
-				<div class="column gap padding-top-bottom padding-sides content">
-					<div class="row gap-small center">
-						<p-checkbox #showDetailsCheckbox inputId="showDetailsCheckbox" [binary]="true"/>
-						<label for="showDetailsCheckbox">Show Details</label>
-					</div>
-					<div class="column">
-						@for (route of getRoutes(); track $index) {
-							<div class="column">
-								<p-divider class="small-divider"/>
-								<app-data-list-entry [icons]="[route.typeIcon, getCircularStateIcon(route.circularState)]" [title]="[route.name | formatName, route.number | formatName]" [subtitles]="showDetailsCheckbox.checked ? mapRouteVariations(route.variations) : []" [color]="route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(route))"/>
-							</div>
-						}
-					</div>
-				</div>
-			</p-tabpanel>
-
-			@if (getConnections().length > 0) {
-				<p-tabpanel value="2">
-					<div class="column padding-top-bottom padding-sides content">
-						@for (connection of getConnections(); track $index) {
-							<div class="column">
-								@if ($index > 0) {
-									<p-divider class="small-divider"/>
-								}
-								<app-data-list-entry [icons]="connection.getIcons()" [title]="[connection.name | formatName, '']" [subtitles]="[]" [color]="connection.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(connection.id)"/>
-							</div>
-						}
-					</div>
 				</p-tabpanel>
-			}
-		</p-tabpanels>
-	</p-tabs>
-</div>
 
-<p-dialog header="Arrival Details" [visible]="!!dialogData" [modal]="true" [dismissableMask]="true">
-	<div class="column gap">
-		<div class="column">
-			<div class="title">Departure Index</div>
-			<div>{{ dialogData?.departureIndex }}</div>
-		</div>
-		<div class="column">
-			<div class="title">{{ dialogData?.cars?.length }}-Car Vehicle</div>
-			@for (car of dialogData?.cars; track $index) {
-				<div>{{ car }}</div>
-			}
-		</div>
+				@if (getConnections().length > 0) {
+					<p-tabpanel value="2">
+						<div class="column padding-top-bottom padding-sides content">
+							@for (connection of getConnections(); track $index) {
+								<div class="column">
+									@if ($index > 0) {
+										<p-divider class="small-divider"/>
+									}
+									<app-data-list-entry [icons]="connection.getIcons()" [title]="[connection.name | formatName, '']" [subtitles]="[]" [color]="connection.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(connection.id)"/>
+								</div>
+							}
+						</div>
+					</p-tabpanel>
+				}
+			</p-tabpanels>
+		</p-tabs>
 	</div>
-	<ng-template #footer>
-		<p-button label="Close" (onClick)="dialogData = undefined"/>
-	</ng-template>
-</p-dialog>
+
+	<p-dialog [header]="t('station.arrivalDetails')" [visible]="!!dialogData" [modal]="true" [dismissableMask]="true">
+		<div class="column gap">
+			<div class="column">
+				<div class="title">{{ t('station.departureIndex') }}</div>
+				<div>{{ dialogData?.departureIndex }}</div>
+			</div>
+			<div class="column">
+				<div class="title">{{ t('station.carVehicle', {count: dialogData?.cars?.length}) }}</div>
+				@for (car of dialogData?.cars; track $index) {
+					<div>{{ car }}</div>
+				}
+			</div>
+		</div>
+		<ng-template #footer>
+			<p-button [label]="t('common.close')" (onClick)="dialogData = undefined"/>
+		</ng-template>
+	</p-dialog>
+</ng-container>
