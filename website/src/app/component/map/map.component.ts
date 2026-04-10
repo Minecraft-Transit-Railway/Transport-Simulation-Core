@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, inject, Output, ViewChild} from "@angular/core";
+import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, output, signal, viewChild} from "@angular/core";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import SETTINGS from "../../utility/settings";
 import {MapDataService} from "../../service/map-data.service";
 import {connectStations, connectWith45} from "../../utility/drawing";
@@ -16,6 +17,7 @@ import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {ClientsService} from "../../service/clients.service";
 import {TooltipModule} from "primeng/tooltip";
 import {NgOptimizedImage} from "@angular/common";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 const blackColor = 0x000000;
 const whiteColor = 0xFFFFFF;
@@ -35,9 +37,11 @@ const animationDuration = 2000;
 
 @Component({
 	selector: "app-map",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		TooltipModule,
 		ProgressSpinnerModule,
+		TranslocoDirective,
 		SplitNamePipe,
 		NgOptimizedImage,
 	],
@@ -46,26 +50,24 @@ const animationDuration = 2000;
 })
 export class MapComponent implements AfterViewInit {
 	private readonly changeDetectorRef = inject(ChangeDetectorRef);
+	private readonly destroyRef = inject(DestroyRef);
 	private readonly mapDataService = inject(MapDataService);
 	private readonly mapSelectionService = inject(MapSelectionService);
 	private readonly clientsService = inject(ClientsService);
 	private readonly themeService = inject(ThemeService);
 
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() clientClicked = new EventEmitter<string>();
-	@ViewChild("wrapper") private readonly wrapperRef!: ElementRef<HTMLDivElement>;
-	@ViewChild("canvas") private readonly canvasRef!: ElementRef<HTMLCanvasElement>;
-	@ViewChild("stats") private readonly statsRef!: ElementRef<HTMLDivElement>;
-	readonly clientGroupsOnRoute: {
-		clients: { id: string, name: string }[],
-		clientImagePadding: number,
-		x: number,
-		y: number,
-	}[] = [];
-	readonly textLabels: TextLabel[] = [];
+	readonly stationClicked = output<string>();
+	readonly clientClicked = output<string>();
+	private readonly wrapperRef = viewChild.required<ElementRef<HTMLDivElement>>("wrapper");
+	private readonly canvasRef = viewChild.required<ElementRef<HTMLCanvasElement>>("canvas");
+	private readonly statsRef = viewChild.required<ElementRef<HTMLDivElement>>("stats");
+	readonly clientGroupsOnRoute = signal<ClientGroupOnRoute[]>([]);
+	readonly textLabels = signal<TextLabel[]>([]);
 	readonly clientImageSize = clientImageSize;
+	readonly loading = this.mapDataService.mapLoading;
 
 	private timeoutId = 0;
+	private animationFrameId = 0;
 	private clientPositions: Record<string, { x: number, y: number }> = {};
 
 	private readonly clientGroupsOnRouteRaw: {
@@ -74,7 +76,6 @@ export class MapComponent implements AfterViewInit {
 		y: number,
 	}[] = [];
 
-	private readonly canvas: () => HTMLCanvasElement;
 	private readonly scene = new THREE.Scene();
 	private readonly camera = new THREE.OrthographicCamera(0, 0, 0, 0, -200, 200);
 	private controls: OrbitControls | undefined;
@@ -88,14 +89,14 @@ export class MapComponent implements AfterViewInit {
 	private lineGeometryThinDashed: LineGeometry | undefined;
 	private pointsForLineConnection: Record<string, [number, number, boolean][]> = {};
 
-	constructor() {
-		this.canvas = () => this.canvasRef.nativeElement;
+	private canvas() {
+		return this.canvasRef().nativeElement;
 	}
 
 	ngAfterViewInit() {
 		const stats = document.location.origin === "http://localhost:4200" ? new Stats() : undefined;
 		if (stats) {
-			this.statsRef.nativeElement.append(stats.dom);
+			this.statsRef().nativeElement.append(stats.dom);
 		}
 
 		this.scene.background = new THREE.Color(this.getBackgroundColor()).convertLinearToSRGB();
@@ -114,8 +115,8 @@ export class MapComponent implements AfterViewInit {
 		const draw = (scheduleRedraw: boolean) => {
 			hasUpdate = true;
 			if (scheduleRedraw) {
-				clearTimeout(this.timeoutId);
-				this.timeoutId = setTimeout(() => {
+				window.clearTimeout(this.timeoutId);
+				this.timeoutId = window.setTimeout(() => {
 					hasUpdate = true;
 					this.createStationBlobs();
 					this.createStationConnections();
@@ -123,7 +124,7 @@ export class MapComponent implements AfterViewInit {
 						lineNormalDashed?.computeLineDistances();
 						lineThinDashed?.computeLineDistances();
 					});
-				}, 100) as unknown as number;
+				}, 100);
 			}
 		};
 
@@ -161,11 +162,11 @@ export class MapComponent implements AfterViewInit {
 			}
 
 			stats?.update();
-			requestAnimationFrame(animate);
+			this.animationFrameId = requestAnimationFrame(animate);
 		};
-		requestAnimationFrame(animate);
+		this.animationFrameId = requestAnimationFrame(animate);
 
-		this.controls = new OrbitControls(this.camera, this.wrapperRef.nativeElement);
+		this.controls = new OrbitControls(this.camera, this.wrapperRef().nativeElement);
 		this.controls.target.set(0, 0, 0);
 		this.controls.update();
 		this.controls.mouseButtons = {LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN};
@@ -173,9 +174,10 @@ export class MapComponent implements AfterViewInit {
 		this.controls.zoomToCursor = true;
 		this.controls.zoomSpeed = 2;
 		this.controls.addEventListener("change", () => draw(true));
-		window.addEventListener("resize", () => draw(true));
+		const resizeHandler = () => draw(true);
+		window.addEventListener("resize", resizeHandler);
 
-		this.mapDataService.drawMap.subscribe(() => {
+		this.mapDataService.drawMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
 			this.scene.background = new THREE.Color(this.getBackgroundColor()).convertLinearToSRGB();
 			this.scene.clear();
 
@@ -229,13 +231,13 @@ export class MapComponent implements AfterViewInit {
 			draw(false);
 		});
 
-		this.mapSelectionService.updateSelection.subscribe(() => {
+		this.mapSelectionService.updateSelection.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
 			if (!this.mapDataService.mapLoading()) {
 				draw(true);
 			}
 		});
 
-		this.mapDataService.animateMap.subscribe(({x, z}) => {
+		this.mapDataService.animateMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({x, z}) => {
 			animationStartX = this.camera.position.x;
 			animationStartY = this.camera.position.y;
 			animationTargetX = x;
@@ -243,7 +245,7 @@ export class MapComponent implements AfterViewInit {
 			animationStartTime = Date.now();
 		});
 
-		this.mapDataService.animateClient.subscribe(id => {
+		this.mapDataService.animateClient.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
 			const client = this.clientPositions[id];
 			if (client) {
 				animationStartX = this.camera.position.x;
@@ -254,15 +256,19 @@ export class MapComponent implements AfterViewInit {
 			}
 		});
 
-		this.clientsService.dataProcessed.subscribe(() => {
+		this.clientsService.dataProcessed.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
 			if (!this.mapDataService.mapLoading()) {
 				draw(true);
 			}
 		});
-	}
 
-	getLoading() {
-		return this.mapDataService.mapLoading();
+		this.destroyRef.onDestroy(() => {
+			cancelAnimationFrame(this.animationFrameId);
+			window.clearTimeout(this.timeoutId);
+			window.removeEventListener("resize", resizeHandler);
+			renderer.dispose();
+			this.controls?.dispose();
+		});
 	}
 
 	private createStationBlobs() {
@@ -320,7 +326,7 @@ export class MapComponent implements AfterViewInit {
 			}
 		});
 
-		Object.values(this.clientsService.allClients).forEach(({id, rawX, rawZ}) => this.clientPositions[id] = {x: rawX, y: -rawZ});
+		this.clientsService.allClients().forEach(({id, rawX, rawZ}) => this.clientPositions[id] = {x: rawX, y: -rawZ});
 		Object.entries(this.clientsService.clientGroupsForRoute()).forEach(([routeKey, {clients, x, z, route, routeStationId1, routeStationId2}]) => {
 			const points = this.pointsForLineConnection[routeKey];
 			if (points) {
@@ -547,7 +553,7 @@ export class MapComponent implements AfterViewInit {
 	private updateLabels() {
 		const halfCanvasWidth = this.canvas().clientWidth / 2;
 		const halfCanvasHeight = this.canvas().clientHeight / 2;
-		this.textLabels.length = 0;
+		const newTextLabels: TextLabel[] = [];
 		let renderedTextCount = 0;
 
 		this.mapDataService.stationsForMap().forEach(({station, rotate, width, height}) => {
@@ -564,7 +570,7 @@ export class MapComponent implements AfterViewInit {
 				const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
 				const textOffset = Math.max(rotate ? rotatedSize : newHeight, clientsHeight) + 9 * SETTINGS.scale;
 				const icons = getIcons(type => this.mapDataService.routeTypeVisibility()[type] === "HIDDEN");
-				this.textLabels.push({
+				newTextLabels.push({
 					hoverOverride: false,
 					id,
 					text: name,
@@ -581,11 +587,11 @@ export class MapComponent implements AfterViewInit {
 			}
 		});
 
-		this.clientGroupsOnRoute.length = 0;
+		const newClientGroupsOnRoute: ClientGroupOnRoute[] = [];
 		this.clientGroupsOnRouteRaw.forEach(({clients, x, y}) => {
 			const canvasX = (x - this.camera.position.x) * this.camera.zoom;
 			const canvasY = (-y + this.camera.position.y) * this.camera.zoom;
-			this.clientGroupsOnRoute.push({
+			newClientGroupsOnRoute.push({
 				clients,
 				clientImagePadding: clientImagePadding * SETTINGS.scale,
 				x: canvasX + halfCanvasWidth,
@@ -596,7 +602,7 @@ export class MapComponent implements AfterViewInit {
 		this.clientsService.allClientsNotInStationOrRoute().forEach(({id, name, rawX, rawZ}) => {
 			const canvasX = (rawX - this.camera.position.x) * this.camera.zoom;
 			const canvasY = (rawZ + this.camera.position.y) * this.camera.zoom;
-			this.clientGroupsOnRoute.push({
+			newClientGroupsOnRoute.push({
 				clients: [{id, name}],
 				clientImagePadding: clientImagePadding * SETTINGS.scale,
 				x: canvasX + halfCanvasWidth,
@@ -604,6 +610,8 @@ export class MapComponent implements AfterViewInit {
 			});
 		});
 
+		this.textLabels.set(newTextLabels);
+		this.clientGroupsOnRoute.set(newClientGroupsOnRoute);
 		this.changeDetectorRef.detectChanges();
 	}
 
@@ -670,16 +678,23 @@ export class MapComponent implements AfterViewInit {
 	}
 }
 
-class TextLabel {
-	public hoverOverride = false;
-	public readonly id: string = "";
-	public readonly text: string = "";
-	public readonly icons: string[] = [];
-	public readonly shouldRenderText: boolean = false;
-	public readonly clients?: { id: string, name: string }[];
-	public readonly clientImagePadding: number = 0;
-	public readonly x: number = 0;
-	public readonly y: number = 0;
-	public readonly stationWidth: number = 0;
-	public readonly stationHeight: number = 0;
+interface ClientGroupOnRoute {
+	readonly clients: { id: string; name: string }[];
+	readonly clientImagePadding: number;
+	readonly x: number;
+	readonly y: number;
+}
+
+interface TextLabel {
+	hoverOverride: boolean;
+	readonly id: string;
+	readonly text: string;
+	readonly icons: string[];
+	readonly shouldRenderText: boolean;
+	readonly clients?: { id: string; name: string }[];
+	readonly clientImagePadding: number;
+	readonly x: number;
+	readonly y: number;
+	readonly stationWidth: number;
+	readonly stationHeight: number;
 }

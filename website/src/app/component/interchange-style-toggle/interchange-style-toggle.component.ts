@@ -4,12 +4,14 @@ import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectButtonChangeEvent, SelectButtonModule} from "primeng/selectbutton";
 import {FormsModule} from "@angular/forms";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-interchange-style-toggle",
 	imports: [
 		SelectButtonModule,
 		TooltipModule,
+		TranslocoDirective,
 		FormsModule,
 	],
 	templateUrl: "./interchange-style-toggle.component.html",
@@ -22,12 +24,12 @@ export class InterchangeStyleToggleComponent {
 		{
 			icon: "more_horiz",
 			value: "DOTTED",
-			tooltip: "Dotted",
+			tooltip: "visibility.dotted",
 		},
 		{
 			icon: "drag_handle",
 			value: "HOLLOW",
-			tooltip: "Hollow",
+			tooltip: "visibility.hollow",
 		},
 	];
 

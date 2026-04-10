@@ -208,8 +208,8 @@ export class Arrival {
 		return this.realtime ? Math.abs(Math.round(this.deviation / 1000)) : -1;
 	}
 
-	public getDeviationString() {
-		return SimplifyRoutesPipe.getDeviationString(this.realtime, this.deviation);
+	public getDeviationKey() {
+		return SimplifyRoutesPipe.getDeviationKey(this.realtime, this.deviation);
 	}
 
 	calculateValues() {

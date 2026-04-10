@@ -18,6 +18,7 @@ import {ChipModule} from "primeng/chip";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormatDatePipe} from "../../pipe/formatDatePipe";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-station-panel",
@@ -37,6 +38,7 @@ import {SplitNamePipe} from "../../pipe/splitNamePipe";
 		SplitNamePipe,
 		DataListEntryComponent,
 		TitleComponent,
+		TranslocoDirective,
 	],
 	templateUrl: "./station-panel.component.html",
 	styleUrl: "./station-panel.component.scss",

@@ -13,6 +13,7 @@ import {DataListEntryComponent} from "../data-list-entry/data-list-entry.compone
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {SearchData} from "../../entity/searchData";
 import {ClientsService} from "../../service/clients.service";
+import {TranslocoService} from "@jsverse/transloco";
 
 
 const maxResults = 50;
@@ -38,6 +39,7 @@ export class SearchComponent {
 	private readonly clientsService = inject(ClientsService);
 	private readonly simplifyStationsPipe = inject(SimplifyStationsPipe);
 	private readonly simplifyRoutesPipe = inject(SimplifyRoutesPipe);
+	private readonly translocoService = inject(TranslocoService);
 
 	@Output() stationClicked = new EventEmitter<string>();
 	@Output() routeClicked = new EventEmitter<string>();
@@ -78,21 +80,21 @@ export class SearchComponent {
 
 			if (searchedStations.length > 0) {
 				this.data.push({
-					label: "Stations",
+					label: this.translocoService.translate("search.stations"),
 					items: searchedStations,
 				});
 			}
 
 			if (searchedRoutes.length > 0) {
 				this.data.push({
-					label: "Routes",
+					label: this.translocoService.translate("search.routes"),
 					items: searchedRoutes,
 				});
 			}
 
 			if (searchedClients.length > 0) {
 				this.data.push({
-					label: "Players",
+					label: this.translocoService.translate("search.players"),
 					items: searchedClients,
 				});
 			}

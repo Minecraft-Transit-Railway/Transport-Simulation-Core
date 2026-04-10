@@ -15,6 +15,7 @@ import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {ROUTE_TYPES} from "../../data/routeType";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-client-panel",
@@ -32,6 +33,7 @@ import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 		DataListEntryComponent,
 		FormatColorPipe,
 		FormatNamePipe,
+		TranslocoDirective,
 	],
 	templateUrl: "./client-panel.component.html",
 	styleUrl: "./client-panel.component.scss",
@@ -65,7 +67,7 @@ export class ClientPanelComponent {
 		const routeStation2 = client ? client.routeStation2 : undefined;
 		return route && routeStation1 && routeStation2 ? {route, routeStation1, routeStation2, icon: ROUTE_TYPES[route.type].icon} : undefined;
 	}
-	
+
 	getRouteKey(route: { color: number, name: string, number: string }) {
 		return SimplifyRoutesPipe.getRouteKey(route);
 	}
