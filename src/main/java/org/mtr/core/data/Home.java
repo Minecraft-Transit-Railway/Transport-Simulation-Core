@@ -6,6 +6,8 @@ import org.mtr.core.simulation.Simulator;
 
 public final class Home extends HomeSchema {
 
+	private static final int MAX_PASSENGERS_PER_TICK = 10;
+
 	public Home(Data data) {
 		super(TransportMode.values()[0], data);
 	}
@@ -17,12 +19,14 @@ public final class Home extends HomeSchema {
 
 	public void tick(long millisElapsed) {
 		if (data instanceof Simulator simulator) {
-			while (passengers.size() != population) {
+			int adjustments = 0;
+			while (passengers.size() != population && adjustments < MAX_PASSENGERS_PER_TICK) {
 				if (passengers.size() > population) {
 					passengers.removeFirst();
 				} else {
 					passengers.add(new Passenger(data));
 				}
+				adjustments++;
 			}
 
 			passengers.forEach(passenger -> passenger.tick(this, simulator, millisElapsed));

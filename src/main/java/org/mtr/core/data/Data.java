@@ -129,14 +129,44 @@ public abstract class Data {
 			});
 
 			// clear station connections
-			// write station connections
-			stations.forEach(station1 -> {
-				station1.connectedStations.clear();
-				stations.forEach(station2 -> {
-					if (station1 != station2 && station1.intersecting(station2)) {
-						station1.connectedStations.add(station2);
+			// write station connections using spatial grid for efficiency
+			final long gridSize = 500;
+			final Long2ObjectOpenHashMap<ObjectArrayList<Station>> stationGrid = new Long2ObjectOpenHashMap<>();
+			stations.forEach(station -> {
+				station.connectedStations.clear();
+				if (!SimpleAreaBase.validCorners(station)) {
+					return;
+				}
+				final long minCellX = Math.floorDiv(station.getMinX(), gridSize);
+				final long maxCellX = Math.floorDiv(station.getMaxX(), gridSize);
+				final long minCellZ = Math.floorDiv(station.getMinZ(), gridSize);
+				final long maxCellZ = Math.floorDiv(station.getMaxZ(), gridSize);
+				for (long cx = minCellX; cx <= maxCellX; cx++) {
+					for (long cz = minCellZ; cz <= maxCellZ; cz++) {
+						stationGrid.computeIfAbsent((cx << 32) | (cz & 0xFFFFFFFFL), key -> new ObjectArrayList<>()).add(station);
 					}
-				});
+				}
+			});
+			stations.forEach(station1 -> {
+				if (!SimpleAreaBase.validCorners(station1)) {
+					return;
+				}
+				final long minCellX = Math.floorDiv(station1.getMinX(), gridSize);
+				final long maxCellX = Math.floorDiv(station1.getMaxX(), gridSize);
+				final long minCellZ = Math.floorDiv(station1.getMinZ(), gridSize);
+				final long maxCellZ = Math.floorDiv(station1.getMaxZ(), gridSize);
+				for (long cx = minCellX; cx <= maxCellX; cx++) {
+					for (long cz = minCellZ; cz <= maxCellZ; cz++) {
+						final ObjectArrayList<Station> cell = stationGrid.get((cx << 32) | (cz & 0xFFFFFFFFL));
+						if (cell != null) {
+							cell.forEach(station2 -> {
+								if (station1 != station2 && station1.intersecting(station2)) {
+									station1.connectedStations.add(station2);
+								}
+							});
+						}
+					}
+				}
 			});
 
 			if (this instanceof Simulator) {

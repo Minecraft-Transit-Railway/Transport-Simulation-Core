@@ -152,6 +152,10 @@ public final class Passenger extends PassengerSchema {
 				findDirectionsTime = System.currentTimeMillis() + COOLDOWN + RANDOM.nextInt(COOLDOWN);
 
 				if (!passengerDirections.isEmpty()) {
+					directions.clear();
+					currentStartPlatform = null;
+					currentEndPlatform = null;
+					currentRoute = null;
 					directions.addAll(passengerDirections);
 					if (newLandmark == null) {
 						// Going home
@@ -161,12 +165,14 @@ public final class Passenger extends PassengerSchema {
 						landmarkVisitEndTime = 0;
 					} else {
 						// Going to a landmark
-						final long visitDuration = newLandmark.reserveVisit(landmarkVisitStartTime);
+						final long estimatedArrivalTime = passengerDirections.getLast().getEndTime();
+						final long visitDuration = newLandmark.reserveVisit(estimatedArrivalTime);
 						if (visitDuration > 0) {
 							startLandmarkId = endLandmarkId;
 							endLandmarkId = newLandmark.getId();
-							landmarkVisitStartTime = passengerDirections.getLast().getEndTime();
+							landmarkVisitStartTime = estimatedArrivalTime;
 							landmarkVisitEndTime = landmarkVisitStartTime + visitDuration;
+							newLandmark.writeVisitCache(landmarkVisitStartTime, landmarkVisitEndTime);
 						}
 					}
 				}

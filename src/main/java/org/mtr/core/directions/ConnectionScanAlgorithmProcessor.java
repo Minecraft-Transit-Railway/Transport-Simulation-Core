@@ -200,13 +200,13 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 
 		for (final Long2ObjectMap.Entry<Connection> entry : earliestConnections.long2ObjectEntrySet()) {
 			final long platformId = entry.getLongKey();
-			final long startTime = entry.getValue().startTime();
+			final long arrivalTime = entry.getValue().endTime();
 			final long distance = walkingDistancesToEnd.getOrDefault(platformId, DirectionsFinder.MAX_WALKING_DISTANCE + 1);
 			if (distance <= DirectionsFinder.MAX_WALKING_DISTANCE) {
-				final long endTime = startTime + Math.round(distance / DirectionsFinder.WALKING_SPEED);
+				final long endTime = arrivalTime + Math.round(distance / DirectionsFinder.WALKING_SPEED);
 				if (endTime < bestEndTime) {
 					bestPlatformId = platformId;
-					bestStartTime = startTime;
+					bestStartTime = arrivalTime;
 					bestEndTime = endTime;
 					bestWalkingDistance = distance;
 				}

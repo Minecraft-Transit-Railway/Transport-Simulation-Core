@@ -298,6 +298,7 @@ public class Simulator extends Data implements Utilities {
 			}
 
 			lifts.forEach(lift -> lift.tick(millisElapsed));
+			landmarks.forEach(Landmark::tick);
 			homes.forEach(home -> home.tick(millisElapsed));
 
 			// Process queued runs
