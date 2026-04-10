@@ -8,7 +8,7 @@
 			</p-float-label>
 			<button pButton class="icon-button" severity="secondary" (click)="directionsOpened.emit()" [fluid]="true">
 				<div class="row gap-small">
-					<div class="material-icons">directions</div>
+					<i class="iconify" data-icon="material-symbols:directions"></i>
 					<div>{{ t('mainPanel.findDirections') }}</div>
 				</div>
 			</button>
@@ -18,7 +18,7 @@
 				<div class="column gap-small">
 					@for (routeType of routeTypes; track $index) {
 						<div class="row gap center">
-							<div class="material-icons">{{ routeType[1].icon }}</div>
+							<i class="iconify" [attr.data-icon]="'material-symbols:' + routeType[1].icon"></i>
 							<div class="shrink spacing">{{ t('routeType.' + routeType[0]) }}</div>
 							<app-visibility-toggle [routeType]="routeType[0]"/>
 						</div>
@@ -27,7 +27,7 @@
 				@if (hasInterchanges()) {
 					<p-divider/>
 					<div class="row gap center">
-						<div class="material-icons">polyline</div>
+						<i class="iconify control-icon" data-icon="material-symbols:polyline"></i>
 						<div class="shrink spacing">{{ t('mainPanel.interchangeStyle') }}</div>
 						<app-interchange-style-toggle/>
 					</div>

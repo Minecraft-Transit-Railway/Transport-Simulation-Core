@@ -36,6 +36,6 @@
 			(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, false)"
 			(clientClicked)="onClickClient($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
 	<button pButton class="button-corner" [rounded]="true" [text]="true" [raised]="true" size="large" (click)="onClickMain(sideMain, sideStation, sideClient, sideDirections, sideRoute)" [pTooltip]="t('common.menu')" tooltipPosition="left">
-		<div class="material-icons">menu</div>
+		<i class="iconify" data-icon="material-symbols:menu"></i>
 	</button>
 </ng-container>

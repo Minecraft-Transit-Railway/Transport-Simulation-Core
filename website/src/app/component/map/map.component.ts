@@ -17,6 +17,7 @@ import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {ClientsService} from "../../service/clients.service";
 import {TooltipModule} from "primeng/tooltip";
 import {NgOptimizedImage} from "@angular/common";
+import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
 import {TranslocoDirective} from "@jsverse/transloco";
 
 const blackColor = 0x000000;
@@ -55,6 +56,7 @@ export class MapComponent implements AfterViewInit {
 	private readonly mapSelectionService = inject(MapSelectionService);
 	private readonly clientsService = inject(ClientsService);
 	private readonly themeService = inject(ThemeService);
+	private readonly sanitizer = inject(DomSanitizer);
 
 	readonly stationClicked = output<string>();
 	readonly clientClicked = output<string>();
@@ -69,6 +71,7 @@ export class MapComponent implements AfterViewInit {
 	private timeoutId = 0;
 	private animationFrameId = 0;
 	private clientPositions: Record<string, { x: number, y: number }> = {};
+	private iconCache = new Map<string, SafeHtml>();
 
 	private readonly clientGroupsOnRouteRaw: {
 		clients: { id: string, name: string }[],
@@ -94,6 +97,12 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	ngAfterViewInit() {
+		setTimeout(() => {
+			if ((window as unknown as { Iconify?: { scan?: () => void } }).Iconify?.scan) {
+				(window as unknown as { Iconify: { scan: () => void } }).Iconify.scan();
+			}
+		}, 0);
+
 		const stats = document.location.origin === "http://localhost:4200" ? new Stats() : undefined;
 		if (stats) {
 			this.statsRef().nativeElement.append(stats.dom);
@@ -269,6 +278,18 @@ export class MapComponent implements AfterViewInit {
 			renderer.dispose();
 			this.controls?.dispose();
 		});
+	}
+
+	getStationIcon(icon: string): SafeHtml {
+		if (!this.iconCache.has(icon)) {
+			const iconHtml = `<i class="iconify" data-icon="material-symbols:${icon}"></i>`;
+			this.iconCache.set(icon, this.sanitizer.bypassSecurityTrustHtml(iconHtml));
+		}
+		return this.iconCache.get(icon)!;
+	}
+
+	trackByIcon(index: number, icon: string): string {
+		return icon;
 	}
 
 	private createStationBlobs() {

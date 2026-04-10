@@ -19,7 +19,7 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 	private readonly splitNamePipe = inject(SplitNamePipe);
 
 	public readonly arrivalsRoutes = signal<{ key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }[]>([]);
-	public readonly routesAtStation = signal<{ name: string, variations: string[], number: string, color: number, typeIcon: string }[]>([]);
+	public readonly routesAtStation = signal<{ name: string, variations: string[], number: string, color: number, typeIcon: string, circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE" }[]>([]);
 	public readonly arrivals = signal<Arrival[]>([]);
 	public readonly hasTerminating = signal<boolean>(false);
 	private readonly filterArrivalRoutes: string[] = [];
@@ -75,15 +75,15 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 
 	public setStation(stationId: string, zoomToStation: boolean) {
 		this.select(stationId);
-		const newRoutes: Record<string, { name: string, variations: string[], number: string, color: number, typeIcon: string }> = {};
-		this.dataService.routes().forEach(({name, number, color, type, routePlatforms}) => {
+		const newRoutes: Record<string, { name: string, variations: string[], number: string, color: number, typeIcon: string, circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE" }> = {};
+		this.dataService.routes().forEach(({name, number, color, type, circularState, routePlatforms}) => {
 			if (routePlatforms.some(routePlatform => routePlatform.station.id === this.selectedData()?.id)) {
 				const key = SimplifyRoutesPipe.getRouteKey({name, number, color});
 				const variation = name.split("||")[1];
 				if (key in newRoutes) {
 					newRoutes[key].variations.push(variation);
 				} else {
-					newRoutes[key] = {name: name.split("||")[0], variations: [variation], number, color, typeIcon: ROUTE_TYPES[type].icon};
+					newRoutes[key] = {name: name.split("||")[0], variations: [variation], number, color, typeIcon: ROUTE_TYPES[type].icon, circularState};
 				}
 			}
 		});
