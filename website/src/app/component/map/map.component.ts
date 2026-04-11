@@ -95,7 +95,6 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	ngAfterViewInit() {
-
 		const stats = document.location.origin === "http://localhost:4200" ? new Stats() : undefined;
 		if (stats) {
 			this.statsRef().nativeElement.append(stats.dom);

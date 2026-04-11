@@ -24,6 +24,10 @@ html, body {
 	height: 100%;
 }
 
+iconify-icon {
+	font-size: 1.5rem;
+}
+
 .column {
 	display: flex;
 	flex-flow: column nowrap;
@@ -109,14 +113,4 @@ html, body {
 .icon-button {
 	width: 2.5rem;
 	height: 2.5rem;
-}
-
-iconify-icon {
-	font-size: 1.5rem;
-	display: inline-block;
-	vertical-align: middle;
-}
-
-.big-icon > iconify-icon {
-	font-size: 4rem;
 }
