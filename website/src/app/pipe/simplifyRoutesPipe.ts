@@ -36,7 +36,7 @@ export class SimplifyRoutesPipe implements PipeTransform {
 	}
 
 	public static getCircularStateIcon(circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE") {
-		return circularState === "CLOCKWISE" ? "rotate_right" : circularState === "ANTICLOCKWISE" ? "rotate_left" : "";
+		return circularState === "CLOCKWISE" ? "mdi:clockwise" : circularState === "ANTICLOCKWISE" ? "mdi:anticlockwise" : "";
 	}
 
 	public static getDeviationKey(realtime: boolean, deviation: number) {

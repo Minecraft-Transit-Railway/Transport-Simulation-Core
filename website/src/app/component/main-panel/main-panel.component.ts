@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -37,10 +37,10 @@ import {TranslocoDirective} from "@jsverse/transloco";
 		VisibilityToggleComponent,
 		InterchangeStyleToggleComponent,
 		DataListEntryComponent,
-
 	],
 	templateUrl: "./main-panel.component.html",
 	styleUrl: "./main-panel.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class MainPanelComponent {
 	private readonly mapDataService = inject(MapDataService);

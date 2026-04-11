@@ -4,15 +4,15 @@ export class RouteType {
 }
 
 export const ROUTE_TYPES: Record<string, RouteType> = {
-	train_normal: new RouteType("directions_railway", "Train"),
-	train_light_rail: new RouteType("tram", "Light Rail"),
-	train_high_speed: new RouteType("train", "High Speed"),
-	boat_normal: new RouteType("sailing", "Ferry"),
-	boat_light_rail: new RouteType("directions_boat", "Cruise"),
-	boat_high_speed: new RouteType("snowmobile", "Fast Ferry"),
-	cable_car_normal: new RouteType("airline_seat_recline_extra", "Cable Car"),
-	bus_normal: new RouteType("directions_bus", "Bus"),
-	bus_light_rail: new RouteType("local_taxi", "Minibus"),
-	bus_high_speed: new RouteType("airport_shuttle", "Express Bus"),
-	airplane_normal: new RouteType("flight", "Plane"),
+	train_normal: new RouteType("mdi:train", "Train"),
+	train_light_rail: new RouteType("mdi:lightRail", "Light Rail"),
+	train_high_speed: new RouteType("mdi:highSpeedRail", "High Speed"),
+	boat_normal: new RouteType("mdi:ferry", "Ferry"),
+	boat_light_rail: new RouteType("mdi:cruise", "Cruise"),
+	boat_high_speed: new RouteType("mdi:fastFerry", "Fast Ferry"),
+	cable_car_normal: new RouteType("mdi:cableCar", "Cable Car"),
+	bus_normal: new RouteType("mdi:bus", "Bus"),
+	bus_light_rail: new RouteType("mdi:minibus", "Minibus"),
+	bus_high_speed: new RouteType("mdi:expressBus", "Express Bus"),
+	airplane_normal: new RouteType("mdi:plane", "Plane"),
 } as const;

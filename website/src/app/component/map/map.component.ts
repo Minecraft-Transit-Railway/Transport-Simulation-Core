@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, output, signal, viewChild} from "@angular/core";
+import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, ElementRef, inject, output, signal, viewChild} from "@angular/core";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import SETTINGS from "../../utility/settings";
 import {MapDataService} from "../../service/map-data.service";
@@ -47,6 +47,7 @@ const animationDuration = 2000;
 	],
 	templateUrl: "./map.component.html",
 	styleUrl: "./map.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class MapComponent implements AfterViewInit {
 	private readonly changeDetectorRef = inject(ChangeDetectorRef);
@@ -269,6 +270,10 @@ export class MapComponent implements AfterViewInit {
 			renderer.dispose();
 			this.controls?.dispose();
 		});
+	}
+
+	trackByIcon(index: number, icon: string): string {
+		return icon;
 	}
 
 	private createStationBlobs() {

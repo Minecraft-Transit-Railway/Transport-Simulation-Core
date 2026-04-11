@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, Input, Output} from "@angular/core";
 import {NgOptimizedImage, NgTemplateOutlet} from "@angular/common";
 import {RippleModule} from "primeng/ripple";
 
@@ -11,6 +11,7 @@ import {RippleModule} from "primeng/ripple";
 	],
 	templateUrl: "./data-list-entry.component.html",
 	styleUrl: "./data-list-entry.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class DataListEntryComponent {
 	@Input({required: true}) icons: string[] = [];

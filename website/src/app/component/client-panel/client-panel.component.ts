@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output} from "@angular/core";
 import {TooltipModule} from "primeng/tooltip";
 import {CheckboxModule} from "primeng/checkbox";
 import {DividerModule} from "primeng/divider";
@@ -37,6 +37,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 	],
 	templateUrl: "./client-panel.component.html",
 	styleUrl: "./client-panel.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ClientPanelComponent {
 	private readonly clientService = inject(ClientService);

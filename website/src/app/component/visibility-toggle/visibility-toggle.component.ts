@@ -1,9 +1,9 @@
-import {Component, inject, Input} from "@angular/core";
+import {Component, CUSTOM_ELEMENTS_SCHEMA, inject, Input} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectButtonChangeEvent, SelectButtonModule} from "primeng/selectbutton";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {FormsModule} from "@angular/forms";
 import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
@@ -13,10 +13,10 @@ import {TranslocoDirective} from "@jsverse/transloco";
 		TooltipModule,
 		TranslocoDirective,
 		FormsModule,
-		ReactiveFormsModule,
 	],
 	templateUrl: "./visibility-toggle.component.html",
 	styleUrl: "./visibility-toggle.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class VisibilityToggleComponent {
 	private readonly mapDataService = inject(MapDataService);
@@ -24,22 +24,22 @@ export class VisibilityToggleComponent {
 	@Input({required: true}) routeType = "";
 	protected readonly visibilityOptions: { icon: string, value: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED", tooltip: string }[] = [
 		{
-			icon: "visibility_off",
+			icon: "mdi:hide",
 			value: "HIDDEN",
 			tooltip: "visibility.hidden",
 		},
 		{
-			icon: "horizontal_rule",
+			icon: "fluent:solid",
 			value: "SOLID",
 			tooltip: "visibility.solid",
 		},
 		{
-			icon: "drag_handle",
+			icon: "fluent:hollow",
 			value: "HOLLOW",
 			tooltip: "visibility.hollow",
 		},
 		{
-			icon: "more_horiz",
+			icon: "fluent:dashed",
 			value: "DASHED",
 			tooltip: "visibility.dashed",
 		},

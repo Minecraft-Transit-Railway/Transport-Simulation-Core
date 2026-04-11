@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject} from "@angular/core";
 import {MapComponent} from "./component/map/map.component";
 import {StationPanelComponent} from "./component/station-panel/station-panel.component";
 import {StationService} from "./service/station.service";
@@ -31,6 +31,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 	],
 	templateUrl: "./app.component.html",
 	styleUrl: "./app.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AppComponent {
 	private readonly stationService = inject(StationService);

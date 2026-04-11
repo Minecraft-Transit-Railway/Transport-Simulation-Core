@@ -7,14 +7,14 @@
 					<app-search [label]="t('common.end')" [parentFormGroup]="formGroup" childFormControlName="endInput" [includeRoutes]="false" (stationClicked)="onClickStation($event, false)" (clientClicked)="onClickClient($event, false)" (textCleared)="onClearInput(false)"/>
 				</div>
 				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="swapStations()" [disabled]="cannotSwap()" [pTooltip]="t('directionsPanel.swap')">
-					<div class="material-icons">swap_vert</div>
+					<iconify-icon icon="mdi:swap" aria-hidden="true"></iconify-icon>
 				</button>
 			</div>
 			@if (!cannotManuallyRefresh()) {
 				<p-divider/>
 				<button pButton class="icon-button" severity="secondary" (click)="refreshDirections()" [fluid]="true">
 					<div class="row gap-small">
-						<div class="material-icons">refresh</div>
+						<iconify-icon icon="mdi:refresh" aria-hidden="true"></iconify-icon>
 						<div>{{ t('directionsPanel.refreshDirections') }}</div>
 					</div>
 				</button>
@@ -31,7 +31,7 @@
 			@if (isValid() && getDirections().length === 0) {
 				<div class="column center wrapper">
 					<div class="spacing"></div>
-					<div class="material-icons big-icon">remove_road</div>
+					<iconify-icon class="big-icon" icon="mdi:noDirections" aria-hidden="true"></iconify-icon>
 					<div>{{ t('directionsPanel.noDirectionsFound') }}</div>
 					<div class="spacing"></div>
 				</div>
@@ -44,12 +44,12 @@
 								<div class="gray no-wrap">{{ direction.startTime | formatDate }}</div>
 							</div>
 						</app-route-display>
-						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[{icon: direction.route ? direction.icon : sameStation(direction) ? 'transfer_within_a_station' : 'directions_walk', offset: 0}]">
+						<app-route-display [colorAbove]="getRouteColor($index)" [colorBelow]="getRouteColor($index)" [isStation]="false" [icons]="[{icon: direction.route ? direction.icon : sameStation(direction) ? 'mdi:transfer' : 'mdi:walk', offset: 0}]">
 							@if (direction.route) {
 								<div class="row center">
 									<app-data-list-entry class="spacing" [icons]="[getCircularIcon(direction.route)]" [title]="[getRouteName(direction.route), '']" [subtitles]="[[getRouteDestination(direction.route), '']]" [useLightColor]="true" [clickable]="false"/>
 									<div class="row center gray">
-										<div class="material-icons">schedule</div>
+										<iconify-icon icon="mdi:schedule" aria-hidden="true"></iconify-icon>
 										<div>&nbsp;{{ getDuration(direction) }}</div>
 									</div>
 								</div>
@@ -57,7 +57,7 @@
 								<div class="row center">
 									<app-data-list-entry class="spacing" [icons]="[]" [title]="[getDistanceLabel(direction), '']" [subtitles]="[]" [useLightColor]="true" [clickable]="false"/>
 									<div class="row center gray">
-										<div class="material-icons">schedule</div>
+										<iconify-icon icon="mdi:schedule" aria-hidden="true"></iconify-icon>
 										<div>&nbsp;{{ getDuration(direction) }}</div>
 									</div>
 								</div>

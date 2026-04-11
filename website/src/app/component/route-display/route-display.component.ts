@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, inject, Input, signal, ViewChild} from "@angular/core";
+import {AfterViewInit, Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, inject, Input, signal, ViewChild} from "@angular/core";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {ThemeService} from "../../service/theme.service";
 import {TooltipModule} from "primeng/tooltip";
@@ -11,6 +11,7 @@ import {TooltipModule} from "primeng/tooltip";
 	],
 	templateUrl: "./route-display.component.html",
 	styleUrl: "./route-display.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class RouteDisplayComponent implements AfterViewInit {
 	private readonly themeService = inject(ThemeService);

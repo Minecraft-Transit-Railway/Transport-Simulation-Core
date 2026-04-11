@@ -4,26 +4,26 @@
 			<app-title [name]="getStation()?.name ?? ''" [color]="getStationColor()"/>
 			<div class="row gap-small center">
 				<div class="row gap center" [pTooltip]="t('common.location')" tooltipPosition="left">
-					<div class="material-icons">my_location</div>
+					<iconify-icon icon="mdi:location" aria-hidden="true"></iconify-icon>
 					<div>({{ getCoordinatesText() }})</div>
 				</div>
 				<div class="row center">
-					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="copyLocation(icon)" [pTooltip]="t('common.copyLocation')" tooltipPosition="bottom">
-						<div class="material-icons" #icon>content_copy</div>
+					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="copyLocation()" [pTooltip]="t('common.copyLocation')" tooltipPosition="bottom">
+						<iconify-icon [icon]="copyIcon()" aria-hidden="true"></iconify-icon>
 					</button>
 					<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" [pTooltip]="t('common.focusOnMap')" tooltipPosition="bottom">
-						<div class="material-icons">filter_center_focus</div>
+						<iconify-icon icon="mdi:focus" aria-hidden="true"></iconify-icon>
 					</button>
 				</div>
 			</div>
 			<div class="row gap center">
 				<div class="row gap center" [pTooltip]="t('station.fareZones')" tooltipPosition="left">
-					<div class="material-icons">sell</div>
+					<iconify-icon icon="mdi:fareZone" aria-hidden="true"></iconify-icon>
 					<div>({{ getZoneText() }})</div>
 				</div>
 			</div>
 			<div class="row center">
-				<div class="material-icons" [pTooltip]="t('common.directions')" tooltipPosition="left">directions</div>
+				<iconify-icon icon="mdi:directions" [pTooltip]="t('common.directions')" tooltipPosition="left" aria-hidden="true"></iconify-icon>
 				<p-button [label]="t('common.start')" variant="text" (onClick)="openDirections(true)"/>
 				<p-button [label]="t('common.end')" variant="text" (onClick)="openDirections(false)"/>
 			</div>
@@ -52,7 +52,7 @@
 								@for (route of getActiveRoutes(); track $index) {
 									<div class="row center chip clickable" [style.box-shadow]="'inset 0 0 0 ' + (routeFiltered(route.key) ? 4 : 2) + 'px ' + (route.color | formatColor)" (click)="updateArrivalFilter(showTerminatingCheckbox.checked, route.key)">
 										<div class="row gap-small center">
-											<div class="material-icons">{{ route.typeIcon }}</div>
+											<iconify-icon [icon]="route.typeIcon" aria-hidden="true"></iconify-icon>
 											<div class="column chip-text">
 												@for (name of route.name | splitName; track $index) {
 													<div>{{ name.text }}</div>

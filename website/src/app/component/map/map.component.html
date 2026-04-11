@@ -50,7 +50,7 @@
 							}
 							<div class="row" aria-hidden="true">
 								@for (icon of textLabel.icons; track $index) {
-									<div class="material-icons station-name icon">{{ icon }}</div>
+									<iconify-icon class="station-name icon" [icon]="icon"></iconify-icon>
 								}
 							</div>
 						</div>
