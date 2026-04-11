@@ -121,8 +121,4 @@ export class SearchComponent {
 		const name = entry?.value?.name;
 		return name ? name.replaceAll("|", " ") : "";
 	}
-
-	getText() {
-		return "";
-	}
 }
