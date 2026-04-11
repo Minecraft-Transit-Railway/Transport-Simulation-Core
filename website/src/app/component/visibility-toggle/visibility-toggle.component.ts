@@ -24,22 +24,22 @@ export class VisibilityToggleComponent {
 	@Input({required: true}) routeType = "";
 	protected readonly visibilityOptions: { icon: string, value: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED", tooltip: string }[] = [
 		{
-			icon: "visibility-off",
+			icon: "mdi:hide",
 			value: "HIDDEN",
 			tooltip: "visibility.hidden",
 		},
 		{
-			icon: "horizontal-rule",
+			icon: "fluent:solid",
 			value: "SOLID",
 			tooltip: "visibility.solid",
 		},
 		{
-			icon: "drag-handle",
+			icon: "fluent:hollow",
 			value: "HOLLOW",
 			tooltip: "visibility.hollow",
 		},
 		{
-			icon: "more-horiz",
+			icon: "fluent:dashed",
 			value: "DASHED",
 			tooltip: "visibility.dashed",
 		},

@@ -9,15 +9,15 @@
 			</div>
 			<div class="row gap-small center">
 				<div class="row gap center" [pTooltip]="t('common.location')" tooltipPosition="left">
-					<iconify-icon icon="material-symbols:my-location" aria-hidden="true"></iconify-icon>
+					<iconify-icon icon="mdi:location" aria-hidden="true"></iconify-icon>
 					<div>({{ getCoordinatesText() }})</div>
 				</div>
 				<button pButton class="icon-button" [rounded]="true" [text]="true" (click)="focus()" [pTooltip]="t('common.focusOnMap')" tooltipPosition="bottom">
-					<iconify-icon icon="material-symbols:filter-center-focus" aria-hidden="true"></iconify-icon>
+					<iconify-icon icon="mdi:focus" aria-hidden="true"></iconify-icon>
 				</button>
 			</div>
 			<div class="row center">
-				<iconify-icon icon="material-symbols:directions" [pTooltip]="t('common.directions')" tooltipPosition="left" aria-hidden="true"></iconify-icon>
+				<iconify-icon icon="mdi:directions" [pTooltip]="t('common.directions')" tooltipPosition="left" aria-hidden="true"></iconify-icon>
 				<p-button [label]="t('common.start')" variant="text" (onClick)="openDirections(true)"/>
 				<p-button [label]="t('common.end')" variant="text" (onClick)="openDirections(false)"/>
 			</div>
@@ -32,7 +32,7 @@
 				<app-data-list-entry [icons]="[routeDetails.icon]" [title]="[routeDetails.route.name | formatName, routeDetails.route.number | formatName]" [subtitles]="[]" [color]="routeDetails.route.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="routeClicked.emit(getRouteKey(routeDetails.route))"/>
 				<p-divider/>
 				<app-data-list-entry [icons]="routeDetails.routeStation1.getIcons()" [title]="[routeDetails.routeStation1.name | formatName, '']" [subtitles]="[]" [color]="routeDetails.routeStation1.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(routeDetails.routeStation1.id)"/>
-				<app-data-list-entry [icons]="['arrow-downward']" [title]="['', '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
+				<app-data-list-entry [icons]="['mdi:arrowDown']" [title]="['', '']" [subtitles]="[]" [useLightColor]="false" [clickable]="false"/>
 				<app-data-list-entry [icons]="routeDetails.routeStation2.getIcons()" [title]="[routeDetails.routeStation2.name | formatName, '']" [subtitles]="[]" [color]="routeDetails.routeStation2.color | formatColor" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(routeDetails.routeStation2.id)"/>
 			} @else {
 				@if (getStation(); as station) {

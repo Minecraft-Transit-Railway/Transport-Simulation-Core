@@ -127,13 +127,13 @@ export class StationPanelComponent {
 		return this.stationService.loading();
 	}
 
-	protected readonly copyIcon = signal("material-symbols:content-copy");
+	protected readonly copyIcon = signal("mdi:copy");
 
 	copyLocation() {
-		this.copyIcon.set("material-symbols:check");
+		this.copyIcon.set("mdi:check");
 		const station = this.stationService.selectedData();
 		navigator.clipboard.writeText(station === undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();
-		setTimeout(() => this.copyIcon.set("material-symbols:content-copy"), 1000);
+		setTimeout(() => this.copyIcon.set("mdi:copy"), 1000);
 	}
 
 	focus() {

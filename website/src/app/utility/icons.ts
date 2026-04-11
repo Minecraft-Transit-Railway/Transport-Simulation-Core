@@ -1,89 +1,85 @@
 import {addIcon} from "iconify-icon";
 
 // Static UI icons
-import menu from "@iconify-icons/material-symbols/menu";
-import myLocation from "@iconify-icons/material-symbols/my-location";
-import contentCopy from "@iconify-icons/material-symbols/content-copy";
-import filterCenterFocus from "@iconify-icons/material-symbols/filter-center-focus";
-import sell from "@iconify-icons/material-symbols/sell";
-import directions from "@iconify-icons/material-symbols/directions";
-import schedule from "@iconify-icons/material-symbols/schedule";
-import home from "@iconify-icons/material-symbols/home";
-import hourglassEmpty from "@iconify-icons/material-symbols/hourglass-empty";
-import swapVert from "@iconify-icons/material-symbols/swap-vert";
-import refresh from "@iconify-icons/material-symbols/refresh";
-import removeRoad from "@iconify-icons/material-symbols/remove-road";
-import polyline from "@iconify-icons/material-symbols/polyline";
-import check from "@iconify-icons/material-symbols/check";
+import menu from "@iconify-icons/mdi/menu";
+import location from "@iconify-icons/mdi/my-location";
+import copy from "@iconify-icons/mdi/content-copy";
+import focus from "@iconify-icons/mdi/image-filter-center-focus";
+import fareZone from "@iconify-icons/mdi/tag-multiple";
+import directions from "@iconify-icons/mdi/directions";
+import schedule from "@iconify-icons/mdi/schedule";
+import depot from "@iconify-icons/mdi/shed";
+import duration from "@iconify-icons/mdi/hourglass-empty";
+import swap from "@iconify-icons/mdi/swap-vertical";
+import refresh from "@iconify-icons/mdi/refresh";
+import noDirections from "@iconify-icons/mdi/sign-direction-remove";
+import interchange from "@iconify-icons/mdi/transit-connection-horizontal";
+import transfer from "@iconify-icons/mdi/transit-transfer";
+import check from "@iconify-icons/mdi/check";
 
 // Visibility / interchange toggle icons
-import visibilityOff from "@iconify-icons/material-symbols/visibility-off";
-import horizontalRule from "@iconify-icons/material-symbols/horizontal-rule";
-import dragHandle from "@iconify-icons/material-symbols/drag-handle";
-import moreHoriz from "@iconify-icons/material-symbols/more-horiz";
+import hidden from "@iconify-icons/mdi/hide";
+import solid from "@iconify-icons/fluent/line-horizontal-1-24-regular";
+import hollow from "@iconify-icons/fluent/re-order-24-regular";
+import dashed from "@iconify-icons/fluent/line-horizontal-1-dashes-24-regular";
 
 // Route type icons (referenced dynamically via routeType.ts)
-import directionsRailway from "@iconify-icons/material-symbols/directions-railway";
-import tram from "@iconify-icons/material-symbols/tram";
-import train from "@iconify-icons/material-symbols/train";
-import sailing from "@iconify-icons/material-symbols/sailing";
-import directionsBoat from "@iconify-icons/material-symbols/directions-boat";
-import snowmobile from "@iconify-icons/material-symbols/snowmobile";
-import airlineSeatReclineExtra from "@iconify-icons/material-symbols/airline-seat-recline-extra";
-import directionsBus from "@iconify-icons/material-symbols/directions-bus";
-import localTaxi from "@iconify-icons/material-symbols/local-taxi";
-import airportShuttle from "@iconify-icons/material-symbols/airport-shuttle";
-import flight from "@iconify-icons/material-symbols/flight";
+import train from "@iconify-icons/mdi/subway-variant";
+import lightRail from "@iconify-icons/mdi/tram";
+import highSpeedRail from "@iconify-icons/mdi/train";
+import ferry from "@iconify-icons/mdi/sail-boat";
+import cruise from "@iconify-icons/mdi/boat";
+import fastFerry from "@iconify-icons/mdi/sail-boat-sink";
+import cableCar from "@iconify-icons/mdi/cable-car";
+import bus from "@iconify-icons/mdi/bus-double-decker";
+import minibus from "@iconify-icons/mdi/bus";
+import expressBus from "@iconify-icons/mdi/bus-side";
+import plane from "@iconify-icons/mdi/airplane";
 
 // Circular state icons
-import rotateRight from "@iconify-icons/material-symbols/rotate-right";
-import rotateLeft from "@iconify-icons/material-symbols/rotate-left";
-
-// Directions icons
-import transferWithinAStation from "@iconify-icons/material-symbols/transfer-within-a-station";
-import directionsWalk from "@iconify-icons/material-symbols/directions-walk";
+import clockwise from "@iconify-icons/mdi/rotate-clockwise";
+import anticlockwise from "@iconify-icons/mdi/rotate-counter-clockwise";
 
 // Misc icons
-import arrowDownward from "@iconify-icons/material-symbols/arrow-downward";
+import walk from "@iconify-icons/mdi/directions-walk";
+import arrowDown from "@iconify-icons/mdi/arrow-down";
 
 /**
- * Pre-registers all Material Symbols icons used in the app so they are bundled
- * and available offline without CDN requests.
+ * Pre-registers all icons used in the app so they are bundled and available offline without CDN requests.
  */
 export function registerIcons(): void {
-	addIcon("material-symbols:menu", menu);
-	addIcon("material-symbols:my-location", myLocation);
-	addIcon("material-symbols:content-copy", contentCopy);
-	addIcon("material-symbols:filter-center-focus", filterCenterFocus);
-	addIcon("material-symbols:sell", sell);
-	addIcon("material-symbols:directions", directions);
-	addIcon("material-symbols:schedule", schedule);
-	addIcon("material-symbols:home", home);
-	addIcon("material-symbols:hourglass-empty", hourglassEmpty);
-	addIcon("material-symbols:swap-vert", swapVert);
-	addIcon("material-symbols:refresh", refresh);
-	addIcon("material-symbols:remove-road", removeRoad);
-	addIcon("material-symbols:polyline", polyline);
-	addIcon("material-symbols:check", check);
-	addIcon("material-symbols:visibility-off", visibilityOff);
-	addIcon("material-symbols:horizontal-rule", horizontalRule);
-	addIcon("material-symbols:drag-handle", dragHandle);
-	addIcon("material-symbols:more-horiz", moreHoriz);
-	addIcon("material-symbols:directions-railway", directionsRailway);
-	addIcon("material-symbols:tram", tram);
-	addIcon("material-symbols:train", train);
-	addIcon("material-symbols:sailing", sailing);
-	addIcon("material-symbols:directions-boat", directionsBoat);
-	addIcon("material-symbols:snowmobile", snowmobile);
-	addIcon("material-symbols:airline-seat-recline-extra", airlineSeatReclineExtra);
-	addIcon("material-symbols:directions-bus", directionsBus);
-	addIcon("material-symbols:local-taxi", localTaxi);
-	addIcon("material-symbols:airport-shuttle", airportShuttle);
-	addIcon("material-symbols:flight", flight);
-	addIcon("material-symbols:rotate-right", rotateRight);
-	addIcon("material-symbols:rotate-left", rotateLeft);
-	addIcon("material-symbols:transfer-within-a-station", transferWithinAStation);
-	addIcon("material-symbols:directions-walk", directionsWalk);
-	addIcon("material-symbols:arrow-downward", arrowDownward);
+	addIcon("mdi:menu", menu);
+	addIcon("mdi:location", location);
+	addIcon("mdi:copy", copy);
+	addIcon("mdi:focus", focus);
+	addIcon("mdi:fareZone", fareZone);
+	addIcon("mdi:directions", directions);
+	addIcon("mdi:schedule", schedule);
+	addIcon("mdi:depot", depot);
+	addIcon("mdi:duration", duration);
+	addIcon("mdi:swap", swap);
+	addIcon("mdi:refresh", refresh);
+	addIcon("mdi:noDirections", noDirections);
+	addIcon("mdi:interchange", interchange);
+	addIcon("mdi:transfer", transfer);
+	addIcon("mdi:check", check);
+	addIcon("fluent:hidden", hidden);
+	addIcon("fluent:solid", solid);
+	addIcon("fluent:hollow", hollow);
+	addIcon("fluent:dashed", dashed);
+	addIcon("mdi:train", train);
+	addIcon("mdi:lightRail", lightRail);
+	addIcon("mdi:highSpeedRail", highSpeedRail);
+	addIcon("mdi:ferry", ferry);
+	addIcon("mdi:cruise", cruise);
+	addIcon("mdi:fastFerry", fastFerry);
+	addIcon("mdi:cableCar", cableCar);
+	addIcon("mdi:bus", bus);
+	addIcon("mdi:minibus", minibus);
+	addIcon("mdi:expressBus", expressBus);
+	addIcon("mdi:plane", plane);
+	addIcon("mdi:clockwise", clockwise);
+	addIcon("mdi:anticlockwise", anticlockwise);
+	addIcon("mdi:walk", walk);
+	addIcon("mdi:arrowDown", arrowDown);
 }
-

@@ -49,8 +49,8 @@
 								<div class="station-name text" [class.cjk]="textLabelPart.isCjk">{{ textLabelPart.text }}</div>
 							}
 							<div class="row" aria-hidden="true">
-								@for (icon of textLabel.icons; track trackByIcon($index, icon)) {
-									<span class="station-name icon"><iconify-icon [icon]="'material-symbols:' + icon"></iconify-icon></span>
+								@for (icon of textLabel.icons; track $index) {
+									<iconify-icon class="station-name icon" [icon]="icon"></iconify-icon>
 								}
 							</div>
 						</div>

@@ -273,7 +273,6 @@ export class MapComponent implements AfterViewInit {
 		});
 	}
 
-
 	trackByIcon(index: number, icon: string): string {
 		return icon;
 	}

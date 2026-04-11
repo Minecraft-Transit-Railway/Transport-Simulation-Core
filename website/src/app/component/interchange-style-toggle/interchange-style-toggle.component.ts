@@ -23,12 +23,12 @@ export class InterchangeStyleToggleComponent {
 
 	protected readonly interchangeStyleOptions: { icon: string, value: "DOTTED" | "HOLLOW", tooltip: string }[] = [
 		{
-			icon: "more-horiz",
+			icon: "fluent:dashed",
 			value: "DOTTED",
 			tooltip: "visibility.dotted",
 		},
 		{
-			icon: "drag-handle",
+			icon: "fluent:hollow",
 			value: "HOLLOW",
 			tooltip: "visibility.hollow",
 		},

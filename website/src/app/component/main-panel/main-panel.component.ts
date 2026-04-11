@@ -109,7 +109,6 @@ export class MainPanelComponent {
 		this.formGroup.patchValue({search: undefined});
 	}
 
-
 	changeTheme(isDarkTheme: boolean) {
 		this.themeService.setTheme(isDarkTheme);
 	}
