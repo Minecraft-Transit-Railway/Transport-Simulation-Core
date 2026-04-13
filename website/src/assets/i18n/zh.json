@@ -22,7 +22,8 @@
 		"interchangeStyle": "轉車站樣式",
 		"players": "玩家 ({{count}})",
 		"noPlayersOnline": "目前沒有玩家在綫上。",
-		"darkTheme": "深色主題"
+		"darkTheme": "深色主題",
+		"language": "語言"
 	},
 	"station": {
 		"title": "車站詳情",

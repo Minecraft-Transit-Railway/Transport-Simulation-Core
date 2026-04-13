@@ -51,9 +51,15 @@
 				</p-accordion>
 			</div>
 			<div class="spacing"></div>
-			<div class="row gap-small center padding-sides padding-top-bottom">
-				<p-toggle-switch inputId="themeToggle" formControlName="themeToggle" (onChange)="changeTheme($event.checked)"/>
-				<label for="themeToggle">{{ t('mainPanel.darkTheme') }}</label>
+			<div class="column gap padding-sides padding-top-bottom">
+				<div class="row gap-small center">
+					<p-toggle-switch inputId="themeToggle" formControlName="themeToggle" (onChange)="changeTheme($event.checked)"/>
+					<label for="themeToggle">{{ t('mainPanel.darkTheme') }}</label>
+				</div>
+				<p-float-label variant="in">
+					<p-select inputId="language" formControlName="language" [options]="languageOptions()" optionLabel="label" optionValue="value" (onChange)="changeLanguage($event.value)" [fluid]="true"/>
+					<label for="language">{{ t('mainPanel.language') }}</label>
+				</p-float-label>
 			</div>
 		</div>
 	</div>

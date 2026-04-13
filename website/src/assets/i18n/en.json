@@ -22,7 +22,8 @@
 		"interchangeStyle": "Interchange Style",
 		"players": "Players ({{count}})",
 		"noPlayersOnline": "There are no players online.",
-		"darkTheme": "Dark Theme"
+		"darkTheme": "Dark Theme",
+		"language": "Language"
 	},
 	"station": {
 		"title": "Station Details",

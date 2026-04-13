@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
+import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -17,7 +17,13 @@ import {SearchComponent} from "../search/search.component";
 import {AccordionModule} from "primeng/accordion";
 import {ClientsService} from "../../service/clients.service";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
-import {TranslocoDirective} from "@jsverse/transloco";
+import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
+import {getCookie, setCookie} from "../../data/utilities";
+
+const languageMapping: Record<string, string> = {
+	en: "English",
+	zh: "繁體中文",
+};
 
 @Component({
 	selector: "app-main-panel",
@@ -48,6 +54,7 @@ export class MainPanelComponent {
 	private readonly dimensionService = inject(DimensionService);
 	private readonly clientsService = inject(ClientsService);
 	private readonly themeService = inject(ThemeService);
+	private readonly translocoService = inject(TranslocoService);
 
 	readonly stationClicked = output<string>();
 	readonly routeClicked = output<string>();
@@ -59,8 +66,16 @@ export class MainPanelComponent {
 		dimension: new FormControl(""),
 		dimension1: new FormControl<"HIDDEN" | "SOLID" | "HOLLOW" | "DASHED">("HIDDEN"),
 		themeToggle: new FormControl(this.themeService.isDarkTheme()),
+		language: new FormControl(getCookie("language") || this.translocoService.getActiveLang()),
 	});
 	protected readonly routeTypes = signal<[string, RouteType][]>([]);
+
+	protected readonly languageOptions = computed(() => {
+		return this.translocoService.getAvailableLangs().map(lang => {
+			const code = typeof lang === "string" ? lang : lang.id;
+			return {value: code, label: languageMapping[code]};
+		});
+	});
 
 	constructor() {
 		this.mapDataService.dataProcessed.subscribe(() => {
@@ -113,5 +128,10 @@ export class MainPanelComponent {
 
 	changeTheme(isDarkTheme: boolean) {
 		this.themeService.setTheme(isDarkTheme);
+	}
+
+	changeLanguage(lang: string) {
+		setCookie("language", lang);
+		this.translocoService.setActiveLang(lang);
 	}
 }
