@@ -6,7 +6,6 @@ import {SearchData} from "../entity/searchData";
 @Pipe({
 	name: "simplifyRoutes",
 	pure: true,
-	standalone: true,
 })
 export class SimplifyRoutesPipe implements PipeTransform {
 

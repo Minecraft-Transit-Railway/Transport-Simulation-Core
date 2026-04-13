@@ -1,12 +1,9 @@
 import {Station} from "./station";
 
-export class StationForMap {
-	constructor(
-		public readonly station: Station,
-		public readonly rotate: boolean,
-		public readonly routeCount: number,
-		public readonly width: number,
-		public readonly height: number,
-	) {
-	}
+export interface StationForMap {
+	readonly station: Station;
+	readonly rotate: boolean;
+	readonly routeCount: number;
+	readonly width: number;
+	readonly height: number;
 }

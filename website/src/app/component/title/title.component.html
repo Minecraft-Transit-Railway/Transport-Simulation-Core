@@ -1,10 +1,11 @@
 <div class="column gap">
 	<div class="column">
-		@for (namePart of name | splitName; track $index) {
-			<div class="name {{namePart.isCjk ? 'cjk' : ''}}">{{ namePart.text }}</div>
+		@for (namePart of name() | splitName; track $index) {
+			<div class="name" [class.cjk]="namePart.isCjk">{{ namePart.text }}</div>
 		}
 	</div>
-	@if (color) {
-		<div class="color-bar" [style.background-color]="color | formatColor"></div>
+	@let colorValue = color();
+	@if (colorValue) {
+		<div class="color-bar" [style.background-color]="colorValue | formatColor"></div>
 	}
 </div>

@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Input, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject, input, output} from "@angular/core";
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MapDataService} from "../../service/map-data.service";
 import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
@@ -20,6 +20,7 @@ const maxResults = 50;
 
 @Component({
 	selector: "app-search",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FloatLabelModule,
 		InputTextModule,
@@ -41,15 +42,15 @@ export class SearchComponent {
 	private readonly simplifyRoutesPipe = inject(SimplifyRoutesPipe);
 	private readonly translocoService = inject(TranslocoService);
 
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() routeClicked = new EventEmitter<string>();
-	@Output() clientClicked = new EventEmitter<string>();
-	@Output() textCleared = new EventEmitter<void>();
-	@Input({required: true}) label = "";
-	@Input({required: true}) parentFormGroup!: FormGroup;
-	@Input({required: true}) childFormControlName = "";
-	@Input({required: true}) includeRoutes = true;
-	@Input() setText!: EventEmitter<string>;
+	readonly stationClicked = output<string>();
+	readonly routeClicked = output<string>();
+	readonly clientClicked = output<string>();
+	readonly textCleared = output<void>();
+	readonly label = input.required<string>();
+	readonly parentFormGroup = input.required<FormGroup>();
+	readonly childFormControlName = input.required<string>();
+	readonly includeRoutes = input.required<boolean>();
+	readonly setText = input<import("@angular/core").OutputEmitterRef<string>>();
 
 	protected data: SelectItemGroup[] = [];
 
@@ -75,7 +76,7 @@ export class SearchComponent {
 			};
 
 			const searchedStations = filter(this.simplifyStationsPipe.transform(this.dataService.stations()));
-			const searchedRoutes = filter(this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes()) : []);
+			const searchedRoutes = filter(this.includeRoutes() ? this.simplifyRoutesPipe.transform(this.dataService.routes()) : []);
 			const searchedClients = filter(this.clientsService.allClients().map(client => ({key: client.id, icons: [`https://mc-heads.net/avatar/${client.id}`], name: client.name, number: "", type: "client"})));
 
 			if (searchedStations.length > 0) {

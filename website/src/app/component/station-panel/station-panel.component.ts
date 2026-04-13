@@ -1,4 +1,4 @@
-import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output, signal} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
@@ -22,6 +22,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-station-panel",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		ButtonModule,
 		TooltipModule,
@@ -49,9 +50,9 @@ export class StationPanelComponent {
 	private readonly stationService = inject(StationService);
 
 	protected dialogData?: Arrival;
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() routeClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<{ stationDetails: { stationId: string, isStartStation: boolean } }>;
+	readonly stationClicked = output<string>();
+	readonly routeClicked = output<string>();
+	readonly directionsOpened = output<{ stationDetails: { stationId: string, isStartStation: boolean } }>();
 
 	getStation() {
 		return this.stationService.selectedData();
@@ -139,7 +140,7 @@ export class StationPanelComponent {
 	focus() {
 		const station = this.stationService.selectedData();
 		if (station) {
-			this.dataService.animateMap.emit({x: station.x, z: station.z});
+			this.dataService.animateMap.next({x: station.x, z: station.z});
 		}
 	}
 

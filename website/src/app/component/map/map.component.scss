@@ -43,14 +43,14 @@ canvas {
 .station-name.icon {
 	font-size: 1.2rem;
 	width: unset;
-	filter: drop-shadow(-1px -1px 0 var(--background-color))
-		drop-shadow(0 -1px 0 var(--background-color))
-		drop-shadow(1px -1px 0 var(--background-color))
-		drop-shadow(1px 0 0 var(--background-color))
-		drop-shadow(1px 1px 0 var(--background-color))
-		drop-shadow(0 1px 0 var(--background-color))
-		drop-shadow(-1px 1px 0 var(--background-color))
-		drop-shadow(-1px 0 0 var(--background-color));
+	filter: drop-shadow(-1px -1px 0 var(--background-color)),
+			drop-shadow(0 -1px 0 var(--background-color)),
+			drop-shadow(1px -1px 0 var(--background-color)),
+			drop-shadow(1px 0 0 var(--background-color)),
+			drop-shadow(1px 1px 0 var(--background-color)),
+			drop-shadow(0 1px 0 var(--background-color)),
+			drop-shadow(-1px 1px 0 var(--background-color)),
+			drop-shadow(-1px 0 0 var(--background-color));
 }
 
 .loading-background {

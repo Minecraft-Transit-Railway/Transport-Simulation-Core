@@ -16,7 +16,7 @@ export class ThemeService {
 	public setTheme(isDarkTheme: boolean) {
 		this.darkTheme = isDarkTheme;
 		this.setElementTag();
-		setTimeout(() => this.mapDataService.drawMap.emit(), 0);
+		setTimeout(() => this.mapDataService.drawMap.next(), 0);
 	}
 
 	public isDarkTheme() {

@@ -1,4 +1,4 @@
-import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {ROUTE_TYPES, RouteType} from "../../data/routeType";
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
@@ -21,6 +21,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-main-panel",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FloatLabelModule,
 		SelectModule,
@@ -48,10 +49,10 @@ export class MainPanelComponent {
 	private readonly clientsService = inject(ClientsService);
 	private readonly themeService = inject(ThemeService);
 
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() routeClicked = new EventEmitter<string>();
-	@Output() clientClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<void>();
+	readonly stationClicked = output<string>();
+	readonly routeClicked = output<string>();
+	readonly clientClicked = output<string>();
+	readonly directionsOpened = output<void>();
 
 	protected readonly formGroup = new FormGroup({
 		search: new FormControl(""),
@@ -59,19 +60,20 @@ export class MainPanelComponent {
 		dimension1: new FormControl<"HIDDEN" | "SOLID" | "HOLLOW" | "DASHED">("HIDDEN"),
 		themeToggle: new FormControl(this.themeService.isDarkTheme()),
 	});
-	protected readonly routeTypes: [string, RouteType][] = [];
+	protected readonly routeTypes = signal<[string, RouteType][]>([]);
 
 	constructor() {
 		this.mapDataService.dataProcessed.subscribe(() => {
 			if (!this.formGroup.getRawValue().dimension) {
 				this.formGroup.patchValue({dimension: this.dimensionService.getDimensions()[0]});
 			}
-			this.routeTypes.length = 0;
+			const newRouteTypes: [string, RouteType][] = [];
 			Object.entries(ROUTE_TYPES).forEach(([routeTypeKey, routeType]) => {
 				if (routeTypeKey in this.mapDataService.routeTypeVisibility()) {
-					this.routeTypes.push([routeTypeKey, routeType]);
+					newRouteTypes.push([routeTypeKey, routeType]);
 				}
 			});
+			this.routeTypes.set(newRouteTypes);
 		});
 	}
 

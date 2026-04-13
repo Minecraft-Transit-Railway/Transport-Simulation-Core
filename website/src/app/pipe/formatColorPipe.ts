@@ -3,7 +3,6 @@ import {Pipe, PipeTransform} from "@angular/core";
 @Pipe({
 	name: "formatColor",
 	pure: true,
-	standalone: true,
 })
 export class FormatColorPipe implements PipeTransform {
 

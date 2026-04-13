@@ -1,4 +1,4 @@
-import {Component, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output} from "@angular/core";
 import {TooltipModule} from "primeng/tooltip";
 import {CheckboxModule} from "primeng/checkbox";
 import {DividerModule} from "primeng/divider";
@@ -19,6 +19,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-client-panel",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FloatLabelModule,
 		SelectModule,
@@ -43,9 +44,9 @@ export class ClientPanelComponent {
 	private readonly clientService = inject(ClientService);
 	private readonly mapDataService = inject(MapDataService);
 
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() routeClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<{ clientDetails: { clientId: string, isStartClient: boolean } }>;
+	readonly stationClicked = output<string>();
+	readonly routeClicked = output<string>();
+	readonly directionsOpened = output<{ clientDetails: { clientId: string, isStartClient: boolean } }>();
 
 	getName() {
 		return this.clientService.client()?.name ?? "";
@@ -81,7 +82,7 @@ export class ClientPanelComponent {
 	focus() {
 		const clientId = this.clientService.selectedData();
 		if (clientId) {
-			this.mapDataService.animateClient.emit(clientId);
+			this.mapDataService.animateClient.next(clientId);
 		}
 	}
 

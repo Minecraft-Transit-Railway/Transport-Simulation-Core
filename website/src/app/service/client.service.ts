@@ -37,7 +37,7 @@ export class ClientService extends SelectableDataServiceBase<string, string> {
 
 	public setClient(clientId: string) {
 		this.select(clientId);
-		this.mapDataService.animateClient.emit(clientId);
+		this.mapDataService.animateClient.next(clientId);
 		this.updateClient();
 	}
 

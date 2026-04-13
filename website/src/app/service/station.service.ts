@@ -7,7 +7,7 @@ import {DimensionService} from "./dimension.service";
 import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
 import {Station} from "../entity/station";
-import {arrRemove} from "rxjs/internal/util/arrRemove";
+
 
 const REFRESH_INTERVAL = 3000;
 const MAX_ARRIVALS = 5;
@@ -61,7 +61,7 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 			SimplifyRoutesPipe.sortRoutes(newRoutes);
 			let arrivalsRoutes: { key: string, name: string, number: string, color: number, textLineCount: number, typeIcon: string }[] = this.arrivalsRoutes();
 
-			if (JSON.stringify(newRoutes) !== JSON.stringify(this.arrivalsRoutes)) {
+			if (JSON.stringify(newRoutes) !== JSON.stringify(this.arrivalsRoutes())) {
 				arrivalsRoutes = [];
 				newRoutes.forEach(route => arrivalsRoutes.push(route));
 			}
@@ -107,7 +107,7 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 				this.dataService.updateData();
 			}
 			if (zoomToStation) {
-				this.dataService.animateMap.emit({x: selectedStation.x, z: selectedStation.z});
+				this.dataService.animateMap.next({x: selectedStation.x, z: selectedStation.z});
 			}
 		}
 	}
@@ -124,8 +124,9 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 
 	public updateArrivalFilter(filterArrivalShowTerminating: boolean, toggleRouteKey?: string) {
 		if (toggleRouteKey) {
-			if (this.filterArrivalRoutes.includes(toggleRouteKey)) {
-				arrRemove(this.filterArrivalRoutes, toggleRouteKey);
+			const index = this.filterArrivalRoutes.indexOf(toggleRouteKey);
+			if (index >= 0) {
+				this.filterArrivalRoutes.splice(index, 1);
 			} else {
 				this.filterArrivalRoutes.push(toggleRouteKey);
 			}

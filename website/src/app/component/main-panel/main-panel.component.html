@@ -16,7 +16,7 @@
 		<div class="column content">
 			<div class="column padding-sides">
 				<div class="column gap-small">
-					@for (routeType of routeTypes; track $index) {
+					@for (routeType of routeTypes(); track $index) {
 						<div class="row gap center">
 							<iconify-icon [icon]="routeType[1].icon" aria-hidden="true"></iconify-icon>
 							<div class="shrink spacing">{{ t('routeType.' + routeType[0]) }}</div>

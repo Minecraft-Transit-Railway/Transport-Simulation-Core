@@ -93,7 +93,7 @@ export class AppComponent {
 	}
 
 	onOpenDirections(directionsSelection: { stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } } | undefined, sideMain: DrawerComponent, sideStation: DrawerComponent, sideClient: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
-		this.directionsService.directionsPanelOpened.emit(directionsSelection);
+		this.directionsService.directionsPanelOpened.next(directionsSelection);
 		sideMain.close();
 		sideStation.close();
 		sideClient.close();

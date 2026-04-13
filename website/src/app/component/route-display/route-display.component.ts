@@ -1,10 +1,11 @@
-import {AfterViewInit, Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, inject, Input, signal, ViewChild} from "@angular/core";
+import {AfterViewInit, ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, ElementRef, inject, input, signal, viewChild} from "@angular/core";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {ThemeService} from "../../service/theme.service";
 import {TooltipModule} from "primeng/tooltip";
 
 @Component({
 	selector: "app-route-display",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FormatColorPipe,
 		TooltipModule,
@@ -16,22 +17,19 @@ import {TooltipModule} from "primeng/tooltip";
 export class RouteDisplayComponent implements AfterViewInit {
 	private readonly themeService = inject(ThemeService);
 
-	@Input() colorAbove?: number;
-	@Input() colorBelow?: number;
-	@Input({required: true}) isStation = false;
-	@Input({required: true}) icons: { icon: string, offset: number, tooltip?: string }[] = [];
-	@ViewChild("text") private readonly textRef!: ElementRef<HTMLDivElement>;
+	readonly colorAbove = input<number>();
+	readonly colorBelow = input<number>();
+	readonly isStation = input.required<boolean>();
+	readonly icons = input.required<{ icon: string, offset: number, tooltip?: string }[]>();
+	private readonly textRef = viewChild.required<ElementRef<HTMLDivElement>>("text");
 	private readonly height = signal(0);
+	readonly isDarkTheme = computed(() => this.themeService.isDarkTheme());
 
 	ngAfterViewInit(): void {
-		new ResizeObserver(entries => entries.forEach(entry => this.height.set(entry.target.clientHeight))).observe(this.textRef.nativeElement);
+		new ResizeObserver(entries => entries.forEach(entry => this.height.set(entry.target.clientHeight))).observe(this.textRef().nativeElement);
 	}
 
 	getHeight() {
 		return this.height();
-	}
-
-	isDarkTheme() {
-		return this.themeService.isDarkTheme();
 	}
 }

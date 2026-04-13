@@ -5,7 +5,6 @@ import {SearchData} from "../entity/searchData";
 @Pipe({
 	name: "simplifyStations",
 	pure: true,
-	standalone: true,
 })
 export class SimplifyStationsPipe implements PipeTransform {
 

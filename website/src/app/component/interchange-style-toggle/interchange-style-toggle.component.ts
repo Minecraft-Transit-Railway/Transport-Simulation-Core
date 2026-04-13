@@ -1,4 +1,4 @@
-import {Component, CUSTOM_ELEMENTS_SCHEMA, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
@@ -8,6 +8,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-interchange-style-toggle",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		SelectButtonModule,
 		TooltipModule,

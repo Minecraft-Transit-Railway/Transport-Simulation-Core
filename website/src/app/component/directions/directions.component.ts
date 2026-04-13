@@ -1,4 +1,4 @@
-import {Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal} from "@angular/core";
 import {SearchComponent} from "../search/search.component";
 import {DirectionsService} from "../../service/directions.service";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
@@ -29,6 +29,7 @@ import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-directions",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FloatLabelModule,
 		InputNumberModule,

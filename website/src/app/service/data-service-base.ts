@@ -1,9 +1,9 @@
-import {Observable} from "rxjs";
+import {Observable, Subject} from "rxjs";
 import {DimensionService} from "./dimension.service";
-import {EventEmitter, signal} from "@angular/core";
+import {signal} from "@angular/core";
 
 export abstract class DataServiceBase<T> {
-	public readonly dataProcessed = new EventEmitter<void>();
+	public readonly dataProcessed = new Subject<void>();
 	public readonly loading = signal(false);
 	private id = "";
 	private timeoutId = 0;
@@ -25,21 +25,17 @@ export abstract class DataServiceBase<T> {
 			const currentId = this.formatId();
 			observable.subscribe({
 				next: data => {
-					if (currentId == this.formatId()) {
+					if (currentId === this.formatId()) {
 						this.loading.set(false);
 						this.processData(data);
-						this.dataProcessed.emit();
+						this.dataProcessed.next();
 						this.scheduleData();
-					} else {
-						console.log("skipped");
 					}
 				},
 				error: error => {
-					if (currentId == this.formatId()) {
+					if (currentId === this.formatId()) {
 						console.error(error);
 						this.scheduleData();
-					} else {
-						console.log("skipped");
 					}
 				},
 			});
