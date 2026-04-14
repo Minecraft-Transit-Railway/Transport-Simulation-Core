@@ -1,4 +1,5 @@
-import {EventEmitter, inject, Injectable, signal} from "@angular/core";
+import {inject, Injectable, signal} from "@angular/core";
+import {Subject} from "rxjs";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";
 import {Route} from "../entity/route";
 import {DimensionService} from "./dimension.service";
@@ -15,7 +16,7 @@ const REFRESH_INTERVAL = 3000;
 
 @Injectable({providedIn: "root"})
 export class DirectionsService extends SelectableDataServiceBase<{ currentTime: number, data: DirectionsResponseDTO }, { directionsRequest: DirectionsRequestDTO, startStationId?: string, endStationId?: string }> {
-	public readonly directionsPanelOpened = new EventEmitter<{ stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } } | undefined>();
+	public readonly directionsPanelOpened = new Subject<{ stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } } | undefined>();
 	public readonly directions = signal<{
 		startStation?: Station,
 		endStation?: Station,

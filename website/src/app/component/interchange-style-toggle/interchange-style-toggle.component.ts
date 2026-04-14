@@ -1,33 +1,37 @@
-import {Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectButtonChangeEvent, SelectButtonModule} from "primeng/selectbutton";
 import {FormsModule} from "@angular/forms";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-interchange-style-toggle",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		SelectButtonModule,
 		TooltipModule,
+		TranslocoDirective,
 		FormsModule,
 	],
 	templateUrl: "./interchange-style-toggle.component.html",
 	styleUrl: "./interchange-style-toggle.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class InterchangeStyleToggleComponent {
 	private readonly mapDataService = inject(MapDataService);
 
 	protected readonly interchangeStyleOptions: { icon: string, value: "DOTTED" | "HOLLOW", tooltip: string }[] = [
 		{
-			icon: "more_horiz",
+			icon: "fluent:dashed",
 			value: "DOTTED",
-			tooltip: "Dotted",
+			tooltip: "visibility.dotted",
 		},
 		{
-			icon: "drag_handle",
+			icon: "fluent:hollow",
 			value: "HOLLOW",
-			tooltip: "Hollow",
+			tooltip: "visibility.hollow",
 		},
 	];
 

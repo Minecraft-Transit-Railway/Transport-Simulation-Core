@@ -1,58 +1,66 @@
-<div class="column gap wrapper" [formGroup]="formGroup">
-	<div class="column gap-small padding-sides">
-		<app-search label="Search for anything..." [parentFormGroup]="formGroup" childFormControlName="search" [includeRoutes]="true" (stationClicked)="clickStation($event)" (routeClicked)="clickRoute($event)" (clientClicked)="clickClient($event)"/>
-		<p-float-label variant="in">
-			<p-select inputId="dropdown" formControlName="dimension" [options]="getDimensions()" (onChange)="setDimension()" [fluid]="true"/>
-			<label for="dropdown">Dimension</label>
-		</p-float-label>
-		<button pButton class="icon-button" severity="secondary" (click)="directionsOpened.emit()" [fluid]="true">
-			<div class="row gap-small">
-				<div class="material-icons">directions</div>
-				<div>Find Directions</div>
-			</div>
-		</button>
-	</div>
-	<div class="column content">
-		<div class="column padding-sides">
-			<div class="column gap-small">
-				@for (routeType of routeTypes; track $index) {
+<ng-container *transloco="let t">
+	<div class="column gap wrapper" [formGroup]="formGroup">
+		<div class="column gap-small padding-sides">
+			<app-search [label]="t('mainPanel.searchPlaceholder')" [parentFormGroup]="formGroup" childFormControlName="search" [includeRoutes]="true" (stationClicked)="clickStation($event)" (routeClicked)="clickRoute($event)" (clientClicked)="clickClient($event)"/>
+			<p-float-label variant="in">
+				<p-select inputId="dropdown" formControlName="dimension" [options]="getDimensions()" (onChange)="setDimension()" [fluid]="true"/>
+				<label for="dropdown">{{ t('mainPanel.dimension') }}</label>
+			</p-float-label>
+			<button pButton class="icon-button" severity="secondary" (click)="directionsOpened.emit()" [fluid]="true">
+				<div class="row gap-small">
+					<iconify-icon icon="mdi:directions" aria-hidden="true"></iconify-icon>
+					<div>{{ t('mainPanel.findDirections') }}</div>
+				</div>
+			</button>
+		</div>
+		<div class="column content">
+			<div class="column padding-sides">
+				<div class="column gap-small">
+					@for (routeType of routeTypes(); track $index) {
+						<div class="row gap center">
+							<iconify-icon [icon]="routeType[1].icon" aria-hidden="true"></iconify-icon>
+							<div class="shrink spacing">{{ t('routeType.' + routeType[0]) }}</div>
+							<app-visibility-toggle [routeType]="routeType[0]"/>
+						</div>
+					}
+				</div>
+				@if (hasInterchanges()) {
+					<p-divider/>
 					<div class="row gap center">
-						<div class="material-icons">{{ routeType[1].icon }}</div>
-						<div class="shrink spacing">{{ routeType[1].text }}</div>
-						<app-visibility-toggle [routeType]="routeType[0]"/>
+						<iconify-icon icon="mdi:interchange" aria-hidden="true"></iconify-icon>
+						<div class="shrink spacing">{{ t('mainPanel.interchangeStyle') }}</div>
+						<app-interchange-style-toggle/>
 					</div>
 				}
-			</div>
-			@if (hasInterchanges()) {
 				<p-divider/>
-				<div class="row gap center">
-					<div class="material-icons">polyline</div>
-					<div class="shrink spacing">Interchange Style</div>
-					<app-interchange-style-toggle/>
+				<p-accordion [multiple]="true">
+					<p-accordion-panel>
+						<p-accordion-header>{{ t('mainPanel.players', {count: getAllClients().length}) }}</p-accordion-header>
+						<p-accordion-content>
+							@if (getAllClients().length === 0) {
+								<div>{{ t('mainPanel.noPlayersOnline') }}</div>
+							} @else {
+								<div class="column gap-small">
+									@for (client of getAllClients(); track $index) {
+										<app-data-list-entry [icons]="['https://mc-heads.net/avatar/' + client.id]" [title]="[client.name, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="clientClicked.emit(client.id)"/>
+									}
+								</div>
+							}
+						</p-accordion-content>
+					</p-accordion-panel>
+				</p-accordion>
+			</div>
+			<div class="spacing"></div>
+			<div class="column gap padding-sides padding-top-bottom">
+				<div class="row gap-small center">
+					<p-toggle-switch inputId="themeToggle" formControlName="themeToggle" (onChange)="changeTheme($event.checked)"/>
+					<label for="themeToggle">{{ t('mainPanel.darkTheme') }}</label>
 				</div>
-			}
-			<p-divider/>
-			<p-accordion [multiple]="true">
-				<p-accordion-panel>
-					<p-accordion-header>Players ({{ getAllClients().length }})</p-accordion-header>
-					<p-accordion-content>
-						@if (getAllClients().length === 0) {
-							<div>There are no players online.</div>
-						} @else {
-							<div class="column gap-small">
-								@for (client of getAllClients(); track $index) {
-									<app-data-list-entry [icons]="['https://mc-heads.net/avatar/' + client.id]" [title]="[client.name, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="clientClicked.emit(client.id)"/>
-								}
-							</div>
-						}
-					</p-accordion-content>
-				</p-accordion-panel>
-			</p-accordion>
-		</div>
-		<div class="spacing"></div>
-		<div class="row gap-small center padding-sides padding-top-bottom">
-			<p-toggle-switch inputId="themeToggle" formControlName="themeToggle" (onChange)="changeTheme($event.checked)"/>
-			<label for="themeToggle">Dark Theme</label>
+				<p-float-label variant="in">
+					<p-select inputId="language" formControlName="language" [options]="languageOptions()" optionLabel="label" optionValue="value" (onChange)="changeLanguage($event.value)" [fluid]="true"/>
+					<label for="language">{{ t('mainPanel.language') }}</label>
+				</p-float-label>
+			</div>
 		</div>
 	</div>
-</div>
+</ng-container>

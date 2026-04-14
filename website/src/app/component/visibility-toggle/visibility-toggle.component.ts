@@ -1,54 +1,57 @@
-import {Component, inject, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, input} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
 import {setCookie} from "../../data/utilities";
 import {TooltipModule} from "primeng/tooltip";
 import {SelectButtonChangeEvent, SelectButtonModule} from "primeng/selectbutton";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {FormsModule} from "@angular/forms";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-visibility-toggle",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		SelectButtonModule,
 		TooltipModule,
+		TranslocoDirective,
 		FormsModule,
-		ReactiveFormsModule,
 	],
 	templateUrl: "./visibility-toggle.component.html",
 	styleUrl: "./visibility-toggle.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class VisibilityToggleComponent {
 	private readonly mapDataService = inject(MapDataService);
 
-	@Input({required: true}) routeType = "";
+	readonly routeType = input.required<string>();
 	protected readonly visibilityOptions: { icon: string, value: "HIDDEN" | "SOLID" | "HOLLOW" | "DASHED", tooltip: string }[] = [
 		{
-			icon: "visibility_off",
+			icon: "mdi:hide",
 			value: "HIDDEN",
-			tooltip: "Hidden",
+			tooltip: "visibility.hidden",
 		},
 		{
-			icon: "horizontal_rule",
+			icon: "fluent:solid",
 			value: "SOLID",
-			tooltip: "Solid",
+			tooltip: "visibility.solid",
 		},
 		{
-			icon: "drag_handle",
+			icon: "fluent:hollow",
 			value: "HOLLOW",
-			tooltip: "Hollow",
+			tooltip: "visibility.hollow",
 		},
 		{
-			icon: "more_horiz",
+			icon: "fluent:dashed",
 			value: "DASHED",
-			tooltip: "Dashed",
+			tooltip: "visibility.dashed",
 		},
 	];
 
 	getVisibility() {
-		return this.mapDataService.routeTypeVisibility()[this.routeType];
+		return this.mapDataService.routeTypeVisibility()[this.routeType()];
 	}
 
 	setVisibility(event: SelectButtonChangeEvent) {
-		this.mapDataService.routeTypeVisibility()[this.routeType] = event.value;
+		this.mapDataService.routeTypeVisibility()[this.routeType()] = event.value;
 		this.mapDataService.updateData();
 		Object.entries(this.mapDataService.routeTypeVisibility()).forEach(([newRouteTypeKey, visibility]) => setCookie(`visibility_${newRouteTypeKey}`, visibility));
 	}

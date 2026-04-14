@@ -1,1 +1,96 @@
-{}
+{
+	"common": {
+		"start": "起點",
+		"end": "終點",
+		"close": "關閉",
+		"location": "位置",
+		"directions": "路綫指引",
+		"focusOnMap": "在地圖上聚焦",
+		"copyLocation": "複製位置",
+		"none": "（無）",
+		"untitled": "（未命名）",
+		"menu": "選單"
+	},
+	"map": {
+		"loadingMap": "正在載入地圖",
+		"transitMap": "交通地圖"
+	},
+	"mainPanel": {
+		"searchPlaceholder": "搜尋任何內容...",
+		"dimension": "維度",
+		"findDirections": "尋找路綫",
+		"interchangeStyle": "轉車站樣式",
+		"players": "玩家 ({{count}})",
+		"noPlayersOnline": "目前沒有玩家在綫上。",
+		"darkTheme": "深色主題",
+		"language": "語言"
+	},
+	"station": {
+		"title": "車站詳情",
+		"fareZones": "收費區",
+		"arrivals": "到達",
+		"routes": "路綫",
+		"connectingStations": "轉乘站",
+		"showTerminating": "顯示終點站列車",
+		"showDetails": "顯示詳情",
+		"arrivalDetails": "到站詳情",
+		"departureIndex": "發車編號",
+		"carVehicle": "{{count}}卡列車",
+		"arrived": "已到站",
+		"platform": "{{name}}號月台",
+		"everyEightSeconds": "每8秒一班"
+	},
+	"route": {
+		"title": "路綫詳情",
+		"routeVariation": "路綫方向",
+		"totalDuration": "全程時間",
+		"depotsForRoute": "路綫車廠",
+		"showTravelTimes": "顯示行車時間",
+		"showDwellTimes": "顯示停站時間",
+		"dwellTime": "停站時間",
+		"travelTime": "行車時間"
+	},
+	"client": {
+		"title": "玩家"
+	},
+	"directionsPanel": {
+		"swap": "交換",
+		"refreshDirections": "重新整理路綫",
+		"noDirectionsFound": "找不到路綫。",
+		"intermediateStation": "{{count}} 個中途站",
+		"intermediateStations": "{{count}} 個中途站"
+	},
+	"visibility": {
+		"hidden": "隱藏",
+		"solid": "實綫",
+		"hollow": "空心",
+		"dashed": "虛綫",
+		"dotted": "點綫"
+	},
+	"routeType": {
+		"train_normal": "列車",
+		"train_light_rail": "輕鐵",
+		"train_high_speed": "高速鐵路",
+		"boat_normal": "渡輪",
+		"boat_light_rail": "遊輪",
+		"boat_high_speed": "快速渡輪",
+		"cable_car_normal": "纜車",
+		"bus_normal": "巴士",
+		"bus_light_rail": "小巴",
+		"bus_high_speed": "特快巴士",
+		"airplane_normal": "飛機"
+	},
+	"search": {
+		"stations": "車站",
+		"routes": "路綫",
+		"players": "玩家"
+	},
+	"deviation": {
+		"delay": "延誤",
+		"early": "提早",
+		"scheduled": "計劃時間"
+	},
+	"units": {
+		"km": "{{distance}} 公里"
+	}
+}

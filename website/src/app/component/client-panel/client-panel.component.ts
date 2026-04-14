@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output} from "@angular/core";
 import {TooltipModule} from "primeng/tooltip";
 import {CheckboxModule} from "primeng/checkbox";
 import {DividerModule} from "primeng/divider";
@@ -15,9 +15,11 @@ import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {ROUTE_TYPES} from "../../data/routeType";
 import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-client-panel",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FloatLabelModule,
 		SelectModule,
@@ -32,17 +34,19 @@ import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
 		DataListEntryComponent,
 		FormatColorPipe,
 		FormatNamePipe,
+		TranslocoDirective,
 	],
 	templateUrl: "./client-panel.component.html",
 	styleUrl: "./client-panel.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ClientPanelComponent {
 	private readonly clientService = inject(ClientService);
 	private readonly mapDataService = inject(MapDataService);
 
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() routeClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<{ clientDetails: { clientId: string, isStartClient: boolean } }>;
+	readonly stationClicked = output<string>();
+	readonly routeClicked = output<string>();
+	readonly directionsOpened = output<{ clientDetails: { clientId: string, isStartClient: boolean } }>();
 
 	getName() {
 		return this.clientService.client()?.name ?? "";
@@ -65,7 +69,7 @@ export class ClientPanelComponent {
 		const routeStation2 = client ? client.routeStation2 : undefined;
 		return route && routeStation1 && routeStation2 ? {route, routeStation1, routeStation2, icon: ROUTE_TYPES[route.type].icon} : undefined;
 	}
-	
+
 	getRouteKey(route: { color: number, name: string, number: string }) {
 		return SimplifyRoutesPipe.getRouteKey(route);
 	}
@@ -78,7 +82,7 @@ export class ClientPanelComponent {
 	focus() {
 		const clientId = this.clientService.selectedData();
 		if (clientId) {
-			this.mapDataService.animateClient.emit(clientId);
+			this.mapDataService.animateClient.next(clientId);
 		}
 	}
 

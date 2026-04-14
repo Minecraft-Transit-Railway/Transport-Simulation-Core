@@ -1,8 +1,8 @@
-export class SearchData {
-	public readonly key: string = "";
-	public readonly icons: string[] = [];
-	public readonly color?: number;
-	public readonly name: string = "";
-	public readonly number: string = "";
-	public readonly type: "station" | "route" | "client" = "station";
+export interface SearchData {
+	readonly key: string;
+	readonly icons: string[];
+	readonly color?: number;
+	readonly name: string;
+	readonly number: string;
+	readonly type: "station" | "route" | "client";
 }

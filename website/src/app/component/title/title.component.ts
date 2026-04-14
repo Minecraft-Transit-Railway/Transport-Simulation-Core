@@ -1,9 +1,10 @@
-import {Component, Input} from "@angular/core";
+import {ChangeDetectionStrategy, Component, input} from "@angular/core";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 
 @Component({
 	selector: "app-title",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		SplitNamePipe,
 		FormatColorPipe,
@@ -12,6 +13,6 @@ import {FormatColorPipe} from "../../pipe/formatColorPipe";
 	styleUrl: "./title.component.scss",
 })
 export class TitleComponent {
-	@Input({required: true}) name = "";
-	@Input({required: true}) color?: number;
+	readonly name = input.required<string>();
+	readonly color = input<number>();
 }

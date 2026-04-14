@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
 import {FormatNamePipe} from "../../pipe/formatNamePipe";
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
@@ -18,9 +18,11 @@ import {ChipModule} from "primeng/chip";
 import {FormatTimePipe} from "../../pipe/formatTimePipe";
 import {FormatDatePipe} from "../../pipe/formatDatePipe";
 import {SplitNamePipe} from "../../pipe/splitNamePipe";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-station-panel",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		ButtonModule,
 		TooltipModule,
@@ -37,18 +39,20 @@ import {SplitNamePipe} from "../../pipe/splitNamePipe";
 		SplitNamePipe,
 		DataListEntryComponent,
 		TitleComponent,
+		TranslocoDirective,
 	],
 	templateUrl: "./station-panel.component.html",
 	styleUrl: "./station-panel.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class StationPanelComponent {
 	private readonly dataService = inject(MapDataService);
 	private readonly stationService = inject(StationService);
 
 	protected dialogData?: Arrival;
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() routeClicked = new EventEmitter<string>();
-	@Output() directionsOpened = new EventEmitter<{ stationDetails: { stationId: string, isStartStation: boolean } }>;
+	readonly stationClicked = output<string>();
+	readonly routeClicked = output<string>();
+	readonly directionsOpened = output<{ stationDetails: { stationId: string, isStartStation: boolean } }>();
 
 	getStation() {
 		return this.stationService.selectedData();
@@ -124,17 +128,19 @@ export class StationPanelComponent {
 		return this.stationService.loading();
 	}
 
-	copyLocation(icon: HTMLDivElement) {
-		icon.innerText = "check";
+	protected readonly copyIcon = signal("mdi:copy");
+
+	copyLocation() {
+		this.copyIcon.set("mdi:check");
 		const station = this.stationService.selectedData();
 		navigator.clipboard.writeText(station === undefined ? "" : `${Math.round(station.x)} ${Math.round(station.y)} ${Math.round(station.z)}`).then();
-		setTimeout(() => icon.innerText = "content_copy", 1000);
+		setTimeout(() => this.copyIcon.set("mdi:copy"), 1000);
 	}
 
 	focus() {
 		const station = this.stationService.selectedData();
 		if (station) {
-			this.dataService.animateMap.emit({x: station.x, z: station.z});
+			this.dataService.animateMap.next({x: station.x, z: station.z});
 		}
 	}
 

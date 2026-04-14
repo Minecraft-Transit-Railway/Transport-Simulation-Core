@@ -1,4 +1,4 @@
-import {Component, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject} from "@angular/core";
 import {MapComponent} from "./component/map/map.component";
 import {StationPanelComponent} from "./component/station-panel/station-panel.component";
 import {StationService} from "./service/station.service";
@@ -12,13 +12,16 @@ import {ButtonModule} from "primeng/button";
 import {TooltipModule} from "primeng/tooltip";
 import {ClientService} from "./service/client.service";
 import {ClientPanelComponent} from "./component/client-panel/client-panel.component";
+import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-root",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		MapComponent,
 		ButtonModule,
 		TooltipModule,
+		TranslocoDirective,
 		StationPanelComponent,
 		DrawerComponent,
 		ClientPanelComponent,
@@ -28,6 +31,7 @@ import {ClientPanelComponent} from "./component/client-panel/client-panel.compon
 	],
 	templateUrl: "./app.component.html",
 	styleUrl: "./app.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class AppComponent {
 	private readonly stationService = inject(StationService);
@@ -89,7 +93,7 @@ export class AppComponent {
 	}
 
 	onOpenDirections(directionsSelection: { stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } } | undefined, sideMain: DrawerComponent, sideStation: DrawerComponent, sideClient: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
-		this.directionsService.directionsPanelOpened.emit(directionsSelection);
+		this.directionsService.directionsPanelOpened.next(directionsSelection);
 		sideMain.close();
 		sideStation.close();
 		sideClient.close();

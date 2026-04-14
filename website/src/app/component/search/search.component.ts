@@ -1,4 +1,4 @@
-import {Component, EventEmitter, inject, Input, Output} from "@angular/core";
+import {ChangeDetectionStrategy, Component, inject, input, output} from "@angular/core";
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MapDataService} from "../../service/map-data.service";
 import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
@@ -13,12 +13,14 @@ import {DataListEntryComponent} from "../data-list-entry/data-list-entry.compone
 import {FormatColorPipe} from "../../pipe/formatColorPipe";
 import {SearchData} from "../../entity/searchData";
 import {ClientsService} from "../../service/clients.service";
+import {TranslocoService} from "@jsverse/transloco";
 
 
 const maxResults = 50;
 
 @Component({
 	selector: "app-search",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FloatLabelModule,
 		InputTextModule,
@@ -38,16 +40,17 @@ export class SearchComponent {
 	private readonly clientsService = inject(ClientsService);
 	private readonly simplifyStationsPipe = inject(SimplifyStationsPipe);
 	private readonly simplifyRoutesPipe = inject(SimplifyRoutesPipe);
+	private readonly translocoService = inject(TranslocoService);
 
-	@Output() stationClicked = new EventEmitter<string>();
-	@Output() routeClicked = new EventEmitter<string>();
-	@Output() clientClicked = new EventEmitter<string>();
-	@Output() textCleared = new EventEmitter<void>();
-	@Input({required: true}) label = "";
-	@Input({required: true}) parentFormGroup!: FormGroup;
-	@Input({required: true}) childFormControlName = "";
-	@Input({required: true}) includeRoutes = true;
-	@Input() setText!: EventEmitter<string>;
+	readonly stationClicked = output<string>();
+	readonly routeClicked = output<string>();
+	readonly clientClicked = output<string>();
+	readonly textCleared = output<void>();
+	readonly label = input.required<string>();
+	readonly parentFormGroup = input.required<FormGroup>();
+	readonly childFormControlName = input.required<string>();
+	readonly includeRoutes = input.required<boolean>();
+	readonly setText = input<import("@angular/core").OutputEmitterRef<string>>();
 
 	protected data: SelectItemGroup[] = [];
 
@@ -73,26 +76,26 @@ export class SearchComponent {
 			};
 
 			const searchedStations = filter(this.simplifyStationsPipe.transform(this.dataService.stations()));
-			const searchedRoutes = filter(this.includeRoutes ? this.simplifyRoutesPipe.transform(this.dataService.routes()) : []);
+			const searchedRoutes = filter(this.includeRoutes() ? this.simplifyRoutesPipe.transform(this.dataService.routes()) : []);
 			const searchedClients = filter(this.clientsService.allClients().map(client => ({key: client.id, icons: [`https://mc-heads.net/avatar/${client.id}`], name: client.name, number: "", type: "client"})));
 
 			if (searchedStations.length > 0) {
 				this.data.push({
-					label: "Stations",
+					label: this.translocoService.translate("search.stations"),
 					items: searchedStations,
 				});
 			}
 
 			if (searchedRoutes.length > 0) {
 				this.data.push({
-					label: "Routes",
+					label: this.translocoService.translate("search.routes"),
 					items: searchedRoutes,
 				});
 			}
 
 			if (searchedClients.length > 0) {
 				this.data.push({
-					label: "Players",
+					label: this.translocoService.translate("search.players"),
 					items: searchedClients,
 				});
 			}
@@ -118,9 +121,5 @@ export class SearchComponent {
 	getName(entry: { value?: { name?: string } }) {
 		const name = entry?.value?.name;
 		return name ? name.replaceAll("|", " ") : "";
-	}
-
-	getText() {
-		return "";
 	}
 }

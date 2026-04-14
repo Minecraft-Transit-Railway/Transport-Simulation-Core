@@ -1,4 +1,4 @@
-import {Component, inject, signal} from "@angular/core";
+import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal} from "@angular/core";
 import {SearchComponent} from "../search/search.component";
 import {DirectionsService} from "../../service/directions.service";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
@@ -25,9 +25,11 @@ import {InputNumberModule} from "primeng/inputnumber";
 import {SearchData} from "../../entity/searchData";
 import {Station} from "../../entity/station";
 import {ClientsService} from "../../service/clients.service";
+import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-directions",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		FloatLabelModule,
 		InputNumberModule,
@@ -44,10 +46,12 @@ import {ClientsService} from "../../service/clients.service";
 		FormatNamePipe,
 		DataListEntryComponent,
 		FormatDatePipe,
+		TranslocoDirective,
 		ReactiveFormsModule,
 	],
 	templateUrl: "./directions.component.html",
 	styleUrl: "./directions.component.scss",
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class DirectionsComponent {
 	private readonly directionsService = inject(DirectionsService);
@@ -56,6 +60,7 @@ export class DirectionsComponent {
 	private readonly mapSelectionService = inject(MapSelectionService);
 	private readonly formatNamePipe = inject(FormatNamePipe);
 	private readonly formatTimePipe = inject(FormatTimePipe);
+	private readonly translocoService = inject(TranslocoService);
 
 	protected readonly formGroup = new FormGroup({
 		startInput: new FormControl<{ value: SearchData } | undefined>(undefined),
@@ -177,11 +182,11 @@ export class DirectionsComponent {
 	}
 
 	getStationName(station?: Station) {
-		return station ? this.formatNamePipe.transform(station.name) : "(Untitled)";
+		return station ? this.formatNamePipe.transform(station.name) : this.translocoService.translate("common.untitled");
 	}
 
 	getPlatformName(platformName?: string) {
-		return platformName ? `Platform ${this.formatNamePipe.transform(platformName)}` : "";
+		return platformName ? this.translocoService.translate("station.platform", {name: this.formatNamePipe.transform(platformName)}) : "";
 	}
 
 	getRouteName(route: Route) {
@@ -202,7 +207,7 @@ export class DirectionsComponent {
 
 	getDistanceLabel(direction: { distance: number }) {
 		const roundedDistance = Math.round(direction.distance / 100) / 10;
-		return roundedDistance > 0 ? `${roundedDistance} km` : "";
+		return roundedDistance > 0 ? this.translocoService.translate("units.km", {distance: roundedDistance}) : "";
 	}
 
 	getCircularIcon(route: Route) {

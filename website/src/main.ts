@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import {bootstrapApplication} from "@angular/platform-browser";
 import {AppComponent} from "./app/app.component";
 import {provideHttpClient} from "@angular/common/http";
@@ -12,6 +11,10 @@ import {providePrimeNG} from "primeng/config";
 import {myPreset} from "./theme-preset";
 import {provideTransloco} from "@jsverse/transloco";
 import {TranslocoHttpLoader} from "./transloco-loader";
+import {registerIcons} from "./app/utility/icons";
+import {getCookie} from "./app/data/utilities";
+
+registerIcons();
 
 bootstrapApplication(AppComponent, {
 	providers: [
@@ -25,7 +28,7 @@ bootstrapApplication(AppComponent, {
 		provideTransloco({
 			config: {
 				availableLangs: ["en", "zh"],
-				defaultLang: "en",
+				defaultLang: getCookie("language") || "en",
 				reRenderOnLangChange: true,
 				prodMode: !isDevMode(),
 			},

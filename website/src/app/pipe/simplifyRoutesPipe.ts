@@ -6,7 +6,6 @@ import {SearchData} from "../entity/searchData";
 @Pipe({
 	name: "simplifyRoutes",
 	pure: true,
-	standalone: true,
 })
 export class SimplifyRoutesPipe implements PipeTransform {
 
@@ -36,10 +35,10 @@ export class SimplifyRoutesPipe implements PipeTransform {
 	}
 
 	public static getCircularStateIcon(circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE") {
-		return circularState === "CLOCKWISE" ? "rotate_right" : circularState === "ANTICLOCKWISE" ? "rotate_left" : "";
+		return circularState === "CLOCKWISE" ? "mdi:clockwise" : circularState === "ANTICLOCKWISE" ? "mdi:anticlockwise" : "";
 	}
 
-	public static getDeviationString(realtime: boolean, deviation: number) {
-		return realtime ? deviation > 0 ? "delay" : "early" : "Scheduled";
+	public static getDeviationKey(realtime: boolean, deviation: number) {
+		return realtime ? deviation > 0 ? "deviation.delay" : "deviation.early" : "deviation.scheduled";
 	}
 }

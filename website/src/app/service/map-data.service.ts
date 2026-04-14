@@ -2,7 +2,8 @@ import {arrayAverage, getCookie, getFromArray, pushIfNotExists, setIfUndefined} 
 import {ROUTE_TYPES} from "../data/routeType";
 import {LineConnection} from "../entity/lineConnection";
 import {StationConnection} from "../entity/stationConnection";
-import {EventEmitter, inject, Injectable, signal, WritableSignal} from "@angular/core";
+import {inject, Injectable, signal, WritableSignal} from "@angular/core";
+import {Subject} from "rxjs";
 import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {StationsAndRoutesDTO} from "../entity/generated/stationsAndRoutes";
@@ -30,9 +31,9 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 	public readonly centerY = signal<number>(0);
 	public readonly mapLoading = signal<boolean>(true);
 
-	public readonly drawMap = new EventEmitter<void>();
-	public readonly animateMap = new EventEmitter<{ x: number, z: number }>();
-	public readonly animateClient = new EventEmitter<string>();
+	public readonly drawMap = new Subject<void>();
+	public readonly animateMap = new Subject<{ x: number, z: number }>();
+	public readonly animateClient = new Subject<string>();
 
 	constructor() {
 		const dimensionService = inject(DimensionService);
@@ -207,11 +208,6 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 					}
 				});
 
-				const testRouteColors: string[] = [];
-				combinedGroups.forEach(combinedGroup => combinedGroup.forEach(routeColor => {
-					console.assert(!testRouteColors.includes(routeColor), "Duplicate colors in combined groups", combinedGroups);
-					testRouteColors.push(routeColor);
-				}));
 
 				const routesForDirection: [string[], string[], string[], string[]] = [[], [], [], []];
 				combinedGroups.forEach(combinedGroup => {
@@ -264,7 +260,6 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 					for (let i = 0; i < routeColors.length; i++) {
 						const color = routeColors[i];
 						const lineConnectionDetails = lineConnection.lineConnectionParts[i];
-						console.assert(lineConnectionDetails.color === undefined || lineConnectionDetails.color === color, "Color and offsets mismatch", lineConnectionDetails);
 						lineConnectionDetails.color = color;
 						lineConnectionDetails[`offset${index}`] = routesForDirection[direction].indexOf(color) - routesForDirection[direction].length / 2 + 0.5;
 						const {forwards, backwards} = lineConnectionsOneWay[`${key}_${color}`];
@@ -342,7 +337,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 		this.stationsForMap.set(stationsForMap);
 		this.centerX.set(centerX);
 		this.centerY.set(centerY);
-		this.drawMap.emit();
+		this.drawMap.next();
 		this.mapLoading.set(false);
 	}
 }

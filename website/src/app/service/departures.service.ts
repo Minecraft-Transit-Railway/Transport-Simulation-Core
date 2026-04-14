@@ -1,8 +1,9 @@
-import {EventEmitter, inject, Injectable, signal} from "@angular/core";
+import {inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
 import {DimensionService} from "./dimension.service";
 import {setIfUndefined} from "../data/utilities";
 import {DataServiceBase} from "./data-service-base";
+import {Subject} from "rxjs";
 
 const REFRESH_INTERVAL = 3000;
 
@@ -16,7 +17,7 @@ export class DeparturesService extends DataServiceBase<{ departures: Record<stri
 		const dimensionService = inject(DimensionService);
 
 		super(() => {
-			const cacheCompleted = new EventEmitter<{
+			const cacheCompleted = new Subject<{
 				departures: Record<string, { departureFromNow: number, deviation: number }[]>,
 				lastUpdated: number,
 			}>();
@@ -31,8 +32,7 @@ export class DeparturesService extends DataServiceBase<{ departures: Record<stri
 
 					while (true) {
 						if (index >= data.data.departures.length) {
-							console.debug(`Cache for ${index} route(s) created after ${iterations} iteration(s) in ${Date.now() - startTime} ms`);
-							cacheCompleted.emit({departures, lastUpdated: startTime});
+							cacheCompleted.next({departures, lastUpdated: startTime});
 							break;
 						}
 

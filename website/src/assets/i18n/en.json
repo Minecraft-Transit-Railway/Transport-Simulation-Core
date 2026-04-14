@@ -1,1 +1,96 @@
-{}
+{
+	"common": {
+		"start": "Start",
+		"end": "End",
+		"close": "Close",
+		"location": "Location",
+		"directions": "Directions",
+		"focusOnMap": "Focus on Map",
+		"copyLocation": "Copy Location",
+		"none": "(None)",
+		"untitled": "(Untitled)",
+		"menu": "Menu"
+	},
+	"map": {
+		"loadingMap": "Loading map",
+		"transitMap": "Transit map"
+	},
+	"mainPanel": {
+		"searchPlaceholder": "Search for anything...",
+		"dimension": "Dimension",
+		"findDirections": "Find Directions",
+		"interchangeStyle": "Interchange Style",
+		"players": "Players ({{count}})",
+		"noPlayersOnline": "There are no players online.",
+		"darkTheme": "Dark Theme",
+		"language": "Language"
+	},
+	"station": {
+		"title": "Station Details",
+		"fareZones": "Fare Zones",
+		"arrivals": "Arrivals",
+		"routes": "Routes",
+		"connectingStations": "Connecting Stations",
+		"showTerminating": "Show Terminating",
+		"showDetails": "Show Details",
+		"arrivalDetails": "Arrival Details",
+		"departureIndex": "Departure Index",
+		"carVehicle": "{{count}}-Car Vehicle",
+		"arrived": "Arrived",
+		"platform": "Platform {{name}}",
+		"everyEightSeconds": "Every 8 Seconds"
+	},
+	"route": {
+		"title": "Route Details",
+		"routeVariation": "Route Variation",
+		"totalDuration": "Total Duration",
+		"depotsForRoute": "Depot(s) for Route",
+		"showTravelTimes": "Show Travel Times",
+		"showDwellTimes": "Show Dwell Times",
+		"dwellTime": "Dwell Time",
+		"travelTime": "Travel Time"
+	},
+	"client": {
+		"title": "Player"
+	},
+	"directionsPanel": {
+		"swap": "Swap",
+		"refreshDirections": "Refresh Directions",
+		"noDirectionsFound": "No directions found.",
+		"intermediateStation": "{{count}} intermediate station",
+		"intermediateStations": "{{count}} intermediate stations"
+	},
+	"visibility": {
+		"hidden": "Hidden",
+		"solid": "Solid",
+		"hollow": "Hollow",
+		"dashed": "Dashed",
+		"dotted": "Dotted"
+	},
+	"routeType": {
+		"train_normal": "Train",
+		"train_light_rail": "Light Rail",
+		"train_high_speed": "High Speed",
+		"boat_normal": "Ferry",
+		"boat_light_rail": "Cruise",
+		"boat_high_speed": "Fast Ferry",
+		"cable_car_normal": "Cable Car",
+		"bus_normal": "Bus",
+		"bus_light_rail": "Minibus",
+		"bus_high_speed": "Express Bus",
+		"airplane_normal": "Aeroplane"
+	},
+	"search": {
+		"stations": "Stations",
+		"routes": "Routes",
+		"players": "Players"
+	},
+	"deviation": {
+		"delay": "delay",
+		"early": "early",
+		"scheduled": "Scheduled"
+	},
+	"units": {
+		"km": "{{distance}} km"
+	}
+}
