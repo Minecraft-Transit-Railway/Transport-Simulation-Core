@@ -24,6 +24,16 @@ html, body {
 	height: 100%;
 }
 
+a {
+	color: var(--p-text-color);
+	text-decoration: none;
+}
+
+a:hover {
+	color: var(--p-text-hover-color);
+	text-decoration: underline;
+}
+
 iconify-icon {
 	font-size: 1.5rem;
 }
