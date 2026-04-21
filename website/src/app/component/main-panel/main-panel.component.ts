@@ -19,6 +19,7 @@ import {ClientsService} from "../../service/clients.service";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
 import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
 import {getCookie, setCookie} from "../../data/utilities";
+import {VERSION} from "../../../version";
 
 const languageMapping: Record<string, string> = {
 	en: "English",
@@ -60,6 +61,7 @@ export class MainPanelComponent {
 	readonly routeClicked = output<string>();
 	readonly clientClicked = output<string>();
 	readonly directionsOpened = output<void>();
+	readonly version = VERSION;
 
 	protected readonly formGroup = new FormGroup({
 		search: new FormControl(""),

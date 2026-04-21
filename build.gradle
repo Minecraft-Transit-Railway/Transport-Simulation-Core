@@ -1,5 +1,9 @@
+import org.apache.tools.ant.filters.ReplaceTokens
 import org.mtr.core.Generator
 import org.mtr.core.WebserverSetup
+
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 plugins {
 	id "java"
@@ -58,6 +62,26 @@ jar {
 test {
 	useJUnitPlatform()
 	testLogging { showStandardStreams = true }
+}
+
+tasks.configureEach {
+	version = ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")).format("yyyyMMdd-HHmmss")
+
+	copy {
+		outputs.upToDateWhen { false }
+		from "website/version-template.txt"
+		into "website/src"
+		filter(ReplaceTokens, tokens: ["version": version])
+		rename "(.+)-template.txt", "\$1.ts"
+	}
+
+	copy {
+		outputs.upToDateWhen { false }
+		from "src/main/VersionTemplate.java"
+		into "src/main/java/org/mtr/core"
+		filter(ReplaceTokens, tokens: ["version": version])
+		rename "(.+)Template.java", "\$1.java"
+	}
 }
 
 tasks.register("generateTypeScriptSchemaClasses") {

@@ -52,14 +52,20 @@
 			</div>
 			<div class="spacing"></div>
 			<div class="column gap padding-sides padding-top-bottom">
-				<div class="row gap-small center">
-					<p-toggle-switch inputId="themeToggle" formControlName="themeToggle" (onChange)="changeTheme($event.checked)"/>
-					<label for="themeToggle">{{ t('mainPanel.darkTheme') }}</label>
-				</div>
 				<p-float-label variant="in">
 					<p-select inputId="language" formControlName="language" [options]="languageOptions()" optionLabel="label" optionValue="value" (onChange)="changeLanguage($event.value)" [fluid]="true"/>
 					<label for="language">{{ t('mainPanel.language') }}</label>
 				</p-float-label>
+				<div class="row gap-small center">
+					<p-toggle-switch inputId="themeToggle" formControlName="themeToggle" (onChange)="changeTheme($event.checked)"/>
+					<label for="themeToggle">{{ t('mainPanel.darkTheme') }}</label>
+				</div>
+				<a class="version" href="https://github.com/Minecraft-Transit-Railway/Transport-Simulation-Core" target="_blank">
+					<div class="column">
+						<div>Transport Simulation Core</div>
+						<div>{{ version }}</div>
+					</div>
+				</a>
 			</div>
 		</div>
 	</div>
