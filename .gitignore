@@ -31,5 +31,6 @@ bin/
 generated/
 src/main/java/org/mtr/core/Version.java
 website/.gitignore
+website/src/version.ts
 website/src/app/entity/generated/
 log4j2.properties
