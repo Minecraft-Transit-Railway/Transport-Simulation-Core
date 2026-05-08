@@ -1,12 +1,12 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.oba.Schedule;
 import org.mtr.core.oba.SingleElement;
 import org.mtr.core.oba.TripDetails;
 import org.mtr.core.tool.Utilities;
 
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class Trip implements Utilities {
@@ -83,9 +83,9 @@ public class Trip implements Utilities {
 		}
 
 		final Schedule schedule = new Schedule(
-				previousTrip == null ? "" : previousTrip.getTripId(departureIndex, departureOffset),
-				nextTrip == null ? "" : nextTrip.getTripId(departureIndex, departureOffset),
-				siding.getOBAFrequencyElement(currentMillis)
+			previousTrip == null ? "" : previousTrip.getTripId(departureIndex, departureOffset),
+			nextTrip == null ? "" : nextTrip.getTripId(departureIndex, departureOffset),
+			siding.getOBAFrequencyElement(currentMillis)
 		);
 
 		stopTimes.forEach(tripStopTime -> {
@@ -94,10 +94,10 @@ public class Trip implements Utilities {
 		});
 
 		singleElement.set(new TripDetails(
-				getTripId(departureIndex, departureOffset),
-				siding.getOBATripStatus(currentMillis, stopTimes.getFirst(), departureIndex, departureOffset, "", ""),
-				schedule,
-				siding.getOBAFrequencyElement(currentMillis)
+			getTripId(departureIndex, departureOffset),
+			siding.getOBATripStatus(currentMillis, stopTimes.getFirst(), departureIndex, departureOffset, "", ""),
+			schedule,
+			siding.getOBAFrequencyElement(currentMillis)
 		));
 	}
 

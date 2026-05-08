@@ -4,10 +4,9 @@ import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.core.generator.objects.Class;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generator.objects.*;
-
-import javax.annotation.Nullable;
+import org.mtr.core.generator.objects.Class;
 
 public class SchemaParserTypeScript {
 

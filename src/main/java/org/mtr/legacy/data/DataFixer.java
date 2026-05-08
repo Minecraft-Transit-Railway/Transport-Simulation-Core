@@ -124,10 +124,10 @@ public final class DataFixer {
 						vehicleId = trainId;
 					}
 					vehicleCars.add(new VehicleCar(
-							vehicleId.toLowerCase(Locale.ENGLISH),
-							trainLength, trainWidth,
-							-bogiePosition, bogiePosition,
-							(type & 0b01) == 0 ? 0 : 1, (type & 0b10) == 0 ? 0 : 1
+						vehicleId.toLowerCase(Locale.ENGLISH),
+						trainLength, trainWidth,
+						-bogiePosition, bogiePosition,
+						(type & 0b01) == 0 ? 0 : 1, (type & 0b10) == 0 ? 0 : 1
 					));
 				}
 			} catch (Exception ignored) {
@@ -219,9 +219,9 @@ public final class DataFixer {
 
 	private static Position convertPosition(long packedPosition) {
 		return new Position(
-				(int) (packedPosition << 64 - X_OFFSET - PACKED_X_LENGTH >> 64 - PACKED_X_LENGTH),
-				(int) (packedPosition << 64 - PACKED_Y_LENGTH >> 64 - PACKED_Y_LENGTH),
-				(int) (packedPosition << 64 - Z_OFFSET - PACKED_Z_LENGTH >> 64 - PACKED_Z_LENGTH)
+			(int) (packedPosition << 64 - X_OFFSET - PACKED_X_LENGTH >> 64 - PACKED_X_LENGTH),
+			(int) (packedPosition << 64 - PACKED_Y_LENGTH >> 64 - PACKED_Y_LENGTH),
+			(int) (packedPosition << 64 - Z_OFFSET - PACKED_Z_LENGTH >> 64 - PACKED_Z_LENGTH)
 		);
 	}
 
@@ -234,7 +234,7 @@ public final class DataFixer {
 				readerBase.merge(new MessagePackReader(messageUnpacker));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to apply legacy data fixer", e);
 		}
 	}
 

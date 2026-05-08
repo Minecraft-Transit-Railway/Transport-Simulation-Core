@@ -7,7 +7,6 @@ import org.mtr.core.data.Rail;
 import org.mtr.core.generated.operation.DynamicDataResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 
-import javax.annotation.Nonnull;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
@@ -30,7 +29,6 @@ public final class DynamicDataResponse extends DynamicDataResponseSchema {
 		uuid = UUID.fromString(clientId);
 	}
 
-	@Nonnull
 	@Override
 	protected Data liftsToUpdateDataParameter() {
 		return data;

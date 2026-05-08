@@ -2,10 +2,9 @@ package org.mtr.core.path;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.core.tool.Utilities;
-
-import javax.annotation.Nullable;
 
 public abstract class PathFinder<T> {
 

@@ -1,12 +1,12 @@
 import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
 import {RouteKeyService, RouteVariationService} from "../../service/route.service";
-import {FormatNamePipe} from "../../pipe/formatNamePipe";
+import {FormatNamePipe} from "../../pipe/format-name.pipe";
 import {RouteDisplayComponent} from "../route-display/route-display.component";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
-import {FormatTimePipe} from "../../pipe/formatTimePipe";
-import {ROUTE_TYPES} from "../../data/routeType";
+import {FormatTimePipe} from "../../pipe/format-time.pipe";
+import {ROUTE_TYPES} from "../../data/route-type";
 import {TitleComponent} from "../title/title.component";
-import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {SimplifyRoutesPipe} from "../../pipe/simplify-routes.pipe";
 import {TooltipModule} from "primeng/tooltip";
 import {CheckboxModule} from "primeng/checkbox";
 import {DividerModule} from "primeng/divider";

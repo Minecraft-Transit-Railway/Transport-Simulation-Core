@@ -10,7 +10,7 @@ import {LineGeometry} from "three/examples/jsm/lines/LineGeometry.js";
 import {Line2} from "three/examples/jsm/lines/Line2.js";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import {rotate, trig45} from "../../data/utilities";
-import {SplitNamePipe} from "../../pipe/splitNamePipe";
+import {SplitNamePipe} from "../../pipe/split-name.pipe";
 import {ThemeService} from "../../service/theme.service";
 import {MapSelectionService} from "../../service/map-selection.service";
 import {ProgressSpinnerModule} from "primeng/progressspinner";

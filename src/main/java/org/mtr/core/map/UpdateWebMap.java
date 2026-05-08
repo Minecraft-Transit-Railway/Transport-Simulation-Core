@@ -33,7 +33,7 @@ public interface UpdateWebMap {
 				callback.accept(inputStream);
 			}
 		} catch (IOException e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to read resource {}", path, e);
 		}
 	}
 

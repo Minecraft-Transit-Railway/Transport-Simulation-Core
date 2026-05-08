@@ -1,10 +1,9 @@
 package org.mtr.core.serializer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.libraries.org.msgpack.core.MessagePacker;
-
-import javax.annotation.Nullable;
 
 public final class MessagePackWriter extends WriterBase {
 
@@ -59,7 +58,7 @@ public final class MessagePackWriter extends WriterBase {
 			messagePacker.packMapHeader(instructions.size());
 			serializePart();
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to serialize MessagePack output", e);
 		}
 	}
 

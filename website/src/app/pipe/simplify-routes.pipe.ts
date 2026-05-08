@@ -1,7 +1,7 @@
 import {Pipe, PipeTransform} from "@angular/core";
-import {ROUTE_TYPES} from "../data/routeType";
+import {ROUTE_TYPES} from "../data/route-type";
 import {Route} from "../entity/route";
-import {SearchData} from "../entity/searchData";
+import {SearchData} from "../entity/search-data";
 
 @Pipe({
 	name: "simplifyRoutes",

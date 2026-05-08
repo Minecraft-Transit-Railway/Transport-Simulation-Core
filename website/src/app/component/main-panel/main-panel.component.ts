@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
 import {MapDataService} from "../../service/map-data.service";
-import {ROUTE_TYPES, RouteType} from "../../data/routeType";
+import {ROUTE_TYPES, RouteType} from "../../data/route-type";
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {DimensionService} from "../../service/dimension.service";
 import {ThemeService} from "../../service/theme.service";

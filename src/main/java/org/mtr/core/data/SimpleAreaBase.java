@@ -1,10 +1,9 @@
 package org.mtr.core.data;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.AreaBaseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
-
-import javax.annotation.Nullable;
 
 public abstract class SimpleAreaBase extends AreaBaseSchema {
 

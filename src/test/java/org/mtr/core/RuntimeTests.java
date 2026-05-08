@@ -7,10 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Utilities;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
 
-@ParametersAreNonnullByDefault
 public class RuntimeTests implements TestUtilities {
 
 	@Test

@@ -1,6 +1,6 @@
 import {Route} from "./route";
 import {StationDTO} from "./generated/station";
-import {ROUTE_TYPES} from "../data/routeType";
+import {ROUTE_TYPES} from "../data/route-type";
 
 export class Station {
 	public readonly id: string;

@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.VehicleSchema;
 import org.mtr.core.path.SidingPathFinder;
@@ -18,7 +19,6 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
-import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class Vehicle extends VehicleSchema implements Utilities {
@@ -525,8 +525,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	}
 
 	/**
-	 * Indicate which portions of each path segment are occupied by this vehicle.
-	 * Also check if the vehicle needs to send a socket update:
+	 * Indicate which portions of each path segment are occupied by this vehicle. Also check if the vehicle needs to send a socket update:
 	 * <ul>
 	 * <li>Entered a client's view radius</li>
 	 * <li>Left a client's view radius</li>

@@ -1,5 +1,6 @@
 package org.mtr.core.servlet;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Depot;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Siding;
@@ -9,8 +10,6 @@ import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
-
-import javax.annotation.Nullable;
 
 public final class OperationProcessor {
 

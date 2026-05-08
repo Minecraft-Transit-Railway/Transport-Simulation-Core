@@ -1,10 +1,9 @@
 package org.mtr.core.data;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.PositionSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Vector;
-
-import javax.annotation.Nullable;
 
 public class Position extends PositionSchema implements Comparable<Position> {
 

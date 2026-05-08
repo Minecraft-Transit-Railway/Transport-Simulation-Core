@@ -3,6 +3,7 @@ package org.mtr.core.servlet;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
 
@@ -15,96 +16,43 @@ public final class OBAServlet extends ServletBase {
 	}
 
 	@Override
-	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse) {
+	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<@Nullable JsonObject> sendResponse) {
 		final OBAResponse obaResponse = new OBAResponse(data, parameters, simulator.getCurrentMillis(), simulator);
 		switch (endpoint) {
-			case "agencies-with-coverage":
-				sendResponse.accept(obaResponse.getAgenciesWithCoverage());
-				break;
-			case "agency":
-				sendResponse.accept(obaResponse.getAgency());
-				break;
-			case "arrival-and-departure-for-stop":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "arrivals-and-departures-for-stop":
-				sendResponse.accept(obaResponse.getArrivalsAndDeparturesForStop());
-				break;
-			case "arrivals-and-departures-for-location":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "block":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "cancel-alarm":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "current-time":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "register-alarm-for-arrival-and-departure-at-stop":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "report-problem-with-stop":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "report-problem-with-trip":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "route-ids-for-agency":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "route":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "routes-for-agency":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "routes-for-location":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "schedule-for-route":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "schedule-for-stop":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "shape":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "stop-ids-for-agency":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "stop":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "stops-for-location":
-				sendResponse.accept(obaResponse.getStopsForLocation());
-				break;
-			case "stops-for-route":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "trip-details":
-				sendResponse.accept(obaResponse.getTripDetails());
-				break;
-			case "trip-for-vehicle":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "trip":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "trips-for-location":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "trips-for-route":
-				sendResponse.accept(new JsonObject());
-				break;
-			case "vehicles-for-agency":
-				sendResponse.accept(new JsonObject());
-				break;
-			default:
-				sendResponse.accept(null);
-				break;
+			// --- Implemented endpoints ---
+			case "agencies-with-coverage" -> sendResponse.accept(obaResponse.getAgenciesWithCoverage());
+			case "agency" -> sendResponse.accept(obaResponse.getAgency());
+			case "arrivals-and-departures-for-stop" -> sendResponse.accept(obaResponse.getArrivalsAndDeparturesForStop());
+			case "stops-for-location" -> sendResponse.accept(obaResponse.getStopsForLocation());
+			case "trip-details" -> sendResponse.accept(obaResponse.getTripDetails());
+			// --- OneBusAway compatibility stubs: documented but not yet implemented. ---
+			// These endpoints exist so that OBA client libraries probing the full surface get
+			// a well-formed (empty) response instead of a 404. Do not rely on a non-empty
+			// payload — see docs/API.md for the implementation status.
+			case "arrival-and-departure-for-stop",
+			     "arrivals-and-departures-for-location",
+			     "block",
+			     "cancel-alarm",
+			     "current-time",
+			     "register-alarm-for-arrival-and-departure-at-stop",
+			     "report-problem-with-stop",
+			     "report-problem-with-trip",
+			     "route-ids-for-agency",
+			     "route",
+			     "routes-for-agency",
+			     "routes-for-location",
+			     "schedule-for-route",
+			     "schedule-for-stop",
+			     "shape",
+			     "stop-ids-for-agency",
+			     "stop",
+			     "stops-for-route",
+			     "trip-for-vehicle",
+			     "trip",
+			     "trips-for-location",
+			     "trips-for-route",
+			     "vehicles-for-agency" -> sendResponse.accept(new JsonObject());
+			default -> sendResponse.accept(null);
 		}
 	}
 }

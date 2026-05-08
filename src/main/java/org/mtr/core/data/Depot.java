@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.core.generated.data.DepotSchema;
 import org.mtr.core.operation.UpdateDataResponse;
@@ -16,7 +17,6 @@ import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.function.IntConsumer;
 
@@ -30,8 +30,7 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	private final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 	/**
-	 * A temporary list to store all platforms of the vehicle instructions as well as the route used to get to each platform.
-	 * Repeated platforms are ignored.
+	 * A temporary list to store all platforms of the vehicle instructions as well as the route used to get to each platform. Repeated platforms are ignored.
 	 */
 	private final ObjectArrayList<PlatformRouteDetails> platformsInRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
@@ -229,21 +228,18 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 
 		return new VehicleExtraData.VehiclePlatformRouteInfo(
-				previousData == null ? null : previousData.platform,
-				thisData == null ? null : thisData.platform,
-				nextData == null ? null : nextData.platform,
-				thisData == null ? null : thisData.route,
-				nextData == null ? null : nextData.route,
-				nextNextData == null ? null : nextNextData.route,
-				nextData == null ? Integer.MAX_VALUE : nextData.platformIndex
+			previousData == null ? null : previousData.platform,
+			thisData == null ? null : thisData.platform,
+			nextData == null ? null : nextData.platform,
+			thisData == null ? null : thisData.route,
+			nextData == null ? null : nextData.route,
+			nextNextData == null ? null : nextNextData.route,
+			nextData == null ? Integer.MAX_VALUE : nextData.platformIndex
 		);
 	}
 
 	/**
-	 * The first part generates platform directions (N, NE, etc.) for OBA data.
-	 * The second part reads from real-time departures and in-game frequencies and converts them to departures.
-	 * Each departure is mapped to a siding and siding time segments must be generated beforehand.
-	 * Should only be called during initialization (but after siding initialization), when setting world time, and after path generation of all sidings.
+	 * The first part generates platform directions (N, NE, etc.) for OBA data. The second part reads from real-time departures and in-game frequencies and converts them to departures. Each departure is mapped to a siding and siding time segments must be generated beforehand. Should only be called during initialization (but after siding initialization), when setting world time, and after path generation of all sidings.
 	 */
 	public void generatePlatformDirectionsAndWriteDeparturesToSidings() {
 		final Long2ObjectOpenHashMap<Angle> platformDirections = new Long2ObjectOpenHashMap<>();

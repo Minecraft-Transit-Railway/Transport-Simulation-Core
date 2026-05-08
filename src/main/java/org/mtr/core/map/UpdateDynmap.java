@@ -7,6 +7,7 @@ import org.dynmap.DynmapCommonAPIListener;
 import org.dynmap.markers.AreaMarker;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.core.data.AreaBase;
 import org.mtr.core.data.SavedRailBase;
@@ -14,7 +15,7 @@ import org.mtr.core.simulation.Simulator;
 
 public final class UpdateDynmap implements UpdateWebMap {
 
-	private static DynmapCommonAPI dynmapCommonAPI;
+	private static @Nullable DynmapCommonAPI dynmapCommonAPI;
 
 	static {
 		try {
@@ -28,13 +29,12 @@ public final class UpdateDynmap implements UpdateWebMap {
 						UpdateWebMap.readResource(STATION_ICON_PATH, inputStream -> markerAPI.createMarkerIcon(STATION_ICON_KEY, STATION_ICON_KEY, inputStream));
 						UpdateWebMap.readResource(DEPOT_ICON_PATH, inputStream -> markerAPI.createMarkerIcon(DEPOT_ICON_KEY, DEPOT_ICON_KEY, inputStream));
 					} catch (Exception e) {
-						Main.LOGGER.error("", e);
+						Main.LOGGER.error("Failed to register Dynmap marker icons", e);
 					}
 				}
 			});
-		} catch (
-				Exception e) {
-			Main.LOGGER.error("", e);
+		} catch (Exception e) {
+			Main.LOGGER.error("Failed to register Dynmap API listener", e);
 		}
 	}
 
@@ -43,27 +43,18 @@ public final class UpdateDynmap implements UpdateWebMap {
 			updateDynmap(simulator.dimension, simulator.stations, MARKER_SET_STATIONS_ID, MARKER_SET_STATIONS_TITLE, MARKER_SET_STATION_AREAS_ID, MARKER_SET_STATION_AREAS_TITLE, STATION_ICON_KEY);
 			updateDynmap(simulator.dimension, simulator.depots, MARKER_SET_DEPOTS_ID, MARKER_SET_DEPOTS_TITLE, MARKER_SET_DEPOT_AREAS_ID, MARKER_SET_DEPOT_AREAS_TITLE, DEPOT_ICON_KEY);
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to update Dynmap markers for {}", simulator.dimension, e);
 		}
 	}
 
 	private static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void updateDynmap(String dimension, ObjectArraySet<T> areas, String areasId, String areasTitle, String areaAreasId, String areaAreasTitle, String iconKey) {
 		if (dynmapCommonAPI != null) {
-			final String worldId;
-			switch (dimension) {
-				case "minecraft/overworld":
-					worldId = "world";
-					break;
-				case "minecraft/the_nether":
-					worldId = "DIM-1";
-					break;
-				case "minecraft/the_end":
-					worldId = "DIM1";
-					break;
-				default:
-					worldId = dimension.replaceFirst("/", ":");
-					break;
-			}
+			final String worldId = switch (dimension) {
+				case "minecraft/overworld" -> "world";
+				case "minecraft/the_nether" -> "DIM-1";
+				case "minecraft/the_end" -> "DIM1";
+				default -> dimension.replaceFirst("/", ":");
+			};
 
 			final MarkerAPI markerAPI = dynmapCommonAPI.getMarkerAPI();
 			markerAPI.getPlayerSets().forEach(playerSet -> {

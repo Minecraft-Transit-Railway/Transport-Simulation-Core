@@ -13,7 +13,10 @@ public final class MessageQueue<T> {
 		try {
 			linkedBlockingDeque.put(object);
 		} catch (InterruptedException e) {
-			Main.LOGGER.error("", e);
+			// Restore the interrupt flag so callers higher up the stack can react to the
+			// interruption — the alternative is silently swallowing it (see CODE_STYLES §3.14).
+			Thread.currentThread().interrupt();
+			Main.LOGGER.error("Interrupted while enqueuing message", e);
 		}
 	}
 

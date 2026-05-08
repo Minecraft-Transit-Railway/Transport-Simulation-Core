@@ -33,7 +33,7 @@ public final class MessagePackReader extends ReaderBase {
 		} catch (MessageTypeException e) {
 			throw e;
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to read MessagePack input", e);
 		}
 	}
 
@@ -143,6 +143,7 @@ public final class MessagePackReader extends ReaderBase {
 	 * @deprecated for {@link DataFixer} use only
 	 */
 	@Deprecated
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	public void iterateMap(String key, BiConsumer<String, Value> consumer) {
 		final Value value = map.get(key);
 		if (value != null) {

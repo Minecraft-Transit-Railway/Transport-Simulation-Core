@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Depot;
 import org.mtr.core.generated.WebserverResources;
 import org.mtr.core.servlet.*;
@@ -11,8 +12,6 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.org.eclipse.jetty.servlet.ServletHolder;
 
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
@@ -26,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@ParametersAreNonnullByDefault
 public class Main {
 
 	private final ObjectImmutableList<Simulator> simulators;
@@ -54,7 +52,7 @@ public class Main {
 			main.readConsoleInput();
 		} catch (Exception e) {
 			printHelp();
-			LOGGER.error("", e);
+			LOGGER.error("Failed to start simulation", e);
 		}
 	}
 
@@ -135,29 +133,22 @@ public class Main {
 			try {
 				final String[] input = new BufferedReader(new InputStreamReader(System.in)).readLine().trim().toLowerCase(Locale.ENGLISH).replaceAll("[^a-z ]", "").split(" ");
 				switch (input[0]) {
-					case "exit":
-					case "stop":
-					case "quit":
+					case "exit", "stop", "quit" -> {
 						stop();
 						return;
-					case "save":
-					case "save-all":
-						save();
-						break;
-					case "generate":
-					case "regenerate":
+					}
+					case "save", "save-all" -> save();
+					case "generate", "regenerate" -> {
 						final StringBuilder generateKey = new StringBuilder();
 						for (int i = 1; i < input.length; i++) {
 							generateKey.append(input[i]).append(" ");
 						}
 						simulators.forEach(simulator -> Depot.generateDepotsByName(simulator, generateKey.toString()));
-						break;
-					default:
-						LOGGER.info("Unknown command \"{}\"", input[0]);
-						break;
+					}
+					default -> LOGGER.info("Unknown command \"{}\"", input[0]);
 				}
 			} catch (Exception e) {
-				LOGGER.error("", e);
+				LOGGER.error("Failed to read console input", e);
 				stop();
 				return;
 			}

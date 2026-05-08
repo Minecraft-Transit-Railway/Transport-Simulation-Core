@@ -61,12 +61,12 @@ public final class OBAResponse extends ResponseBase<Object> {
 				if (!visitedSidingIds.contains(siding.getId())) {
 					visitedSidingIds.add(siding.getId());
 					siding.getOBAArrivalsAndDeparturesElementsWithTripsUsed(
-							singleElement,
-							stopWithArrivalsAndDepartures,
-							currentMillis,
-							platform,
-							Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
-							Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000
+						singleElement,
+						stopWithArrivalsAndDepartures,
+						currentMillis,
+						platform,
+						Math.max(0, (int) getParameter("minutesBefore", 5)) * 60000,
+						Math.max(0, (int) getParameter("minutesAfter", 35)) * 60000
 					);
 				}
 			})));

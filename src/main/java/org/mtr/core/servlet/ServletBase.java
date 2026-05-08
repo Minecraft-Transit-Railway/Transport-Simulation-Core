@@ -1,11 +1,13 @@
 package org.mtr.core.servlet;
 
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.core.Main;
+import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.integration.Response;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
@@ -16,13 +18,13 @@ import org.mtr.libraries.javax.servlet.http.HttpServlet;
 import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
 import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@Log4j2
 public abstract class ServletBase extends HttpServlet {
 
 	private final ObjectImmutableList<Simulator> simulators;
@@ -51,7 +53,9 @@ public abstract class ServletBase extends HttpServlet {
 				int dimension = 0;
 				try {
 					dimension = Integer.parseInt(tryGetParameter(httpServletRequest, "dimension"));
-				} catch (Exception ignored) {
+				} catch (NumberFormatException e) {
+					// Fall back to dimension 0 when the query parameter is missing or malformed.
+					log.debug("Falling back to dimension 0; could not parse 'dimension' query parameter", e);
 				}
 
 				if (dimension < 0 || dimension >= simulators.size()) {
@@ -61,11 +65,11 @@ public abstract class ServletBase extends HttpServlet {
 				}
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to handle servlet request to {}", httpServletRequest.getRequestURI(), e);
 		}
 	}
 
-	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse);
+	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<@Nullable JsonObject> sendResponse);
 
 	private void run(HttpServletRequest httpServletRequest, @Nullable HttpServletResponse httpServletResponse, @Nullable AsyncContext asyncContext, JsonReader jsonReader, Simulator simulator) {
 		final String endpoint;
@@ -87,7 +91,7 @@ public abstract class ServletBase extends HttpServlet {
 			}
 		});
 
-		simulator.run(() -> getContent(endpoint, data, parameters, jsonReader, simulator, jsonObject -> {
+		simulator.run(() -> getContent(endpoint, data, parameters, jsonReader, simulator, (@Nullable JsonObject jsonObject) -> {
 			if (httpServletResponse != null && asyncContext != null) {
 				buildResponseObject(httpServletResponse, asyncContext, jsonObject, jsonObject == null ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, endpoint, data);
 			}
@@ -116,7 +120,7 @@ public abstract class ServletBase extends HttpServlet {
 							servletOutputStream.write(byteBuffer.get());
 						}
 					} catch (Exception e) {
-						Main.LOGGER.error("", e);
+						log.error("Failed to write servlet response", e);
 					}
 				}
 
@@ -126,21 +130,18 @@ public abstract class ServletBase extends HttpServlet {
 				}
 			});
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to send servlet response", e);
 		}
 	}
 
 	public static String getMimeType(String fileName) {
 		final String[] fileNameSplit = fileName.split("\\.");
 		final String fileExtension = fileNameSplit.length == 0 ? "" : fileNameSplit[fileNameSplit.length - 1];
-		switch (fileExtension) {
-			case "js":
-				return "text/javascript";
-			case "json":
-				return "application/json";
-			default:
-				return "text/" + fileExtension;
-		}
+		return switch (fileExtension) {
+			case "js" -> "text/javascript";
+			case "json" -> "application/json";
+			default -> "text/" + fileExtension;
+		};
 	}
 
 	protected static String removeLastSlash(String text) {

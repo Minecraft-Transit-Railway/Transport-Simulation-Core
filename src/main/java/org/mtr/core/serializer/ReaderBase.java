@@ -4,9 +4,9 @@ import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -55,7 +55,7 @@ public abstract class ReaderBase {
 			try {
 				consumer.accept(value);
 			} catch (Exception e) {
-				Main.LOGGER.error("", e);
+				Main.LOGGER.error("Failed to unpack value {}", value, e);
 			}
 		}
 	}

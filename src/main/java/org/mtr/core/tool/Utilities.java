@@ -5,12 +5,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectLongImmutablePair;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.core.data.Position;
 import org.mtr.core.serializer.JsonWriter;
 import org.mtr.core.serializer.SerializedDataBase;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -45,8 +45,8 @@ public interface Utilities {
 
 	static boolean isBetween(Position position, double x1, double y1, double z1, double x2, double y2, double z2, double padding) {
 		return Utilities.isBetween(position.getX(), x1, x2, padding) &&
-				Utilities.isBetween(position.getY(), y1, y2, padding) &&
-				Utilities.isBetween(position.getZ(), z1, z2, padding);
+			Utilities.isBetween(position.getY(), y1, y2, padding) &&
+			Utilities.isBetween(position.getZ(), z1, z2, padding);
 	}
 
 	static boolean isIntersecting(double value1, double value2, double value3, double value4) {
@@ -110,10 +110,12 @@ public interface Utilities {
 		return speedKilometersPerHour / 3600;
 	}
 
+	@Nullable
 	static <T, U extends List<T>> T getElement(U collection, int index) {
 		return getElement(collection, index, null);
 	}
 
+	@Nullable
 	static <T, U extends List<T>> T getElement(@Nullable U collection, int index, @Nullable T defaultValue) {
 		final T result;
 		if (collection == null || index >= collection.size() || index < -collection.size()) {
@@ -232,10 +234,11 @@ public interface Utilities {
 		}
 	}
 
-	static <T> boolean sameItems(Collection<T> collection1, Collection<T> collection2) {
-		return collection1.containsAll(collection2) && collection2.containsAll(collection1);
+	static <T> boolean differentItems(Collection<T> collection1, Collection<T> collection2) {
+		return !collection1.containsAll(collection2) || !collection2.containsAll(collection1);
 	}
 
+	@Nullable
 	static <T> T loopUntilTimeout(Supplier<T> action, long timeoutMillis) {
 		final long startMillis = System.currentTimeMillis();
 		while (System.currentTimeMillis() - startMillis < timeoutMillis) {
@@ -263,8 +266,10 @@ public interface Utilities {
 			while (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
 				Main.LOGGER.warn("Termination failed, retrying...");
 			}
-		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+		} catch (InterruptedException e) {
+			// Restore the interrupt flag (CODE_STYLES §3.14) so callers can react.
+			Thread.currentThread().interrupt();
+			Main.LOGGER.error("Interrupted while awaiting executor termination", e);
 		}
 	}
 }

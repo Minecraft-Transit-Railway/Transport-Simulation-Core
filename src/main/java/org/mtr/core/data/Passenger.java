@@ -3,13 +3,13 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.longs.LongLongImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectBooleanImmutablePair;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.PassengerSchema;
 import org.mtr.core.map.DirectionsRequest;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 
 public final class Passenger extends PassengerSchema {

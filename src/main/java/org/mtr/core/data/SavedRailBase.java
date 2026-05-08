@@ -1,5 +1,6 @@
 package org.mtr.core.data;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.SavedRailBaseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
@@ -7,7 +8,7 @@ import org.mtr.legacy.data.DataFixer;
 
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends SavedRailBaseSchema {
 
-	public U area;
+	public @Nullable U area;
 
 	public SavedRailBase(Position position1, Position position2, TransportMode transportMode, Data data) {
 		super(position1, position2, transportMode, data);

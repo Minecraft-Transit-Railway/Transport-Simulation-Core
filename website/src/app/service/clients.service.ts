@@ -1,14 +1,14 @@
-import {inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
-import {DimensionService} from "./dimension.service";
-import {DataServiceBase} from "./data-service-base";
-import {MapDataService} from "./map-data.service";
-import {ClientsDTO} from "../entity/generated/clients";
-import {Station} from "../entity/station";
-import {Route} from "../entity/route";
-import {setIfUndefined} from "../data/utilities";
+import {inject, Injectable, signal} from "@angular/core";
 
-const REFRESH_INTERVAL = 3000;
+import {setIfUndefined} from "../data/utilities";
+import {Route} from "../entity/route";
+import {Station} from "../entity/station";
+import {ClientsDTO} from "../entity/generated/clients";
+import {LIVE_REFRESH_INTERVAL_MILLIS} from "../utility/refresh.constants";
+import {DataServiceBase} from "./data-service-base";
+import {DimensionService} from "./dimension.service";
+import {MapDataService} from "./map-data.service";
 
 @Injectable({providedIn: "root"})
 export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
@@ -142,7 +142,7 @@ export class ClientsService extends DataServiceBase<{ data: ClientsDTO }> {
 			this.clientGroupsForStation.set(clientGroupsForStation);
 			this.clientGroupsForRoute.set(clientGroupsForRoute);
 			this.clientCache.set(clientCache);
-		}, REFRESH_INTERVAL, dimensionService);
+		}, LIVE_REFRESH_INTERVAL_MILLIS, dimensionService);
 		mapDataService.dataProcessed.subscribe(() => this.fetchData(""));
 	}
 

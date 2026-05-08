@@ -1,6 +1,6 @@
 import {Pipe, PipeTransform} from "@angular/core";
 import {Station} from "../entity/station";
-import {SearchData} from "../entity/searchData";
+import {SearchData} from "../entity/search-data";
 
 @Pipe({
 	name: "simplifyStations",

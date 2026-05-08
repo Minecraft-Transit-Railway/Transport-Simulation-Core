@@ -1,6 +1,7 @@
 package org.mtr.core.map;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.*;
 import org.mtr.core.data.Client;
 import org.mtr.core.data.Station;
@@ -8,7 +9,6 @@ import org.mtr.core.generated.map.DirectionsRequestSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -54,9 +54,9 @@ public final class DirectionsRequest extends DirectionsRequestSchema {
 	private Position getPosition(Simulator simulator, long x, long y, long z, String stationName, String clientId) {
 		if (!stationName.isEmpty()) {
 			final Station station = simulator.stations.stream()
-					.filter(checkStation -> checkStation.getName().equalsIgnoreCase(stationName) || Arrays.stream(checkStation.getName().split("\\|")).anyMatch(namePart -> namePart.equalsIgnoreCase(stationName)))
-					.findFirst()
-					.orElse(null);
+				.filter(checkStation -> checkStation.getName().equalsIgnoreCase(stationName) || Arrays.stream(checkStation.getName().split("\\|")).anyMatch(namePart -> namePart.equalsIgnoreCase(stationName)))
+				.findFirst()
+				.orElse(null);
 			if (station != null) {
 				long xTotal = 0;
 				long yTotal = 0;

@@ -3,8 +3,8 @@ package org.mtr.core.generator.schema;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.jspecify.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

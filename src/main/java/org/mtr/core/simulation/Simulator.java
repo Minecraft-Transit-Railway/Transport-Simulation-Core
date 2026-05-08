@@ -1,8 +1,10 @@
 package org.mtr.core.simulation;
 
+
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
-import org.mtr.core.Main;
+import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.*;
 import org.mtr.core.directions.DirectionsFinder;
 import org.mtr.core.serializer.SerializedDataBase;
@@ -13,11 +15,11 @@ import org.mtr.core.servlet.QueueObject;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.LegacyRailLoader;
 
-import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+@Log4j2
 public class Simulator extends Data implements Utilities {
 
 	private long lastMillis;
@@ -60,15 +62,15 @@ public class Simulator extends Data implements Utilities {
 		final ObjectLongImmutablePair<FileLoaderHolder> fileLoaderHolderAndDuration = Utilities.measureDuration(() -> {
 			LegacyRailLoader.load(savePath, rails, threadedFileLoading);
 			return new FileLoaderHolder(
-					new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations", threadedFileLoading),
-					new FileLoader<>(platforms, messagePackHelper -> new Platform(messagePackHelper, this), savePath, "platforms", threadedFileLoading),
-					new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings", threadedFileLoading),
-					new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes", threadedFileLoading),
-					new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", threadedFileLoading),
-					new FileLoader<>(lifts, messagePackHelper -> new Lift(messagePackHelper, this), savePath, "lifts", threadedFileLoading),
-					new FileLoader<>(rails, Rail::new, savePath, "rails", threadedFileLoading),
-					new FileLoader<>(homes, messagePackHelper -> new Home(messagePackHelper, this), savePath, "homes", threadedFileLoading),
-					new FileLoader<>(landmarks, messagePackHelper -> new Landmark(messagePackHelper, this), savePath, "landmarks", threadedFileLoading)
+				new FileLoader<>(stations, messagePackHelper -> new Station(messagePackHelper, this), savePath, "stations", threadedFileLoading),
+				new FileLoader<>(platforms, messagePackHelper -> new Platform(messagePackHelper, this), savePath, "platforms", threadedFileLoading),
+				new FileLoader<>(sidings, messagePackHelper -> new Siding(messagePackHelper, this), savePath, "sidings", threadedFileLoading),
+				new FileLoader<>(routes, messagePackHelper -> new Route(messagePackHelper, this), savePath, "routes", threadedFileLoading),
+				new FileLoader<>(depots, messagePackHelper -> new Depot(messagePackHelper, this), savePath, "depots", threadedFileLoading),
+				new FileLoader<>(lifts, messagePackHelper -> new Lift(messagePackHelper, this), savePath, "lifts", threadedFileLoading),
+				new FileLoader<>(rails, Rail::new, savePath, "rails", threadedFileLoading),
+				new FileLoader<>(homes, messagePackHelper -> new Home(messagePackHelper, this), savePath, "homes", threadedFileLoading),
+				new FileLoader<>(landmarks, messagePackHelper -> new Landmark(messagePackHelper, this), savePath, "landmarks", threadedFileLoading)
 			);
 		});
 		fileLoaderStations = fileLoaderHolderAndDuration.left().fileLoaderStations;
@@ -80,7 +82,7 @@ public class Simulator extends Data implements Utilities {
 		fileLoaderRails = fileLoaderHolderAndDuration.left().fileLoaderRails;
 		fileLoaderHomes = fileLoaderHolderAndDuration.left().fileLoaderHomes;
 		fileLoaderLandmarks = fileLoaderHolderAndDuration.left().fileLoaderLandmarks;
-		Main.LOGGER.info("Data loading complete for {} in {} second(s)", dimension, (float) fileLoaderHolderAndDuration.rightLong() / MILLIS_PER_SECOND);
+		log.info("Data loading complete for {} in {} second(s)", dimension, (float) fileLoaderHolderAndDuration.rightLong() / MILLIS_PER_SECOND);
 
 		// Initialize cache
 		sync();
@@ -118,12 +120,12 @@ public class Simulator extends Data implements Utilities {
 				sidings.forEach(Siding::clearVehicles);
 			}
 			final ObjectLongImmutablePair<Integer> ticksAndDuration = Utilities.measureDuration(this::tickUntilCaughtUp);
-			Main.LOGGER.info(
-					"Simulation difference of {}h{}m for {} caught up with {} ticks in {} second(s)",
-					totalDifference / MILLIS_PER_SECOND / 3600, (totalDifference / MILLIS_PER_SECOND / 60) % 60,
-					dimension,
-					ticksAndDuration.left(),
-					(float) ticksAndDuration.rightLong() / MILLIS_PER_SECOND
+			log.info(
+				"Simulation difference of {}h{}m for {} caught up with {} ticks in {} second(s)",
+				totalDifference / MILLIS_PER_SECOND / 3600, (totalDifference / MILLIS_PER_SECOND / 60) % 60,
+				dimension,
+				ticksAndDuration.left(),
+				(float) ticksAndDuration.rightLong() / MILLIS_PER_SECOND
 			);
 		} else {
 			tickUntilCaughtUp();
@@ -310,7 +312,7 @@ public class Simulator extends Data implements Utilities {
 			// Process messages
 			messageQueueC2S.process(queueObject -> queueObject.runCallback(OperationProcessor.process(queueObject.key, queueObject.data, this)));
 		} catch (Throwable e) {
-			Main.LOGGER.fatal("", e);
+			log.fatal("", e);
 		}
 	}
 
@@ -329,7 +331,7 @@ public class Simulator extends Data implements Utilities {
 			return changed1 || changed2 || changed3 || changed4 || changed5 || changed6 || changed7 || changed8 || changed9;
 		});
 		if (changedAndDuration.left() || !useReducedHash) {
-			Main.LOGGER.info("Save complete for {} in {} second(s)", dimension, changedAndDuration.rightLong() / 1000F);
+			log.info("Save complete for {} in {} second(s)", dimension, changedAndDuration.rightLong() / 1000F);
 		}
 
 		// Save settings
@@ -345,25 +347,25 @@ public class Simulator extends Data implements Utilities {
 		final IntIntImmutablePair saveCounts = fileLoader.save(useReducedHash);
 		final int changedCount = saveCounts.leftInt();
 		if (changedCount > 0) {
-			Main.LOGGER.info("- Changed {}: {}", fileLoader.key, changedCount);
+			log.info("- Changed {}: {}", fileLoader.key, changedCount);
 		}
 		final int deletedCount = saveCounts.rightInt();
 		if (deletedCount > 0) {
-			Main.LOGGER.info("- Deleted {}: {}", fileLoader.key, deletedCount);
+			log.info("- Deleted {}: {}", fileLoader.key, deletedCount);
 		}
 		return changedCount > 0 || deletedCount > 0;
 	}
 
 	private record FileLoaderHolder(
-			FileLoader<Station> fileLoaderStations,
-			FileLoader<Platform> fileLoaderPlatforms,
-			FileLoader<Siding> fileLoaderSidings,
-			FileLoader<Route> fileLoaderRoutes,
-			FileLoader<Depot> fileLoaderDepots,
-			FileLoader<Lift> fileLoaderLifts,
-			FileLoader<Rail> fileLoaderRails,
-			FileLoader<Home> fileLoaderHomes,
-			FileLoader<Landmark> fileLoaderLandmarks
+		FileLoader<Station> fileLoaderStations,
+		FileLoader<Platform> fileLoaderPlatforms,
+		FileLoader<Siding> fileLoaderSidings,
+		FileLoader<Route> fileLoaderRoutes,
+		FileLoader<Depot> fileLoaderDepots,
+		FileLoader<Lift> fileLoaderLifts,
+		FileLoader<Rail> fileLoaderRails,
+		FileLoader<Home> fileLoaderHomes,
+		FileLoader<Landmark> fileLoaderLandmarks
 	) {
 	}
 }

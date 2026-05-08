@@ -22,18 +22,18 @@ public final class UpdateSquaremap implements UpdateWebMap {
 				try {
 					iconRegistry.register(Key.of(STATION_ICON_KEY), ImageIO.read(inputStream));
 				} catch (IOException e) {
-					Main.LOGGER.error("", e);
+					Main.LOGGER.error("Failed to load Squaremap station icon", e);
 				}
 			});
 			UpdateWebMap.readResource(DEPOT_ICON_PATH, inputStream -> {
 				try {
 					iconRegistry.register(Key.of(DEPOT_ICON_KEY), ImageIO.read(inputStream));
 				} catch (IOException e) {
-					Main.LOGGER.error("", e);
+					Main.LOGGER.error("Failed to load Squaremap depot icon", e);
 				}
 			});
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to register Squaremap icons", e);
 		}
 	}
 
@@ -43,7 +43,7 @@ public final class UpdateSquaremap implements UpdateWebMap {
 			updateSquaremap(simulator.dimension, simulator.depots, MARKER_SET_DEPOTS_ID, MARKER_SET_DEPOTS_TITLE, MARKER_SET_DEPOT_AREAS_ID, MARKER_SET_DEPOT_AREAS_TITLE, DEPOT_ICON_KEY);
 		} catch (IllegalStateException ignored) {
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to update Squaremap markers for {}", simulator.dimension, e);
 		}
 	}
 

@@ -15,13 +15,11 @@ import org.mtr.core.generator.schema.SchemaParserJava;
 import org.mtr.core.generator.schema.SchemaParserTypeScript;
 import org.mtr.core.generator.schema.Utilities;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-@ParametersAreNonnullByDefault
 public final class Generator {
 
 	private static final Logger LOGGER = LogManager.getLogger("Generator");
@@ -82,9 +80,23 @@ public final class Generator {
 
 		try {
 			FileUtils.write(
-					projectPath.resolve("src/main/java/org/mtr").resolve(outputPath).resolve("package-info.java").toFile(),
-					String.format("@ParametersAreNonnullByDefault\npackage org.mtr.%s;\n\nimport javax.annotation.ParametersAreNonnullByDefault;", outputPackage),
-					StandardCharsets.UTF_8
+				projectPath.resolve("src/main/java/org/mtr").resolve(outputPath).resolve("package-info.java").toFile(),
+				String.format(
+					"/**%n"
+						+ " * Generated schema classes for {@code org.mtr.%1$s}.%n"
+						+ " *%n"
+						+ " * <p>Do not edit by hand &mdash; these files are produced by the {@code Generator} task in%n"
+						+ " * {@code buildSrc/} from the JSON schemas under%n"
+						+ " * {@code buildSrc/src/main/resources/schema/}. See {@code docs/SCHEMA.md} for the%n"
+						+ " * authoring workflow.</p>%n"
+						+ " */%n"
+						+ "@NullMarked%n"
+						+ "package org.mtr.%1$s;%n"
+						+ "%n"
+						+ "import org.jspecify.annotations.NullMarked;",
+					outputPackage
+				),
+				StandardCharsets.UTF_8
 			);
 		} catch (Exception e) {
 			LOGGER.error("", e);
@@ -133,7 +145,7 @@ public final class Generator {
 	private static void setImports(Class newClass, String... imports) {
 		newClass.imports.add("org.mtr.core.serializer.*");
 		newClass.imports.add("org.mtr.core.tool.*");
-		newClass.imports.add("javax.annotation.*");
+		newClass.imports.add("org.jspecify.annotations.*");
 		for (final String importPackage : imports) {
 			newClass.imports.add(String.format("org.mtr.%s.*", importPackage));
 		}

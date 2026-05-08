@@ -4,11 +4,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.StationSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.legacy.data.DataFixer;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.function.Function;
 

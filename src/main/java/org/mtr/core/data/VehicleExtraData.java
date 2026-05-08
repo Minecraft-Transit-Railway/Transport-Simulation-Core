@@ -5,12 +5,12 @@ import it.unimi.dsi.fastutil.booleans.BooleanBooleanImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.VehicleExtraDataSchema;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 
-import javax.annotation.Nullable;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -442,9 +442,9 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 	}
 
 	public static VehicleExtraData create(
-			long depotId, long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
-			ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
-			boolean repeatInfinitely, double acceleration, double deceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime
+		long depotId, long sidingId, double railLength, ObjectArrayList<VehicleCar> vehicleCars,
+		ObjectArrayList<PathData> pathSidingToMainRoute, ObjectArrayList<PathData> pathMainRoute, ObjectArrayList<PathData> pathMainRouteToSiding, PathData defaultPathData,
+		boolean repeatInfinitely, double acceleration, double deceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime
 	) {
 		final double newRailLength = Siding.getRailLength(railLength);
 		final double newTotalVehicleLength = Siding.getTotalVehicleLength(vehicleCars);

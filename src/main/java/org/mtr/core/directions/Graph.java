@@ -2,12 +2,11 @@ package org.mtr.core.directions;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.RefreshableObject;
-
-import javax.annotation.Nullable;
 
 public final class Graph extends RefreshableObject<Long2ObjectOpenHashMap<Long2ObjectOpenHashMap<IndependentConnection>>> {
 
@@ -59,9 +58,9 @@ public final class Graph extends RefreshableObject<Long2ObjectOpenHashMap<Long2O
 							final long distance = platformMidPosition.manhattanDistance(walkingPlatform.getMidPosition());
 							if (distance <= DirectionsFinder.MAX_WALKING_DISTANCE) {
 								independentConnections.computeIfAbsent(platformId, key -> new Long2ObjectOpenHashMap<>()).put(walkingPlatform.getId(), new IndependentConnection(
-										null,
-										platformId, walkingPlatform.getId(),
-										Math.round(distance / DirectionsFinder.WALKING_SPEED), distance
+									null,
+									platformId, walkingPlatform.getId(),
+									Math.round(distance / DirectionsFinder.WALKING_SPEED), distance
 								));
 							}
 						}
@@ -74,13 +73,13 @@ public final class Graph extends RefreshableObject<Long2ObjectOpenHashMap<Long2O
 			simulator.routes.forEach(route -> {
 				if (route.getTransportMode().continuousMovement && !route.getHidden()) {
 					DirectionsFinder.processRoute(
+						route,
+						route.getRoutePlatforms().size() - 1,
+						(offsetTimeFromLastDeparture, duration, platform1, platform2) -> independentConnections.computeIfAbsent(platform1.getId(), key -> new Long2ObjectOpenHashMap<>()).put(platform2.getId(), new IndependentConnection(
 							route,
-							route.getRoutePlatforms().size() - 1,
-							(offsetTimeFromLastDeparture, duration, platform1, platform2) -> independentConnections.computeIfAbsent(platform1.getId(), key -> new Long2ObjectOpenHashMap<>()).put(platform2.getId(), new IndependentConnection(
-									route,
-									platform1.getId(), platform2.getId(),
-									duration, 0
-							))
+							platform1.getId(), platform2.getId(),
+							duration, 0
+						))
 					);
 				}
 			});

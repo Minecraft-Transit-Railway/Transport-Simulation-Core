@@ -1,18 +1,19 @@
-import {inject, Injectable, signal} from "@angular/core";
-import {Subject} from "rxjs";
-import {SelectableDataServiceBase} from "./selectable-data-service-base";
-import {Route} from "../entity/route";
-import {DimensionService} from "./dimension.service";
-import {ROUTE_TYPES} from "../data/routeType";
-import {MapSelectionService} from "./map-selection.service";
 import {HttpClient} from "@angular/common/http";
-import {DirectionsResponseDTO} from "../entity/generated/directionsResponse";
-import {DirectionsRequestDTO} from "../entity/generated/directionsRequest";
-import {MapDataService} from "./map-data.service";
-import {Station} from "../entity/station";
-import {ClientsService} from "./clients.service";
+import {inject, Injectable, signal} from "@angular/core";
 
-const REFRESH_INTERVAL = 3000;
+import {Subject} from "rxjs";
+
+import {ROUTE_TYPES} from "../data/route-type";
+import {Route} from "../entity/route";
+import {Station} from "../entity/station";
+import {DirectionsRequestDTO} from "../entity/generated/directionsRequest";
+import {DirectionsResponseDTO} from "../entity/generated/directionsResponse";
+import {LIVE_REFRESH_INTERVAL_MILLIS} from "../utility/refresh.constants";
+import {ClientsService} from "./clients.service";
+import {DimensionService} from "./dimension.service";
+import {MapDataService} from "./map-data.service";
+import {MapSelectionService} from "./map-selection.service";
+import {SelectableDataServiceBase} from "./selectable-data-service-base";
 
 @Injectable({providedIn: "root"})
 export class DirectionsService extends SelectableDataServiceBase<{ currentTime: number, data: DirectionsResponseDTO }, { directionsRequest: DirectionsRequestDTO, startStationId?: string, endStationId?: string }> {
@@ -154,7 +155,7 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 			}
 
 			this.directions.set(newDirections);
-		}, REFRESH_INTERVAL, dimensionService);
+		}, LIVE_REFRESH_INTERVAL_MILLIS, dimensionService);
 	}
 
 	public selectData(startStation: Station | undefined, endStation: Station | undefined, startClientId: string | undefined, endClientId: string | undefined) {

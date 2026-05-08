@@ -174,17 +174,17 @@ public abstract class Data {
 					UpdateSquaremap.updateSquaremap((Simulator) this);
 				} catch (NoClassDefFoundError ignored) {
 				} catch (Exception e) {
-					Main.LOGGER.error("", e);
+					Main.LOGGER.error("Failed to update Squaremap integration", e);
 				}
 				try {
 					UpdateDynmap.updateDynmap((Simulator) this);
 				} catch (NoClassDefFoundError ignored) {
 				} catch (Exception e) {
-					Main.LOGGER.error("", e);
+					Main.LOGGER.error("Failed to update Dynmap integration", e);
 				}
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to sync data after simulation tick", e);
 		}
 	}
 

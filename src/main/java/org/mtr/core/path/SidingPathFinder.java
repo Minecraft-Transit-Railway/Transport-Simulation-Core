@@ -3,12 +3,12 @@ package org.mtr.core.path;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
-import javax.annotation.Nullable;
 import java.util.function.BiConsumer;
 
 public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> extends PathFinder<SidingPathFinder.PositionAndAngle> {
@@ -211,11 +211,11 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 
 	private static PathData getAirplanePathData(Position position1, Angle angle1, Position position2, Angle angle2, int stopIndex) {
 		return new PathData(Rail.newRail(
-				position1, angle1, position2, angle2,
-				Rail.Shape.QUADRATIC, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				new ObjectArrayList<>(), AIRPLANE_SPEED, 0,
-				false, false, true, false, false, TransportMode.AIRPLANE
+			position1, angle1, position2, angle2,
+			Rail.Shape.QUADRATIC, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			new ObjectArrayList<>(), AIRPLANE_SPEED, 0,
+			false, false, true, false, false, TransportMode.AIRPLANE
 		), 0, 0, stopIndex, position1, position2);
 	}
 

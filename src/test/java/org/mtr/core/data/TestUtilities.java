@@ -10,6 +10,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.mtr.core.Main;
 import org.mtr.core.serializer.*;
@@ -20,8 +21,6 @@ import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
 import org.mtr.libraries.org.msgpack.core.MessagePack;
 import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
 
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
@@ -29,7 +28,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-@ParametersAreNonnullByDefault
 public interface TestUtilities {
 
 	Path TEST_DIRECTORY = Paths.get("build/test-data");
@@ -64,7 +62,7 @@ public interface TestUtilities {
 			try {
 				((HttpPost) httpUriRequest).setEntity(new StringEntity(bodyObject.toString()));
 			} catch (Exception e) {
-				Main.LOGGER.error("", e);
+				Main.LOGGER.error("Failed to attach JSON body to POST request", e);
 			}
 		}
 
@@ -75,7 +73,7 @@ public interface TestUtilities {
 				responseObject = Utilities.parseJson(EntityUtils.toString(response.getEntity()));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed to execute HTTP request to {}", uri, e);
 		}
 
 		return responseObject;
@@ -94,7 +92,7 @@ public interface TestUtilities {
 				compareObjects(data, newInstance.apply(new MessagePackReader(messageUnpacker)));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			Main.LOGGER.error("Failed round-trip serialization of {}", data, e);
 		}
 	}
 

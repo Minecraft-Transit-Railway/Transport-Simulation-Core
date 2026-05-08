@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.PassengerDirection;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Position;
@@ -14,8 +15,6 @@ import org.mtr.core.map.DirectionsRequest;
 import org.mtr.core.map.DirectionsResponse;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.RefreshableObject;
-
-import javax.annotation.Nullable;
 
 public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Object> {
 
@@ -54,13 +53,13 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 				for (int i = 0; i < directionsRequestCount; i++) {
 					final DirectionsRequest directionsRequest = directionsRequests.get(i);
 					requests[i] = new Request(
-							directionsRequest.getStartPosition(simulator),
-							directionsRequest.getEndPosition(simulator),
-							Math.max(millis, directionsRequest.getStartTime()),
-							new Long2ObjectOpenHashMap<>(),
-							new Long2LongOpenHashMap(),
-							directionsRequest.callback1,
-							directionsRequest.callback2
+						directionsRequest.getStartPosition(simulator),
+						directionsRequest.getEndPosition(simulator),
+						Math.max(millis, directionsRequest.getStartTime()),
+						new Long2ObjectOpenHashMap<>(),
+						new Long2LongOpenHashMap(),
+						directionsRequest.callback1,
+						directionsRequest.callback2
 					);
 				}
 				directionsRequests.clear();
@@ -74,10 +73,10 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 						if (distanceToStart <= DirectionsFinder.MAX_WALKING_DISTANCE) {
 							final long endTime = request.startTime() + Math.round(distanceToStart / DirectionsFinder.WALKING_SPEED);
 							request.earliestConnections().put(endPlatform.getId(), new Connection(
-									null,
-									START_PLATFORM_ID, endPlatform.getId(),
-									request.startTime(), endTime,
-									distanceToStart
+								null,
+								START_PLATFORM_ID, endPlatform.getId(),
+								request.startTime(), endTime,
+								distanceToStart
 							));
 							addIndependentConnectionsBFS(endPlatform.getId(), request.earliestConnections());
 						}
@@ -106,12 +105,12 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 		} else if (index2 < requests.length) {
 			final Request request = requests[index2];
 			final DirectionsResponse directionsResponse = request.callback1() == null ? null : new DirectionsResponse(
-					graph.getTotalRefreshTime(),
-					arrivals.getTotalRefreshTime(),
-					getTotalRefreshTime(),
-					graph.getLongestRefreshTime(),
-					arrivals.getLongestRefreshTime(),
-					getLongestRefreshTime()
+				graph.getTotalRefreshTime(),
+				arrivals.getTotalRefreshTime(),
+				getTotalRefreshTime(),
+				graph.getLongestRefreshTime(),
+				arrivals.getLongestRefreshTime(),
+				getLongestRefreshTime()
 			);
 			final ObjectArrayList<PassengerDirection> passengerDirections = request.callback2() == null ? null : new ObjectArrayList<>();
 			Connection current = getEndConnection(request.earliestConnections(), request.walkingDistancesToEnd());
@@ -124,20 +123,20 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 
 				if (directionsResponse != null) {
 					directionsResponse.getDirectionsConnections().add(0, new DirectionsConnection(
-							current.route() == null ? "" : current.route().getHexId(),
-							startStation == null ? "" : startStation.getHexId(), endStation == null ? "" : endStation.getHexId(),
-							startPlatform == null ? "" : startPlatform.getName(), endPlatform == null ? "" : endPlatform.getName(),
-							current.startTime(), current.endTime(),
-							current.walkingDistance()
+						current.route() == null ? "" : current.route().getHexId(),
+						startStation == null ? "" : startStation.getHexId(), endStation == null ? "" : endStation.getHexId(),
+						startPlatform == null ? "" : startPlatform.getName(), endPlatform == null ? "" : endPlatform.getName(),
+						current.startTime(), current.endTime(),
+						current.walkingDistance()
 					));
 				}
 
 				if (passengerDirections != null) {
 					passengerDirections.add(0, new PassengerDirection(
-							current.route() == null ? 0 : current.route().getId(),
-							startPlatform == null ? 0 : startPlatform.getId(),
-							endPlatform == null ? 0 : endPlatform.getId(),
-							current.startTime(), current.endTime()
+						current.route() == null ? 0 : current.route().getId(),
+						startPlatform == null ? 0 : startPlatform.getId(),
+						endPlatform == null ? 0 : endPlatform.getId(),
+						current.startTime(), current.endTime()
 					));
 				}
 
@@ -179,10 +178,10 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 				final Connection startConnection = earliestConnections.get(startPlatformId);
 				independentConnectionsForPlatformId.forEach((endPlatformId, independentConnection) -> {
 					if (addConnection(new Connection(
-							independentConnection.route(),
-							startPlatformId, endPlatformId,
-							startConnection.endTime(), startConnection.endTime() + independentConnection.duration(),
-							independentConnection.walkingDistance()
+						independentConnection.route(),
+						startPlatformId, endPlatformId,
+						startConnection.endTime(), startConnection.endTime() + independentConnection.duration(),
+						independentConnection.walkingDistance()
 					), earliestConnections)) {
 						queue.add(endPlatformId);
 					}
@@ -217,10 +216,10 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 			return null;
 		} else {
 			return new Connection(
-					null,
-					bestPlatformId, END_PLATFORM_ID,
-					bestStartTime, bestEndTime,
-					bestWalkingDistance
+				null,
+				bestPlatformId, END_PLATFORM_ID,
+				bestStartTime, bestEndTime,
+				bestWalkingDistance
 			);
 		}
 	}

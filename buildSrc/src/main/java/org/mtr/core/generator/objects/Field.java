@@ -2,13 +2,16 @@ package org.mtr.core.generator.objects;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.jspecify.annotations.Nullable;
 
 public class Field implements GeneratedObject {
 
 	public final ObjectArraySet<OtherModifier> otherModifiers = new ObjectArraySet<>();
+	public final ObjectArraySet<String> annotations = new ObjectArraySet<>();
 	private final VisibilityModifier visibilityModifier;
 	private final Type type;
 	private final String name;
+	@Nullable
 	private final String defaultValue;
 	private final boolean useDefaultInitializer;
 
@@ -34,6 +37,7 @@ public class Field implements GeneratedObject {
 
 		final StringBuilder stringBuilder = new StringBuilder(visibilityModifier.name).append(' ');
 		otherModifiers.forEach(otherModifier -> stringBuilder.append(otherModifier.name).append(' '));
+		annotations.forEach(annotation -> stringBuilder.append('@').append(annotation).append(' '));
 		stringBuilder.append(type.nameJava).append(' ').append(name).append(type.getInitializerJava(defaultValue, useDefaultInitializer));
 		result.add(stringBuilder.toString());
 
