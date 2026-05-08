@@ -4,8 +4,8 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
-import org.mtr.core.Main;
 import org.mtr.core.generated.data.DepotSchema;
 import org.mtr.core.operation.UpdateDataResponse;
 import org.mtr.core.path.SidingPathFinder;
@@ -20,6 +20,17 @@ import org.mtr.legacy.data.DataFixer;
 import java.util.Collections;
 import java.util.function.IntConsumer;
 
+/**
+ * A bundle of {@link Siding}s plus the platform-by-platform route they all serve.
+ *
+ * <p>Each {@code Depot} owns the path-generation pipeline for its sidings — building the chain
+ * of {@link SidingPathFinder}s, the resulting {@link PathData} list, and the per-day departure
+ * timetable that feeds individual sidings via {@link Siding#addDeparture(long)}. The depot's
+ * configured frequencies + the simulator's in-game day length feed
+ * {@link #generatePlatformDirectionsAndWriteDeparturesToSidings()} which is the heart of the
+ * timetable computation.</p>
+ */
+@Log4j2
 public final class Depot extends DepotSchema implements Utilities {
 
 	@Nullable
@@ -36,7 +47,14 @@ public final class Depot extends DepotSchema implements Utilities {
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
+	/** Continuous-movement vehicles (e.g. cable cars) depart at fixed-period intervals. */
 	public static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
+	/**
+	 * MTR depot frequencies are expressed in trains-per-hour scaled by this constant so the
+	 * timetable maths can stay in integer arithmetic. Equivalent to four hours of milliseconds —
+	 * picked so the smallest non-zero frequency (1 train per 4h) maps to {@code intervalMillis = MILLIS_PER_HOUR}.
+	 */
+	private static final long FREQUENCY_BASE_MILLIS = 4L * MILLIS_PER_HOUR;
 	private static final String KEY_PATH = "path";
 
 	public Depot(TransportMode transportMode, Data data) {
@@ -59,6 +77,8 @@ public final class Depot extends DepotSchema implements Utilities {
 		final long tempLastGeneratedFailedEndId = lastGeneratedFailedEndId;
 		final long tempLastGeneratedFailedSidingCount = lastGeneratedFailedSidingCount;
 		super.updateData(readerBase);
+		// Only the simulator-side `Data` is authoritative for generation status; on the client the
+		// schema-supplied fields are kept as-is.
 		if (data instanceof Simulator) {
 			lastGeneratedMillis = tempLastGeneratedMillis;
 			lastGeneratedStatus = tempLastGeneratedStatus;
@@ -257,14 +277,15 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 
 		platformDirections.forEach((platformId, angle) -> {
-			final Platform platform = data.platformIdMap.get(platformId);
+			// Unbox the Long key once so we hit the primitive overload of Long2ObjectOpenHashMap#get and avoid the deprecated `get(Object)`.
+			final Platform platform = data.platformIdMap.get((long) platformId);
 			if (platform != null) {
 				platform.setAngles(id, angle);
 			}
 		});
 
 		final LongArrayList departures = new LongArrayList();
-		final long gameMillisPerDay = data instanceof Simulator ? ((Simulator) data).getGameMillisPerDay() : 0;
+		final long gameMillisPerDay = data instanceof final Simulator simulator1 ? simulator1.getGameMillisPerDay() : 0;
 		repeatDepartures = 1;
 
 		if (transportMode.continuousMovement) {
@@ -274,8 +295,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		} else {
 			if (useRealTime) {
 				departures.addAll(realTimeDepartures);
-			} else if (data instanceof Simulator) {
-				final Simulator simulator = (Simulator) data;
+			} else if (data instanceof final Simulator simulator) {
 				final long offsetMillis = simulator.getMillisOfGameMidnight();
 				long lastDeparture = Long.MIN_VALUE;
 
@@ -285,12 +305,12 @@ public final class Depot extends DepotSchema implements Utilities {
 				}
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
-					final long frequency = getFrequency(((Simulator) data).isTimeMoving() ? i : ((Simulator) data).getGameHour());
+					final long frequency = getFrequency(simulator.isTimeMoving() ? i : simulator.getGameHour());
 					if (frequency == 0) {
 						continue;
 					}
 
-					final long intervalMillis = 14400000 / frequency;
+					final long intervalMillis = FREQUENCY_BASE_MILLIS / frequency;
 					final long hourMinMillis = MILLIS_PER_HOUR * i;
 					final long hourMaxMillis = MILLIS_PER_HOUR * (i + 1);
 
@@ -351,7 +371,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		if (savedRails.isEmpty()) {
 			updateGenerationStatus(GeneratedStatus.NO_SIDINGS, 0, 0, "No sidings in %s");
 		} else {
-			Main.LOGGER.info("Starting path generation for {}...", name);
+			log.info("Starting path generation for {}...", name);
 			path.clear();
 			sidingPathFinders.clear();
 			generatingSidingIds.clear();
@@ -370,7 +390,7 @@ public final class Depot extends DepotSchema implements Utilities {
 			onGenerationComplete.accept(false);
 		}
 		onGenerationComplete = null;
-		Main.LOGGER.info("{}", String.format(message, name));
+		log.info("{}", String.format(message, name));
 	}
 
 	public static void generateDepotsByName(Simulator simulator, String filter) {

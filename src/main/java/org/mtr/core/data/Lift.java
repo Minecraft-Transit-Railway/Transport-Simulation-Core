@@ -90,8 +90,8 @@ public class Lift extends LiftSchema implements Utilities {
 			railProgress = Utilities.clampSafe(railProgress + speed * millisElapsed, 0, getProgress(Integer.MAX_VALUE));
 		}
 
-		if (data instanceof Simulator) {
-			((Simulator) data).clients.forEach(client -> {
+		if (data instanceof final Simulator simulator) {
+			simulator.clients.forEach(client -> {
 				if (Utilities.isBetween(client.getPosition(), minPosition, maxPosition, client.getUpdateRadius())) {
 					client.update(this, needsUpdate);
 				}

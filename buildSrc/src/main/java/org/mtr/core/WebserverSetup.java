@@ -6,7 +6,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,7 +55,7 @@ public final class WebserverSetup {
 
 	private static String download(String url) {
 		try {
-			return IOUtils.toString(new URL(url), StandardCharsets.UTF_8);
+			return IOUtils.toString(URI.create(url).toURL(), StandardCharsets.UTF_8);
 		} catch (Exception e) {
 			LOGGER.error("", e);
 			return "";

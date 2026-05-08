@@ -3,8 +3,8 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.*;
 import it.unimi.dsi.fastutil.objects.*;
+import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
-import org.mtr.core.Main;
 import org.mtr.core.directions.DirectionsFinder;
 import org.mtr.core.generated.data.SidingSchema;
 import org.mtr.core.oba.*;
@@ -22,6 +22,15 @@ import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.LongConsumer;
 
+/**
+ * A single platform / parking spot inside a {@link Depot} that owns its own physical track
+ * (between the depot's main loop and the siding tail) and the {@link Vehicle} fleet currently
+ * dispatched along it.
+ *
+ * <p>Sidings are the unit at which the simulator generates and stores paths, dispatches vehicles
+ * for each timetabled departure, and reports OBA arrivals / trip details.</p>
+ */
+@Log4j2
 public final class Siding extends SidingSchema implements Utilities {
 
 	private PathData defaultPathData;
@@ -234,7 +243,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	public boolean tick() {
 		// Generate any pending paths
 		SidingPathFinder.findPathTick(pathSidingToMainRoute, sidingPathFinderSidingToMainRoute, area == null ? 0 : area.getCruisingAltitude(), () -> finishGeneratingPath(false), (startSavedRail, endSavedRail) -> {
-			Main.LOGGER.info("Path not found from {} siding {} to main route", getDepotName(), name);
+			log.info("Path not found from {} siding {} to main route", getDepotName(), name);
 			finishGeneratingPath(true);
 		});
 		SidingPathFinder.findPathTick(pathMainRouteToSiding, sidingPathFinderMainRouteToSiding, area == null ? 0 : area.getCruisingAltitude(), () -> {
@@ -245,7 +254,7 @@ public final class Siding extends SidingSchema implements Utilities {
 			}
 			finishGeneratingPath(false);
 		}, (startSavedRail, endSavedRail) -> {
-			Main.LOGGER.info("Path not found from main route to {} siding {}", getDepotName(), name);
+			log.info("Path not found from main route to {} siding {}", getDepotName(), name);
 			finishGeneratingPath(true);
 		});
 
@@ -311,7 +320,7 @@ public final class Siding extends SidingSchema implements Utilities {
 					if (departureIndex >= 0 && departureIndex < departures.size()) {
 						if (!transportMode.continuousMovement && vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
 							if (millisElapsed <= MILLIS_PER_HOUR) {
-								Main.LOGGER.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
+								log.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
 							}
 						} else {
 							vehicle.startUp(departureIndex, departures.getLong(departureIndex));
@@ -586,7 +595,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		final long offset = departures.isEmpty() || repeatInterval == 0 ? 0 : (data.getCurrentMillis() - departures.getLong(0)) / repeatInterval * repeatInterval;
 
 		for (int i = 0; i < departures.size(); i++) {
-			if ((data instanceof Simulator ? ((Simulator) data).matchMillis(departures.getLong(i) + offset) : 0) == 0) {
+			if ((data instanceof final Simulator simulator ? simulator.matchMillis(departures.getLong(i) + offset) : 0) == 0) {
 				return i;
 			}
 		}

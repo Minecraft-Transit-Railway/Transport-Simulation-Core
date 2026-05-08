@@ -9,6 +9,14 @@ import org.mtr.core.tool.Utilities;
 
 import java.util.function.Consumer;
 
+/**
+ * One run of a {@link Vehicle} from the start of a {@link Route} to the end &mdash; the
+ * GTFS-style "trip" concept reused by the OBA layer.
+ *
+ * <p>A trip groups a sequence of {@link StopTime} entries (one per platform) under a stable
+ * identifier composed of the owning {@link Siding} and a per-block index, and exposes the
+ * conversions to OBA {@link Schedule} / {@link TripDetails} payloads.</p>
+ */
 public class Trip implements Utilities {
 
 	public final Route route;

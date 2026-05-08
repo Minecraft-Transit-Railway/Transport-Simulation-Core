@@ -1,6 +1,5 @@
 package org.mtr.core.servlet;
 
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,6 +23,15 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Common HTTP plumbing for every servlet exposed by the simulator.
+ *
+ * <p>Routes incoming requests to the right {@link Simulator} (via the {@code dimension} query
+ * parameter, or all simulators when {@code dimensions=all}), parses the request body once into
+ * a {@link JsonReader}, then defers to the subclass-implemented
+ * {@link #getContent(String, String, Object2ObjectAVLTreeMap, JsonReader, Simulator, Consumer)}
+ * which runs on the simulator thread to keep state mutation single-threaded.</p>
+ */
 @Log4j2
 public abstract class ServletBase extends HttpServlet {
 
@@ -69,6 +77,16 @@ public abstract class ServletBase extends HttpServlet {
 		}
 	}
 
+	/**
+	 * Subclass hook: produce the JSON body for one resolved request.
+	 *
+	 * @param endpoint    first path segment after the servlet's base path
+	 * @param data        second path segment (typically a hex id), or {@code ""} if absent
+	 * @param parameters  query-string parameters keyed by name
+	 * @param jsonReader  reader over the parsed request body
+	 * @param simulator   simulator the request was routed to
+	 * @param sendResponse callback fed either the response body, or {@code null} to signal a 404
+	 */
 	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<@Nullable JsonObject> sendResponse);
 
 	private void run(HttpServletRequest httpServletRequest, @Nullable HttpServletResponse httpServletResponse, @Nullable AsyncContext asyncContext, JsonReader jsonReader, Simulator simulator) {
@@ -98,6 +116,11 @@ public abstract class ServletBase extends HttpServlet {
 		}));
 	}
 
+	/**
+	 * Asynchronously stream {@code content} to {@code httpServletResponse} as a UTF-8 byte array
+	 * with the given {@code contentType} and HTTP status. Used by every servlet to flush its
+	 * JSON / static-asset payload from the simulator thread without blocking it.
+	 */
 	public static void sendResponse(HttpServletResponse httpServletResponse, AsyncContext asyncContext, String content, String contentType, HttpResponseStatus httpResponseStatus) {
 		try {
 			final ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
@@ -134,6 +157,10 @@ public abstract class ServletBase extends HttpServlet {
 		}
 	}
 
+	/**
+	 * Map a file extension to its MIME type. Falls back to {@code "text/<ext>"} for anything not
+	 * explicitly listed — sufficient for the small set of static files the dashboard ships.
+	 */
 	public static String getMimeType(String fileName) {
 		final String[] fileNameSplit = fileName.split("\\.");
 		final String fileExtension = fileNameSplit.length == 0 ? "" : fileNameSplit[fileNameSplit.length - 1];

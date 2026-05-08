@@ -13,6 +13,22 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 
+/**
+ * One physical track segment in the world &mdash; the building block every {@link Vehicle}
+ * actually moves along.
+ *
+ * <p>A rail spans two endpoints with directional speed limits, a curve {@link Shape} and a
+ * tilt profile (delegated to {@link RailMath} for geometry); flags such as {@link #isPlatform},
+ * {@link #isSiding}, {@link #canTurnBack}, {@link #canConnectRemotely} and
+ * {@link #canHaveSignal} classify how the simulator may use it. Signal-block reservations
+ * are tracked in pairs of pre-/currently-blocked vehicle id maps so the
+ * {@link BlockReservation} state machine can distinguish "I'm holding this segment for a
+ * vehicle that has not yet entered" from "a vehicle is occupying this segment now".</p>
+ *
+ * <p>Construction is funneled through the {@code newXxxRail(&hellip;)} static factories and
+ * {@link #copy(Rail, ObjectArrayList)} so that the various rail flavours (generic, turn-back,
+ * platform, siding) all run through a single canonical constructor.</p>
+ */
 public final class Rail extends RailSchema {
 
 	private long manualBlockCooldown;

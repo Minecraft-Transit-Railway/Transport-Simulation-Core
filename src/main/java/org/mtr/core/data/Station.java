@@ -12,6 +12,15 @@ import org.mtr.legacy.data.DataFixer;
 import java.util.Collections;
 import java.util.function.Function;
 
+/**
+ * A passenger-facing area that owns one or more {@link Platform}s and is the endpoint shown
+ * to riders on the dashboard, in OBA responses and on the system map.
+ *
+ * <p>Stations expose their physical footprint (inherited from {@link AreaBase}), their fare
+ * zones ({@link #getZone1()} &hellip; {@link #getZone3()}), connections to neighbouring
+ * stations through {@link #connectedStations} and a list of {@link StationExit}s for
+ * wayfinding.</p>
+ */
 public final class Station extends StationSchema {
 
 	public final ObjectAVLTreeSet<Station> connectedStations = new ObjectAVLTreeSet<>();

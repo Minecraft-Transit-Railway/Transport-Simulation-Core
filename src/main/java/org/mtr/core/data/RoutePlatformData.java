@@ -4,6 +4,14 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.mtr.core.generated.data.RoutePlatformDataSchema;
 import org.mtr.core.serializer.ReaderBase;
 
+/**
+ * One entry inside a {@link Route}'s ordered platform list: the id of the {@link Platform}
+ * the route stops at, plus an optional per-stop custom destination string that overrides the
+ * route's default destination at that platform.
+ *
+ * <p>The {@link #platform} reference is resolved by the simulator after deserialisation
+ * &mdash; on disk only the platform id is persisted.</p>
+ */
 public final class RoutePlatformData extends RoutePlatformDataSchema {
 
 	public Platform platform;

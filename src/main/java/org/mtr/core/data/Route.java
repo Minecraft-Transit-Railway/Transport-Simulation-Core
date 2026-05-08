@@ -9,6 +9,15 @@ import org.mtr.legacy.data.DataFixer;
 
 import java.util.Locale;
 
+/**
+ * An ordered sequence of {@link Platform}s that together form a single line / direction
+ * passengers can travel along.
+ *
+ * <p>Routes are owned by one or more {@link Depot}s (the depots that dispatch vehicles along
+ * them) and reference platforms by id; {@link #durations} caches the per-segment travel time
+ * computed from the latest {@link Siding} simulation so the schedule view does not have to
+ * recompute it on every read.</p>
+ */
 public final class Route extends RouteSchema {
 
 	public final ObjectArrayList<Depot> depots = new ObjectArrayList<>();

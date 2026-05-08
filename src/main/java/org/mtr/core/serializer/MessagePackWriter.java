@@ -1,10 +1,18 @@
 package org.mtr.core.serializer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
-import org.mtr.core.Main;
 import org.mtr.libraries.org.msgpack.core.MessagePacker;
 
+/**
+ * {@link WriterBase} that buffers writes as deferred {@link Pack} closures and flushes them as a
+ * single MessagePack map header followed by its body when {@link #serialize()} is called.
+ *
+ * <p>Buffering lets us emit the correct map / array header sizes even though the schema-driven
+ * write order does not know how many entries it will produce up-front.</p>
+ */
+@Log4j2
 public final class MessagePackWriter extends WriterBase {
 
 	private final MessagePacker messagePacker;
@@ -53,12 +61,17 @@ public final class MessagePackWriter extends WriterBase {
 		return messagePackerWriter;
 	}
 
+	/**
+	 * Flush the buffered instructions to the underlying {@link MessagePacker} as a single map.
+	 * Errors are logged rather than propagated so a single bad entry does not abort persistence
+	 * of the whole simulator state.
+	 */
 	public void serialize() {
 		try {
 			messagePacker.packMapHeader(instructions.size());
 			serializePart();
 		} catch (Exception e) {
-			Main.LOGGER.error("Failed to serialize MessagePack output", e);
+			log.error("Failed to serialize MessagePack output", e);
 		}
 	}
 

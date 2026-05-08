@@ -1,6 +1,5 @@
 package org.mtr.core.simulation;
 
-
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
 import lombok.extern.log4j.Log4j2;
@@ -19,19 +18,37 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+/**
+ * Per-dimension simulation engine — one {@link Simulator} per Minecraft world / dimension.
+ *
+ * <p>The simulator owns the in-memory graph of stations, platforms, sidings, routes, depots,
+ * lifts, rails, homes, landmarks and clients for its dimension, and ticks them forward in
+ * one-second slices via {@link #tickUntilCaughtUp()}. State mutation is single-threaded: any
+ * cross-thread work (HTTP servlets, embedding mod callbacks) must be marshalled through
+ * {@link #run(Runnable)} so it executes on the simulator's own thread.</p>
+ *
+ * <p>Persistence is delegated to {@link FileLoader} — one per top-level entity type. Saves are
+ * incremental (only changed buckets are rewritten) unless {@code useReducedHash} is {@code false}
+ * during the final shutdown save.</p>
+ */
 @Log4j2
 public class Simulator extends Data implements Utilities {
 
 	private long lastMillis;
 	private boolean autoSave = false;
 	private long gameMillis;
-	private long gameMillisPerDay = 20 * 60 * MILLIS_PER_SECOND; // default value
+	/** Real-time milliseconds per in-game day; default = 20 in-game minutes ≈ Minecraft's vanilla rate. */
+	private long gameMillisPerDay = DEFAULT_GAME_MILLIS_PER_DAY;
 	private boolean isTimeMoving;
 	private long lastSetGameMillisMidnight;
 
+	/** Connected dashboard / mod clients for this dimension. */
 	public final ObjectArraySet<Client> clients = new ObjectArraySet<>();
+	/** Stable dimension identifier (e.g. {@code "minecraft/overworld"}). */
 	public final String dimension;
+	/** Identifiers of every dimension hosted in the same process — used for cross-dimension routing. */
 	public final String[] dimensions;
+	/** Background path-finder for passenger directions queries. */
 	public final DirectionsFinder directionsFinder = new DirectionsFinder(this);
 
 	private final FileLoader<Station> fileLoaderStations;
@@ -51,8 +68,23 @@ public class Simulator extends Data implements Utilities {
 	private final MessageQueue<QueueObject> messageQueueC2S = new MessageQueue<>();
 	private final MessageQueue<QueueObject> messageQueueS2C = new MessageQueue<>();
 
+	/**
+	 * If the simulation falls more than this many milliseconds behind wall clock, log a notice and
+	 * fast-forward in one-second slices until caught up. Picked at two minutes as a balance between
+	 * "noisy log on a sluggish host" and "silent multi-hour drift".
+	 */
 	private static final int SIMULATION_DIFFERENCE_LOGGING_THRESHOLD = 120000;
+	/** Default in-game day length in real-time milliseconds (20 in-game minutes). */
+	private static final long DEFAULT_GAME_MILLIS_PER_DAY = 20L * 60 * MILLIS_PER_SECOND;
 
+	/**
+	 * Load a dimension from disk and bring its in-memory graph up to a tickable state.
+	 *
+	 * @param dimension           identifier of the dimension being loaded
+	 * @param dimensions          identifiers of every dimension hosted in the same process
+	 * @param rootPath            root data directory; per-dimension state lives under {@code rootPath/<dimension>}
+	 * @param threadedFileLoading if {@code true}, fan file reads out across a thread pool
+	 */
 	public Simulator(String dimension, String[] dimensions, Path rootPath, boolean threadedFileLoading) {
 		this.dimension = dimension;
 		this.dimensions = dimensions;
@@ -111,6 +143,12 @@ public class Simulator extends Data implements Utilities {
 		setCurrentMillis(Utilities.getElement(new ObjectArrayList<>(settings), 0, new Settings(0)).getLastSimulationMillis());
 	}
 
+	/**
+	 * Catch the simulation up to wall clock and log a notice if it had drifted by more than
+	 * {@link #SIMULATION_DIFFERENCE_LOGGING_THRESHOLD} milliseconds. If the drift exceeds an hour
+	 * the simulator jumps to "one hour ago" instead of replaying the full gap, since replaying
+	 * many hours of vehicle motion is rarely useful and is expensive.
+	 */
 	public void tick() {
 		final long totalDifference = System.currentTimeMillis() - getCurrentMillis();
 		if (totalDifference >= SIMULATION_DIFFERENCE_LOGGING_THRESHOLD) {
@@ -132,15 +170,19 @@ public class Simulator extends Data implements Utilities {
 		}
 	}
 
+	/** Schedule a full save on the next tick. Returns immediately. */
 	public void save() {
 		autoSave = true;
 	}
 
+	/** Stop ticking and perform a final, non-incremental save. */
 	public void stop() {
 		save(false);
 	}
 
 	/**
+	 * Compare {@code millis} to the last-tick / current-tick window, accounting for day-wrap.
+	 *
 	 * @param millis Milliseconds to check
 	 * @return 1 if upcoming, 0 if current, -1 if passed
 	 */
@@ -152,6 +194,11 @@ public class Simulator extends Data implements Utilities {
 		}
 	}
 
+	/**
+	 * Fast-forward the listed depots through one full in-game day in one-second slices, leaving
+	 * the simulator's clock unchanged. Used by the dashboard "instant deploy" button so depot
+	 * vehicles are immediately spawned on every siding.
+	 */
 	public void instantDeployDepots(ObjectArrayList<Depot> depotsToInstantDeploy) {
 		final long oldLastMillis = lastMillis;
 		final long oldCurrentMillis = getCurrentMillis();
@@ -164,6 +211,14 @@ public class Simulator extends Data implements Utilities {
 		setCurrentMillis(oldCurrentMillis);
 	}
 
+	/**
+	 * Convenience overload of {@link #instantDeployDepots(ObjectArrayList)} that selects depots by
+	 * a name {@code filter} via {@link NameColorDataBase#getDataByName}.
+	 *
+	 * @param simulator simulator whose depots are scanned (typically {@code this} — kept as a
+	 *                  parameter so the method matches the embedding mod's existing signature)
+	 * @param filter    case-insensitive name filter
+	 */
 	public void instantDeployDepotsByName(Simulator simulator, String filter) {
 		instantDeployDepots(NameColorDataBase.getDataByName(simulator.depots, filter));
 	}
@@ -181,10 +236,12 @@ public class Simulator extends Data implements Utilities {
 		depots.forEach(Depot::generatePlatformDirectionsAndWriteDeparturesToSidings);
 	}
 
+	/** @return real-time milliseconds in one in-game day, or {@code 0} if unknown / paused */
 	public long getGameMillisPerDay() {
 		return gameMillisPerDay;
 	}
 
+	/** @return whether the daylight cycle (and therefore the in-game clock) is currently advancing */
 	public boolean isTimeMoving() {
 		return isTimeMoving;
 	}
@@ -203,34 +260,54 @@ public class Simulator extends Data implements Utilities {
 		return gameMillisPerDay > 0 ? (int) (gameMillis * HOURS_PER_DAY / gameMillisPerDay) : 0;
 	}
 
+	/**
+	 * Queue a {@link Runnable} to execute on the simulator thread at the start of the next tick.
+	 * Used by HTTP servlets and the embedding mod to safely mutate simulator state without
+	 * crossing threads.
+	 */
 	public void run(Runnable runnable) {
 		queuedRuns.put(runnable);
 	}
 
+	/** Enqueue a client-to-server message; processed during the next tick. */
 	public void sendMessageC2S(QueueObject queueObject) {
 		messageQueueC2S.put(queueObject);
 	}
 
+	/**
+	 * Push a server-to-client message into the outgoing queue. The optional {@code consumer} is
+	 * invoked on the simulator thread when the matching response payload of type
+	 * {@code responseDataClass} arrives back from the client.
+	 */
 	public <T extends SerializedDataBase> void sendMessageS2C(String key, SerializedDataBase data, @Nullable Consumer<T> consumer, @Nullable Class<T> responseDataClass) {
 		messageQueueS2C.put(new QueueObject(key, data, consumer == null ? null : responseData -> run(() -> consumer.accept(responseData)), responseDataClass));
 	}
 
+	/** Drain all pending S2C messages and feed each into {@code callback}. */
 	public void processMessagesS2C(Consumer<QueueObject> callback) {
 		messageQueueS2C.process(callback);
 	}
 
+	/** @return whether the entity {@code uuid} is currently riding {@code vehicleId} */
 	public boolean isRiding(UUID uuid, long vehicleId) {
 		return ridingVehicleIds.getLong(uuid) == vehicleId;
 	}
 
+	/** Record that the entity {@code uuid} has boarded {@code vehicleId}. */
 	public void ride(UUID uuid, long vehicleId) {
 		ridingVehicleIds.put(uuid, vehicleId);
 	}
 
+	/** Record that the entity {@code uuid} has dismounted whatever vehicle it was riding. */
 	public void stopRiding(UUID uuid) {
 		ridingVehicleIds.removeLong(uuid);
 	}
 
+	/**
+	 * @param uuid riding entity to look up
+	 * @return the next platform of the vehicle being ridden by {@code uuid}, or {@code null} if
+	 * the entity is not riding anything or its vehicle has no upcoming platform.
+	 */
 	@Nullable
 	public Platform getNextPlatformOfRidingVehicle(UUID uuid) {
 		final Platform[] platform = {null};
@@ -331,7 +408,7 @@ public class Simulator extends Data implements Utilities {
 			return changed1 || changed2 || changed3 || changed4 || changed5 || changed6 || changed7 || changed8 || changed9;
 		});
 		if (changedAndDuration.left() || !useReducedHash) {
-			log.info("Save complete for {} in {} second(s)", dimension, changedAndDuration.rightLong() / 1000F);
+			log.info("Save complete for {} in {} second(s)", dimension, (float) changedAndDuration.rightLong() / MILLIS_PER_SECOND);
 		}
 
 		// Save settings

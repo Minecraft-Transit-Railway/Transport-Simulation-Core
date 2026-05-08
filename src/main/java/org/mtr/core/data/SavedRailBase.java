@@ -6,6 +6,19 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
 
+/**
+ * Common state for a piece of track owned by an {@link AreaBase} &mdash; today either a
+ * {@link Platform} (owned by a {@link Station}) or a {@link Siding} (owned by a
+ * {@link Depot}).
+ *
+ * <p>Holds the two-position track segment (inherited from
+ * {@link org.mtr.core.generated.data.SavedRailBaseSchema SavedRailBaseSchema}) and a back-reference
+ * to its owning area, set by the simulator once the area / rail association has been resolved
+ * from positions.</p>
+ *
+ * @param <T> the concrete subtype (curiously-recurring template parameter)
+ * @param <U> the {@link AreaBase} subtype that owns this rail
+ */
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends SavedRailBaseSchema {
 
 	public @Nullable U area;

@@ -6,28 +6,28 @@
 ## Standalone jar
 
 The fat jar produced by `./gradlew build` (`build/libs/Transport-Simulation-Core-*.jar`) is
-runnable directly. The CLI signature is:
+runnable directly. The CLI is parsed by picocli and supports named options:
 
 ```text
-java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <useThreadedSimulation> <useThreadedFileLoading> <dimensions...>
+java -jar Transport-Simulation-Core.jar --root-path <path> [--webserver-port <port>] [--[no-]threaded-simulation] [--[no-]threaded-file-loading] <dimensions...>
 ```
 
-| Argument                 | Description                                                                                                                                                               |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `rootPath`               | Filesystem directory containing per-dimension save folders. Each `<dimension>` argument is resolved relative to this path.                                                |
-| `webserverPort`          | TCP port for the embedded Jetty server. **Pass `0`** to disable the webserver entirely (handy when embedding from another process).                                       |
-| `useThreadedSimulation`  | `true` to spawn one scheduled thread per dimension that ticks every `Main.MILLISECONDS_PER_TICK` (10 ms). `false` requires the caller to drive `Main.manualTick()`.       |
-| `useThreadedFileLoading` | `true` to load each dimension's save files in parallel; `false` to load sequentially (less memory pressure on small machines).                                            |
-| `dimensions...`          | One or more dimension names. Each becomes a `Simulator` and a `<rootPath>/<name>/` subdirectory. The order defines the integer index used by the `dimension` query param. |
+| Argument / option              | Description                                                                                                                                                               |
+|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--root-path`, `-r`            | Filesystem directory containing per-dimension save folders. Each `<dimension>` argument is resolved relative to this path.                                                |
+| `--webserver-port`, `-p`       | TCP port for the embedded Jetty server. Default is `8080`. **Pass `0`** to disable the webserver entirely (handy when embedding from another process).                   |
+| `--[no-]threaded-simulation`   | Enabled by default. Disable with `--no-threaded-simulation` when the caller drives `Main.manualTick()`.                                                                   |
+| `--[no-]threaded-file-loading` | Enabled by default. Disable with `--no-threaded-file-loading` to load sequentially (less memory pressure on small machines).                                               |
+| `dimensions...`                | One or more dimension names. Each becomes a `Simulator` and a `<rootPath>/<name>/` subdirectory. The order defines the integer index used by the `dimension` query param. |
 
 ### Example
 
 ```bash
 java -jar Transport-Simulation-Core-20260508-101530.jar \
-    /var/lib/transport-simulation \
-    8080 \
-    true \
-    true \
+    --root-path /var/lib/transport-simulation \
+    --webserver-port 8080 \
+    --threaded-simulation \
+    --threaded-file-loading \
     overworld nether end
 ```
 
@@ -39,14 +39,14 @@ own thread, and exposes:
   `dimension=1`, `dimension=2`),
 - OBA at <http://localhost:8080/oba/api/where/...>.
 
-If any argument is missing or unparseable, the process logs:
+To print generated help / version text:
 
-```
-Usage:
-java -jar Transport-Simulation-Core.jar <rootPath> <webserverPort> <useThreadedSimulation> <useThreadedFileLoading> <dimensions...>
+```text
+java -jar Transport-Simulation-Core.jar --help
+java -jar Transport-Simulation-Core.jar --version
 ```
 
-…followed by the underlying exception, and exits.
+If required arguments are missing or unparseable, picocli prints usage automatically and the process logs the parse error.
 
 ## Console commands
 

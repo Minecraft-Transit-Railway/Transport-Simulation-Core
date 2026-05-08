@@ -41,9 +41,13 @@ public final class Passenger extends PassengerSchema {
 	}
 
 	/**
-	 * @deprecated for {@link org.mtr.core.generated.data.HomeSchema} use only
+	 * Internal-only: the single-argument constructor used by
+	 * {@link org.mtr.core.generated.data.HomeSchema} when reconstructing the {@code passengers}
+	 * array. Wraps the read in a fresh {@link ClientData} so the resulting passenger has somewhere
+	 * to look up cached references. <strong>Do not call from user code.</strong>
 	 */
 	@Deprecated
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	public Passenger(ReaderBase readerBase) {
 		this(readerBase, new ClientData());
 	}

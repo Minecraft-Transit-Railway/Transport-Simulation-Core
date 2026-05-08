@@ -1,273 +1,106 @@
-package org.mtr.core.data;
+# Running
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.*;
-import org.mtr.core.Main;
-import org.mtr.core.map.UpdateDynmap;
-import org.mtr.core.map.UpdateSquaremap;
-import org.mtr.core.serializer.SerializedDataBaseWithId;
-import org.mtr.core.simulation.Simulator;
+> How to run the packaged jar. For build steps see [BUILD.md](BUILD.md); for the HTTP
+> surface see [API.md](API.md).
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Supplier;
+## Standalone jar
 
-public abstract class Data {
+The fat jar produced by `./gradlew build` (`build/libs/Transport-Simulation-Core-*.jar`) is
+runnable directly. The CLI is parsed by picocli and supports named options:
 
-	private long currentMillis;
+```text
+java -jar Transport-Simulation-Core.jar --root-path <path> [--webserver-port <port>] [--[no-]threaded-simulation] [--[no-]threaded-file-loading] <dimensions...>
+```
 
-	public final ObjectArraySet<Station> stations = new ObjectArraySet<>();
-	public final ObjectArraySet<Platform> platforms = new ObjectArraySet<>();
-	public final ObjectArraySet<Siding> sidings = new ObjectArraySet<>();
-	public final ObjectArraySet<Route> routes = new ObjectArraySet<>();
-	public final ObjectArraySet<Depot> depots = new ObjectArraySet<>();
-	public final ObjectArraySet<Lift> lifts = new ObjectArraySet<>();
-	public final ObjectArraySet<Rail> rails = new ObjectArraySet<>();
-	public final ObjectArraySet<Home> homes = new ObjectArraySet<>();
-	public final ObjectArraySet<Landmark> landmarks = new ObjectArraySet<>();
+| Argument / option              | Description                                                                                                                                                               |
+|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--root-path`, `-r`            | Filesystem directory containing per-dimension save folders. Each `<dimension>` argument is resolved relative to this path.                                                |
+| `--webserver-port`, `-p`       | TCP port for the embedded Jetty server. Default is `8080`. **Pass `0`** to disable the webserver entirely (handy when embedding from another process).                   |
+| `--[no-]threaded-simulation`   | Enabled by default. Disable with `--no-threaded-simulation` when the caller drives `Main.manualTick()`.                                                                   |
+| `--[no-]threaded-file-loading` | Enabled by default. Disable with `--no-threaded-file-loading` to load sequentially (less memory pressure on small machines).                                               |
+| `dimensions...`                | One or more dimension names. Each becomes a `Simulator` and a `<rootPath>/<name>/` subdirectory. The order defines the integer index used by the `dimension` query param. |
 
-	public final Long2ObjectOpenHashMap<Station> stationIdMap = new Long2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Platform> platformIdMap = new Long2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Siding> sidingIdMap = new Long2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Route> routeIdMap = new Long2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Depot> depotIdMap = new Long2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Lift> liftIdMap = new Long2ObjectOpenHashMap<>();
-	public final Object2ObjectOpenHashMap<String, Rail> railIdMap = new Object2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Home> homeIdMap = new Long2ObjectOpenHashMap<>();
-	public final Long2ObjectOpenHashMap<Landmark> landmarkIdMap = new Long2ObjectOpenHashMap<>();
+### Example
 
-	public final Object2ObjectOpenHashMap<Position, Object2ObjectOpenHashMap<Position, Rail>> positionsToRail = new Object2ObjectOpenHashMap<>();
-	public final Object2ObjectOpenHashMap<Position, Rail> runwaysInbound = new Object2ObjectOpenHashMap<>();
-	public final ObjectOpenHashSet<Position> runwaysOutbound = new ObjectOpenHashSet<>();
-	public final Long2ObjectOpenHashMap<Position> platformIdToPosition = new Long2ObjectOpenHashMap<>();
+```bash
+java -jar Transport-Simulation-Core-20260508-101530.jar \
+    --root-path /var/lib/transport-simulation \
+    --webserver-port 8080 \
+    --threaded-simulation \
+    --threaded-file-loading \
+    overworld nether end
+```
 
-	public void sync() {
-		try {
-			// clear rail connections
-			// write rail connections
-			positionsToRail.clear();
-			rails.forEach(rail -> rail.writePositionsToRailCache(positionsToRail));
-			rails.forEach(rail -> rail.writeConnectedRailsCacheFromMap(positionsToRail));
+This starts the server on port 8080, ticks each of the three dimensions every 10 ms on its
+own thread, and exposes:
 
-			// clear runways
-			// write runways
-			runwaysInbound.clear();
-			runwaysOutbound.clear();
-			rails.forEach(rail -> {
-				if (rail.canConnectRemotely()) {
-					final Position position1 = rail.getPosition1();
-					final Position position2 = rail.getPosition2();
-					if (rail.speedLimit1MetersPerMillisecond > 0) {
-						if (positionsToRail.get(position1).size() == 1) {
-							runwaysInbound.put(position1, rail);
-						}
-						if (positionsToRail.get(position2).size() == 1) {
-							runwaysOutbound.add(position2);
-						}
-					}
-					if (rail.speedLimit2MetersPerMillisecond > 0) {
-						if (positionsToRail.get(position2).size() == 1) {
-							runwaysInbound.put(position2, rail);
-						}
-						if (positionsToRail.get(position1).size() == 1) {
-							runwaysOutbound.add(position1);
-						}
-					}
-				}
-			});
+- the dashboard at <http://localhost:8080/>,
+- map data at <http://localhost:8080/mtr/api/map/stations-and-routes?dimension=0> (and
+  `dimension=1`, `dimension=2`),
+- OBA at <http://localhost:8080/oba/api/where/...>.
 
-			if (this instanceof Simulator) {
-				platforms.removeIf(platform -> platform.isInvalidSavedRail(this));
-				sidings.removeIf(siding -> siding.isInvalidSavedRail(this));
-			}
+To print generated help / version text:
 
-			mapIds(stationIdMap, stations);
-			mapIds(platformIdMap, platforms);
-			mapIds(sidingIdMap, sidings);
-			mapIds(routeIdMap, routes);
-			mapIds(depotIdMap, depots);
-			mapIds(liftIdMap, lifts);
-			mapIds(railIdMap, rails);
-			mapIds(homeIdMap, homes);
-			mapIds(landmarkIdMap, landmarks);
+```text
+java -jar Transport-Simulation-Core.jar --help
+java -jar Transport-Simulation-Core.jar --version
+```
 
-			mapAreasAndSavedRails(platforms, stations);
-			mapAreasAndSavedRails(sidings, depots);
+If required arguments are missing or unparseable, picocli prints usage automatically and the process logs the parse error.
 
-			// clear platform routes
-			// clear platform route colors
-			// clear platform to position
-			// write platform to position
-			platformIdToPosition.clear();
-			platforms.forEach(platform -> {
-				platform.routes.clear();
-				platform.routeColors.clear();
-				platformIdToPosition.put(platform.getId(), platform.getMidPosition());
-			});
+## Console commands
 
-			// clear route depots
-			// write route platforms
-			// write route platform routes
-			// write route platform colors
-			routes.forEach(route -> {
-				route.depots.clear();
-				route.getRoutePlatforms().forEach(routePlatformData -> routePlatformData.writePlatformCache(route, platformIdMap));
-				route.getRoutePlatforms().removeIf(routePlatformData -> routePlatformData.platform == null);
-			});
+While the standalone server is running, it reads commands from stdin
+([`Main.readConsoleInput`](../src/main/java/org/mtr/core/Main.java)). Input is lower-cased
+and split on whitespace; only `[a-z ]` characters are kept.
 
-			// clear depot routes
-			// write route depots
-			// write depot routes
-			// clear all platforms in route
-			// write all platforms in route
-			// write path data cache
-			depots.forEach(depot -> {
-				depot.writeRouteCache(routeIdMap);
-				depot.writePathCache();
-			});
+| Command                                | Effect                                                                                                                                       |
+|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| `stop`, `exit`, `quit`                 | Stop the webserver, shut down the tick scheduler, run a full save, then exit cleanly.                                                        |
+| `save`, `save-all`                     | Persist every dimension's state to disk. The server keeps running.                                                                           |
+| `generate <name>`, `regenerate <name>` | Run `Depot.generateDepotsByName(simulator, name)` against every dimension — regenerates routes for the depot(s) whose name matches `<name>`. |
+| anything else                          | Logged as `Unknown command "..."`.                                                                                                           |
 
-			// clear station connections
-			// write station connections using spatial grid for efficiency
-			final long gridSize = 500;
-			final Long2ObjectOpenHashMap<ObjectArrayList<Station>> stationGrid = new Long2ObjectOpenHashMap<>();
-			stations.forEach(station -> {
-				station.connectedStations.clear();
-				if (!SimpleAreaBase.validCorners(station)) {
-					return;
-				}
-				final long minCellX = Math.floorDiv(station.getMinX(), gridSize);
-				final long maxCellX = Math.floorDiv(station.getMaxX(), gridSize);
-				final long minCellZ = Math.floorDiv(station.getMinZ(), gridSize);
-				final long maxCellZ = Math.floorDiv(station.getMaxZ(), gridSize);
-				for (long cx = minCellX; cx <= maxCellX; cx++) {
-					for (long cz = minCellZ; cz <= maxCellZ; cz++) {
-						stationGrid.computeIfAbsent((cx << 32) | (cz & 0xFFFFFFFFL), key -> new ObjectArrayList<>()).add(station);
-					}
-				}
-			});
-			stations.forEach(station1 -> {
-				if (!SimpleAreaBase.validCorners(station1)) {
-					return;
-				}
-				final long minCellX = Math.floorDiv(station1.getMinX(), gridSize);
-				final long maxCellX = Math.floorDiv(station1.getMaxX(), gridSize);
-				final long minCellZ = Math.floorDiv(station1.getMinZ(), gridSize);
-				final long maxCellZ = Math.floorDiv(station1.getMaxZ(), gridSize);
-				for (long cx = minCellX; cx <= maxCellX; cx++) {
-					for (long cz = minCellZ; cz <= maxCellZ; cz++) {
-						final ObjectArrayList<Station> cell = stationGrid.get((cx << 32) | (cz & 0xFFFFFFFFL));
-						if (cell != null) {
-							cell.forEach(station2 -> {
-								if (station1 != station2 && station1.intersecting(station2)) {
-									station1.connectedStations.add(station2);
-								}
-							});
-						}
-					}
-				}
-			});
+Any uncaught exception in the input loop logs the stack trace, runs `stop()` and exits.
 
-			if (this instanceof Simulator) {
-				try {
-					UpdateSquaremap.updateSquaremap((Simulator) this);
-				} catch (NoClassDefFoundError ignored) {
-				} catch (Exception e) {
-					Main.LOGGER.error("Failed to update Squaremap integration", e);
-				}
-				try {
-					UpdateDynmap.updateDynmap((Simulator) this);
-				} catch (NoClassDefFoundError ignored) {
-				} catch (Exception e) {
-					Main.LOGGER.error("Failed to update Dynmap integration", e);
-				}
-			}
-		} catch (Exception e) {
-			Main.LOGGER.error("Failed to sync data after simulation tick", e);
-		}
-	}
+## Logging
 
-	public final long getCurrentMillis() {
-		return currentMillis;
-	}
+Logging is via Log4j2; the configuration ships in
+[`src/main/resources/log4j2.properties`](../src/main/resources/log4j2.properties). The root
+logger writes to stdout — wrap the process in `systemd`, `nohup` or your supervisor of
+choice to capture logs.
 
-	protected final void setCurrentMillis(long currentMillis) {
-		this.currentMillis = currentMillis;
-	}
+The shared logger is `Main.LOGGER` (category `TransportSimulationCore`).
 
-	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> V tryGet(W map, T key1, U key2, V defaultValue) {
-		final V result = tryGet(map, key1, key2);
-		return result == null ? defaultValue : result;
-	}
+## Embedded usage
 
-	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> V tryGet(W map, T key1, U key2) {
-		final Map<U, V> innerMap = map.get(key1);
-		if (innerMap == null) {
-			return null;
-		} else {
-			return innerMap.get(key2);
-		}
-	}
+When this jar is embedded in another Java process (the canonical case is the Minecraft
+Transit Railway mod), construct `Main` directly instead of using `main(String[])`:
 
-	public static <T, U, V extends Map<T, W>, W extends Collection<U>> void put(V map, T key, U newValue, Supplier<W> innerSetSupplier) {
-		final W innerSet = map.get(key);
-		final W newInnerSet;
-		if (innerSet == null) {
-			newInnerSet = innerSetSupplier.get();
-			map.put(key, newInnerSet);
-		} else {
-			newInnerSet = innerSet;
-		}
-		newInnerSet.add(newValue);
-	}
+```java
+final Main main = new Main(
+    rootPath,
+    webserverPort,                   // 0 to disable
+    /* threadedSimulation = */ false,
+    /* threadedFileLoading = */ true,
+    webserver -> webserver.addServlet(myCustomServletHolder, "/my/path/*"),
+    "overworld", "nether", "end");
 
-	public static <T, U, V extends Map<T, W>, W extends Collection<U>, X extends Collection<U>> void put(V map, T key, X newValue, Supplier<W> innerSetSupplier) {
-		final W innerSet = map.get(key);
-		final W newInnerSet;
-		if (innerSet == null) {
-			newInnerSet = innerSetSupplier.get();
-			map.put(key, newInnerSet);
-		} else {
-			newInnerSet = innerSet;
-		}
-		newInnerSet.addAll(newValue);
-	}
+// per host tick:
+main.manualTick();
 
-	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> void put(W map, T key1, U key2, Function<V, V> putValue, Supplier<X> innerMapSupplier) {
-		final X innerMap = map.get(key1);
-		final X newInnerMap;
-		if (innerMap == null) {
-			newInnerMap = innerMapSupplier.get();
-			map.put(key1, newInnerMap);
-		} else {
-			newInnerMap = innerMap;
-		}
-		newInnerMap.put(key2, putValue.apply(newInnerMap.get(key2)));
-	}
+// per host outbound message:
+main.sendMessageC2S(worldIndex, queueObject);
 
-	private static <U extends NameColorDataBase> void mapIds(Long2ObjectMap<U> map, ObjectSet<U> source) {
-		map.clear();
-		source.forEach(data -> map.put(data.getId(), data));
-	}
+// per host poll:
+main.processMessagesS2C(worldIndex, queueObject -> { ... });
 
-	private static <U extends SerializedDataBaseWithId> void mapIds(Object2ObjectMap<String, U> map, ObjectSet<U> source) {
-		map.clear();
-		source.forEach(data -> map.put(data.getHexId(), data));
-	}
+// on host shutdown:
+main.stop();
+```
 
-	private static <U extends SavedRailBase<U, V>, V extends AreaBase<V, U>> void mapAreasAndSavedRails(ObjectArraySet<U> savedRails, ObjectArraySet<V> areas) {
-		areas.forEach(area -> area.savedRails.clear());
-		savedRails.forEach(savedRail -> {
-			savedRail.area = null;
-			final Position pos = savedRail.getMidPosition();
-			for (final V area : areas) {
-				if (area.isTransportMode(savedRail) && area.inArea(pos)) {
-					savedRail.area = area;
-					area.savedRails.add(savedRail);
-					break;
-				}
-			}
-		});
-	}
-}
+The `additionalWebserverSetup` `Consumer<Webserver>` is invoked after the built-in servlets
+are registered and before Jetty starts, so embedding hosts can layer their own routes on top
+of the public `/mtr/api/map/*` and `/oba/api/where/*` endpoints. Set
+`Main.CLIENT_NAME_RESOLVER` if you want the `clients` map endpoint to populate display
+names.

@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.longs.LongImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.extern.log4j.Log4j2;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Station;
 import org.mtr.core.generated.operation.ArrivalsRequestSchema;
@@ -13,18 +14,37 @@ import org.mtr.core.simulation.Simulator;
 
 import java.util.Collections;
 
+/**
+ * Wire request for the {@code arrivals} operation: given a set of station / platform ids,
+ * return the next-to-depart vehicles per platform up to a per-platform / global cap.
+ *
+ * <p>Hex-string ids are accepted alongside numeric ids so the same request shape works for
+ * both the in-process API (numeric, fast-path) and HTTP clients (hex strings, human-readable).</p>
+ */
+@Log4j2
 public final class ArrivalsRequest extends ArrivalsRequestSchema {
 
+	/**
+	 * Construct a request directly from numeric platform ids — the in-process fast path used by
+	 * the embedding mod.
+	 */
 	public ArrivalsRequest(LongImmutableList platformIds, int maxCountPerPlatform, int maxCountTotal) {
 		super(maxCountPerPlatform, maxCountTotal);
 		this.platformIds.addAll(platformIds);
 	}
 
+	/** Deserialisation constructor used by the wire layer. */
 	public ArrivalsRequest(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}
 
+	/**
+	 * Resolve the request against {@code simulator} and produce the matching response.
+	 *
+	 * @param simulator simulator the request was routed to
+	 * @return populated, time-stamped response, sorted by departure time
+	 */
 	public ArrivalsResponse getArrivals(Simulator simulator) {
 		final ObjectArrayList<ArrivalResponse> arrivalResponseList = new ObjectArrayList<>();
 		final ObjectAVLTreeSet<String> visitedKeys = new ObjectAVLTreeSet<>();
@@ -61,7 +81,10 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 	private static long parseHexId(String id) {
 		try {
 			return Long.parseUnsignedLong(id, 16);
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			// Treat malformed hex ids as "no such id" by returning 0 — caller will simply not
+			// match any platform / station. Logged at debug per CODE_STYLES §3.14.
+			log.debug("parseHexId({}) returning 0", id, e);
 			return 0;
 		}
 	}

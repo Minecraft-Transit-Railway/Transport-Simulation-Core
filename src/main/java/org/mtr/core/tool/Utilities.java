@@ -19,12 +19,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
+/**
+ * Grab-bag of stateless helpers reused across the simulator: clamping, interpolation, range
+ * tests, hex-string formatting, executor-shutdown plumbing and so on.
+ *
+ * <p>Declared as an {@code interface} so domain classes can {@code implements Utilities} and
+ * pick up the time-unit constants ({@link #MILLIS_PER_SECOND}, {@link #MILLIS_PER_DAY}, …) as
+ * inherited fields without polluting their own API. All methods are {@code static} — there is
+ * no state and no instance to construct.</p>
+ */
 public interface Utilities {
 
+	/** Hours in a day; lifted from a literal because it shows up in tick / departure maths. */
 	int HOURS_PER_DAY = 24;
+	/** Milliseconds in one second. */
 	int MILLIS_PER_SECOND = 1000;
+	/** Milliseconds in one minute. */
 	int MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+	/** Milliseconds in one hour. */
 	int MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
+	/** Milliseconds in one (real) day. */
 	int MILLIS_PER_DAY = HOURS_PER_DAY * MILLIS_PER_HOUR;
 
 	static boolean isBetween(double value, double value1, double value2) {
@@ -93,7 +107,11 @@ public interface Utilities {
 	static JsonObject parseJson(String data) {
 		try {
 			return JsonParser.parseString(data).getAsJsonObject();
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			// Empty object is the documented "couldn't parse" return. Logged at debug because the
+			// caller frequently feeds untrusted input (servlet bodies, on-disk legacy files) and a
+			// hard failure would be wrong; logged at all so silent corruption is debuggable. (§3.14)
+			Main.LOGGER.debug("parseJson fell back to empty object for input of length {}", data.length(), e);
 			return new JsonObject();
 		}
 	}
@@ -228,7 +246,10 @@ public interface Utilities {
 	static int compare(String value1, String value2, IntSupplier ifZero) {
 		try {
 			return compare(Long.parseLong(value1), Long.parseLong(value2), ifZero);
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			// Numeric comparison was attempted as a fast path; fall back to lexicographic on
+			// non-numeric input. Logged at debug per CODE_STYLES §3.14.
+			Main.LOGGER.debug("Numeric compare of \"{}\" / \"{}\" failed; falling back to string compare", value1, value2, e);
 			final int result = value1.compareTo(value2);
 			return result == 0 ? ifZero.getAsInt() : result;
 		}

@@ -2,10 +2,21 @@ package org.mtr.core.path;
 
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
-import org.mtr.core.Main;
 import org.mtr.core.tool.Utilities;
 
+/**
+ * Generic best-first path finder over an arbitrary node type {@code T}.
+ *
+ * <p>Subclasses describe the graph by overriding {@link #getConnections(long, Object, Long)}
+ * (the outgoing edges from a node) and {@link #getWeightFromEndNode(Object)} (a heuristic
+ * distance to the goal). Each call to {@link #findPath()} advances the search by one step;
+ * call repeatedly until the returned list becomes non-null. Two blacklists prevent the search
+ * from cycling: a {@code globalBlacklist} of nodes already evaluated and a {@code localBlacklist}
+ * of nodes on the current candidate path.</p>
+ */
+@Log4j2
 public abstract class PathFinder<T> {
 
 	private long totalTime = Long.MAX_VALUE;
@@ -60,7 +71,7 @@ public abstract class PathFinder<T> {
 			if (bestNode == null || bestDuration == 0) {
 				if (tempData.isEmpty()) {
 					completed = true;
-					Main.LOGGER.debug("Found the best path after {} iteration(s)", iterations);
+					log.debug("Found the best path after {} iteration(s)", iterations);
 				} else {
 					tempData.removeLast();
 				}
@@ -72,7 +83,7 @@ public abstract class PathFinder<T> {
 				if (bestNode.equals(endNode)) {
 					if (totalDuration > 0 && (totalDuration < totalTime || totalDuration == totalTime && tempData.size() < data.size())) {
 						if (totalDuration == totalTime) {
-							Main.LOGGER.debug("Found a shorter path!");
+							log.debug("Found a shorter path!");
 						}
 						totalTime = totalDuration;
 						data.clear();

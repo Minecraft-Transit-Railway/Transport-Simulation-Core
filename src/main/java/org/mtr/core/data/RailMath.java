@@ -6,6 +6,17 @@ import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
+/**
+ * Pure-geometry helper that turns a {@link Rail}'s endpoint positions, angles and tilt
+ * profile into actual {@link Vector} samples along the curve &mdash; the bit of code that
+ * lets vehicles, signals and rendering all agree on where the track <em>is</em> in 3D space.
+ *
+ * <p>Stateless after construction: every input (curve {@link Rail.Shape}, vertical radius,
+ * tilt control points, &hellip;) is captured at construction time and the per-curve cache of
+ * tilt segments is built once. Bounding-box fields ({@link #minX} &hellip; {@link #maxZ}) are
+ * exposed so the simulator can index rails spatially without reaching back into the
+ * geometry.</p>
+ */
 public class RailMath {
 
 	public final long minX;
