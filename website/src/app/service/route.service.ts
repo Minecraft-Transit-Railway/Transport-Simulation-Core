@@ -1,6 +1,6 @@
 import {inject, Injectable, signal} from "@angular/core";
 import {MapDataService} from "./map-data.service";
-import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
+import {SimplifyRoutesPipe} from "../pipe/simplify-routes.pipe";
 import {DeparturesService} from "./departures.service";
 import {Route} from "../entity/route";
 import {SelectableDataServiceBase} from "./selectable-data-service-base";

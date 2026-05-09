@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.PathDataSchema;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
@@ -12,7 +13,6 @@ import org.mtr.core.tool.ConditionalList;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 
 public class PathData extends PathDataSchema implements ConditionalList {
@@ -119,9 +119,9 @@ public class PathData extends PathDataSchema implements ConditionalList {
 			// TODO better positioning when vehicle is moving too quickly
 			final double ratio = Utilities.clampSafe(rawValue / getRailLength(), 0, 1);
 			return new Vehicle.PositionAndTiltAngle(new Vector(
-					startPosition.getX() + ratio * (endPosition.getX() - startPosition.getX()) + 0.5,
-					startPosition.getY() + ratio * (endPosition.getY() - startPosition.getY()),
-					startPosition.getZ() + ratio * (endPosition.getZ() - startPosition.getZ()) + 0.5
+				startPosition.getX() + ratio * (endPosition.getX() - startPosition.getX()) + 0.5,
+				startPosition.getY() + ratio * (endPosition.getY() - startPosition.getY()),
+				startPosition.getZ() + ratio * (endPosition.getZ() - startPosition.getZ()) + 0.5
 			), 0);
 		}
 	}
@@ -153,12 +153,12 @@ public class PathData extends PathDataSchema implements ConditionalList {
 	private Rail defaultRail() {
 		final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(startPosition, startAngle.angleDegrees, endPosition, endAngle.angleDegrees);
 		return Rail.newRail(
-				startPosition, angles.left(),
-				endPosition, angles.right(),
-				Rail.Shape.QUADRATIC, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0,
-				false, false, true, false, false, TransportMode.TRAIN
+			startPosition, angles.left(),
+			endPosition, angles.right(),
+			Rail.Shape.QUADRATIC, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			new ObjectArrayList<>(), speedLimit == 0 ? SidingPathFinder.AIRPLANE_SPEED : speedLimit, 0,
+			false, false, true, false, false, TransportMode.TRAIN
 		);
 	}
 

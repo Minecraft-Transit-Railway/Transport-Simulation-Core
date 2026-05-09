@@ -1,13 +1,14 @@
 import {inject, Injectable, signal} from "@angular/core";
-import {MapDataService} from "./map-data.service";
-import {DimensionService} from "./dimension.service";
-import {SelectableDataServiceBase} from "./selectable-data-service-base";
-import {of} from "rxjs";
-import {ClientsService} from "./clients.service";
-import {Station} from "../entity/station";
-import {Route} from "../entity/route";
 
-const REFRESH_INTERVAL = 30000;
+import {of} from "rxjs";
+
+import {Route} from "../entity/route";
+import {Station} from "../entity/station";
+import {SLOW_REFRESH_INTERVAL_MILLIS} from "../utility/refresh.constants";
+import {ClientsService} from "./clients.service";
+import {DimensionService} from "./dimension.service";
+import {MapDataService} from "./map-data.service";
+import {SelectableDataServiceBase} from "./selectable-data-service-base";
 
 @Injectable({providedIn: "root"})
 export class ClientService extends SelectableDataServiceBase<string, string> {
@@ -31,7 +32,7 @@ export class ClientService extends SelectableDataServiceBase<string, string> {
 			// empty
 		}, clientId => of(clientId), () => {
 			//empty
-		}, REFRESH_INTERVAL, dimensionService);
+		}, SLOW_REFRESH_INTERVAL_MILLIS, dimensionService);
 		this.clientsService.dataProcessed.subscribe(() => this.updateClient());
 	}
 

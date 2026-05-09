@@ -26,14 +26,18 @@ dependencies {
 	implementation "it.unimi.dsi:fastutil:8.5.15" // Pinning version for Minecraft 1.21.4
 	implementation "commons-io:commons-io:2.+"
 	implementation "org.apache.logging.log4j:log4j-core:2.24.+"
-	compileOnly "com.google.code.findbugs:jsr305:+"
+	implementation "org.jspecify:jspecify:+"
+	implementation "info.picocli:picocli:+"
+	compileOnly "org.projectlombok:lombok:+"
+	annotationProcessor "org.projectlombok:lombok:+"
 	compileOnly "xyz.jpenilla:squaremap-api:+"
 	compileOnly "net.kyori:adventure-api:+"
 	compileOnly "us.dynmap:DynmapCoreAPI:3.7-beta-6"
 	testImplementation "org.junit.jupiter:junit-jupiter-api:+"
 	testImplementation "org.junit.platform:junit-platform-launcher:+"
 	testImplementation "org.apache.httpcomponents:httpclient:+"
-	testCompileOnly "com.google.code.findbugs:jsr305:+"
+	testCompileOnly "org.projectlombok:lombok:+"
+	testAnnotationProcessor "org.projectlombok:lombok:+"
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:+"
 }
 
@@ -62,6 +66,21 @@ jar {
 test {
 	useJUnitPlatform()
 	testLogging { showStandardStreams = true }
+}
+
+javadoc {
+	// Suppress only the "missing" doclint group — generated schema classes and pure DTOs would otherwise spam the build log with thousands of "no comment" warnings.
+	// Keep all other doclint groups (html, syntax, reference, accessibility) on so genuinely broken Javadoc on hand-written code still fails the build.
+	options.addStringOption("Xdoclint:all,-missing", "-quiet")
+}
+
+compileJava {
+	// Enable -Xlint:all so we surface every javac warning we are expected to clean up under CODE_STYLES.md §3.13.
+	// Suppressions (each justified per §3.13 — if you add another, add a comment too):
+	//   - `serial`      — we never Java-serialise our classes; serialVersionUID is noise.
+	//   - `processing`  — Lombok is an intentional annotation processor; its "no claimed annotations" notes are not actionable.
+	//   - `this-escape` — almost every domain class extends a generated `*Schema` whose constructor calls `updateData(...)`, which subclasses override; this is the project's serialisation pattern and is safe by construction.
+	options.compilerArgs += ["-Xlint:all", "-Xlint:-serial", "-Xlint:-processing", "-Xlint:-this-escape"]
 }
 
 tasks.configureEach {

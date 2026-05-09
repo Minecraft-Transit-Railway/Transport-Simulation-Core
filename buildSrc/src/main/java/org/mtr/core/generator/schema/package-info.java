@@ -1,4 +1,4 @@
-@ParametersAreNonnullByDefault
+@NullMarked
 package org.mtr.core.generator.schema;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import org.jspecify.annotations.NullMarked;

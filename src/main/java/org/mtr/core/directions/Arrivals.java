@@ -4,12 +4,12 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Route;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.RefreshableObject;
 import org.mtr.core.tool.Utilities;
 
-import javax.annotation.Nullable;
 import java.util.Comparator;
 
 public final class Arrivals extends RefreshableObject<ObjectArrayList<ObjectArrayList<Connection>>> {
@@ -48,10 +48,10 @@ public final class Arrivals extends RefreshableObject<ObjectArrayList<ObjectArra
 							routeConnectionsLists.add(new ObjectArrayList<>());
 						}
 						routeConnectionsLists.get(index).add(new Connection(
-								departuresForRoute.left(),
-								platform1.getId(), platform2.getId(),
-								vehicleArrival1, vehicleArrival2,
-								0
+							departuresForRoute.left(),
+							platform1.getId(), platform2.getId(),
+							vehicleArrival1, vehicleArrival2,
+							0
 						));
 					}
 				}

@@ -1,8 +1,7 @@
 package org.mtr.core.oba;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.oba.TripDetailsSchema;
-
-import javax.annotation.Nullable;
 
 public final class TripDetails extends TripDetailsSchema {
 
@@ -12,7 +11,7 @@ public final class TripDetails extends TripDetailsSchema {
 	}
 
 	@Override
-	protected Frequency getDefaultFrequency() {
+	protected @Nullable Frequency getDefaultFrequency() {
 		return null;
 	}
 }

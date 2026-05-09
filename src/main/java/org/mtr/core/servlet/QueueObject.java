@@ -1,10 +1,10 @@
 package org.mtr.core.servlet;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.serializer.WriterBase;
 
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public final class QueueObject {
@@ -14,12 +14,12 @@ public final class QueueObject {
 	@Nullable
 	private final Consumer<SerializedDataBase> callback;
 
-	public <T extends SerializedDataBase> QueueObject(String key, SerializedDataBase data, @Nullable Consumer<T> callback, @Nullable Class<T> reaponseDataClass) {
+	public <T extends SerializedDataBase> QueueObject(String key, SerializedDataBase data, @Nullable Consumer<T> callback, @Nullable Class<T> responseDataClass) {
 		this.key = key;
 		this.data = data;
-		this.callback = callback == null || reaponseDataClass == null ? null : serializedDataBase -> {
-			if (reaponseDataClass.isInstance(serializedDataBase)) {
-				callback.accept(reaponseDataClass.cast(serializedDataBase));
+		this.callback = callback == null || responseDataClass == null ? null : serializedDataBase -> {
+			if (responseDataClass.isInstance(serializedDataBase)) {
+				callback.accept(responseDataClass.cast(serializedDataBase));
 			}
 		};
 	}

@@ -7,6 +7,15 @@ import org.mtr.core.tool.Utilities;
 
 import java.util.Random;
 
+/**
+ * A non-rail point of interest (a tourist attraction, monument, &hellip;) that generates
+ * passenger demand throughout the day.
+ *
+ * <p>Each tick the landmark adjusts its visiting passenger count for the current
+ * {@value #DAY_DIVISIONS}-slot time-of-day bucket, modelling passengers arriving, staying for
+ * up to {@value #MAX_STAY} divisions (≈ 12 hours) and leaving again. The resulting demand
+ * feeds the simulator's passenger generator.</p>
+ */
 public final class Landmark extends LandmarkSchema {
 
 	private int addedVisitorsThisTick;

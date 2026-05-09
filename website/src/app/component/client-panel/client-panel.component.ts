@@ -11,10 +11,10 @@ import {ClientService} from "../../service/client.service";
 import {Button, ButtonDirective} from "primeng/button";
 import {MapDataService} from "../../service/map-data.service";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
-import {FormatColorPipe} from "../../pipe/formatColorPipe";
-import {FormatNamePipe} from "../../pipe/formatNamePipe";
-import {ROUTE_TYPES} from "../../data/routeType";
-import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {FormatColorPipe} from "../../pipe/format-color.pipe";
+import {FormatNamePipe} from "../../pipe/format-name.pipe";
+import {ROUTE_TYPES} from "../../data/route-type";
+import {SimplifyRoutesPipe} from "../../pipe/simplify-routes.pipe";
 import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({

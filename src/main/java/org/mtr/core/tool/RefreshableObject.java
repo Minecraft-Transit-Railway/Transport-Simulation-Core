@@ -1,11 +1,11 @@
 package org.mtr.core.tool;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
- * Represents a ticked object that can be refreshed.
- * After the object has been ticked after a set timeout, it is refreshed.
- * Refreshing can occur in multiple steps.
+ * Represents a ticked object that can be refreshed. After the object has been ticked after a set timeout, it is refreshed. Refreshing can occur in multiple steps.
+ *
+ * @param <T> the type of the cached value being refreshed
  */
 public abstract class RefreshableObject<T> {
 
@@ -69,14 +69,23 @@ public abstract class RefreshableObject<T> {
 	@Nullable
 	public abstract T refresh(int currentRefreshStep);
 
+	/**
+	 * @return the most recently refreshed cached value
+	 */
 	public T getData() {
 		return data;
 	}
 
+	/**
+	 * @return the cumulative wall-clock time, in milliseconds, spent inside {@link #refresh(int)} during the current refresh cycle
+	 */
 	public long getTotalRefreshTime() {
 		return totalRefreshTime;
 	}
 
+	/**
+	 * @return the longest single {@link #refresh(int)} call duration, in milliseconds, observed during the current refresh cycle
+	 */
 	public long getLongestRefreshTime() {
 		return longestRefreshTime;
 	}

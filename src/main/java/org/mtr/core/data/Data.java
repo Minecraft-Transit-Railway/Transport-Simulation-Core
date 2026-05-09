@@ -3,7 +3,7 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.*;
-import org.mtr.core.Main;
+import lombok.extern.log4j.Log4j2;
 import org.mtr.core.map.UpdateDynmap;
 import org.mtr.core.map.UpdateSquaremap;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
@@ -14,6 +14,16 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * In-memory model shared between simulator-side ({@link Simulator}) and client-side
+ * ({@link ClientData}) instances.
+ *
+ * <p>Holds the canonical {@link ObjectArraySet}s of every domain entity (stations, platforms,
+ * sidings, routes, depots, lifts, rails, homes, landmarks) plus the cached {@code *IdMap} lookups
+ * those entities expose to each other. {@code Simulator} is the single mutator on the simulation
+ * thread; {@code ClientData} is fed by incoming wire updates.</p>
+ */
+@Log4j2
 public abstract class Data {
 
 	private long currentMillis;
@@ -169,22 +179,26 @@ public abstract class Data {
 				}
 			});
 
-			if (this instanceof Simulator) {
+			if (this instanceof final Simulator simulator) {
 				try {
-					UpdateSquaremap.updateSquaremap((Simulator) this);
-				} catch (NoClassDefFoundError ignored) {
+					UpdateSquaremap.updateSquaremap(simulator);
+				} catch (NoClassDefFoundError e) {
+					// Squaremap is an optional compile-only dependency — ignore at debug level if absent.
+					log.debug("Squaremap classes not on the classpath; skipping integration", e);
 				} catch (Exception e) {
-					Main.LOGGER.error("", e);
+					log.error("Failed to update Squaremap integration", e);
 				}
 				try {
-					UpdateDynmap.updateDynmap((Simulator) this);
-				} catch (NoClassDefFoundError ignored) {
+					UpdateDynmap.updateDynmap(simulator);
+				} catch (NoClassDefFoundError e) {
+					// Dynmap is an optional compile-only dependency — ignore at debug level if absent.
+					log.debug("Dynmap classes not on the classpath; skipping integration", e);
 				} catch (Exception e) {
-					Main.LOGGER.error("", e);
+					log.error("Failed to update Dynmap integration", e);
 				}
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to sync data after simulation tick", e);
 		}
 	}
 

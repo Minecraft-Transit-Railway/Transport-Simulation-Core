@@ -2,9 +2,9 @@ package org.mtr.core.generator.objects;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generator.schema.Utilities;
 
-import javax.annotation.Nullable;
 import java.util.function.Function;
 
 public class Class implements GeneratedObject {

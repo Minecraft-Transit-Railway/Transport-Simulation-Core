@@ -4,10 +4,9 @@ import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.core.generator.objects.Class;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generator.objects.*;
-
-import javax.annotation.Nullable;
+import org.mtr.core.generator.objects.Class;
 
 public class SchemaParserJava {
 
@@ -35,7 +34,7 @@ public class SchemaParserJava {
 		schemaClass.methods.add(updateMethod);
 		schemaClass.methods.add(serializeMethod);
 		final Method toStringMethod = new Method(VisibilityModifier.PUBLIC, Type.STRING, "toString");
-		toStringMethod.annotations.add("Nonnull");
+		toStringMethod.annotations.add("NonNull");
 		toStringMethod.content.add(extendsClassName == null ? "return \"\"" : "return super.toString()");
 		schemaClass.methods.add(toStringMethod);
 
@@ -70,8 +69,10 @@ public class SchemaParserJava {
 						} else if (typeWithData.requireAbstractInitializationMethod) {
 							final String methodName = String.format("getDefault%s", Utilities.capitalizeFirstLetter(key));
 							field = new Field(VisibilityModifier.PROTECTED, typeWithData.type, key, String.format("%s()", methodName));
+							field.annotations.add("Nullable");
 							final Method method1 = new Method(VisibilityModifier.PROTECTED, typeWithData.type, methodName);
 							method1.otherModifiers.add(OtherModifier.ABSTRACT);
+							method1.annotations.add("Nullable");
 							schemaClass.methods.add(method1);
 						} else {
 							field = new Field(VisibilityModifier.PROTECTED, typeWithData.type, key, true);
@@ -85,7 +86,7 @@ public class SchemaParserJava {
 					final String methodName = String.format("%s%sParameter", key, Utilities.capitalizeFirstLetter(parameter));
 					final Method method = new Method(VisibilityModifier.PROTECTED, Type.createObject(Utilities.capitalizeFirstLetter(parameter), ""), methodName);
 					method.otherModifiers.add(OtherModifier.ABSTRACT);
-					method.annotations.add("Nonnull");
+					method.annotations.add("NonNull");
 					schemaClass.methods.add(method);
 				});
 
@@ -167,22 +168,15 @@ public class SchemaParserJava {
 				return isArray ? null : TypeWithData.createEnum(formattedRefName, Utilities.getStringOrNull(jsonObject.get("typeScriptEnum")));
 			}
 		} else if (typeString != null) {
-			switch (typeString) {
-				case "boolean":
-					return isArray ? TypeWithData.createPrimitiveArray(Type.BOOLEAN_ARRAY, "Boolean") : TypeWithData.createPrimitive(Type.BOOLEAN, "Boolean", "false");
-				case "integer":
-					return isArray ? TypeWithData.createPrimitiveArray(Type.INTEGER_ARRAY, "Long") : TypeWithData.createPrimitive(Type.INTEGER, "Long", "0");
-				case "number":
-					return isArray ? TypeWithData.createPrimitiveArray(Type.NUMBER_ARRAY, "Double") : TypeWithData.createPrimitive(Type.NUMBER, "Double", "0");
-				case "string":
-					return isArray ? TypeWithData.createPrimitiveArray(Type.STRING_ARRAY, "String") : TypeWithData.createPrimitive(Type.STRING, "String", "\"\"");
-				case "array":
-					return getType(jsonObject.getAsJsonObject("items"), true, typeScriptImports);
-				case "object":
-					// TODO nested objects not supported
-				default:
-					return null;
-			}
+			return switch (typeString) {
+				case "boolean" -> isArray ? TypeWithData.createPrimitiveArray(Type.BOOLEAN_ARRAY, "Boolean") : TypeWithData.createPrimitive(Type.BOOLEAN, "Boolean", "false");
+				case "integer" -> isArray ? TypeWithData.createPrimitiveArray(Type.INTEGER_ARRAY, "Long") : TypeWithData.createPrimitive(Type.INTEGER, "Long", "0");
+				case "number" -> isArray ? TypeWithData.createPrimitiveArray(Type.NUMBER_ARRAY, "Double") : TypeWithData.createPrimitive(Type.NUMBER, "Double", "0");
+				case "string" -> isArray ? TypeWithData.createPrimitiveArray(Type.STRING_ARRAY, "String") : TypeWithData.createPrimitive(Type.STRING, "String", "\"\"");
+				case "array" -> getType(jsonObject.getAsJsonObject("items"), true, typeScriptImports);
+				// TODO nested objects ("object") not yet supported.
+				default -> null;
+			};
 		} else {
 			return null;
 		}

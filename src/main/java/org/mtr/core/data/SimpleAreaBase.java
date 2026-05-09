@@ -1,11 +1,17 @@
 package org.mtr.core.data;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.AreaBaseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 
-import javax.annotation.Nullable;
-
+/**
+ * Bare two-corner rectangular area without any owned rails &mdash; the bridge between the
+ * generated {@link AreaBaseSchema} and the rail-owning {@link AreaBase} subclass tree.
+ *
+ * <p>Used directly by lightweight non-rail areas such as {@link Landmark} and {@link Home};
+ * extended by {@link AreaBase} for the heavier {@link Station} / {@link Depot} pair.</p>
+ */
 public abstract class SimpleAreaBase extends AreaBaseSchema {
 
 	public SimpleAreaBase(TransportMode transportMode, Data data) {

@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy, Component, input} from "@angular/core";
-import {SplitNamePipe} from "../../pipe/splitNamePipe";
-import {FormatColorPipe} from "../../pipe/formatColorPipe";
+import {SplitNamePipe} from "../../pipe/split-name.pipe";
+import {FormatColorPipe} from "../../pipe/format-color.pipe";
 
 @Component({
 	selector: "app-title",

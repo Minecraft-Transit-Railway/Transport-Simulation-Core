@@ -1,17 +1,17 @@
 import {ChangeDetectionStrategy, Component, inject, input, output} from "@angular/core";
 import {FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MapDataService} from "../../service/map-data.service";
-import {SimplifyStationsPipe} from "../../pipe/simplifyStationsPipe";
-import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
-import {FormatNamePipe} from "../../pipe/formatNamePipe";
+import {SimplifyStationsPipe} from "../../pipe/simplify-stations.pipe";
+import {SimplifyRoutesPipe} from "../../pipe/simplify-routes.pipe";
+import {FormatNamePipe} from "../../pipe/format-name.pipe";
 import {AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent} from "primeng/autocomplete";
 import {DividerModule} from "primeng/divider";
 import {FloatLabelModule} from "primeng/floatlabel";
 import {InputTextModule} from "primeng/inputtext";
 import {SelectItemGroup} from "primeng/api";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
-import {FormatColorPipe} from "../../pipe/formatColorPipe";
-import {SearchData} from "../../entity/searchData";
+import {FormatColorPipe} from "../../pipe/format-color.pipe";
+import {SearchData} from "../../entity/search-data";
 import {ClientsService} from "../../service/clients.service";
 import {TranslocoService} from "@jsverse/transloco";
 

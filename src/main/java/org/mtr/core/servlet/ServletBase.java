@@ -5,7 +5,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.core.Main;
+import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.integration.Response;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
@@ -16,13 +17,22 @@ import org.mtr.libraries.javax.servlet.http.HttpServlet;
 import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
 import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Common HTTP plumbing for every servlet exposed by the simulator.
+ *
+ * <p>Routes incoming requests to the right {@link Simulator} (via the {@code dimension} query
+ * parameter, or all simulators when {@code dimensions=all}), parses the request body once into
+ * a {@link JsonReader}, then defers to the subclass-implemented
+ * {@link #getContent(String, String, Object2ObjectAVLTreeMap, JsonReader, Simulator, Consumer)}
+ * which runs on the simulator thread to keep state mutation single-threaded.</p>
+ */
+@Log4j2
 public abstract class ServletBase extends HttpServlet {
 
 	private final ObjectImmutableList<Simulator> simulators;
@@ -51,7 +61,9 @@ public abstract class ServletBase extends HttpServlet {
 				int dimension = 0;
 				try {
 					dimension = Integer.parseInt(tryGetParameter(httpServletRequest, "dimension"));
-				} catch (Exception ignored) {
+				} catch (NumberFormatException e) {
+					// Fall back to dimension 0 when the query parameter is missing or malformed.
+					log.debug("Falling back to dimension 0; could not parse 'dimension' query parameter", e);
 				}
 
 				if (dimension < 0 || dimension >= simulators.size()) {
@@ -61,11 +73,21 @@ public abstract class ServletBase extends HttpServlet {
 				}
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to handle servlet request to {}", httpServletRequest.getRequestURI(), e);
 		}
 	}
 
-	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse);
+	/**
+	 * Subclass hook: produce the JSON body for one resolved request.
+	 *
+	 * @param endpoint    first path segment after the servlet's base path
+	 * @param data        second path segment (typically a hex id), or {@code ""} if absent
+	 * @param parameters  query-string parameters keyed by name
+	 * @param jsonReader  reader over the parsed request body
+	 * @param simulator   simulator the request was routed to
+	 * @param sendResponse callback fed either the response body, or {@code null} to signal a 404
+	 */
+	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<@Nullable JsonObject> sendResponse);
 
 	private void run(HttpServletRequest httpServletRequest, @Nullable HttpServletResponse httpServletResponse, @Nullable AsyncContext asyncContext, JsonReader jsonReader, Simulator simulator) {
 		final String endpoint;
@@ -87,13 +109,18 @@ public abstract class ServletBase extends HttpServlet {
 			}
 		});
 
-		simulator.run(() -> getContent(endpoint, data, parameters, jsonReader, simulator, jsonObject -> {
+		simulator.run(() -> getContent(endpoint, data, parameters, jsonReader, simulator, (@Nullable JsonObject jsonObject) -> {
 			if (httpServletResponse != null && asyncContext != null) {
 				buildResponseObject(httpServletResponse, asyncContext, jsonObject, jsonObject == null ? HttpResponseStatus.NOT_FOUND : HttpResponseStatus.OK, endpoint, data);
 			}
 		}));
 	}
 
+	/**
+	 * Asynchronously stream {@code content} to {@code httpServletResponse} as a UTF-8 byte array
+	 * with the given {@code contentType} and HTTP status. Used by every servlet to flush its
+	 * JSON / static-asset payload from the simulator thread without blocking it.
+	 */
 	public static void sendResponse(HttpServletResponse httpServletResponse, AsyncContext asyncContext, String content, String contentType, HttpResponseStatus httpResponseStatus) {
 		try {
 			final ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
@@ -116,7 +143,7 @@ public abstract class ServletBase extends HttpServlet {
 							servletOutputStream.write(byteBuffer.get());
 						}
 					} catch (Exception e) {
-						Main.LOGGER.error("", e);
+						log.error("Failed to write servlet response", e);
 					}
 				}
 
@@ -126,21 +153,22 @@ public abstract class ServletBase extends HttpServlet {
 				}
 			});
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to send servlet response", e);
 		}
 	}
 
+	/**
+	 * Map a file extension to its MIME type. Falls back to {@code "text/<ext>"} for anything not
+	 * explicitly listed — sufficient for the small set of static files the dashboard ships.
+	 */
 	public static String getMimeType(String fileName) {
 		final String[] fileNameSplit = fileName.split("\\.");
 		final String fileExtension = fileNameSplit.length == 0 ? "" : fileNameSplit[fileNameSplit.length - 1];
-		switch (fileExtension) {
-			case "js":
-				return "text/javascript";
-			case "json":
-				return "application/json";
-			default:
-				return "text/" + fileExtension;
-		}
+		return switch (fileExtension) {
+			case "js" -> "text/javascript";
+			case "json" -> "application/json";
+			default -> "text/" + fileExtension;
+		};
 	}
 
 	protected static String removeLastSlash(String text) {

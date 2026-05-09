@@ -1,20 +1,21 @@
-import {arrayAverage, getCookie, getFromArray, pushIfNotExists, setIfUndefined} from "../data/utilities";
-import {ROUTE_TYPES} from "../data/routeType";
-import {LineConnection} from "../entity/lineConnection";
-import {StationConnection} from "../entity/stationConnection";
-import {inject, Injectable, signal, WritableSignal} from "@angular/core";
-import {Subject} from "rxjs";
 import {HttpClient} from "@angular/common/http";
-import {DimensionService} from "./dimension.service";
-import {StationsAndRoutesDTO} from "../entity/generated/stationsAndRoutes";
-import {DataServiceBase} from "./data-service-base";
-import {Route, RoutePlatform} from "../entity/route";
-import {StationDTO} from "../entity/generated/station";
-import {Station} from "../entity/station";
-import {RouteDTO} from "../entity/generated/route";
-import {StationForMap} from "../entity/stationForMap";
+import {inject, Injectable, signal, WritableSignal} from "@angular/core";
 
-const REFRESH_INTERVAL = 30000;
+import {Subject} from "rxjs";
+
+import {ROUTE_TYPES} from "../data/route-type";
+import {arrayAverage, getCookie, getFromArray, pushIfNotExists, setIfUndefined} from "../data/utilities";
+import {LineConnection} from "../entity/line-connection";
+import {Route, RoutePlatform} from "../entity/route";
+import {Station} from "../entity/station";
+import {StationConnection} from "../entity/station-connection";
+import {StationForMap} from "../entity/station-for-map";
+import {RouteDTO} from "../entity/generated/route";
+import {StationDTO} from "../entity/generated/station";
+import {StationsAndRoutesDTO} from "../entity/generated/stationsAndRoutes";
+import {SLOW_REFRESH_INTERVAL_MILLIS} from "../utility/refresh.constants";
+import {DataServiceBase} from "./data-service-base";
+import {DimensionService} from "./dimension.service";
 
 @Injectable({providedIn: "root"})
 export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO }> {
@@ -106,7 +107,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 			this.routeTypeVisibility.set(routeTypeVisibility);
 			this.dimensionService.setDimensions(data.dimensions);
 			this.updateData();
-		}, REFRESH_INTERVAL, dimensionService);
+		}, SLOW_REFRESH_INTERVAL_MILLIS, dimensionService);
 
 		const cookieInterchangeStyle = getCookie("interchange_style");
 		this.interchangeStyle = signal<"DOTTED" | "HOLLOW">(cookieInterchangeStyle === "DOTTED" || cookieInterchangeStyle === "HOLLOW" ? cookieInterchangeStyle : "DOTTED");

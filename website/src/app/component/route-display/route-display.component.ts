@@ -1,5 +1,5 @@
 import {AfterViewInit, ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, ElementRef, inject, input, signal, viewChild} from "@angular/core";
-import {FormatColorPipe} from "../../pipe/formatColorPipe";
+import {FormatColorPipe} from "../../pipe/format-color.pipe";
 import {ThemeService} from "../../service/theme.service";
 import {TooltipModule} from "primeng/tooltip";
 

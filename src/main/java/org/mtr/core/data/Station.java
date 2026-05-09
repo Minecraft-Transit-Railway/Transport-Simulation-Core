@@ -4,14 +4,23 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.StationSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.legacy.data.DataFixer;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.function.Function;
 
+/**
+ * A passenger-facing area that owns one or more {@link Platform}s and is the endpoint shown
+ * to riders on the dashboard, in OBA responses and on the system map.
+ *
+ * <p>Stations expose their physical footprint (inherited from {@link AreaBase}), their fare
+ * zones ({@link #getZone1()} &hellip; {@link #getZone3()}), connections to neighbouring
+ * stations through {@link #connectedStations} and a list of {@link StationExit}s for
+ * wayfinding.</p>
+ */
 public final class Station extends StationSchema {
 
 	public final ObjectAVLTreeSet<Station> connectedStations = new ObjectAVLTreeSet<>();

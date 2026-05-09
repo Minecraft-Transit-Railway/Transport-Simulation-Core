@@ -1,14 +1,22 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.oba.Schedule;
 import org.mtr.core.oba.SingleElement;
 import org.mtr.core.oba.TripDetails;
 import org.mtr.core.tool.Utilities;
 
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
+/**
+ * One run of a {@link Vehicle} from the start of a {@link Route} to the end &mdash; the
+ * GTFS-style "trip" concept reused by the OBA layer.
+ *
+ * <p>A trip groups a sequence of {@link StopTime} entries (one per platform) under a stable
+ * identifier composed of the owning {@link Siding} and a per-block index, and exposes the
+ * conversions to OBA {@link Schedule} / {@link TripDetails} payloads.</p>
+ */
 public class Trip implements Utilities {
 
 	public final Route route;
@@ -83,9 +91,9 @@ public class Trip implements Utilities {
 		}
 
 		final Schedule schedule = new Schedule(
-				previousTrip == null ? "" : previousTrip.getTripId(departureIndex, departureOffset),
-				nextTrip == null ? "" : nextTrip.getTripId(departureIndex, departureOffset),
-				siding.getOBAFrequencyElement(currentMillis)
+			previousTrip == null ? "" : previousTrip.getTripId(departureIndex, departureOffset),
+			nextTrip == null ? "" : nextTrip.getTripId(departureIndex, departureOffset),
+			siding.getOBAFrequencyElement(currentMillis)
 		);
 
 		stopTimes.forEach(tripStopTime -> {
@@ -94,10 +102,10 @@ public class Trip implements Utilities {
 		});
 
 		singleElement.set(new TripDetails(
-				getTripId(departureIndex, departureOffset),
-				siding.getOBATripStatus(currentMillis, stopTimes.getFirst(), departureIndex, departureOffset, "", ""),
-				schedule,
-				siding.getOBAFrequencyElement(currentMillis)
+			getTripId(departureIndex, departureOffset),
+			siding.getOBATripStatus(currentMillis, stopTimes.getFirst(), departureIndex, departureOffset, "", ""),
+			schedule,
+			siding.getOBAFrequencyElement(currentMillis)
 		));
 	}
 

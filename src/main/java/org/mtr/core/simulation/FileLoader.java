@@ -1,14 +1,15 @@
 package org.mtr.core.simulation;
 
+
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
-import org.mtr.core.Main;
+import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.serializer.MessagePackReader;
 import org.mtr.core.serializer.MessagePackWriter;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.libraries.org.msgpack.core.*;
 
-import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
@@ -21,6 +22,7 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+@Log4j2
 public class FileLoader<T extends SerializedDataBaseWithId> {
 
 	public final String key;
@@ -58,7 +60,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 						filesDeleted++;
 					}
 				} catch (Exception e) {
-					Main.LOGGER.error("", e);
+					log.error("Failed to delete file {}", fileName, e);
 				}
 				fileHashes.removeInt(fileName);
 			}
@@ -68,43 +70,47 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 	}
 
 	private void readMessagePackFromFile(Function<MessagePackReader, T> getData) {
-		final Object2ObjectArrayMap<String, Future<T>> futureDataMap = new Object2ObjectArrayMap<>();
-		final ExecutorService executorService = Executors.newCachedThreadPool();
+		final Object2ObjectArrayMap<String, Future<@Nullable T>> futureDataMap = new Object2ObjectArrayMap<>();
+		try (final ExecutorService executorService = Executors.newCachedThreadPool()) {
 
-		try (final Stream<Path> pathStream = Files.list(path)) {
-			pathStream.forEach(idFolder -> {
-				try (final Stream<Path> folderStream = Files.list(idFolder)) {
-					folderStream.forEach(idFile -> {
-						final String fileName = combineAsPath(idFolder, idFile);
-						if (threadedFileLoading) {
-							futureDataMap.put(fileName, executorService.submit(() -> readFile(getData, idFile)));
-						} else {
-							processFile(fileName, readFile(getData, idFile));
-						}
-					});
-				} catch (Exception e) {
-					Main.LOGGER.error("", e);
-				}
+			try (final Stream<Path> pathStream = Files.list(path)) {
+				pathStream.forEach(idFolder -> {
+					try (final Stream<Path> folderStream = Files.list(idFolder)) {
+						folderStream.forEach(idFile -> {
+							final String fileName = combineAsPath(idFolder, idFile);
+							if (threadedFileLoading) {
+								futureDataMap.put(fileName, executorService.submit(() -> readFile(getData, idFile)));
+							} else {
+								processFile(fileName, readFile(getData, idFile));
+							}
+						});
+					} catch (Exception e) {
+						log.error("Failed to list files in {}", idFolder, e);
+					}
 
+					try {
+						Files.deleteIfExists(idFolder);
+						log.debug("Deleted empty folder: {}", idFolder);
+					} catch (DirectoryNotEmptyException ignored) {
+					} catch (Exception e) {
+						log.error("Failed to delete empty folder {}", idFolder, e);
+					}
+				});
+			} catch (Exception e) {
+				log.error("Failed to list directory {}", path, e);
+			}
+
+			futureDataMap.forEach((fileName, futureData) -> {
 				try {
-					Files.deleteIfExists(idFolder);
-					Main.LOGGER.debug("Deleted empty folder: {}", idFolder);
-				} catch (DirectoryNotEmptyException ignored) {
+					processFile(fileName, futureData.get());
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					log.error("Interrupted while waiting for {}", fileName, e);
 				} catch (Exception e) {
-					Main.LOGGER.error("", e);
+					log.error("Failed to load file {}", fileName, e);
 				}
 			});
-		} catch (Exception e) {
-			Main.LOGGER.error("", e);
 		}
-
-		futureDataMap.forEach((fileName, futureData) -> {
-			try {
-				processFile(fileName, futureData.get());
-			} catch (Exception e) {
-				Main.LOGGER.error("", e);
-			}
-		});
 	}
 
 	private void processFile(String fileName, @Nullable T data) {
@@ -113,12 +119,12 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 				if (data.isValid()) {
 					dataSet.add(data);
 				} else {
-					Main.LOGGER.warn("Skipping invalid data: {}", data);
+					log.warn("Skipping invalid data: {}", data);
 				}
 				fileHashes.put(fileName, getHash(data, true));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to process file {}", fileName, e);
 		}
 	}
 
@@ -127,7 +133,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 		while (!dirtyData.isEmpty()) {
 			final T data = dirtyData.removeFirst();
 
-			if (data != null && data.isValid()) {
+			if (data.isValid()) {
 				final String fileName = getFileName.apply(data);
 				final String parentFolderName = getParent(fileName);
 				final String parentAndFileName = combineAsPath(parentFolderName, fileName);
@@ -139,7 +145,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 					try (final MessagePacker messagePacker = MessagePack.newDefaultPacker(Files.newOutputStream(path.resolve(parentAndFileName), StandardOpenOption.CREATE))) {
 						packMessage(messagePacker, data, useReducedHash);
 					} catch (Exception e) {
-						Main.LOGGER.error("", e);
+						log.error("Failed to write file {}", parentAndFileName, e);
 					}
 
 					fileHashes.put(parentAndFileName, hash);
@@ -159,14 +165,14 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 			try (final MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(inputStream)) {
 				return getData.apply(new MessagePackReader(messageUnpacker));
 			} catch (Exception e) {
-				Main.LOGGER.error("", e);
+				log.error("Failed to process file {}", idFile, e);
 				if (e instanceof MessageTypeException) {
-					Main.LOGGER.info("Deleting file with parsing error [{}]", idFile);
+					log.info("Deleting file with parsing error [{}]", idFile);
 					Files.deleteIfExists(idFile);
 				}
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to open file {}", idFile, e);
 		}
 		return null;
 	}
@@ -179,7 +185,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 		try {
 			return Integer.parseInt(getParent(fileName), 16);
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to parse parent index from {}", fileName, e);
 			return 0;
 		}
 	}
@@ -206,7 +212,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 			packMessage(messageBufferPacker, data, useReducedHash);
 			hash = Arrays.hashCode(messageBufferPacker.toByteArray());
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to compute hash for {}", data, e);
 		}
 		return hash;
 	}
@@ -226,7 +232,7 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 			try {
 				Files.createDirectories(path);
 			} catch (Exception e) {
-				Main.LOGGER.error("", e);
+				log.error("Failed to create directory {}", path, e);
 			}
 		}
 	}

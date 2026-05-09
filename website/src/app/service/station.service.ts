@@ -1,15 +1,16 @@
-import {inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
-import {MapDataService} from "./map-data.service";
-import {SplitNamePipe} from "../pipe/splitNamePipe";
-import {ROUTE_TYPES} from "../data/routeType";
-import {DimensionService} from "./dimension.service";
-import {SimplifyRoutesPipe} from "../pipe/simplifyRoutesPipe";
-import {SelectableDataServiceBase} from "./selectable-data-service-base";
+import {inject, Injectable, signal} from "@angular/core";
+
+import {ROUTE_TYPES} from "../data/route-type";
 import {Station} from "../entity/station";
+import {SimplifyRoutesPipe} from "../pipe/simplify-routes.pipe";
+import {SplitNamePipe} from "../pipe/split-name.pipe";
+import {LIVE_REFRESH_INTERVAL_MILLIS} from "../utility/refresh.constants";
+import {DimensionService} from "./dimension.service";
+import {MapDataService} from "./map-data.service";
+import {SelectableDataServiceBase} from "./selectable-data-service-base";
 
 
-const REFRESH_INTERVAL = 3000;
 const MAX_ARRIVALS = 5;
 
 @Injectable({providedIn: "root"})
@@ -69,7 +70,7 @@ export class StationService extends SelectableDataServiceBase<{ currentTime: num
 			this.arrivalsRoutes.set(arrivalsRoutes);
 			this.arrivals.set(arrivals);
 			this.hasTerminating.set(hasTerminating);
-		}, REFRESH_INTERVAL, dimensionService);
+		}, LIVE_REFRESH_INTERVAL_MILLIS, dimensionService);
 		setInterval(() => this.arrivals().forEach(arrival => arrival.calculateValues()), 100);
 	}
 

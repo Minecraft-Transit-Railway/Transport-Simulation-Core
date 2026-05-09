@@ -6,6 +6,16 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.generated.data.SimplifiedRouteSchema;
 import org.mtr.core.serializer.ReaderBase;
 
+/**
+ * Compact, UI-oriented projection of a {@link Route} &mdash; the shape that ships to the
+ * Angular dashboard and the legacy mod client. Drops the heavyweight back-references and
+ * keeps just the ordered platform list with each platform's interchange-route colours
+ * pre-computed for rendering.
+ *
+ * <p>Built from a {@link Route} via {@link #addToList(ObjectArrayList, Route)}; never
+ * mutated after construction (callers reach for the schema setters only when reconstructing
+ * from a serialised payload).</p>
+ */
 public final class SimplifiedRoute extends SimplifiedRouteSchema implements Comparable<SimplifiedRoute> {
 
 	private SimplifiedRoute(Route route) {

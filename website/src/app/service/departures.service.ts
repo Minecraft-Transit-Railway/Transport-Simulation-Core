@@ -1,11 +1,12 @@
-import {inject, Injectable, signal} from "@angular/core";
 import {HttpClient} from "@angular/common/http";
-import {DimensionService} from "./dimension.service";
-import {setIfUndefined} from "../data/utilities";
-import {DataServiceBase} from "./data-service-base";
+import {inject, Injectable, signal} from "@angular/core";
+
 import {Subject} from "rxjs";
 
-const REFRESH_INTERVAL = 3000;
+import {setIfUndefined} from "../data/utilities";
+import {LIVE_REFRESH_INTERVAL_MILLIS} from "../utility/refresh.constants";
+import {DataServiceBase} from "./data-service-base";
+import {DimensionService} from "./dimension.service";
 
 @Injectable({providedIn: "root"})
 export class DeparturesService extends DataServiceBase<{ departures: Record<string, { departureFromNow: number, deviation: number }[]>, lastUpdated: number }> {
@@ -60,7 +61,7 @@ export class DeparturesService extends DataServiceBase<{ departures: Record<stri
 		}, data => {
 			this.departures.set(data.departures);
 			this.lastUpdated.set(data.lastUpdated);
-		}, REFRESH_INTERVAL, dimensionService);
+		}, LIVE_REFRESH_INTERVAL_MILLIS, dimensionService);
 		this.fetchData("");
 	}
 

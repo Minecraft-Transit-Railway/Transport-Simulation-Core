@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import org.mtr.core.Main;
+import lombok.extern.log4j.Log4j2;
 import org.mtr.legacy.data.DataFixer;
 import org.mtr.libraries.org.msgpack.core.MessageTypeException;
 import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
@@ -15,14 +15,31 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * {@link ReaderBase} backed by an in-memory MessagePack {@link Value} tree.
+ *
+ * <p>This is the on-disk format the simulator persists to (see {@code FileLoader}). On read,
+ * each top-level key is routed through {@link DataFixer#readerBaseConvertKey(String, Value, Object2ObjectArrayMap)}
+ * so legacy on-disk schemas keep deserialising into the current model.</p>
+ */
+@Log4j2
 public final class MessagePackReader extends ReaderBase {
 
 	private final Object2ObjectArrayMap<String, Value> map;
 
+	/**
+	 * Construct an empty reader; every lookup returns its default.
+	 */
 	public MessagePackReader() {
 		this.map = new Object2ObjectArrayMap<>();
 	}
 
+	/**
+	 * Read a MessagePack map header from {@code messageUnpacker} and consume the matching number
+	 * of {@code (key, value)} pairs. Re-throws {@link MessageTypeException} so the caller can
+	 * distinguish "not a MessagePack map" from "malformed value inside the map" — the latter is
+	 * logged and tolerated.
+	 */
 	public MessagePackReader(MessageUnpacker messageUnpacker) throws MessageTypeException {
 		map = new Object2ObjectArrayMap<>();
 		try {
@@ -33,7 +50,7 @@ public final class MessagePackReader extends ReaderBase {
 		} catch (MessageTypeException e) {
 			throw e;
 		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+			log.error("Failed to read MessagePack input", e);
 		}
 	}
 
@@ -134,15 +151,19 @@ public final class MessagePackReader extends ReaderBase {
 
 	@Override
 	public void merge(ReaderBase readerBase) {
-		if (readerBase instanceof MessagePackReader) {
-			map.putAll(((MessagePackReader) readerBase).map);
+		if (readerBase instanceof final MessagePackReader other) {
+			map.putAll(other.map);
 		}
 	}
 
 	/**
-	 * @deprecated for {@link DataFixer} use only
+	 * Internal-only: iterate over the MessagePack map stored at {@code key} as raw
+	 * {@code (String, Value)} pairs. Used by {@link DataFixer} when migrating legacy on-disk
+	 * shapes that the regular schema-based reader cannot express. <strong>Do not call from user
+	 * code.</strong>
 	 */
 	@Deprecated
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	public void iterateMap(String key, BiConsumer<String, Value> consumer) {
 		final Value value = map.get(key);
 		if (value != null) {
@@ -183,7 +204,9 @@ public final class MessagePackReader extends ReaderBase {
 		value.asArrayValue().forEach(arrayValue -> {
 			try {
 				consumer.accept(arrayValue);
-			} catch (Exception ignored) {
+			} catch (Exception e) {
+				// One bad element should not abort the whole array — log and skip it (CODE_STYLES §3.14).
+				log.debug("Skipping malformed MessagePack array element {}", arrayValue, e);
 			}
 		});
 	}
@@ -192,7 +215,9 @@ public final class MessagePackReader extends ReaderBase {
 		value.asMapValue().entrySet().forEach(entry -> {
 			try {
 				consumer.accept(getString(entry.getKey()), entry.getValue());
-			} catch (Exception ignored) {
+			} catch (Exception e) {
+				// One bad entry should not abort the whole map — log and skip it (CODE_STYLES §3.14).
+				log.debug("Skipping malformed MessagePack map entry {}", entry, e);
 			}
 		});
 	}

@@ -7,16 +7,29 @@ import it.unimi.dsi.fastutil.doubles.DoubleConsumer;
 import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import lombok.extern.log4j.Log4j2;
 import org.mtr.core.tool.Utilities;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * {@link ReaderBase} backed by a Gson {@link JsonElement} tree.
+ *
+ * <p>Used for the {@code /mtr/api/map} JSON wire format and for any on-disk file persisted as
+ * JSON. Keys are read into a {@link Object2ObjectArrayMap} once at construction time so repeated
+ * lookups during schema deserialisation do not re-walk the tree.</p>
+ */
+@Log4j2
 public final class JsonReader extends ReaderBase {
 
 	private final Object2ObjectArrayMap<String, JsonElement> map;
 
+	/**
+	 * Build a reader over the top-level object in {@code value}. If {@code value} is not a JSON
+	 * object the reader is empty (every lookup returns the default).
+	 */
 	public JsonReader(JsonElement value) {
 		map = new Object2ObjectArrayMap<>();
 		iterateMap(value, map::put);
@@ -118,8 +131,8 @@ public final class JsonReader extends ReaderBase {
 
 	@Override
 	public void merge(ReaderBase readerBase) {
-		if (readerBase instanceof JsonReader) {
-			map.putAll(((JsonReader) readerBase).map);
+		if (readerBase instanceof final JsonReader other) {
+			map.putAll(other.map);
 		}
 	}
 
@@ -131,6 +144,13 @@ public final class JsonReader extends ReaderBase {
 		return getValueOrDefault(map.get(key), defaultValue, function);
 	}
 
+	/**
+	 * Convenience factory that parses {@code string} as JSON via {@link Utilities#parseJson(String)}
+	 * (which returns an empty object on parse failure rather than throwing).
+	 *
+	 * @param string raw JSON text
+	 * @return a reader rooted at the parsed top-level object
+	 */
 	public static JsonReader parse(String string) {
 		return new JsonReader(Utilities.parseJson(string));
 	}
@@ -160,7 +180,9 @@ public final class JsonReader extends ReaderBase {
 		value.getAsJsonArray().forEach(arrayValue -> {
 			try {
 				consumer.accept(arrayValue);
-			} catch (Exception ignored) {
+			} catch (Exception e) {
+				// One bad array element should not abort the whole list — log and skip it (CODE_STYLES §3.14).
+				log.debug("Skipping malformed JSON array element {}", arrayValue, e);
 			}
 		});
 	}
@@ -169,7 +191,9 @@ public final class JsonReader extends ReaderBase {
 		value.getAsJsonObject().asMap().forEach((mapKey, mapValue) -> {
 			try {
 				consumer.accept(mapKey, mapValue);
-			} catch (Exception ignored) {
+			} catch (Exception e) {
+				// One bad entry should not abort the whole object — log and skip it (CODE_STYLES §3.14).
+				log.debug("Skipping malformed JSON entry {}={}", mapKey, mapValue, e);
 			}
 		});
 	}

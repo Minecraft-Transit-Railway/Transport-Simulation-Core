@@ -10,7 +10,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.mtr.core.Main;
+import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.VehicleSchema;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.ReaderBase;
@@ -18,9 +19,17 @@ import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
-import javax.annotation.Nullable;
 import java.util.UUID;
 
+/**
+ * A single train / boat / cable car / airplane consist running along a {@link Siding}.
+ *
+ * <p>Lives both server-side (where it owns its motion physics, signal blocks and door state)
+ * and client-side (where it is replayed from sync snapshots) — see {@link #isClientside}. The
+ * physics step is split into {@link #simulateMoving}, {@link #simulateStopped} and
+ * {@link #simulateInDepot} depending on the vehicle's state at the start of the tick.</p>
+ */
+@Log4j2
 public class Vehicle extends VehicleSchema implements Utilities {
 
 	/**
@@ -64,9 +73,13 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	}
 
 	/**
-	 * @deprecated for {@link org.mtr.core.operation.VehicleUpdate} use only
+	 * Internal-only: the single-argument constructor used by
+	 * {@link org.mtr.core.operation.VehicleUpdate} when reconstructing a vehicle from a network
+	 * update. Wraps the read in a fresh {@link ClientData} so the resulting vehicle has somewhere
+	 * to look up cached references. <strong>Do not call from user code.</strong>
 	 */
 	@Deprecated
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	public Vehicle(ReaderBase readerBase) {
 		this(new VehicleExtraData(readerBase), null, readerBase, new ClientData());
 	}
@@ -142,8 +155,8 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 		if (!isClientside) {
 			// Remove entities that have dismounted
-			if (data instanceof Simulator) {
-				vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> !((Simulator) data).isRiding(vehicleRidingEntity.uuid, id));
+			if (data instanceof final Simulator simulator) {
+				vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> !simulator.isRiding(vehicleRidingEntity.uuid, id));
 			}
 
 			// Update the manual state for the client
@@ -153,7 +166,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 	public void startUp(long newDepartureIndex, long newSidingDepartureTime) {
 		if (isClientside) {
-			Main.LOGGER.warn("Vehicle#startUp should only be called on the server side!");
+			log.warn("Vehicle#startUp should only be called on the server side!");
 		}
 
 		vehicleExtraData.closeDoors();
@@ -217,7 +230,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	}
 
 	void updateRidingEntities(ObjectArrayList<VehicleRidingEntity> vehicleRidingEntities) {
-		if (!isClientside && data instanceof Simulator) {
+		if (!isClientside && data instanceof final Simulator simulator) {
 			final ObjectOpenHashSet<UUID> uuidToRemove = new ObjectOpenHashSet<>();
 			final ObjectOpenHashSet<VehicleRidingEntity> vehicleRidingEntitiesToAdd = new ObjectOpenHashSet<>();
 
@@ -226,9 +239,9 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 				if (vehicleRidingEntity.isOnVehicle()) {
 					vehicleRidingEntitiesToAdd.add(vehicleRidingEntity);
-					((Simulator) data).ride(vehicleRidingEntity.uuid, id);
+					simulator.ride(vehicleRidingEntity.uuid, id);
 				} else {
-					((Simulator) data).stopRiding(vehicleRidingEntity.uuid);
+					simulator.stopRiding(vehicleRidingEntity.uuid);
 				}
 
 				if (vehicleExtraData.getIsManualAllowed() && vehicleRidingEntity.isDriver()) {
@@ -494,7 +507,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 	private boolean isCurrentlyManual() {
 		if (isClientside) {
-			Main.LOGGER.warn("Vehicle#isCurrentlyManual should only be called on the server side!");
+			log.warn("Vehicle#isCurrentlyManual should only be called on the server side!");
 		}
 		return !atoOverride && manualCooldown > 0;
 	}
@@ -525,8 +538,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	}
 
 	/**
-	 * Indicate which portions of each path segment are occupied by this vehicle.
-	 * Also check if the vehicle needs to send a socket update:
+	 * Indicate which portions of each path segment are occupied by this vehicle. Also check if the vehicle needs to send a socket update:
 	 * <ul>
 	 * <li>Entered a client's view radius</li>
 	 * <li>Left a client's view radius</li>
@@ -567,11 +579,11 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		}
 
 		if (siding != null) {
-			if (siding.area != null && data instanceof Simulator) {
+			if (siding.area != null && data instanceof final Simulator simulator) {
 				final boolean needsUpdate = vehicleExtraData.checkForUpdate();
 				// TODO for continuous movement, maybe only send the path once rather than sending the entire path for each vehicle
 				final int pathUpdateIndex = transportMode.continuousMovement ? 0 : Math.max(0, index + 1);
-				((Simulator) data).clients.forEach(client -> {
+				simulator.clients.forEach(client -> {
 					final Position position = client.getPosition();
 					final double updateRadius = client.getUpdateRadius();
 					if ((minMaxPositions[0] == null || minMaxPositions[1] == null) ? siding.area.inArea(position, updateRadius) : Utilities.isBetween(position, minMaxPositions[0], minMaxPositions[1], updateRadius) || !closeToDepot() && vehicleExtraData.hasRidingEntity(client.uuid)) {

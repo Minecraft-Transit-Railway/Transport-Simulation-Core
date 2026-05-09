@@ -1,9 +1,9 @@
 package org.mtr.core.oba;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.oba.ScheduleSchema;
 import org.mtr.core.serializer.ReaderBase;
 
-import javax.annotation.Nullable;
 import java.util.TimeZone;
 
 public final class Schedule extends ScheduleSchema {
@@ -23,7 +23,7 @@ public final class Schedule extends ScheduleSchema {
 	}
 
 	@Override
-	protected Frequency getDefaultFrequency() {
+	protected @Nullable Frequency getDefaultFrequency() {
 		return null;
 	}
 }

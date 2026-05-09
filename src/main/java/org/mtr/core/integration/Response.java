@@ -1,10 +1,9 @@
 package org.mtr.core.integration;
 
 import com.google.gson.JsonObject;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.integration.ResponseSchema;
 import org.mtr.core.tool.Utilities;
-
-import javax.annotation.Nullable;
 
 public final class Response extends ResponseSchema {
 

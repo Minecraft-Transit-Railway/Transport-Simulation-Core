@@ -1,8 +1,7 @@
 package org.mtr.core.directions;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Route;
-
-import javax.annotation.Nullable;
 
 /**
  * Represents a connection that is dependent of start time.

@@ -3,13 +3,11 @@ package org.mtr.core.operation;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.UpdateDataResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public final class UpdateDataResponse extends UpdateDataResponseSchema {
 
@@ -25,43 +23,36 @@ public final class UpdateDataResponse extends UpdateDataResponseSchema {
 		updateData(readerBase);
 	}
 
-	@Nonnull
 	@Override
 	protected Data stationsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data platformsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data sidingsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data routesDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data depotsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data homesDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data landmarksDataParameter() {
 		return data;

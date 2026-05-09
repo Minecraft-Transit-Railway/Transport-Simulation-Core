@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.core.data.NameColorDataBase;
 import org.mtr.core.map.*;
@@ -22,20 +23,29 @@ public final class SystemMapServlet extends ServletBase {
 	private final Object2ObjectAVLTreeMap<String, CachedResponse> departuresResponses = new Object2ObjectAVLTreeMap<>();
 	private final Object2ObjectAVLTreeMap<String, CachedResponse> clientsResponses = new Object2ObjectAVLTreeMap<>();
 
+	/**
+	 * Cache lifespan for the relatively-static stations / routes payload.
+	 */
+	private static final long STATIONS_AND_ROUTES_CACHE_MILLIS = 30_000L;
+	/**
+	 * Cache lifespan for live departures and client positions — short enough for the map UI to feel live, long enough that a busy server isn't recomputing per request.
+	 */
+	private static final long LIVE_DATA_CACHE_MILLIS = 3_000L;
+
 	public SystemMapServlet(ObjectImmutableList<Simulator> simulators) {
 		super(simulators);
 	}
 
 	@Override
-	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<JsonObject> sendResponse) {
+	public void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<@Nullable JsonObject> sendResponse) {
 		if (endpoint.equals("directions")) {
 			simulator.directionsFinder.addRequest(new DirectionsRequest(jsonReader, directionsResponse -> sendResponse.accept(Utilities.getJsonObjectFromData(directionsResponse)), null));
 		} else {
 			sendResponse.accept(switch (endpoint) {
-				case "stations-and-routes" -> stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, 30000)).get(simulator);
-				case "departures" -> departuresResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getDepartures, 3000)).get(simulator);
+				case "stations-and-routes" -> stationsAndRoutesResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getStationsAndRoutes, STATIONS_AND_ROUTES_CACHE_MILLIS)).get(simulator);
+				case "departures" -> departuresResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getDepartures, LIVE_DATA_CACHE_MILLIS)).get(simulator);
 				case "arrivals" -> Utilities.getJsonObjectFromData(new ArrivalsRequest(jsonReader).getArrivals(simulator));
-				case "clients" -> clientsResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getClients, 3000)).get(simulator);
+				case "clients" -> clientsResponses.computeIfAbsent(simulator.dimension, key -> new CachedResponse(SystemMapServlet::getClients, LIVE_DATA_CACHE_MILLIS)).get(simulator);
 				default -> new JsonObject();
 			});
 		}
@@ -62,9 +72,9 @@ public final class SystemMapServlet extends ServletBase {
 		simulator.clients.forEach(client -> {
 			final String clientId = client.uuid.toString();
 			clients.put(clientId, new Client(
-					clientId, Main.CLIENT_NAME_RESOLVER == null ? "" : Main.CLIENT_NAME_RESOLVER.apply(client.uuid),
-					client.getPosition().getX(), client.getPosition().getZ(),
-					simulator.stations.stream().filter(station -> station.inArea(client.getPosition())).map(NameColorDataBase::getHexId).findFirst().orElse("")
+				clientId, Main.CLIENT_NAME_RESOLVER == null ? "" : Main.CLIENT_NAME_RESOLVER.apply(client.uuid),
+				client.getPosition().getX(), client.getPosition().getZ(),
+				simulator.stations.stream().filter(station -> station.inArea(client.getPosition())).map(NameColorDataBase::getHexId).findFirst().orElse("")
 			));
 		});
 
@@ -73,10 +83,10 @@ public final class SystemMapServlet extends ServletBase {
 			final Client client = clients.get(clientId);
 			if (client != null) {
 				clients.put(clientId, new Client(
-						client,
-						Utilities.numberToPaddedHexString(vehicleExtraData.getThisRouteId()),
-						Utilities.numberToPaddedHexString(vehicleExtraData.getThisStationId()),
-						Utilities.numberToPaddedHexString(vehicleExtraData.getNextStationId())
+					client,
+					Utilities.numberToPaddedHexString(vehicleExtraData.getThisRouteId()),
+					Utilities.numberToPaddedHexString(vehicleExtraData.getThisStationId()),
+					Utilities.numberToPaddedHexString(vehicleExtraData.getNextStationId())
 				));
 			}
 		}));

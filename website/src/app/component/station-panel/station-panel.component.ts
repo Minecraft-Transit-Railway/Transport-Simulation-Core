@@ -1,10 +1,10 @@
 import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, output, signal} from "@angular/core";
 import {Arrival, StationService} from "../../service/station.service";
-import {FormatNamePipe} from "../../pipe/formatNamePipe";
-import {FormatColorPipe} from "../../pipe/formatColorPipe";
+import {FormatNamePipe} from "../../pipe/format-name.pipe";
+import {FormatColorPipe} from "../../pipe/format-color.pipe";
 import {MapDataService} from "../../service/map-data.service";
 import {DataListEntryComponent} from "../data-list-entry/data-list-entry.component";
-import {SimplifyRoutesPipe} from "../../pipe/simplifyRoutesPipe";
+import {SimplifyRoutesPipe} from "../../pipe/simplify-routes.pipe";
 import {TitleComponent} from "../title/title.component";
 import {Station} from "../../entity/station";
 import {TooltipModule} from "primeng/tooltip";
@@ -15,9 +15,9 @@ import {DividerModule} from "primeng/divider";
 import {DialogModule} from "primeng/dialog";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {ChipModule} from "primeng/chip";
-import {FormatTimePipe} from "../../pipe/formatTimePipe";
-import {FormatDatePipe} from "../../pipe/formatDatePipe";
-import {SplitNamePipe} from "../../pipe/splitNamePipe";
+import {FormatTimePipe} from "../../pipe/format-time.pipe";
+import {FormatDatePipe} from "../../pipe/format-date.pipe";
+import {SplitNamePipe} from "../../pipe/split-name.pipe";
 import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({

@@ -5,12 +5,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectLongImmutablePair;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.Main;
 import org.mtr.core.data.Position;
 import org.mtr.core.serializer.JsonWriter;
 import org.mtr.core.serializer.SerializedDataBase;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -19,12 +19,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
+/**
+ * Grab-bag of stateless helpers reused across the simulator: clamping, interpolation, range
+ * tests, hex-string formatting, executor-shutdown plumbing and so on.
+ *
+ * <p>Declared as an {@code interface} so domain classes can {@code implements Utilities} and
+ * pick up the time-unit constants ({@link #MILLIS_PER_SECOND}, {@link #MILLIS_PER_DAY}, …) as
+ * inherited fields without polluting their own API. All methods are {@code static} — there is
+ * no state and no instance to construct.</p>
+ */
 public interface Utilities {
 
+	/** Hours in a day; lifted from a literal because it shows up in tick / departure maths. */
 	int HOURS_PER_DAY = 24;
+	/** Milliseconds in one second. */
 	int MILLIS_PER_SECOND = 1000;
+	/** Milliseconds in one minute. */
 	int MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+	/** Milliseconds in one hour. */
 	int MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
+	/** Milliseconds in one (real) day. */
 	int MILLIS_PER_DAY = HOURS_PER_DAY * MILLIS_PER_HOUR;
 
 	static boolean isBetween(double value, double value1, double value2) {
@@ -45,8 +59,8 @@ public interface Utilities {
 
 	static boolean isBetween(Position position, double x1, double y1, double z1, double x2, double y2, double z2, double padding) {
 		return Utilities.isBetween(position.getX(), x1, x2, padding) &&
-				Utilities.isBetween(position.getY(), y1, y2, padding) &&
-				Utilities.isBetween(position.getZ(), z1, z2, padding);
+			Utilities.isBetween(position.getY(), y1, y2, padding) &&
+			Utilities.isBetween(position.getZ(), z1, z2, padding);
 	}
 
 	static boolean isIntersecting(double value1, double value2, double value3, double value4) {
@@ -93,7 +107,11 @@ public interface Utilities {
 	static JsonObject parseJson(String data) {
 		try {
 			return JsonParser.parseString(data).getAsJsonObject();
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			// Empty object is the documented "couldn't parse" return. Logged at debug because the
+			// caller frequently feeds untrusted input (servlet bodies, on-disk legacy files) and a
+			// hard failure would be wrong; logged at all so silent corruption is debuggable. (§3.14)
+			Main.LOGGER.debug("parseJson fell back to empty object for input of length {}", data.length(), e);
 			return new JsonObject();
 		}
 	}
@@ -110,10 +128,12 @@ public interface Utilities {
 		return speedKilometersPerHour / 3600;
 	}
 
+	@Nullable
 	static <T, U extends List<T>> T getElement(U collection, int index) {
 		return getElement(collection, index, null);
 	}
 
+	@Nullable
 	static <T, U extends List<T>> T getElement(@Nullable U collection, int index, @Nullable T defaultValue) {
 		final T result;
 		if (collection == null || index >= collection.size() || index < -collection.size()) {
@@ -226,16 +246,20 @@ public interface Utilities {
 	static int compare(String value1, String value2, IntSupplier ifZero) {
 		try {
 			return compare(Long.parseLong(value1), Long.parseLong(value2), ifZero);
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			// Numeric comparison was attempted as a fast path; fall back to lexicographic on
+			// non-numeric input. Logged at debug per CODE_STYLES §3.14.
+			Main.LOGGER.debug("Numeric compare of \"{}\" / \"{}\" failed; falling back to string compare", value1, value2, e);
 			final int result = value1.compareTo(value2);
 			return result == 0 ? ifZero.getAsInt() : result;
 		}
 	}
 
-	static <T> boolean sameItems(Collection<T> collection1, Collection<T> collection2) {
-		return collection1.containsAll(collection2) && collection2.containsAll(collection1);
+	static <T> boolean differentItems(Collection<T> collection1, Collection<T> collection2) {
+		return !collection1.containsAll(collection2) || !collection2.containsAll(collection1);
 	}
 
+	@Nullable
 	static <T> T loopUntilTimeout(Supplier<T> action, long timeoutMillis) {
 		final long startMillis = System.currentTimeMillis();
 		while (System.currentTimeMillis() - startMillis < timeoutMillis) {
@@ -263,8 +287,10 @@ public interface Utilities {
 			while (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
 				Main.LOGGER.warn("Termination failed, retrying...");
 			}
-		} catch (Exception e) {
-			Main.LOGGER.error("", e);
+		} catch (InterruptedException e) {
+			// Restore the interrupt flag (CODE_STYLES §3.14) so callers can react.
+			Thread.currentThread().interrupt();
+			Main.LOGGER.error("Interrupted while awaiting executor termination", e);
 		}
 	}
 }

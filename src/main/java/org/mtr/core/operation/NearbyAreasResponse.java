@@ -5,7 +5,6 @@ import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.NearbyAreasResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 
-import javax.annotation.Nonnull;
 
 public final class NearbyAreasResponse extends NearbyAreasResponseSchema {
 
@@ -22,13 +21,11 @@ public final class NearbyAreasResponse extends NearbyAreasResponseSchema {
 		updateData(readerBase);
 	}
 
-	@Nonnull
 	@Override
 	protected Data depotsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data stationsDataParameter() {
 		return data;

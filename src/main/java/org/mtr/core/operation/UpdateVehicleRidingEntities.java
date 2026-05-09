@@ -1,12 +1,11 @@
 package org.mtr.core.operation;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Siding;
 import org.mtr.core.data.VehicleRidingEntity;
 import org.mtr.core.generated.operation.UpdateVehicleRidingEntitiesSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
-
-import javax.annotation.Nullable;
 
 public final class UpdateVehicleRidingEntities extends UpdateVehicleRidingEntitiesSchema {
 

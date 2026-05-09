@@ -13,6 +13,16 @@ import org.mtr.core.tool.LatLon;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.data.DataFixer;
 
+/**
+ * A boarding location inside a {@link Station} where vehicles dwell to pick up and drop off
+ * passengers.
+ *
+ * <p>Each platform sits on exactly one {@link Rail} segment (its track) and is referenced by
+ * the {@link Route}s that stop at it through {@link #routes}; {@link #routeColors} caches the
+ * union of route colours for fast UI rendering, and {@link #anglesFromDepot} memoises the
+ * approach angle from each depot so the OBA stop-direction lookup does not have to recompute
+ * it.</p>
+ */
 public final class Platform extends PlatformSchema {
 
 	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();

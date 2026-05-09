@@ -2,15 +2,13 @@ package org.mtr.core.operation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.UpdateDataRequestSchema;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.serializer.SerializedDataBase;
 import org.mtr.core.tool.Utilities;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public final class UpdateDataRequest extends UpdateDataRequestSchema {
 
@@ -26,49 +24,41 @@ public final class UpdateDataRequest extends UpdateDataRequestSchema {
 		updateData(readerBase);
 	}
 
-	@Nonnull
 	@Override
 	protected Data stationsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data platformsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data sidingsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data routesDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data depotsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data liftsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data homesDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data landmarksDataParameter() {
 		return data;

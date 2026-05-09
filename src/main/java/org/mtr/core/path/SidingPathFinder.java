@@ -3,14 +3,30 @@ package org.mtr.core.path;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 
-import javax.annotation.Nullable;
 import java.util.function.BiConsumer;
 
+/**
+ * {@link PathFinder} specialisation that walks the {@link Rail} graph between two
+ * {@link SavedRailBase} endpoints (typically a {@link Siding} and a {@link Platform}) to
+ * produce the route a {@link Vehicle} will follow on a single trip.
+ *
+ * <p>Honours rail directionality, signal-block boundaries and per-{@link TransportMode}
+ * specifics: aeroplane mode in particular requires inbound runways
+ * ({@link #runwaysInbound}) and outbound runways ({@link #runwaysOutbound}) to be reached
+ * via straight-line approaches at {@value #AIRPLANE_SPEED} km/h with at most a
+ * {@value #MAX_AIRPLANE_TURN_ARC}-block turn arc.</p>
+ *
+ * @param <T> the start area type
+ * @param <U> the start saved-rail type owned by {@code T}
+ * @param <V> the end area type
+ * @param <W> the end saved-rail type owned by {@code V}
+ */
 public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRailBase<U, T>, V extends AreaBase<V, W>, W extends SavedRailBase<W, V>> extends PathFinder<SidingPathFinder.PositionAndAngle> {
 
 	public final U startSavedRail;
@@ -211,11 +227,11 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 
 	private static PathData getAirplanePathData(Position position1, Angle angle1, Position position2, Angle angle2, int stopIndex) {
 		return new PathData(Rail.newRail(
-				position1, angle1, position2, angle2,
-				Rail.Shape.QUADRATIC, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				new ObjectArrayList<>(), AIRPLANE_SPEED, 0,
-				false, false, true, false, false, TransportMode.AIRPLANE
+			position1, angle1, position2, angle2,
+			Rail.Shape.QUADRATIC, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			new ObjectArrayList<>(), AIRPLANE_SPEED, 0,
+			false, false, true, false, false, TransportMode.AIRPLANE
 		), 0, 0, stopIndex, position1, position2);
 	}
 

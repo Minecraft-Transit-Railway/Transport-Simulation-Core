@@ -4,7 +4,6 @@ import org.mtr.core.data.*;
 import org.mtr.core.generated.operation.DataResponseSchema;
 import org.mtr.core.serializer.ReaderBase;
 
-import javax.annotation.Nonnull;
 
 public final class DataResponse extends DataResponseSchema {
 
@@ -21,37 +20,31 @@ public final class DataResponse extends DataResponseSchema {
 		updateData(readerBase);
 	}
 
-	@Nonnull
 	@Override
 	protected Data stationsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data platformsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data sidingsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data depotsDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data homesDataParameter() {
 		return data;
 	}
 
-	@Nonnull
 	@Override
 	protected Data landmarksDataParameter() {
 		return data;
