@@ -1,15 +1,17 @@
 package org.mtr.core.servlet;
 
-import org.mtr.libraries.javax.servlet.AsyncContext;
-import org.mtr.libraries.javax.servlet.http.HttpServlet;
-import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
-import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.Nullable;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.function.Function;
 
 public abstract class WebServlet extends HttpServlet {
 
-	private final Function<String, String> contentProvider;
+	private final Function<String, @Nullable String> contentProvider;
 	private final String expectedPath;
 
 	public WebServlet(Function<String, String> contentProvider, String expectedPath) {

@@ -5,10 +5,10 @@ import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
+import org.msgpack.core.*;
 import org.mtr.core.serializer.MessagePackReader;
 import org.mtr.core.serializer.MessagePackWriter;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
-import org.mtr.libraries.org.msgpack.core.*;
 
 import java.io.InputStream;
 import java.nio.file.DirectoryNotEmptyException;

@@ -99,7 +99,6 @@ Transport-Simulation-Core/
 │   │   ├── java/org/mtr/core/                    ← backend source
 │   │   └── resources/log4j2.properties
 │   └── test/java/org/mtr/core/                   ← JUnit 5 tests
-├── libs/                    ← shadowed Jetty / utility jars used at runtime
 ├── website/                 ← Angular 21 dashboard
 │   ├── package.json
 │   └── src/app/{component,service,pipe,entity,...}/

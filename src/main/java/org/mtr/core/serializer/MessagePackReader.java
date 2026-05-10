@@ -6,10 +6,10 @@ import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import lombok.extern.log4j.Log4j2;
+import org.msgpack.core.MessageTypeException;
+import org.msgpack.core.MessageUnpacker;
+import org.msgpack.value.Value;
 import org.mtr.legacy.data.DataFixer;
-import org.mtr.libraries.org.msgpack.core.MessageTypeException;
-import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
-import org.mtr.libraries.org.msgpack.value.Value;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;

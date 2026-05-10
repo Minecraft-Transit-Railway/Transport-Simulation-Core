@@ -1,12 +1,12 @@
 package org.mtr.core.servlet;
 
 import lombok.extern.log4j.Log4j2;
-import org.mtr.libraries.org.eclipse.jetty.server.Connector;
-import org.mtr.libraries.org.eclipse.jetty.server.Server;
-import org.mtr.libraries.org.eclipse.jetty.server.ServerConnector;
-import org.mtr.libraries.org.eclipse.jetty.servlet.ServletContextHandler;
-import org.mtr.libraries.org.eclipse.jetty.servlet.ServletHolder;
-import org.mtr.libraries.org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 /**
  * Thin wrapper around an embedded Jetty {@link Server} that hosts the simulator's HTTP surface.
@@ -24,11 +24,17 @@ public final class Webserver {
 	private final ServerConnector serverConnector;
 	private final ServletContextHandler servletContextHandler;
 
-	/** Maximum size of the Jetty thread pool — chosen to comfortably outpace dashboard polling. */
+	/**
+	 * Maximum size of the Jetty thread pool — chosen to comfortably outpace dashboard polling.
+	 */
 	private static final int MAX_THREADS = 100;
-	/** Minimum (always-running) size of the Jetty thread pool. */
+	/**
+	 * Minimum (always-running) size of the Jetty thread pool.
+	 */
 	private static final int MIN_THREADS = 10;
-	/** Idle worker timeout in milliseconds before the pool reaps a thread. */
+	/**
+	 * Idle worker timeout in milliseconds before the pool reaps a thread.
+	 */
 	private static final int IDLE_TIMEOUT_MILLIS = 120;
 
 	/**
@@ -55,7 +61,9 @@ public final class Webserver {
 		servletContextHandler.addServlet(servletHolder, path);
 	}
 
-	/** Start accepting HTTP requests. Errors are logged; the simulator keeps running. */
+	/**
+	 * Start accepting HTTP requests. Errors are logged; the simulator keeps running.
+	 */
 	public void start() {
 		try {
 			server.start();
