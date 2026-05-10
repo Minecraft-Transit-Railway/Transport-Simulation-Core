@@ -26,6 +26,8 @@ jobs:
       - name: Update Gradle
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         run: ./gradlew wrapper --gradle-version latest --no-daemon
+      - name: Generate version
+        run: ./gradlew generateVersion --no-daemon
       - name: Generate schema classes
         run: ./gradlew generateSchemaClasses --no-daemon
       - name: Setup Node
@@ -43,6 +45,13 @@ jobs:
         run: ./gradlew setupWebserver --no-daemon
       - name: Build JAR
         run: ./gradlew build buildSrc:build -x test --no-daemon
+      - name: Publish to GitHub Packages
+        if: github.event_name == 'push'
+        run: ./gradlew publish --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
       - name: Capture main build artifact
         uses: actions/upload-artifact@main
         with:

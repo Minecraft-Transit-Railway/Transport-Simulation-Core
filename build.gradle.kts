@@ -60,7 +60,20 @@ java {
 publishing {
 	publications {
 		create<MavenPublication>("maven") {
-			from(components["java"])
+			artifact(tasks.shadowJar)
+			artifact(tasks.named("sourcesJar"))
+			artifact(tasks.named("javadocJar"))
+		}
+	}
+
+	repositories {
+		maven {
+			name = "GitHubPackages"
+			url = uri("https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "owner/repo"}")
+			credentials {
+				username = System.getenv("GITHUB_ACTOR")
+				password = System.getenv("GITHUB_TOKEN")
+			}
 		}
 	}
 }
@@ -152,8 +165,8 @@ tasks.withType<JavaCompile> {
 	options.compilerArgs.addAll(
 		listOf(
 			"-Xlint:all",
-			"-Xlint:-serial",      // No Java serialization
-			"-Xlint:-processing",  // Lombok annotation processor noise
+			"-Xlint:-serial",     // No Java serialization
+			"-Xlint:-processing", // Lombok annotation processor noise
 			"-Xlint:-this-escape" // Safe: schema constructor pattern
 		)
 	)
