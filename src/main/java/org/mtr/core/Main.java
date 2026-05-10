@@ -1,17 +1,16 @@
 package org.mtr.core;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Depot;
 import org.mtr.core.generated.WebserverResources;
 import org.mtr.core.servlet.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
-
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jspecify.annotations.Nullable;
-import org.mtr.libraries.org.eclipse.jetty.servlet.ServletHolder;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -58,9 +57,13 @@ public class Main {
 	@Nullable
 	public static Function<UUID, String> CLIENT_NAME_RESOLVER;
 
-	/** Shared logger for the whole simulator process. */
+	/**
+	 * Shared logger for the whole simulator process.
+	 */
 	public static final Logger LOGGER = LogManager.getLogger("TransportSimulationCore");
-	/** Wall-clock interval between simulator ticks in threaded mode, in milliseconds. */
+	/**
+	 * Wall-clock interval between simulator ticks in threaded mode, in milliseconds.
+	 */
 	public static final int MILLISECONDS_PER_TICK = 10;
 
 	/**
@@ -94,12 +97,12 @@ public class Main {
 	 * Construct and start the simulator. Used by both {@link #main(String[])} and by the
 	 * embedding mod for in-process use.
 	 *
-	 * @param rootPath                  directory under which each dimension's data lives
-	 * @param webserverPort             Jetty listen port; {@code 0} or negative disables the webserver
-	 * @param threadedSimulation        if {@code true}, each {@link Simulator} ticks on its own scheduled thread
-	 * @param threadedFileLoading       if {@code true}, file loading parallelises across dimensions
-	 * @param additionalWebserverSetup  optional hook letting the embedder register extra servlets before {@link Webserver#start()} is called
-	 * @param dimensions                one or more dimension identifiers to load
+	 * @param rootPath                 directory under which each dimension's data lives
+	 * @param webserverPort            Jetty listen port; {@code 0} or negative disables the webserver
+	 * @param threadedSimulation       if {@code true}, each {@link Simulator} ticks on its own scheduled thread
+	 * @param threadedFileLoading      if {@code true}, file loading parallelises across dimensions
+	 * @param additionalWebserverSetup optional hook letting the embedder register extra servlets before {@link Webserver#start()} is called
+	 * @param dimensions               one or more dimension identifiers to load
 	 */
 	public Main(Path rootPath, int webserverPort, boolean threadedSimulation, boolean threadedFileLoading, @Nullable Consumer<Webserver> additionalWebserverSetup, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
@@ -168,7 +171,9 @@ public class Main {
 		}
 	}
 
-	/** Persist the current state of every simulator to disk. */
+	/**
+	 * Persist the current state of every simulator to disk.
+	 */
 	public void save() {
 		simulators.forEach(Simulator::save);
 	}
@@ -229,12 +234,7 @@ public class Main {
 		}
 	}
 
-	@Command(
-			name = "transport-simulation-core",
-			mixinStandardHelpOptions = true,
-			version = "Transport Simulation Core",
-			description = "Starts one simulator per dimension and optionally exposes the web dashboard and APIs."
-	)
+	@Command(name = "Transport Simulation Core", mixinStandardHelpOptions = true, version = Version.VERSION, description = "Starts one simulator per dimension and optionally exposes the web dashboard and APIs.")
 	private static final class MainArguments {
 
 		@Option(names = {"-r", "--root-path"}, required = true, paramLabel = "<path>", description = "Directory containing per-dimension save folders")

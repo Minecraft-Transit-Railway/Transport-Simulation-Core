@@ -10,12 +10,13 @@ import org.jspecify.annotations.Nullable;
 import org.mtr.core.integration.Response;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
-import org.mtr.libraries.javax.servlet.AsyncContext;
-import org.mtr.libraries.javax.servlet.ServletOutputStream;
-import org.mtr.libraries.javax.servlet.WriteListener;
-import org.mtr.libraries.javax.servlet.http.HttpServlet;
-import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
-import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
+
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -80,11 +81,11 @@ public abstract class ServletBase extends HttpServlet {
 	/**
 	 * Subclass hook: produce the JSON body for one resolved request.
 	 *
-	 * @param endpoint    first path segment after the servlet's base path
-	 * @param data        second path segment (typically a hex id), or {@code ""} if absent
-	 * @param parameters  query-string parameters keyed by name
-	 * @param jsonReader  reader over the parsed request body
-	 * @param simulator   simulator the request was routed to
+	 * @param endpoint     first path segment after the servlet's base path
+	 * @param data         second path segment (typically a hex id), or {@code ""} if absent
+	 * @param parameters   query-string parameters keyed by name
+	 * @param jsonReader   reader over the parsed request body
+	 * @param simulator    simulator the request was routed to
 	 * @param sendResponse callback fed either the response body, or {@code null} to signal a 404
 	 */
 	protected abstract void getContent(String endpoint, String data, Object2ObjectAVLTreeMap<String, String> parameters, JsonReader jsonReader, Simulator simulator, Consumer<@Nullable JsonObject> sendResponse);

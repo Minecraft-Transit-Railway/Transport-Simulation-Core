@@ -183,8 +183,7 @@ public final class ConnectionScanAlgorithmProcessor extends RefreshableObject<Ob
 						startConnection.endTime(), startConnection.endTime() + independentConnection.duration(),
 						independentConnection.walkingDistance()
 					), earliestConnections)) {
-						// Cast to primitive long so we hit LongArrayList#add(long) instead of the deprecated AbstractLongCollection#add(Long).
-						queue.add((long) endPlatformId);
+						queue.add(endPlatformId);
 					}
 				});
 			}

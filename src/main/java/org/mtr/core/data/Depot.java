@@ -47,7 +47,9 @@ public final class Depot extends DepotSchema implements Utilities {
 	private final ObjectArrayList<SidingPathFinder<Station, Platform, Station, Platform>> sidingPathFinders = new ObjectArrayList<>();
 	private final LongAVLTreeSet generatingSidingIds = new LongAVLTreeSet();
 
-	/** Continuous-movement vehicles (e.g. cable cars) depart at fixed-period intervals. */
+	/**
+	 * Continuous-movement vehicles (e.g. cable cars) depart at fixed-period intervals.
+	 */
 	public static final int CONTINUOUS_MOVEMENT_FREQUENCY = 8000;
 	/**
 	 * MTR depot frequencies are expressed in trains-per-hour scaled by this constant so the
@@ -277,8 +279,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 
 		platformDirections.forEach((platformId, angle) -> {
-			// Unbox the Long key once so we hit the primitive overload of Long2ObjectOpenHashMap#get and avoid the deprecated `get(Object)`.
-			final Platform platform = data.platformIdMap.get((long) platformId);
+			final Platform platform = data.platformIdMap.get(platformId);
 			if (platform != null) {
 				platform.setAngles(id, angle);
 			}

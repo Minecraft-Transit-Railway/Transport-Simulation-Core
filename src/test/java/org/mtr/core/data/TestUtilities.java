@@ -12,14 +12,14 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
+import org.msgpack.core.MessageBufferPacker;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessageUnpacker;
 import org.mtr.core.Main;
 import org.mtr.core.serializer.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
-import org.mtr.libraries.org.msgpack.core.MessageBufferPacker;
-import org.mtr.libraries.org.msgpack.core.MessagePack;
-import org.mtr.libraries.org.msgpack.core.MessageUnpacker;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

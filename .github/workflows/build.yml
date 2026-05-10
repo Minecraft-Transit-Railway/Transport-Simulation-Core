@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@main
+      - name: Use lowercase project name for publish
+        run: echo 'rootProject.name = "transport-simulation-core"' > settings.gradle.kts
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@main
       - name: Setup JDK 21
@@ -26,8 +28,10 @@ jobs:
       - name: Update Gradle
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         run: ./gradlew wrapper --gradle-version latest --no-daemon
-      - name: Generate TypeScript schema classes
-        run: ./gradlew generateTypeScriptSchemaClasses --no-daemon
+      - name: Generate version
+        run: ./gradlew generateVersion --no-daemon
+      - name: Generate schema classes
+        run: ./gradlew generateSchemaClasses --no-daemon
       - name: Setup Node
         uses: actions/setup-node@main
         with:
@@ -39,10 +43,18 @@ jobs:
         run: npm run update-all --prefix website
       - name: Build Angular
         run: npm run build --prefix website
-      - name: Generate Java schema classes
-        run: ./gradlew generateJavaSchemaClasses --no-daemon
+      - name: Setup webserver
+        run: ./gradlew setupWebserver --no-daemon
       - name: Build JAR
         run: ./gradlew build buildSrc:build -x test --no-daemon
+      - name: Publish to GitHub Packages
+        if: github.event_name == 'push'
+        run: ./gradlew publish --no-daemon
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
       - name: Capture main build artifact
         uses: actions/upload-artifact@main
         with:

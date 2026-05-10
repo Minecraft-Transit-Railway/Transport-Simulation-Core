@@ -3,7 +3,7 @@ package org.mtr.core.serializer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
-import org.mtr.libraries.org.msgpack.core.MessagePacker;
+import org.msgpack.core.MessagePacker;
 
 /**
  * {@link WriterBase} that buffers writes as deferred {@link Pack} closures and flushes them as a
