@@ -1,11 +1,10 @@
 package org.mtr.core.servlet;
 
-import org.jspecify.annotations.Nullable;
-
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -26,7 +25,7 @@ public abstract class WebServlet extends HttpServlet {
 
 		final String requestUri = httpServletRequest.getRequestURI();
 		if (requestUri.startsWith(expectedPath)) {
-			final String path = ServletBase.removeLastSlash(requestUri.replace(expectedPath, ""));
+			final String path = ServletBase.removeLastSlash(requestUri.replaceFirst(expectedPath, ""));
 			final String newPath = path.isEmpty() ? "index.html" : path;
 			final String content = contentProvider.apply(newPath);
 

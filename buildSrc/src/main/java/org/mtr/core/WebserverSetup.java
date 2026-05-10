@@ -22,27 +22,28 @@ public final class WebserverSetup {
 	public static void setup(File projectPath, String module, String namespace) {
 		final Path websitePath = projectPath.toPath().resolve("website/dist/website/browser");
 		final StringBuilder stringBuilder = new StringBuilder(String.format("package org.mtr.%s%sgenerated;", namespace, namespace.isEmpty() ? "" : "."));
-		stringBuilder.append("@org.jspecify.annotations.Nullable public final class WebserverResources{public static String get(String resource){switch(resource.startsWith(\"/\")?resource.substring(1):resource){");
-		iterateFiles(websitePath, stringBuilder);
+		stringBuilder.append("public final class WebserverResources{@org.jspecify.annotations.Nullable public static String get(String resource){switch(resource.startsWith(\"/\")?resource.substring(1):resource){");
+		iterateFiles(websitePath, Path.of(""), stringBuilder);
 		stringBuilder.append("default:return null;}}}");
 		write(projectPath.toPath().resolve(String.format("%ssrc/main/java/org/mtr/%s%sgenerated/WebserverResources.java", module, namespace, namespace.isEmpty() ? "" : "/")), stringBuilder.toString());
 
 		write(projectPath.toPath().resolve("website/.gitignore"), download("https://raw.githubusercontent.com/angular/angular/refs/heads/main/.gitignore"));
 	}
 
-	private static void iterateFiles(Path path, StringBuilder stringBuilder) {
-		try (final Stream<Path> stream = Files.list(path)) {
-			stream.forEach(innerPath -> {
-				if (Files.isDirectory(innerPath)) {
-					iterateFiles(innerPath, stringBuilder);
+	private static void iterateFiles(Path rootPath, Path innerPath, StringBuilder stringBuilder) {
+		try (final Stream<Path> stream = Files.list(rootPath.resolve(innerPath))) {
+			stream.forEach(filePath -> {
+				final Path resolvedInnerPath = innerPath.resolve(filePath.getFileName());
+				if (Files.isDirectory(filePath)) {
+					iterateFiles(rootPath, resolvedInnerPath, stringBuilder);
 				} else {
 					try {
-						final String text = FileUtils.readFileToString(innerPath.toFile(), StandardCharsets.UTF_8);
+						final String text = FileUtils.readFileToString(filePath.toFile(), StandardCharsets.UTF_8);
 						final List<String> splitText = new ArrayList<>();
 						for (int i = 0; i < text.length(); i += 32768) {
 							splitText.add(String.format("\"%s\"", text.substring(i, Math.min(text.length(), i + 32768)).replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replaceAll("[\r\t]", "")));
 						}
-						stringBuilder.append(String.format("case \"%s\":return new StringBuilder(%s).toString();", innerPath.getFileName().toString(), String.join(").append(", splitText)));
+						stringBuilder.append(String.format("case \"%s\":return new StringBuilder(%s).toString();", resolvedInnerPath.toString().replace("\\", "/"), String.join(").append(", splitText)));
 					} catch (Exception e) {
 						LOGGER.error("", e);
 					}

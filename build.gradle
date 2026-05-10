@@ -8,6 +8,7 @@ import java.time.ZonedDateTime
 plugins {
 	id "java"
 	id "maven-publish"
+	id "com.gradleup.shadow" version "+"
 }
 
 group "org.mtr.core"
@@ -24,10 +25,7 @@ dependencies {
 	implementation "it.unimi.dsi:fastutil:+"
 	implementation "commons-io:commons-io:+"
 	implementation "com.squareup.okhttp3:okhttp:+"
-	implementation "org.eclipse.jetty:jetty-server:+"
 	implementation "org.eclipse.jetty:jetty-servlet:+"
-	implementation "org.eclipse.jetty:jetty-util:+"
-	implementation "jakarta.servlet:jakarta.servlet-api:6.1.0"
 	implementation "org.msgpack:msgpack-core:+"
 	implementation "org.apache.logging.log4j:log4j-core:+"
 	implementation "org.jspecify:jspecify:+"
@@ -124,4 +122,23 @@ tasks.register("generateJavaSchemaClasses") {
 tasks.withType(AbstractArchiveTask).configureEach {
 	preserveFileTimestamps = false
 	reproducibleFileOrder = true
+}
+
+shadowJar {
+	archiveClassifier.set("all")
+	mergeServiceFiles()
+
+	minimize {
+		exclude("org.eclipse.jetty.**")
+	}
+
+	relocate("com", "org.mtr.libraries.com") { skipStringConstants = true }
+	relocate("it", "org.mtr.libraries.it") { skipStringConstants = true }
+	relocate("jakarta", "org.mtr.libraries.jakarta")
+	relocate("javax", "org.mtr.libraries.javax")
+	relocate("kotlin", "org.mtr.libraries.kotlin") { skipStringConstants = true }
+	relocate("okhttp3", "org.mtr.libraries.okhttp3") { skipStringConstants = true }
+	relocate("okio", "org.mtr.libraries.okio") { skipStringConstants = true }
+	relocate("org", "org.mtr.libraries.org") { skipStringConstants = true; exclude "org.mtr.**" }
+	relocate("picocli", "org.mtr.libraries.picocli") { skipStringConstants = true }
 }

@@ -234,12 +234,7 @@ public class Main {
 		}
 	}
 
-	@Command(
-		name = "transport-simulation-core",
-		mixinStandardHelpOptions = true,
-		version = "Transport Simulation Core",
-		description = "Starts one simulator per dimension and optionally exposes the web dashboard and APIs."
-	)
+	@Command(name = "Transport Simulation Core", mixinStandardHelpOptions = true, version = Version.VERSION, description = "Starts one simulator per dimension and optionally exposes the web dashboard and APIs.")
 	private static final class MainArguments {
 
 		@Option(names = {"-r", "--root-path"}, required = true, paramLabel = "<path>", description = "Directory containing per-dimension save folders")
