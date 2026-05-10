@@ -8,7 +8,7 @@
 
 | Tool    | Version                                                                                                                                                            |
 |---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| JDK     | **21** — pinned via `java.toolchain.languageVersion = 21` in [`build.gradle`](../build.gradle). Gradle will provision a matching toolchain if one isn't installed. |
+| JDK     | **21** — pinned via `java.toolchain.languageVersion = 21` in [`build.gradle.kts`](../build.gradle.kts). Gradle will provision a matching toolchain if one isn't installed. |
 | Node.js | A current LTS that supports the Angular 21 toolchain.                                                                                                              |
 | npm     | Bundled with Node.                                                                                                                                                 |
 | Gradle  | Use the wrapper (`./gradlew` / `gradlew.bat`). Don't install Gradle globally.                                                                                      |
@@ -33,9 +33,8 @@ Outputs land in `build/libs/`:
 - `Transport-Simulation-Core-<version>-javadoc.jar`
 
 `<version>` is derived at task-configuration time from
-`ZonedDateTime.now(Asia/Hong_Kong).format("yyyyMMdd-HHmmss")` — see the
-`tasks.configureEach` block in `build.gradle`. The same block also rewrites
-[`src/main/VersionTemplate.java`](../src/main/VersionTemplate.java) and
+`ZonedDateTime.now(Asia/Hong_Kong).format("yyyyMMdd-HHmmss")`. The `generateVersion` task
+rewrites [`src/main/VersionTemplate.java`](../src/main/VersionTemplate.java) and
 [`website/version-template.txt`](../website/version-template.txt) into `Version.java` and
 `version.ts` respectively, so the running server and the bundled UI report the same build
 identifier.
@@ -43,23 +42,24 @@ identifier.
 ### Schema-driven code generation
 
 ```bash
-./gradlew generateJavaSchemaClasses        # regenerate Java schema classes + WebserverResources
-./gradlew generateTypeScriptSchemaClasses  # regenerate TypeScript schema classes
+./gradlew generateSchemaClasses  # regenerate Java + TypeScript schema classes
+./gradlew setupWebserver         # package Angular app into WebserverResources
 ```
 
 These tasks read JSON schemas from `buildSrc/src/main/resources/schema/<area>/` and write
-generated Java / TypeScript into `src/main/java/org/mtr/core/generated/` and
-`website/src/app/entity/generated/`. Both output directories are git-ignored. See
-[SCHEMA.md](SCHEMA.md) for the schema mini-language.
+generated Java / TypeScript into `src/main/java/org/mtr/core/generated/`,
+`src/main/java/org/mtr/legacy/generated/`, and `website/src/app/entity/generated/`.
+All output directories are git-ignored. See [SCHEMA.md](SCHEMA.md) for the schema mini-language.
 
-`generateJavaSchemaClasses` also runs `WebserverSetup`, which packages the built Angular
-app into the `WebserverResources` Java class served at `/`.
+`setupWebserver` packages the built Angular app into the `WebserverResources` Java class
+served at `/`. This means the website must be built (`cd website && npm run build`) before
+this Gradle task if you want the dashboard bundled into the jar.
 
 The full pre-release sequence is therefore:
 
 ```bash
 cd website && npm install && npm run build && cd ..
-./gradlew generateTypeScriptSchemaClasses generateJavaSchemaClasses
+./gradlew generateSchemaClasses setupWebserver
 ./gradlew clean build
 ```
 
@@ -88,8 +88,8 @@ type-check pipeline after it.
 
 ```
 Transport-Simulation-Core/
-├── build.gradle             ← top-level Gradle script
-├── settings.gradle
+├── build.gradle.kts         ← top-level Gradle script
+├── settings.gradle.kts
 ├── gradle.properties        ← project version etc.
 ├── buildSrc/                ← Gradle plugin: schema generator + webserver-resources packer
 │   └── src/main/resources/schema/<area>/*.json   ← authoring schemas (see SCHEMA.md)

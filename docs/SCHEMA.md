@@ -18,29 +18,26 @@ sub-folder is a separate "domain" with its own output package:
 | `oba/`         | DTOs returned by `/oba/api/where/*`.                                     | `org.mtr.core.generated.oba`         | —                                       |
 | `operation/`   | DTOs for the in-process operation queue (`get_data`, `update_data`, …).  | `org.mtr.core.generated.operation`   | —                                       |
 
-The mapping is wired in
-[`build.gradle`](../build.gradle) under
-`tasks.register("generateJavaSchemaClasses")` and
-`tasks.register("generateTypeScriptSchemaClasses")`.
+The mapping is wired in [`build.gradle.kts`](../build.gradle.kts) under the
+`generateSchemaClasses` task (which also generates TypeScript for the `map/` domain).
 
 ## Regenerating
 
 ```bash
-./gradlew generateJavaSchemaClasses
-./gradlew generateTypeScriptSchemaClasses
+./gradlew generateSchemaClasses
+./gradlew setupWebserver
 ```
 
-Run both whenever you touch a schema. The output folders are git-ignored, so the generated
-sources are produced fresh per build environment.
+Run `generateSchemaClasses` whenever you touch a schema. The output folders are git-ignored,
+so the generated sources are produced fresh per build environment.
 
-`generateJavaSchemaClasses` additionally:
+`generateSchemaClasses` additionally emits a `SchemaTests` JUnit class per domain that
+round-trips a randomly populated instance through serialise → deserialise (so adding a
+property without updating the serializer breaks the build).
 
-- emits a `SchemaTests` JUnit class per domain that round-trips a randomly populated
-  instance through serialise → deserialise (so adding a property without updating the
-  serializer breaks the build),
-- runs `WebserverSetup`, which packages the built Angular app into the `WebserverResources`
-  Java class served at `/`. This means the website must be built (`cd website && npm run
-  build`) before this Gradle task if you want the dashboard bundled into the jar.
+Run `setupWebserver` to package the built Angular app into the `WebserverResources` Java class
+served at `/`. This means the website must be built (`cd website && npm run build`) before
+this Gradle task if you want the dashboard bundled into the jar.
 
 ## Schema mini-language
 
@@ -78,7 +75,7 @@ example.
    instead and re-run the relevant Gradle task.
 2. **Mirror schema renames in both languages.** Renaming a property in `schema/map/` will
    change both the Java DTO consumed by the servlet and the TypeScript interface consumed by
-   the dashboard. Run both regeneration tasks before testing.
+   the dashboard. Run `generateSchemaClasses` before testing.
 3. **Use `lower_snake_case` for property names.** Generated Java getters and TypeScript
    fields convert this to `camelCase`; the wire format keeps `snake_case`.
 4. **Keep generated code out of imports lists.** When the schema's class name changes, every

@@ -10,6 +10,14 @@ project's compiler / linter (Java 21 `javac` warnings, Angular ESLint flat confi
 
 For an overview of the system the rules apply to, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
+## 0. Build System
+
+This project uses **Gradle Kotlin DSL** (`.gradle.kts` files). Do not use Groovy DSL syntax
+in new build logic. When editing build scripts, prefer:
+- Type-safe accessors (`tasks.jar { ... }` not `tasks.named("jar") { ... }`)
+- Explicit types for task configurations (`tasks.withType<JavaCompile>()`)
+- Named arguments for filter/map operations (see existing `generateVersion` task)
+
 ## 1. Naming
 
 ### 1.1 Package / folder names are singular
@@ -347,7 +355,7 @@ Use JDK collections only when crossing a public API boundary that already commit
 types (e.g. records returned to Gson serialisation, where Gson handles `List` cleanly but
 not fastutil's `ObjectList`). The fastutil version is pinned to **8.5.15** to match the
 version Minecraft 1.21.4 ships with — see the comment in
-[`build.gradle`](../build.gradle).
+[`build.gradle.kts`](../build.gradle.kts).
 
 ### 3.9 Internationalised strings
 

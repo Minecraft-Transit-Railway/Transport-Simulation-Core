@@ -26,8 +26,8 @@ jobs:
       - name: Update Gradle
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         run: ./gradlew wrapper --gradle-version latest --no-daemon
-      - name: Generate TypeScript schema classes
-        run: ./gradlew generateTypeScriptSchemaClasses --no-daemon
+      - name: Generate schema classes
+        run: ./gradlew generateSchemaClasses --no-daemon
       - name: Setup Node
         uses: actions/setup-node@main
         with:
@@ -39,8 +39,8 @@ jobs:
         run: npm run update-all --prefix website
       - name: Build Angular
         run: npm run build --prefix website
-      - name: Generate Java schema classes
-        run: ./gradlew generateJavaSchemaClasses --no-daemon
+      - name: Setup webserver
+        run: ./gradlew setupWebserver --no-daemon
       - name: Build JAR
         run: ./gradlew build buildSrc:build -x test --no-daemon
       - name: Capture main build artifact
