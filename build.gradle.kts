@@ -1,9 +1,6 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.mtr.core.Generator
 import org.mtr.core.WebserverSetup
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 plugins {
 	java
@@ -11,8 +8,8 @@ plugins {
 	id("com.gradleup.shadow") version "+"
 }
 
-group = "org.mtr.core"
-version = ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")).format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+group = "org.mtr"
+version = project.version
 
 repositories {
 	mavenCentral()
