@@ -83,7 +83,7 @@ example.
    after a rename to surface the affected files.
 5. **The schema is part of the public contract** between this jar and embedded hosts (the
    Minecraft Transit Railway mod). Removing or changing a field is a breaking change — bump
-   the project version (currently date-based, see [BUILD.md](BUILD.md)) and call it out in
+   the project version in `gradle.properties` (see [BUILD.md](BUILD.md)) and call it out in
    release notes.
 
 ## Top-level `schema/` folder

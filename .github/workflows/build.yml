@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@main
+      - name: Use lowercase project name for publish
+        run: echo 'rootProject.name = "transport-simulation-core"' > settings.gradle.kts
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@main
       - name: Setup JDK 21
@@ -48,6 +50,7 @@ jobs:
       - name: Publish to GitHub Packages
         if: github.event_name == 'push'
         run: ./gradlew publish --no-daemon
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}

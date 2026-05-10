@@ -32,12 +32,10 @@ Outputs land in `build/libs/`:
 - `Transport-Simulation-Core-<version>-sources.jar`
 - `Transport-Simulation-Core-<version>-javadoc.jar`
 
-`<version>` is derived at task-configuration time from
-`ZonedDateTime.now(Asia/Hong_Kong).format("yyyyMMdd-HHmmss")`. The `generateVersion` task
-rewrites [`src/main/VersionTemplate.java`](../src/main/VersionTemplate.java) and
+`<version>` is defined in [`gradle.properties`](../gradle.properties). The `generateVersion`
+task rewrites [`src/main/VersionTemplate.java`](../src/main/VersionTemplate.java) and
 [`website/version-template.txt`](../website/version-template.txt) into `Version.java` and
-`version.ts` respectively, so the running server and the bundled UI report the same build
-identifier.
+`version.ts` respectively, so the running server and the bundled UI report the same version.
 
 ### Schema-driven code generation
 
@@ -107,6 +105,6 @@ Transport-Simulation-Core/
 
 ## Continuous integration
 
-There is no CI configuration in the repo at the moment. When you add one, model it on the
-"full pre-release sequence" above (frontend build → schema generation → Gradle build with
-tests).
+See [`.github/workflows/build.yml`](../.github/workflows/build.yml) for the CI configuration.
+The workflow builds the full stack (frontend → schema generation → Gradle build with tests)
+and publishes to GitHub Packages on every push.

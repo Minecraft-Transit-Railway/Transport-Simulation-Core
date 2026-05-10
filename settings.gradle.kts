@@ -1,1 +1,1 @@
-rootProject.name = "transport-simulation-core"
+rootProject.name = "Transport-Simulation-Core"
