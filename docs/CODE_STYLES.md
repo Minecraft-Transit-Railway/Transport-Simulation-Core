@@ -353,9 +353,7 @@ collections — they avoid boxing on every put / get, which matters at MILLISECO
 
 Use JDK collections only when crossing a public API boundary that already commits to JDK
 types (e.g. records returned to Gson serialisation, where Gson handles `List` cleanly but
-not fastutil's `ObjectList`). The fastutil version is pinned to **8.5.15** to match the
-version Minecraft 1.21.4 ships with — see the comment in
-[`build.gradle.kts`](../build.gradle.kts).
+not fastutil's `ObjectList`).
 
 ### 3.9 Internationalised strings
 
@@ -381,7 +379,7 @@ Anything under `src/main/java/org/mtr/core/generated/` and
 `website/src/app/entity/generated/` is produced by the `Generator` task in `buildSrc/`. **Do
 not edit these files by hand** — they will be overwritten on the next build. Edit the
 authoring JSON schema under `buildSrc/src/main/resources/schema/<area>/` instead, then run
-`./gradlew generateJavaSchemaClasses generateTypeScriptSchemaClasses`. The schema mini-language
+`./gradlew generateSchemaClasses`. The schema mini-language
 and the regen workflow are documented in [`SCHEMA.md`](SCHEMA.md).
 
 ### 3.12 Style guides

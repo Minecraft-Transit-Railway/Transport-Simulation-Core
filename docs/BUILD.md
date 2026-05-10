@@ -6,12 +6,12 @@
 
 ## Prerequisites
 
-| Tool    | Version                                                                                                                                                            |
-|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Tool    | Version                                                                                                                                                                    |
+|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | JDK     | **21** — pinned via `java.toolchain.languageVersion = 21` in [`build.gradle.kts`](../build.gradle.kts). Gradle will provision a matching toolchain if one isn't installed. |
-| Node.js | A current LTS that supports the Angular 21 toolchain.                                                                                                              |
-| npm     | Bundled with Node.                                                                                                                                                 |
-| Gradle  | Use the wrapper (`./gradlew` / `gradlew.bat`). Don't install Gradle globally.                                                                                      |
+| Node.js | A current LTS that supports the Angular 21 toolchain.                                                                                                                      |
+| npm     | Bundled with Node.                                                                                                                                                         |
+| Gradle  | Use the wrapper (`./gradlew` / `gradlew.bat`). Don't install Gradle globally.                                                                                              |
 
 ## Backend (Gradle)
 
@@ -22,7 +22,7 @@ All commands run from the repository root.
 ./gradlew jar                              # just package
 ./gradlew test                             # JUnit 5 only
 ./gradlew clean build
-./gradlew publishToMavenLocal              # publish a local Maven artifact (group org.mtr.core)
+./gradlew publishToMavenLocal              # publish a local Maven artifact (group org.mtr)
 ```
 
 Outputs land in `build/libs/`:

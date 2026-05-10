@@ -15,15 +15,15 @@ java -jar Transport-Simulation-Core.jar --root-path <path> [--webserver-port <po
 | Argument / option              | Description                                                                                                                                                               |
 |--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--root-path`, `-r`            | Filesystem directory containing per-dimension save folders. Each `<dimension>` argument is resolved relative to this path.                                                |
-| `--webserver-port`, `-p`       | TCP port for the embedded Jetty server. Default is `8080`. **Pass `0`** to disable the webserver entirely (handy when embedding from another process).                   |
+| `--webserver-port`, `-p`       | TCP port for the embedded Jetty server. Default is `8080`. **Pass `0`** to disable the webserver entirely (handy when embedding from another process).                    |
 | `--[no-]threaded-simulation`   | Enabled by default. Disable with `--no-threaded-simulation` when the caller drives `Main.manualTick()`.                                                                   |
-| `--[no-]threaded-file-loading` | Enabled by default. Disable with `--no-threaded-file-loading` to load sequentially (less memory pressure on small machines).                                               |
+| `--[no-]threaded-file-loading` | Enabled by default. Disable with `--no-threaded-file-loading` to load sequentially (less memory pressure on small machines).                                              |
 | `dimensions...`                | One or more dimension names. Each becomes a `Simulator` and a `<rootPath>/<name>/` subdirectory. The order defines the integer index used by the `dimension` query param. |
 
 ### Example
 
 ```bash
-java -jar Transport-Simulation-Core-20260508-101530.jar \
+java -jar Transport-Simulation-Core-1.0.0.jar \
     --root-path /var/lib/transport-simulation \
     --webserver-port 8080 \
     --threaded-simulation \
