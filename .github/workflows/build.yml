@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
+permissions:
+  packages: write
 
 jobs:
   build:
