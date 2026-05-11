@@ -8,6 +8,15 @@ import org.jspecify.annotations.Nullable;
 import org.mtr.core.generator.objects.*;
 import org.mtr.core.generator.objects.Class;
 
+/**
+ * Parses a single JSON schema object into a TypeScript code-model ({@link Class}).
+ *
+ * <p>Construction mirrors {@link SchemaParserJava} but targets TypeScript DTO classes:
+ * it reads {@code properties}, {@code required}, and {@code typeScriptEditable} from the
+ * schema and builds a public constructor together with typed fields.  Call
+ * {@link #generateSchemaClass} once all sibling parsers are available to resolve the
+ * inheritance chain and obtain the rendered TypeScript source.</p>
+ */
 public class SchemaParserTypeScript {
 
 	private final Class schemaClass;
@@ -16,6 +25,13 @@ public class SchemaParserTypeScript {
 	final ObjectArrayList<String> testMethodContent1 = new ObjectArrayList<>();
 	final ObjectArrayList<String> testMethodContent2 = new ObjectArrayList<>();
 
+	/**
+	 * Creates a schema parser for one JSON schema object targeting TypeScript output.
+	 *
+	 * @param schemaClass      the class model to populate
+	 * @param extendsClassName the name of the direct superclass DTO, or {@code null} if none
+	 * @param jsonObject       the raw JSON schema object
+	 */
 	public SchemaParserTypeScript(Class schemaClass, @Nullable String extendsClassName, JsonObject jsonObject) {
 		this.schemaClass = schemaClass;
 		constructor = schemaClass.createConstructor(VisibilityModifier.PUBLIC);
@@ -64,6 +80,14 @@ public class SchemaParserTypeScript {
 		schemaClass.imports.addAll(imports);
 	}
 
+	/**
+	 * Finalises the class model (wires super-constructor parameters from extended classes)
+	 * and renders it to a TypeScript source string.
+	 *
+	 * @param schemaParsers all sibling schema parsers keyed by schema class name, used to
+	 *                      resolve the inheritance chain
+	 * @return the complete TypeScript source text for the generated DTO class
+	 */
 	public String generateSchemaClass(Object2ObjectAVLTreeMap<String, SchemaParserTypeScript> schemaParsers) {
 		traverseExtendedClasses(this, schemaParsers);
 		return String.join("\n", schemaClass.generateTypeScript());

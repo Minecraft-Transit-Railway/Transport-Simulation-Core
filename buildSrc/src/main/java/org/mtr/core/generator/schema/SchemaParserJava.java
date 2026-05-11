@@ -8,6 +8,16 @@ import org.jspecify.annotations.Nullable;
 import org.mtr.core.generator.objects.*;
 import org.mtr.core.generator.objects.Class;
 
+/**
+ * Parses a single JSON schema object into a Java code-model ({@link Class}) and
+ * accumulates the corresponding JUnit test method content.
+ *
+ * <p>Construction inspects the {@code properties}, {@code required},
+ * {@code javaConstructorFields}, and {@code javaImplements} keys of the supplied
+ * {@link JsonObject} and populates the class model accordingly.  When all sibling
+ * schema parsers are available, call {@link #generateSchemaClass} to finalise
+ * inheritance wiring and obtain the rendered Java source.</p>
+ */
 public class SchemaParserJava {
 
 	private final Class schemaClass;
@@ -20,6 +30,15 @@ public class SchemaParserJava {
 	final ObjectArrayList<String> testMethodContent1 = new ObjectArrayList<>();
 	final ObjectArrayList<String> testMethodContent2 = new ObjectArrayList<>();
 
+	/**
+	 * Creates a schema parser for one JSON schema object.
+	 *
+	 * @param schemaClass      the class model to populate
+	 * @param extendsClassName the {@code Schema}-suffixed name of the direct superclass,
+	 *                         or {@code null} if the class has no schema parent
+	 * @param testMethod       the test method model to which test statements are appended
+	 * @param jsonObject       the raw JSON schema object
+	 */
 	public SchemaParserJava(Class schemaClass, @Nullable String extendsClassName, Method testMethod, JsonObject jsonObject) {
 		this.schemaClass = schemaClass;
 		constructor1 = schemaClass.createConstructor(VisibilityModifier.PROTECTED);
@@ -114,6 +133,18 @@ public class SchemaParserJava {
 		}
 	}
 
+	/**
+	 * Finalises the class model (wires super-constructor parameters and test content from
+	 * extended classes) and renders the class to a Java source string.
+	 *
+	 * <p>If this class is a leaf in the schema inheritance tree it also registers the
+	 * accumulated test method into {@code testClass}.</p>
+	 *
+	 * @param schemaParsers all sibling schema parsers keyed by schema class name, used to
+	 *                      resolve the inheritance chain
+	 * @param testClass     the test class model that collects test methods for leaf schemas
+	 * @return the complete Java source text for the generated schema class
+	 */
 	public String generateSchemaClass(Object2ObjectAVLTreeMap<String, SchemaParserJava> schemaParsers, Class testClass) {
 		if (extendsClassName != null) {
 			updateMethod.content.add(0, "super.updateData(readerBase);");
@@ -153,6 +184,19 @@ public class SchemaParserJava {
 		}
 	}
 
+	/**
+	 * Resolves the {@link TypeWithData} for a single JSON schema property definition.
+	 *
+	 * <p>Handles {@code $ref} (object and enum references), primitive types
+	 * ({@code boolean}, {@code integer}, {@code number}, {@code string}), and
+	 * recursive {@code array} items.  Returns {@code null} for unsupported property
+	 * shapes (e.g. nested objects).</p>
+	 *
+	 * @param jsonObject        the property's JSON schema node
+	 * @param isArray           {@code true} when this call is processing an {@code items} sub-node
+	 * @param typeScriptImports mutable set that collects TypeScript import names for object references
+	 * @return the resolved {@link TypeWithData}, or {@code null} if the property is unsupported
+	 */
 	public static TypeWithData getType(JsonObject jsonObject, boolean isArray, ObjectAVLTreeSet<String> typeScriptImports) {
 		final String refName = Utilities.getStringOrNull(jsonObject.get("$ref"));
 		final String typeString = Utilities.getStringOrNull(jsonObject.get("type"));

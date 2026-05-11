@@ -7,18 +7,51 @@ import org.mtr.core.generator.schema.Utilities;
 
 import java.util.function.Function;
 
+/**
+ * Code-model representation of a Java or TypeScript class declaration.
+ *
+ * <p>Callers build up the class by mutating the public collections ({@link #imports},
+ * {@link #otherModifiers}, {@link #fields}, {@link #constructors}, {@link #methods},
+ * {@link #implementsClasses}) and then call {@link #generateJava()} or
+ * {@link #generateTypeScript()} to obtain the full rendered source.</p>
+ */
 public class Class implements GeneratedObject {
 
+	/**
+	 * Fully-qualified or wildcard import statements added to the generated file (Java only).
+	 */
 	public final ObjectArrayList<String> imports = new ObjectArrayList<>();
+	/**
+	 * Extra non-visibility modifiers applied to the class (e.g. {@link OtherModifier#ABSTRACT}, {@link OtherModifier#FINAL}).
+	 */
 	public final ObjectArraySet<OtherModifier> otherModifiers = new ObjectArraySet<>();
+	/**
+	 * Field declarations belonging to this class, in insertion order.
+	 */
 	public final ObjectArrayList<Field> fields = new ObjectArrayList<>();
+	/**
+	 * Constructor declarations belonging to this class, in insertion order.
+	 */
 	public final ObjectArrayList<Constructor> constructors = new ObjectArrayList<>();
+	/**
+	 * Method declarations belonging to this class, in insertion order.
+	 */
 	public final ObjectArrayList<Method> methods = new ObjectArrayList<>();
+	/**
+	 * Simple names of interfaces this class implements (Java) or extends (TypeScript).
+	 */
 	public final ObjectArrayList<String> implementsClasses = new ObjectArrayList<>();
 	private final String name;
 	private final String extendsClass;
 	private final String packageName;
 
+	/**
+	 * Creates a new class model node.
+	 *
+	 * @param name         the simple class name
+	 * @param extendsClass the simple name of the superclass, or {@code null} if none
+	 * @param packageName  the fully-qualified package name used in the {@code package} declaration
+	 */
 	public Class(String name, @Nullable String extendsClass, String packageName) {
 		this.name = name;
 		this.extendsClass = extendsClass;
@@ -77,6 +110,12 @@ public class Class implements GeneratedObject {
 		result.add(stringBuilder.toString());
 	}
 
+	/**
+	 * Creates and registers a new {@link Constructor} for this class with the given visibility.
+	 *
+	 * @param visibilityModifier the access visibility of the constructor
+	 * @return the newly created constructor, already added to {@link #constructors}
+	 */
 	public Constructor createConstructor(VisibilityModifier visibilityModifier) {
 		final Constructor constructor = new Constructor(visibilityModifier, name);
 		constructors.add(constructor);

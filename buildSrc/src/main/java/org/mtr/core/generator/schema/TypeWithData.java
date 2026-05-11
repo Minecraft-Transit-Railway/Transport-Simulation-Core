@@ -4,14 +4,54 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.generator.objects.Type;
 
+/**
+ * Bundles a {@link Type} with the serialisation/deserialisation code snippets
+ * needed to read, unpack, write, and randomly initialise a schema field of that type.
+ *
+ * <p>Instances are created exclusively through the static factory methods:
+ * {@link #createPrimitive}, {@link #createPrimitiveArray}, {@link #createArray},
+ * {@link #createObject}, and {@link #createEnum}.</p>
+ */
 public class TypeWithData {
 
+	/**
+	 * The resolved {@link Type} for this schema property.
+	 */
 	public final Type type;
+	/**
+	 * A {@link String#format} template used when reading a <em>required</em> field from
+	 * a {@code ReaderBase} in the primary constructor. {@code %1$s} is the field name and
+	 * {@code %2$s} is the Java type name.  {@code null} for array types (handled via
+	 * {@link #unpackData} instead).
+	 */
 	public final String readData;
+	/**
+	 * A {@link String#format} template used inside {@code updateData(ReaderBase)} to
+	 * unpack/iterate an optional or array field.  {@code %1$s} is the field name and
+	 * {@code %2$s} is the Java type name.
+	 */
 	public final String unpackData;
+	/**
+	 * A {@link String#format} template used inside {@code serializeData(WriterBase)} to
+	 * write the field.  {@code %1$s} is the field name and {@code %2$s} is the Java type
+	 * name.
+	 */
 	public final String writeData;
+	/**
+	 * A {@link String#format} template used in generated test code to assign a random
+	 * value to the field.  {@code %1$s} is the fully-qualified field access expression
+	 * (e.g. {@code "data.myField"}).
+	 */
 	public final String randomData;
+	/**
+	 * {@code true} when the field's initialiser must be provided by an {@code abstract}
+	 * method in the generated class (used for optional object-type fields).
+	 */
 	public final boolean requireAbstractInitializationMethod;
+	/**
+	 * Extra schema-defined parameter names that must also be forwarded to nested object
+	 * constructors.
+	 */
 	public final ObjectArrayList<String> extraParameters;
 
 	private TypeWithData(Type type, @Nullable String readData, String unpackData, String writeData, String randomData, boolean requireAbstractInitializationMethod, ObjectArrayList<String> extraParameters) {
@@ -24,6 +64,15 @@ public class TypeWithData {
 		this.extraParameters = extraParameters;
 	}
 
+	/**
+	 * Creates a {@code TypeWithData} for a scalar primitive field (boolean, integer,
+	 * number, or string).
+	 *
+	 * @param type          the resolved primitive {@link Type}
+	 * @param primitiveType the capitalised reader/writer method suffix (e.g. {@code "Boolean"}, {@code "Long"})
+	 * @param defaultValue  the literal default value emitted in the primary constructor (e.g. {@code "0"}, {@code "\"\""})
+	 * @return a new {@code TypeWithData} for the primitive
+	 */
 	public static TypeWithData createPrimitive(Type type, String primitiveType, String defaultValue) {
 		return new TypeWithData(
 			type,
@@ -36,6 +85,14 @@ public class TypeWithData {
 		);
 	}
 
+	/**
+	 * Creates a {@code TypeWithData} for a primitive array field (boolean[], integer[],
+	 * number[], or string[]).
+	 *
+	 * @param type      the resolved array {@link Type}
+	 * @param arrayType the capitalised reader/writer method suffix (e.g. {@code "Long"}, {@code "String"})
+	 * @return a new {@code TypeWithData} for the primitive array
+	 */
 	public static TypeWithData createPrimitiveArray(Type type, String arrayType) {
 		return new TypeWithData(
 			type,
@@ -48,6 +105,14 @@ public class TypeWithData {
 		);
 	}
 
+	/**
+	 * Creates a {@code TypeWithData} for an array of schema objects.
+	 *
+	 * @param type            the resolved array {@link Type}
+	 * @param arrayType       the simple Java class name of the element type
+	 * @param extraParameters additional parameter names forwarded to each element constructor
+	 * @return a new {@code TypeWithData} for the object array
+	 */
 	public static TypeWithData createArray(Type type, String arrayType, ObjectArrayList<String> extraParameters) {
 		final ObjectArrayList<String> parameters = new ObjectArrayList<>();
 		parameters.add("readerBaseChild");
@@ -63,6 +128,13 @@ public class TypeWithData {
 		);
 	}
 
+	/**
+	 * Creates a {@code TypeWithData} for a single nested schema object field.
+	 *
+	 * @param className       the simple Java class name of the nested object
+	 * @param extraParameters additional parameter names forwarded to the nested object constructor
+	 * @return a new {@code TypeWithData} for the nested object
+	 */
 	public static TypeWithData createObject(String className, ObjectArrayList<String> extraParameters) {
 		final ObjectArrayList<String> parameters = new ObjectArrayList<>();
 		parameters.add("readerBaseChild");
@@ -78,6 +150,13 @@ public class TypeWithData {
 		);
 	}
 
+	/**
+	 * Creates a {@code TypeWithData} for a Java enum / TypeScript union-of-string-literals field.
+	 *
+	 * @param refName        the Java enum class name
+	 * @param typeScriptEnum the TypeScript enum string (pipe-separated), or {@code null} if not applicable
+	 * @return a new {@code TypeWithData} for the enum
+	 */
 	public static TypeWithData createEnum(String refName, @Nullable String typeScriptEnum) {
 		return new TypeWithData(
 			Type.createEnum(refName, typeScriptEnum == null ? "" : typeScriptEnum),

@@ -14,7 +14,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@main
       - name: Use lowercase project name for publish
-        run: echo 'rootProject.name = "transport-simulation-core"' > settings.gradle.kts
+        run: |
+          echo 'rootProject.name = "transport-simulation-core"' > settings.gradle.kts
+          echo 'rootProject.name = "transport-simulation-core-build-tools"' > buildSrc/settings.gradle.kts
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@main
       - name: Setup JDK 21
@@ -46,10 +48,18 @@ jobs:
       - name: Setup webserver
         run: ./gradlew setupWebserver --no-daemon
       - name: Build JAR
-        run: ./gradlew build buildSrc:build -x test --no-daemon
-      - name: Publish to GitHub Packages
+        run: ./gradlew build --no-daemon
+      - name: Publish main project to GitHub Packages
         if: github.event_name == 'push'
         run: ./gradlew publish --no-daemon
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+      - name: Publish JSON schema generator to GitHub Packages
+        if: github.event_name == 'push'
+        run: cd buildSrc && ../gradlew publish --no-daemon
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -68,6 +78,7 @@ jobs:
       - name: Commit changes
         uses: iarekylew00t/verified-bot-commit@main
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+        continue-on-error: true
         with:
           message: Update Gradle and Angular
           files: |

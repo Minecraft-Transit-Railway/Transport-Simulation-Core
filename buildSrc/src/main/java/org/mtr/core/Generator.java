@@ -20,10 +20,45 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+/**
+ * Entry point for the Gradle code-generation tasks.
+ *
+ * <p>This class exposes two static methods that are called from
+ * {@code build.gradle.kts} via custom Gradle tasks:</p>
+ * <ul>
+ *   <li>{@link #generateJava} – reads JSON schemas and writes abstract Java
+ *       schema classes plus a JUnit test class.</li>
+ *   <li>{@link #generateTypeScript} – reads JSON schemas and writes TypeScript
+ *       DTO classes for the Angular front-end.</li>
+ * </ul>
+ *
+ * <p>Schema files are looked up under
+ * {@code buildSrc/src/main/resources/schema/}; see {@code docs/SCHEMA.md} for
+ * the authoring workflow.</p>
+ */
 public final class Generator {
 
 	private static final Logger LOGGER = LogManager.getLogger("Generator");
 
+	/**
+	 * Generates abstract Java schema classes and (optionally) a JUnit test class
+	 * from the JSON schema files found under {@code inputPath}.
+	 *
+	 * <p>For every {@code *.json} file in the schema directory an abstract class is
+	 * written to {@code src/main/java/org/mtr/<outputPath>/<ClassName>Schema.java}.
+	 * If {@code writeTests} is {@code true} a {@code SchemaTests.java} file is also
+	 * written to the corresponding test source tree.  A {@code package-info.java}
+	 * annotated with {@code @NullMarked} is always emitted.</p>
+	 *
+	 * @param project    the Gradle project, used to resolve the root and project directories
+	 * @param inputPath  path relative to {@code buildSrc/src/main/resources} containing the
+	 *                   source JSON schema files (e.g. {@code "schema/data"})
+	 * @param outputPath path relative to {@code src/main/java/org/mtr} where the generated
+	 *                   Java files will be written (e.g. {@code "core/generated/data"})
+	 * @param writeTests {@code true} to also generate a JUnit {@code SchemaTests.java} class
+	 * @param imports    additional package suffixes (relative to {@code org.mtr}) whose
+	 *                   wildcard imports are added to every generated class
+	 */
 	public static void generateJava(Project project, String inputPath, String outputPath, boolean writeTests, String... imports) {
 		final Object2ObjectAVLTreeMap<String, SchemaParserJava> schemaParsers = new Object2ObjectAVLTreeMap<>();
 		final String outputPackage = outputPath.replace("/", ".");
@@ -103,6 +138,19 @@ public final class Generator {
 		}
 	}
 
+	/**
+	 * Generates TypeScript DTO classes from the JSON schema files found under
+	 * {@code inputPath} and writes them to {@code outputPath}.
+	 *
+	 * <p>For every {@code *.json} file in the schema directory a TypeScript file is
+	 * written to {@code <outputPath>/<className>.ts}.</p>
+	 *
+	 * @param project    the Gradle project, used to resolve the project directory
+	 * @param inputPath  path relative to {@code buildSrc/src/main/resources} containing the
+	 *                   source JSON schema files (e.g. {@code "schema/map"})
+	 * @param outputPath path relative to the project root where the TypeScript files are
+	 *                   written (e.g. {@code "website/src/app/entity/generated"})
+	 */
 	public static void generateTypeScript(Project project, String inputPath, String outputPath) {
 		final Object2ObjectAVLTreeMap<String, SchemaParserTypeScript> schemaParsers = new Object2ObjectAVLTreeMap<>();
 
