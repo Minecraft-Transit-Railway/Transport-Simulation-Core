@@ -1,6 +1,7 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.RoutePlatformDataSchema;
 import org.mtr.core.serializer.ReaderBase;
 
@@ -14,6 +15,7 @@ import org.mtr.core.serializer.ReaderBase;
  */
 public final class RoutePlatformData extends RoutePlatformDataSchema {
 
+	@Nullable
 	public Platform platform;
 
 	public RoutePlatformData(long platformId) {
@@ -25,6 +27,7 @@ public final class RoutePlatformData extends RoutePlatformDataSchema {
 		updateData(readerBase);
 	}
 
+	@Nullable
 	public Platform getPlatform() {
 		return platform;
 	}

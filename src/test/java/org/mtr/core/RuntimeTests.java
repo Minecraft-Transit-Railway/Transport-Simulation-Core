@@ -3,20 +3,18 @@ package org.mtr.core;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Utilities;
 
 import java.io.IOException;
 
-@Disabled // TODO fix runtime tests hanging
 public class RuntimeTests implements TestUtilities {
 
 	@Test
 	public void createAndUpdateData() throws IOException {
 		FileUtils.deleteDirectory(TEST_DIRECTORY.toFile());
-		final Main main = new Main(TEST_DIRECTORY, PORT, true, true, null, "overworld");
+		final Main main = new Main(TEST_DIRECTORY, PORT, false, false, null, "overworld");
 
 		final Station station1 = new Station(TestUtilities.getDefaultSimulator());
 		station1.setName("Test 1");

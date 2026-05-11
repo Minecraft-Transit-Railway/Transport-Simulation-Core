@@ -238,6 +238,7 @@ public class Main {
 	private static final class MainArguments {
 
 		@Option(names = {"-r", "--root-path"}, required = true, paramLabel = "<path>", description = "Directory containing per-dimension save folders")
+		@Nullable
 		private Path rootPath;
 
 		@Option(names = {"-p", "--webserver-port"}, defaultValue = "8080", paramLabel = "<port>", description = "Jetty listen port; use 0 to disable the webserver (default: ${DEFAULT-VALUE})")
@@ -250,6 +251,7 @@ public class Main {
 		private boolean threadedFileLoading = true;
 
 		@Parameters(arity = "1..*", paramLabel = "<dimension>", description = "One or more dimension identifiers to load")
+		@Nullable
 		private String[] dimensions;
 	}
 

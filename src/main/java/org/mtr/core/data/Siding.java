@@ -33,6 +33,7 @@ import java.util.function.LongConsumer;
 @Log4j2
 public final class Siding extends SidingSchema implements Utilities {
 
+	@Nullable
 	private PathData defaultPathData;
 	private double timeOffsetForRepeating;
 
@@ -571,7 +572,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				final int targetTripStopIndex;
 				final Route nextRoute = Utilities.getElement(area.routes, area.getRepeatInfinitely() && i == area.routes.size() - 1 ? 0 : i + 1);
 				final RoutePlatformData nextRoutePlatformData = nextRoute == null ? null : Utilities.getElement(nextRoute.getRoutePlatforms(), 0);
-				if (nextRoutePlatformData != null && routePlatformData.platform.getId() == nextRoutePlatformData.platform.getId()) {
+				if (nextRoutePlatformData != null && routePlatformData.platform != null && nextRoutePlatformData.platform != null && routePlatformData.platform.getId() == nextRoutePlatformData.platform.getId()) {
 					targetRouteId = nextRoute.getId();
 					targetTripStopIndex = 0;
 				} else {

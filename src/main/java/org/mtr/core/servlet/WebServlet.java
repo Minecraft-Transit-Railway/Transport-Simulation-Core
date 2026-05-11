@@ -13,7 +13,7 @@ public abstract class WebServlet extends HttpServlet {
 	private final Function<String, @Nullable String> contentProvider;
 	private final String expectedPath;
 
-	public WebServlet(Function<String, String> contentProvider, String expectedPath) {
+	public WebServlet(Function<String, @Nullable String> contentProvider, String expectedPath) {
 		this.contentProvider = contentProvider;
 		this.expectedPath = expectedPath;
 	}

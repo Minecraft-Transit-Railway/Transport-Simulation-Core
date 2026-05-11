@@ -82,7 +82,7 @@ public final class Generator {
 					schemaClass.otherModifiers.add(OtherModifier.ABSTRACT);
 
 					final Method testMethod = new Method(VisibilityModifier.PUBLIC, null, String.format("test%s", schemaClassName));
-					testMethod.annotations.add("RepeatedTest(10)");
+					testMethod.annotations.add("Test");
 					testMethod.content.add(String.format("final %1$s data = TestUtilities.random%1$s();", className));
 					testMethod.content.add(String.format("TestUtilities.serializeAndDeserialize(data, TestUtilities::new%s);", className));
 

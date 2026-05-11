@@ -512,11 +512,17 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	public static class VehiclePlatformRouteInfo {
 
+		@Nullable
 		private final Platform previousPlatform;
+		@Nullable
 		private final Platform thisPlatform;
+		@Nullable
 		private final Platform nextPlatform;
+		@Nullable
 		private final Route previousRoute;
+		@Nullable
 		private final Route thisRoute;
+		@Nullable
 		private final Route nextRoute;
 		private final int platformIndexInRoute;
 
