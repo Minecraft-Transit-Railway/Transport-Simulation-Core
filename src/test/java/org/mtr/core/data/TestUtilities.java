@@ -10,12 +10,13 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
-import org.mtr.core.Main;
 import org.mtr.core.serializer.*;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Angle;
@@ -33,6 +34,7 @@ public interface TestUtilities {
 	Path TEST_DIRECTORY = Paths.get("build/test-data");
 	int PORT = 8889; // We don't want to conflict with Minecraft Transit Railway using port 8888 by default
 	Random RANDOM = new Random();
+	Logger LOGGER = LogManager.getLogger(TestUtilities.class);
 
 	static <T extends SerializedDataBase> T getDataFromJsonObject(JsonObject jsonObject, Function<ReaderBase, T> newInstance) {
 		return newInstance.apply(new JsonReader(jsonObject));
@@ -62,7 +64,7 @@ public interface TestUtilities {
 			try {
 				((HttpPost) httpUriRequest).setEntity(new StringEntity(bodyObject.toString()));
 			} catch (Exception e) {
-				Main.LOGGER.error("Failed to attach JSON body to POST request", e);
+				LOGGER.error("Failed to attach JSON body to POST request", e);
 			}
 		}
 
@@ -73,7 +75,7 @@ public interface TestUtilities {
 				responseObject = Utilities.parseJson(EntityUtils.toString(response.getEntity()));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("Failed to execute HTTP request to {}", uri, e);
+			LOGGER.error("Failed to execute HTTP request to {}", uri, e);
 		}
 
 		return responseObject;
@@ -81,7 +83,7 @@ public interface TestUtilities {
 
 	static <T extends SerializedDataBase> void serializeAndDeserialize(T data, Function<ReaderBase, T> newInstance) {
 		final JsonObject jsonObject = Utilities.getJsonObjectFromData(data);
-		Main.LOGGER.info(prettyPrint(jsonObject));
+		LOGGER.info(prettyPrint(jsonObject));
 		compareObjects(data, getDataFromJsonObject(jsonObject, newInstance));
 
 		try (final MessageBufferPacker messageBufferPacker = MessagePack.newDefaultBufferPacker()) {
@@ -92,7 +94,7 @@ public interface TestUtilities {
 				compareObjects(data, newInstance.apply(new MessagePackReader(messageUnpacker)));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("Failed round-trip serialization of {}", data, e);
+			LOGGER.error("Failed round-trip serialization of {}", data, e);
 		}
 	}
 

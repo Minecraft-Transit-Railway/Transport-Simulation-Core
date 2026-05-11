@@ -4,11 +4,11 @@ import it.unimi.dsi.fastutil.ints.IntConsumer;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.extern.log4j.Log4j2;
 import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.Value;
-import org.mtr.core.Main;
 import org.mtr.core.data.*;
 import org.mtr.core.path.SidingPathFinder;
 import org.mtr.core.serializer.MessagePackReader;
@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+@Log4j2
 public final class DataFixer {
 
 	private static final int PACKED_X_LENGTH = 26;
@@ -234,7 +235,7 @@ public final class DataFixer {
 				readerBase.merge(new MessagePackReader(messageUnpacker));
 			}
 		} catch (Exception e) {
-			Main.LOGGER.error("Failed to apply legacy data fixer", e);
+			log.error("Failed to apply legacy data fixer", e);
 		}
 	}
 

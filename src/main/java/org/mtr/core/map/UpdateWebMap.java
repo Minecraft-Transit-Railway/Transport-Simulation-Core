@@ -1,6 +1,8 @@
 package org.mtr.core.map;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mtr.core.Main;
 import org.mtr.core.data.AreaBase;
 import org.mtr.core.data.SavedRailBase;
@@ -26,6 +28,7 @@ public interface UpdateWebMap {
 	String STATION_ICON_KEY = "mtr_station";
 	String DEPOT_ICON_KEY = "mtr_depot";
 	int ICON_SIZE = 24;
+	Logger LOGGER = LogManager.getLogger(UpdateWebMap.class);
 
 	static void readResource(String path, Consumer<InputStream> callback) {
 		try (final InputStream inputStream = Main.class.getResourceAsStream(path)) {
@@ -33,7 +36,7 @@ public interface UpdateWebMap {
 				callback.accept(inputStream);
 			}
 		} catch (IOException e) {
-			Main.LOGGER.error("Failed to read resource {}", path, e);
+			LOGGER.error("Failed to read resource {}", path, e);
 		}
 	}
 

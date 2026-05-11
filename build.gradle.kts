@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.mtr.core.Generator
 import org.mtr.core.WebserverSetup
@@ -25,9 +26,10 @@ dependencies {
 	implementation("com.squareup.okhttp3:okhttp:+")
 	implementation("org.eclipse.jetty:jetty-servlet:+")
 	implementation("org.msgpack:msgpack-core:+")
-	implementation("org.apache.logging.log4j:log4j-core:+")
+	implementation("org.apache.logging.log4j:log4j-core:2.+")
 	implementation("org.jspecify:jspecify:+")
 	implementation("info.picocli:picocli:+")
+	runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.+")
 
 	// Compile-only
 	compileOnly("xyz.jpenilla:squaremap-api:+")
@@ -84,6 +86,7 @@ tasks.jar {
 tasks.shadowJar {
 	archiveClassifier.set("")
 	mergeServiceFiles()
+	transform(Log4j2PluginsCacheFileTransformer())
 	minimize { exclude("org.eclipse.jetty.**") }
 	relocate("com", "org.mtr.libraries.com") { skipStringConstants = true }
 	relocate("it", "org.mtr.libraries.it") { skipStringConstants = true }
