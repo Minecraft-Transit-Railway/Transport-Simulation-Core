@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -70,46 +71,45 @@ public class FileLoader<T extends SerializedDataBaseWithId> {
 	}
 
 	private void readMessagePackFromFile(Function<MessagePackReader, T> getData) {
-		final Object2ObjectArrayMap<String, Future<@Nullable T>> futureDataMap = new Object2ObjectArrayMap<>();
-		try (final ExecutorService executorService = Executors.newCachedThreadPool()) {
-
-			try (final Stream<Path> pathStream = Files.list(path)) {
-				pathStream.forEach(idFolder -> {
-					try (final Stream<Path> folderStream = Files.list(idFolder)) {
-						folderStream.forEach(idFile -> {
-							final String fileName = combineAsPath(idFolder, idFile);
-							if (threadedFileLoading) {
-								futureDataMap.put(fileName, executorService.submit(() -> readFile(getData, idFile)));
-							} else {
-								processFile(fileName, readFile(getData, idFile));
-							}
-						});
-					} catch (Exception e) {
-						log.error("Failed to list files in {}", idFolder, e);
-					}
-
+		if (threadedFileLoading) {
+			final Object2ObjectArrayMap<String, Future<@Nullable T>> futureDataMap = new Object2ObjectArrayMap<>();
+			try (final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor()) {
+				forEachDataFile((fileName, idFile) -> futureDataMap.put(fileName, executorService.submit(() -> readFile(getData, idFile))));
+				futureDataMap.forEach((fileName, futureData) -> {
 					try {
-						Files.deleteIfExists(idFolder);
-						log.debug("Deleted empty folder: {}", idFolder);
-					} catch (DirectoryNotEmptyException ignored) {
+						processFile(fileName, futureData.get());
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						log.error("Interrupted while waiting for {}", fileName, e);
 					} catch (Exception e) {
-						log.error("Failed to delete empty folder {}", idFolder, e);
+						log.error("Failed to load file {}", fileName, e);
 					}
 				});
-			} catch (Exception e) {
-				log.error("Failed to list directory {}", path, e);
 			}
+		} else {
+			forEachDataFile((fileName, idFile) -> processFile(fileName, readFile(getData, idFile)));
+		}
+	}
 
-			futureDataMap.forEach((fileName, futureData) -> {
-				try {
-					processFile(fileName, futureData.get());
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					log.error("Interrupted while waiting for {}", fileName, e);
+	private void forEachDataFile(BiConsumer<String, Path> consumer) {
+		try (final Stream<Path> pathStream = Files.list(path)) {
+			pathStream.forEach(idFolder -> {
+				try (final Stream<Path> folderStream = Files.list(idFolder)) {
+					folderStream.forEach(idFile -> consumer.accept(combineAsPath(idFolder, idFile), idFile));
 				} catch (Exception e) {
-					log.error("Failed to load file {}", fileName, e);
+					log.error("Failed to list files in {}", idFolder, e);
+				}
+
+				try {
+					Files.deleteIfExists(idFolder);
+					log.debug("Deleted empty folder: {}", idFolder);
+				} catch (DirectoryNotEmptyException ignored) {
+				} catch (Exception e) {
+					log.error("Failed to delete empty folder {}", idFolder, e);
 				}
 			});
+		} catch (Exception e) {
+			log.error("Failed to list directory {}", path, e);
 		}
 	}
 

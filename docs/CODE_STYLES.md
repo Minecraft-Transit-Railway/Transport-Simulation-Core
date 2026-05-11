@@ -92,9 +92,8 @@ code-American.
 - Continuation lines inside chained calls / multi-argument calls (see §2.2) are also indented
   with tabs, one level beyond their parent.
 
-There is currently **no YAML** in the repo, so the "spaces in `application.yml`" carve-out
-that other projects need does not apply here. If YAML is added later (CI, Docker Compose,
-…), it must use 2 spaces per level — YAML forbids tabs at indentation positions.
+YAML files in this repo (for example `.github/workflows/*.yml`) must use 2 spaces per level —
+YAML forbids tabs at indentation positions.
 
 ### 2.2 No mid-expression line wrapping
 

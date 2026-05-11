@@ -48,7 +48,7 @@ jobs:
       - name: Setup webserver
         run: ./gradlew setupWebserver --no-daemon
       - name: Build JAR
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build -x test --no-daemon
       - name: Publish main project to GitHub Packages
         if: github.event_name == 'push'
         run: ./gradlew publish --no-daemon

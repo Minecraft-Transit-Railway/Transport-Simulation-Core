@@ -133,19 +133,20 @@ on a non-empty response is a bug.
 `shape`, `stop-ids-for-agency`, `stop`, `stops-for-route`, `trip-for-vehicle`, `trip`,
 `trips-for-location`, `trips-for-route`, `vehicles-for-agency`.
 
-Unknown endpoint names yield `404 Not Found`.
+Unknown endpoint names yield `404 Not Found` (for both `/mtr/api/map/*` and `/oba/api/where/*`).
 
 ## Status codes
 
 The mapping lives in
 [`HttpResponseStatus.java`](../src/main/java/org/mtr/core/servlet/HttpResponseStatus.java):
 
-| Code | Reason            | When                                                                       |
-|------|-------------------|----------------------------------------------------------------------------|
-| 200  | OK                | Request succeeded.                                                         |
-| 301  | Moved Permanently | Returned by static-resource handlers when redirecting (`Location` header). |
-| 400  | Bad Request       | Invalid `dimension` query parameter.                                       |
-| 404  | Not Found         | Unknown endpoint, or a handler returned `null` payload.                    |
+| Code | Reason                | When                                                                       |
+|------|-----------------------|----------------------------------------------------------------------------|
+| 200  | OK                    | Request succeeded.                                                         |
+| 301  | Moved Permanently     | Returned by static-resource handlers when redirecting (`Location` header). |
+| 400  | Bad Request           | Invalid `dimension` query parameter.                                       |
+| 404  | Not Found             | Unknown endpoint, or a handler returned `null` payload.                    |
+| 500  | Internal Server Error | Unexpected exception while handling a request.                             |
 
 ## Embedding extensions
 
