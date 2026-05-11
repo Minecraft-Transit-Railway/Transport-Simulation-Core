@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "org.mtr"
-version = project.version
+version = File(rootDir.parentFile, "gradle.properties").readLines().find { it.startsWith("version=") }?.substringAfter("=") ?: "unspecified"
 
 repositories {
 	mavenCentral()
