@@ -11,9 +11,11 @@ repositories {
 }
 
 dependencies {
+	implementation(gradleApi())
 	implementation("com.google.code.gson:gson:+")
 	implementation("it.unimi.dsi:fastutil:+")
 	implementation("commons-io:commons-io:+")
+	implementation("log4j:log4j:+")
 	implementation("org.jspecify:jspecify:+")
 
 	compileOnly("org.projectlombok:lombok:+")
