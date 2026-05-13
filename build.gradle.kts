@@ -92,7 +92,6 @@ tasks.shadowJar {
 		exclude(dependency("com.squareup.okhttp3:okhttp"))
 		exclude(dependency("it.unimi.dsi:fastutil"))
 		exclude(dependency("org.eclipse.jetty:jetty-servlet"))
-		exclude(dependency("org.jspecify:jspecify"))
 		exclude(dependency("org.msgpack:msgpack-core"))
 	}
 	relocate("com", "org.mtr.libraries.com") { skipStringConstants = true }
