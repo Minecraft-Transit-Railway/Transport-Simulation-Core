@@ -87,7 +87,13 @@ tasks.shadowJar {
 	archiveClassifier.set("")
 	mergeServiceFiles()
 	transform(Log4j2PluginsCacheFileTransformer())
-	minimize { exclude("org.eclipse.jetty.**") }
+	minimize {
+		exclude(dependency("com.google.code.gson:gson"))
+		exclude(dependency("com.squareup.okhttp3:okhttp"))
+		exclude(dependency("org.eclipse.jetty:jetty-servlet"))
+		exclude(dependency("org.jspecify:jspecify"))
+		exclude(dependency("org.msgpack:msgpack-core"))
+	}
 	relocate("com", "org.mtr.libraries.com") { skipStringConstants = true }
 	relocate("it", "org.mtr.libraries.it") { skipStringConstants = true }
 	relocate("jakarta", "org.mtr.libraries.jakarta")
