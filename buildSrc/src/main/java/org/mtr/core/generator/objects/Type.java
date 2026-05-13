@@ -29,8 +29,11 @@ public class Type {
 	 * {@code true} if this type represents a collection / array type.
 	 */
 	public final boolean isArray;
+	@Nullable
 	private final String initializerJava;
+	@Nullable
 	private final String initializerTypeScript;
+	@Nullable
 	private final String formatter;
 
 	/**

@@ -109,7 +109,7 @@ public final class DataFixer {
 				final int trainCars = Math.min(transportMode.maxLength, (int) Math.floor(railLength / trainLength));
 				final double bogiePosition = trainLength < 10 ? 0 : trainLength * 0.34;
 				for (int i = 0; i < trainCars; i++) {
-					final int type = trainCars == 1 ? 3 : i == 0 ? 1 : i == trainCars - 1 ? 2 : 0;
+					final int type = trainCars == 1 ? 3 : (i == 0 ? 1 : (i == trainCars - 1 ? 2 : 0));
 					final String vehicleId;
 					if (transportMode == TransportMode.TRAIN) {
 						if (trainId.startsWith("light_rail")) {

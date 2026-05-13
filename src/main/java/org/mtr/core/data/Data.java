@@ -250,7 +250,7 @@ public abstract class Data {
 		newInnerSet.addAll(newValue);
 	}
 
-	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> void put(W map, T key1, U key2, Function<V, V> putValue, Supplier<X> innerMapSupplier) {
+	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> void put(W map, T key1, U key2, Function<@Nullable V, V> putValue, Supplier<X> innerMapSupplier) {
 		final X innerMap = map.get(key1);
 		final X newInnerMap;
 		if (innerMap == null) {

@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.booleans.BooleanBooleanImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.VehicleExtraDataSchema;
 import org.mtr.core.serializer.JsonReader;
@@ -18,6 +19,7 @@ import java.util.function.Predicate;
 
 public class VehicleExtraData extends VehicleExtraDataSchema {
 
+	@Getter
 	private int stopIndex = -1;
 	private double oldStoppingPoint;
 	private boolean oldDoorTarget;
@@ -192,10 +194,6 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	public String getNextRouteDestination() {
 		return nextRouteDestination;
-	}
-
-	public int getStopIndex() {
-		return stopIndex;
 	}
 
 	public boolean getIsTerminating() {
@@ -453,7 +451,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		final long repeatIndex2 = repeatInfinitely ? repeatIndex1 + pathMainRoute.size() : 0;
 		final double newAcceleration = Siding.roundAcceleration(acceleration);
 		final double newDeceleration = Siding.roundAcceleration(deceleration);
-		final double totalDistance = path.isEmpty() ? 0 : repeatInfinitely && repeatIndex2 < path.size() ? Utilities.getElement(path, (int) repeatIndex2).getStartDistance() : Utilities.getElement(path, -1).getEndDistance();
+		final double totalDistance = path.isEmpty() ? 0 : (repeatInfinitely && repeatIndex2 < path.size() ? Utilities.getElement(path, (int) repeatIndex2).getStartDistance() : Utilities.getElement(path, -1).getEndDistance());
 		final double defaultPosition = (newRailLength + newTotalVehicleLength) / 2;
 		return new VehicleExtraData(depotId, sidingId, newRailLength, newTotalVehicleLength, repeatIndex1, repeatIndex2, newAcceleration, newDeceleration, isManualAllowed, Math.max(Utilities.kilometersPerHourToMetersPerMillisecond(1), maxManualSpeed), manualToAutomaticTime, totalDistance, defaultPosition, vehicleCars, path);
 	}

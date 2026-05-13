@@ -91,13 +91,13 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 
 			final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 			for (int i = 1; i < connectionDetailsList.size(); i++) {
-				final Position position1 = connectionDetailsList.get(i - 1).node.position;
-				final Position position2 = connectionDetailsList.get(i).node.position;
+				final Position position1 = connectionDetailsList.get(i - 1).node().position;
+				final Position position2 = connectionDetailsList.get(i).node().position;
 				final Rail rail = Data.tryGet(positionsToRail, position1, position2);
 
 				if (rail == null) {
-					final Angle angle1 = connectionDetailsList.get(i - 1).node.angle;
-					final Angle angle2 = connectionDetailsList.get(i).node.angle;
+					final Angle angle1 = connectionDetailsList.get(i - 1).node().angle;
+					final Angle angle2 = connectionDetailsList.get(i).node().angle;
 
 					if (transportMode == TransportMode.AIRPLANE && angle1 != null && angle2 != null) {
 						final long heightDifference1 = cruisingAltitude - position1.getY();
@@ -123,7 +123,7 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 				} else {
 					if (i == connectionDetailsList.size() - 1) {
 						path.add(new PathData(rail, endSavedRail.getId(), endSavedRail instanceof Platform ? ((Platform) endSavedRail).getDwellTime() : 1, stopIndex + 1, position1, position2));
-					} else if (rail.canTurnBack() && connectionDetailsList.get(i + 1).node.position.equals(position1)) {
+					} else if (rail.canTurnBack() && connectionDetailsList.get(i + 1).node().position.equals(position1)) {
 						path.add(new PathData(rail, 0, 1, stopIndex, position1, position2));
 					} else {
 						path.add(new PathData(rail, 0, 0, stopIndex, position1, position2));
@@ -186,13 +186,13 @@ public final class SidingPathFinder<T extends AreaBase<T, U>, U extends SavedRai
 	}
 
 	private <X extends AreaBase<X, Y>, Y extends SavedRailBase<Y, X>> void padConnectionDetailsList(ObjectArrayList<ConnectionDetails<PositionAndAngle>> connectionDetailsList, SavedRailBase<Y, X> savedRail, boolean isEnd) {
-		final Position lastPosition = Utilities.getElement(connectionDetailsList, isEnd ? -1 : 0).node.position;
+		final Position lastPosition = Utilities.getElement(connectionDetailsList, isEnd ? -1 : 0).node().position;
 		if (!savedRail.containsPos(lastPosition)) {
 			positionsToRail.get(lastPosition).keySet().stream().filter(savedRail::containsPos).findFirst().ifPresent(newPosition -> {
 				connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(newPosition, null), 0, 0, 0));
 				connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(newPosition), null), 0, 0, 0));
 			});
-		} else if (connectionDetailsList.size() > 1 && !savedRail.containsPos(Utilities.getElement(connectionDetailsList, isEnd ? -2 : 1).node.position)) {
+		} else if (connectionDetailsList.size() > 1 && !savedRail.containsPos(Utilities.getElement(connectionDetailsList, isEnd ? -2 : 1).node().position)) {
 			connectionDetailsList.add(isEnd ? connectionDetailsList.size() : 0, new ConnectionDetails<>(new PositionAndAngle(savedRail.getOtherPosition(lastPosition), null), 0, 0, 0));
 		}
 	}

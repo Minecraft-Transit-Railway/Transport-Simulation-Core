@@ -42,6 +42,7 @@ public class Class implements GeneratedObject {
 	 */
 	public final ObjectArrayList<String> implementsClasses = new ObjectArrayList<>();
 	private final String name;
+	@Nullable
 	private final String extendsClass;
 	private final String packageName;
 

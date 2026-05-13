@@ -21,6 +21,7 @@ public class SchemaParserTypeScript {
 
 	private final Class schemaClass;
 	private final Constructor constructor;
+	@Nullable
 	private final String extendsClassName;
 	final ObjectArrayList<String> testMethodContent1 = new ObjectArrayList<>();
 	final ObjectArrayList<String> testMethodContent2 = new ObjectArrayList<>();

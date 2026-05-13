@@ -24,6 +24,7 @@ public class TypeWithData {
 	 * {@code %2$s} is the Java type name.  {@code null} for array types (handled via
 	 * {@link #unpackData} instead).
 	 */
+	@Nullable
 	public final String readData;
 	/**
 	 * A {@link String#format} template used inside {@code updateData(ReaderBase)} to

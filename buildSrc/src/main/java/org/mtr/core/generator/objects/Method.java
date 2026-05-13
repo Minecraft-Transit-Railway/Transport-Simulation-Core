@@ -33,6 +33,7 @@ public class Method implements GeneratedObject {
 	public final ObjectArrayList<String> content = new ObjectArrayList<>();
 	private final VisibilityModifier visibilityModifier;
 	private final String name;
+	@Nullable
 	private final Type returnType;
 
 	/**

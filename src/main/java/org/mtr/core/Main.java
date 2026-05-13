@@ -247,8 +247,7 @@ public class Main {
 		private boolean threadedFileLoading = true;
 
 		@Parameters(arity = "1..*", paramLabel = "<dimension>", description = "One or more dimension identifiers to load")
-		@Nullable
-		private String[] dimensions;
+		private String @Nullable [] dimensions;
 	}
 
 	/**

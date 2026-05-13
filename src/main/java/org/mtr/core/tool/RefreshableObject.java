@@ -1,5 +1,6 @@
 package org.mtr.core.tool;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -9,10 +10,22 @@ import org.jspecify.annotations.Nullable;
  */
 public abstract class RefreshableObject<T> {
 
+	/**
+	 * The most recently refreshed cached value
+	 */
+	@Getter
 	private T data;
 	private long expiryTime = 0;
 	private int currentRefreshStep = -1;
+	/**
+	 * The cumulative wall-clock time, in milliseconds, spent inside {@link #refresh(int)} during the current refresh cycle
+	 */
+	@Getter
 	private long totalRefreshTime = 0;
+	/**
+	 * The longest single {@link #refresh(int)} call duration, in milliseconds, observed during the current refresh cycle
+	 */
+	@Getter
 	private long longestRefreshTime = 0;
 
 	private final long timeout;
@@ -68,25 +81,4 @@ public abstract class RefreshableObject<T> {
 	 */
 	@Nullable
 	public abstract T refresh(int currentRefreshStep);
-
-	/**
-	 * @return the most recently refreshed cached value
-	 */
-	public T getData() {
-		return data;
-	}
-
-	/**
-	 * @return the cumulative wall-clock time, in milliseconds, spent inside {@link #refresh(int)} during the current refresh cycle
-	 */
-	public long getTotalRefreshTime() {
-		return totalRefreshTime;
-	}
-
-	/**
-	 * @return the longest single {@link #refresh(int)} call duration, in milliseconds, observed during the current refresh cycle
-	 */
-	public long getLongestRefreshTime() {
-		return longestRefreshTime;
-	}
 }

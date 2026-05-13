@@ -25,6 +25,7 @@ public class SchemaParserJava {
 	private final Constructor constructor2;
 	private final Method updateMethod;
 	private final Method serializeMethod;
+	@Nullable
 	private final String extendsClassName;
 	private final Method testMethod;
 	final ObjectArrayList<String> testMethodContent1 = new ObjectArrayList<>();
@@ -53,7 +54,6 @@ public class SchemaParserJava {
 		schemaClass.methods.add(updateMethod);
 		schemaClass.methods.add(serializeMethod);
 		final Method toStringMethod = new Method(VisibilityModifier.PUBLIC, Type.STRING, "toString");
-		toStringMethod.annotations.add("NonNull");
 		toStringMethod.content.add(extendsClassName == null ? "return \"\"" : "return super.toString()");
 		schemaClass.methods.add(toStringMethod);
 
@@ -80,7 +80,11 @@ public class SchemaParserJava {
 							constructor1.content.add(String.format("this.%s%s;", key, typeWithData.type.getInitializerJava(defaultValue, false)));
 						}
 
-						constructor2.content.add(String.format(typeWithData.readData, key, typeWithData.type.nameJava));
+						if (typeWithData.readData != null) {
+							// typeWithData.readData should never be null
+							constructor2.content.add(String.format(typeWithData.readData, key, typeWithData.type.nameJava));
+						}
+
 						serializeMethod.content.add(String.format(typeWithData.writeData, key, typeWithData.type.nameJava));
 					} else {
 						if (defaultValue != null) {
@@ -105,7 +109,6 @@ public class SchemaParserJava {
 					final String methodName = String.format("%s%sParameter", key, Utilities.capitalizeFirstLetter(parameter));
 					final Method method = new Method(VisibilityModifier.PROTECTED, Type.createObject(Utilities.capitalizeFirstLetter(parameter), ""), methodName);
 					method.otherModifiers.add(OtherModifier.ABSTRACT);
-					method.annotations.add("NonNull");
 					schemaClass.methods.add(method);
 				});
 
@@ -197,6 +200,7 @@ public class SchemaParserJava {
 	 * @param typeScriptImports mutable set that collects TypeScript import names for object references
 	 * @return the resolved {@link TypeWithData}, or {@code null} if the property is unsupported
 	 */
+	@Nullable
 	public static TypeWithData getType(JsonObject jsonObject, boolean isArray, ObjectAVLTreeSet<String> typeScriptImports) {
 		final String refName = Utilities.getStringOrNull(jsonObject.get("$ref"));
 		final String typeString = Utilities.getStringOrNull(jsonObject.get("type"));

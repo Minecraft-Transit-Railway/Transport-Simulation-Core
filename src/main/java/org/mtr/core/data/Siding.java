@@ -186,11 +186,11 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void setIsManual(boolean isManual) {
-		maxVehicles = transportMode.continuousMovement ? 0 : isManual ? -1 : 1;
+		maxVehicles = transportMode.continuousMovement ? 0 : (isManual ? -1 : 1);
 	}
 
 	public void setUnlimitedVehicles(boolean unlimitedVehicles) {
-		maxVehicles = transportMode.continuousMovement ? 0 : unlimitedVehicles ? 0 : 1;
+		maxVehicles = transportMode.continuousMovement ? 0 : (unlimitedVehicles ? 0 : 1);
 	}
 
 	public void setMaxVehicles(int newMaxVehicles) {
@@ -544,8 +544,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	 *
 	 * @return a pair containing the vehicle (null if continuous movement) and whether an arrival was found
 	 */
-	ObjectBooleanImmutablePair<Vehicle> getVehicleDetailsAtPlatform(long routeId, long platformId) {
-		final Vehicle[] tempVehicles = {null};
+	ObjectBooleanImmutablePair<@Nullable Vehicle> getVehicleDetailsAtPlatform(long routeId, long platformId) {
+		final @Nullable Vehicle[] tempVehicles = {null};
 		final boolean[] hasArrival = {false};
 		iterateArrivals(data.getCurrentMillis(), platformId, 0, 0, (vehicle, trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
 			if (trip.route.getId() == routeId) {
