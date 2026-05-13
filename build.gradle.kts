@@ -6,6 +6,7 @@ import org.mtr.core.WebserverSetup
 plugins {
 	java
 	`maven-publish`
+	id("io.freefair.lombok") version "+"
 	id("com.gradleup.shadow") version "+"
 }
 
@@ -35,16 +36,11 @@ dependencies {
 	compileOnly("xyz.jpenilla:squaremap-api:+")
 	compileOnly("net.kyori:adventure-api:+")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.8")
-	compileOnly("org.projectlombok:lombok:+")
-	annotationProcessor("org.projectlombok:lombok:+")
 
 	// Test
 	testImplementation("org.junit.jupiter:junit-jupiter-api:+")
 	testImplementation("org.junit.platform:junit-platform-launcher:+")
 	testImplementation("org.apache.httpcomponents:httpclient:+")
-
-	testCompileOnly("org.projectlombok:lombok:+")
-	testAnnotationProcessor("org.projectlombok:lombok:+")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:+")
 }
 

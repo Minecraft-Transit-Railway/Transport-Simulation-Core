@@ -1,6 +1,7 @@
 plugins {
 	java
 	`maven-publish`
+	id("io.freefair.lombok") version "+"
 }
 
 group = "org.mtr"
@@ -17,9 +18,6 @@ dependencies {
 	implementation("commons-io:commons-io:+")
 	implementation("log4j:log4j:+")
 	implementation("org.jspecify:jspecify:+")
-
-	compileOnly("org.projectlombok:lombok:+")
-	annotationProcessor("org.projectlombok:lombok:+")
 }
 
 java {
