@@ -90,6 +90,7 @@ tasks.shadowJar {
 	minimize {
 		exclude(dependency("com.google.code.gson:gson"))
 		exclude(dependency("com.squareup.okhttp3:okhttp"))
+		exclude(dependency("it.unimi.dsi:fastutil"))
 		exclude(dependency("org.eclipse.jetty:jetty-servlet"))
 		exclude(dependency("org.jspecify:jspecify"))
 		exclude(dependency("org.msgpack:msgpack-core"))
