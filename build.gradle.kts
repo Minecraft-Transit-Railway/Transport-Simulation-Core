@@ -93,7 +93,6 @@ tasks.shadowJar {
 	relocate("com", "org.mtr.libraries.com") { skipStringConstants = true }
 	relocate("it", "org.mtr.libraries.it") { skipStringConstants = true }
 	relocate("jakarta", "org.mtr.libraries.jakarta")
-	relocate("javax", "org.mtr.libraries.javax")
 	relocate("kotlin", "org.mtr.libraries.kotlin") { skipStringConstants = true }
 	relocate("okhttp3", "org.mtr.libraries.okhttp3") { skipStringConstants = true }
 	relocate("okio", "org.mtr.libraries.okio") { skipStringConstants = true }
