@@ -1,6 +1,7 @@
 package org.mtr.core.servlet;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
@@ -18,7 +19,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -49,8 +49,9 @@ public abstract class ServletBase extends HttpServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {
+		AsyncContext asyncContext = null;
 		try {
-			final AsyncContext asyncContext = httpServletRequest.startAsync();
+			asyncContext = httpServletRequest.startAsync();
 			asyncContext.setTimeout(0);
 			final JsonElement jsonElement = JsonParser.parseReader(httpServletRequest.getReader());
 			final JsonReader jsonReader = new JsonReader(jsonElement.isJsonNull() ? new JsonObject() : jsonElement);
@@ -75,6 +76,19 @@ public abstract class ServletBase extends HttpServlet {
 			}
 		} catch (Exception e) {
 			log.error("Failed to handle servlet request to {}", httpServletRequest.getRequestURI(), e);
+			final HttpResponseStatus httpResponseStatus = e instanceof JsonParseException ? HttpResponseStatus.BAD_REQUEST : HttpResponseStatus.INTERNAL_SERVER_ERROR;
+			if (asyncContext != null) {
+				buildResponseObject(httpServletResponse, asyncContext, null, httpResponseStatus, "Servlet Exception");
+			} else {
+				try {
+					httpServletResponse.setStatus(httpResponseStatus.code);
+					httpServletResponse.addHeader("Content-Type", getMimeType("json"));
+					httpServletResponse.addHeader("Access-Control-Allow-Origin", "*");
+					httpServletResponse.getWriter().write(new Response(httpResponseStatus.code, httpResponseStatus.description, null).getJson().toString());
+				} catch (Exception responseException) {
+					log.error("Failed to send fallback servlet error response", responseException);
+				}
+			}
 		}
 	}
 
@@ -125,7 +139,8 @@ public abstract class ServletBase extends HttpServlet {
 	public static void sendResponse(HttpServletResponse httpServletResponse, AsyncContext asyncContext, String content, String contentType, HttpResponseStatus httpResponseStatus) {
 		try {
 			final ServletOutputStream servletOutputStream = httpServletResponse.getOutputStream();
-			final ByteBuffer byteBuffer = ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8));
+			final byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
+			final int[] contentPosition = {0};
 			httpServletResponse.addHeader("Content-Type", contentType);
 			httpServletResponse.addHeader("Access-Control-Allow-Origin", "*");
 			if (httpResponseStatus == HttpResponseStatus.REDIRECT) {
@@ -136,12 +151,15 @@ public abstract class ServletBase extends HttpServlet {
 				public void onWritePossible() {
 					try {
 						while (servletOutputStream.isReady()) {
-							if (!byteBuffer.hasRemaining()) {
+							final int remainingBytes = contentBytes.length - contentPosition[0];
+							if (remainingBytes <= 0) {
 								httpServletResponse.setStatus(httpResponseStatus.code);
 								asyncContext.complete();
 								return;
 							}
-							servletOutputStream.write(byteBuffer.get());
+							final int chunkSize = Math.min(remainingBytes, 8192);
+							servletOutputStream.write(contentBytes, contentPosition[0], chunkSize);
+							contentPosition[0] += chunkSize;
 						}
 					} catch (Exception e) {
 						log.error("Failed to write servlet response", e);
@@ -150,6 +168,7 @@ public abstract class ServletBase extends HttpServlet {
 
 				@Override
 				public void onError(Throwable throwable) {
+					log.error("Servlet write callback failed", throwable);
 					asyncContext.complete();
 				}
 			});

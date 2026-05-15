@@ -86,7 +86,10 @@ public final class Route extends RouteSchema {
 			}
 
 			if (platform == null) {
-				platform = Utilities.getElement(routePlatformData, -1).platform;
+				final RoutePlatformData lastRoutePlatformData = Utilities.getElement(routePlatformData, -1);
+				if (lastRoutePlatformData != null) {
+					platform = lastRoutePlatformData.platform;
+				}
 			}
 
 			return platform != null && platform.area != null ? platform.area.getName() : "";
@@ -118,16 +121,12 @@ public final class Route extends RouteSchema {
 	}
 
 	private int getGtfsType() {
-		switch (transportMode) {
-			case TRAIN:
-				return routeType == RouteType.LIGHT_RAIL ? 0 : 2;
-			case BOAT:
-				return 4;
-			case CABLE_CAR:
-				return 6;
-			default:
-				return 3;
-		}
+		return switch (transportMode) {
+			case TRAIN -> routeType == RouteType.LIGHT_RAIL ? 0 : 2;
+			case BOAT -> 4;
+			case CABLE_CAR -> 6;
+			default -> 3;
+		};
 	}
 
 	public enum CircularState {

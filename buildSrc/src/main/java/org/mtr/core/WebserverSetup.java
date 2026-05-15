@@ -15,10 +15,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * Gradle build-tool helper that embeds the compiled Angular web application into
+ * a generated Java source file ({@code WebserverResources.java}).
+ *
+ * <p>The generated class contains a single {@code get(String resource)} method
+ * that uses a {@code switch} statement to return the text content of each static
+ * asset bundled from {@code website/dist/website/browser/}.  This makes the
+ * front-end self-contained inside the JAR with no external file-system dependency
+ * at runtime.</p>
+ *
+ * <p>In addition, the canonical Angular {@code .gitignore} is downloaded and
+ * written to the {@code website/} directory so that generated files are
+ * automatically excluded from version control.</p>
+ */
 public final class WebserverSetup {
 
 	private static final Logger LOGGER = LogManager.getLogger("WebserverSetup");
 
+	/**
+	 * Performs the webserver resource embedding.
+	 *
+	 * <ol>
+	 *   <li>Recursively reads every file under
+	 *       {@code <projectPath>/website/dist/website/browser/}.</li>
+	 *   <li>Encodes each file's content as a Java string literal (splitting at
+	 *       32 768-character boundaries to avoid constant-pool limits).</li>
+	 *   <li>Writes the resulting {@code WebserverResources.java} class to
+	 *       {@code <module>src/main/java/org/mtr/<namespace>/generated/}.</li>
+	 *   <li>Downloads the canonical Angular {@code .gitignore} into
+	 *       {@code <projectPath>/website/.gitignore}.</li>
+	 * </ol>
+	 *
+	 * @param projectPath the root directory of the Gradle project
+	 * @param module      an optional sub-module path prefix (empty string for the root module)
+	 * @param namespace   the Java package segment used in the generated class
+	 *                    (e.g. {@code "core"} → package {@code org.mtr.core.generated})
+	 */
 	public static void setup(File projectPath, String module, String namespace) {
 		final Path websitePath = projectPath.toPath().resolve("website/dist/website/browser");
 		final StringBuilder stringBuilder = new StringBuilder(String.format("package org.mtr.%s%sgenerated;", namespace, namespace.isEmpty() ? "" : "."));
@@ -65,7 +98,7 @@ public final class WebserverSetup {
 
 	private static void write(Path path, String content) {
 		try {
-			Files.write(path, content.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			Files.writeString(path, content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (Exception e) {
 			LOGGER.error("", e);
 		}

@@ -6,16 +6,43 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.stream.Collectors;
 
+/**
+ * Code-model representation of a single method declaration.
+ *
+ * <p>After construction, callers populate {@link #annotations}, {@link #otherModifiers},
+ * {@link #parameters}, and {@link #content} before calling {@link #generateJava()} or
+ * {@link #generateTypeScript()} to obtain the rendered source lines.</p>
+ */
 public class Method implements GeneratedObject {
 
+	/**
+	 * Annotation names placed above the method signature (without the leading {@code @}).
+	 */
 	public final ObjectArraySet<String> annotations = new ObjectArraySet<>();
+	/**
+	 * Extra non-visibility modifiers applied to the method (e.g. {@link OtherModifier#ABSTRACT}, {@link OtherModifier#STATIC}).
+	 */
 	public final ObjectArraySet<OtherModifier> otherModifiers = new ObjectArraySet<>();
+	/**
+	 * Ordered list of parameters accepted by the method.
+	 */
 	public final ObjectArrayList<Parameter> parameters = new ObjectArrayList<>();
+	/**
+	 * Body statements, one per list entry, printed with a single leading tab. Unused when the method is abstract.
+	 */
 	public final ObjectArrayList<String> content = new ObjectArrayList<>();
 	private final VisibilityModifier visibilityModifier;
 	private final String name;
+	@Nullable
 	private final Type returnType;
 
+	/**
+	 * Creates a new method model node.
+	 *
+	 * @param visibilityModifier the access visibility of the method
+	 * @param returnType         the return type, or {@code null} to render {@code void}
+	 * @param name               the method name
+	 */
 	public Method(VisibilityModifier visibilityModifier, @Nullable Type returnType, String name) {
 		this.visibilityModifier = visibilityModifier;
 		this.name = name;

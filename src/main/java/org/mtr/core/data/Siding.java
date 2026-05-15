@@ -33,6 +33,7 @@ import java.util.function.LongConsumer;
 @Log4j2
 public final class Siding extends SidingSchema implements Utilities {
 
+	@Nullable
 	private PathData defaultPathData;
 	private double timeOffsetForRepeating;
 
@@ -185,11 +186,11 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void setIsManual(boolean isManual) {
-		maxVehicles = transportMode.continuousMovement ? 0 : isManual ? -1 : 1;
+		maxVehicles = transportMode.continuousMovement ? 0 : (isManual ? -1 : 1);
 	}
 
 	public void setUnlimitedVehicles(boolean unlimitedVehicles) {
-		maxVehicles = transportMode.continuousMovement ? 0 : unlimitedVehicles ? 0 : 1;
+		maxVehicles = transportMode.continuousMovement ? 0 : (unlimitedVehicles ? 0 : 1);
 	}
 
 	public void setMaxVehicles(int newMaxVehicles) {
@@ -543,8 +544,8 @@ public final class Siding extends SidingSchema implements Utilities {
 	 *
 	 * @return a pair containing the vehicle (null if continuous movement) and whether an arrival was found
 	 */
-	ObjectBooleanImmutablePair<Vehicle> getVehicleDetailsAtPlatform(long routeId, long platformId) {
-		final Vehicle[] tempVehicles = {null};
+	ObjectBooleanImmutablePair<@Nullable Vehicle> getVehicleDetailsAtPlatform(long routeId, long platformId) {
+		final @Nullable Vehicle[] tempVehicles = {null};
 		final boolean[] hasArrival = {false};
 		iterateArrivals(data.getCurrentMillis(), platformId, 0, 0, (vehicle, trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
 			if (trip.route.getId() == routeId) {
@@ -571,7 +572,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				final int targetTripStopIndex;
 				final Route nextRoute = Utilities.getElement(area.routes, area.getRepeatInfinitely() && i == area.routes.size() - 1 ? 0 : i + 1);
 				final RoutePlatformData nextRoutePlatformData = nextRoute == null ? null : Utilities.getElement(nextRoute.getRoutePlatforms(), 0);
-				if (nextRoutePlatformData != null && routePlatformData.platform.getId() == nextRoutePlatformData.platform.getId()) {
+				if (nextRoutePlatformData != null && routePlatformData.platform != null && nextRoutePlatformData.platform != null && routePlatformData.platform.getId() == nextRoutePlatformData.platform.getId()) {
 					targetRouteId = nextRoute.getId();
 					targetTripStopIndex = 0;
 				} else {

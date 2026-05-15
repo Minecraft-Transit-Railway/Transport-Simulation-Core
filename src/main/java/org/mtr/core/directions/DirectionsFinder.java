@@ -1,5 +1,6 @@
 package org.mtr.core.directions;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.map.DirectionsRequest;
@@ -62,6 +63,6 @@ public final class DirectionsFinder {
 
 	@FunctionalInterface
 	public interface RouteOffsetAndPlatformsCallback {
-		void accept(long offsetTimeFromLastDeparture, long duration, Platform platform1, Platform platform2);
+		void accept(long offsetTimeFromLastDeparture, long duration, @Nullable Platform platform1, @Nullable Platform platform2);
 	}
 }

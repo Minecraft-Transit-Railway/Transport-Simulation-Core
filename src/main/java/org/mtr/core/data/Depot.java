@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.DepotSchema;
@@ -39,6 +40,7 @@ public final class Depot extends DepotSchema implements Utilities {
 
 	public final ObjectArrayList<Route> routes = new ObjectArrayList<>();
 
+	@Getter
 	private final ObjectArrayList<PathData> path = new ObjectArrayList<>();
 	/**
 	 * A temporary list to store all platforms of the vehicle instructions as well as the route used to get to each platform. Repeated platforms are ignored.
@@ -173,10 +175,6 @@ public final class Depot extends DepotSchema implements Utilities {
 		return realTimeDepartures;
 	}
 
-	public ObjectArrayList<PathData> getPath() {
-		return path;
-	}
-
 	public void writeRouteCache(Long2ObjectOpenHashMap<Route> routeIdMap) {
 		routes.clear();
 		routeIds.forEach(id -> routes.add(routeIdMap.get(id)));
@@ -264,7 +262,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	 * The first part generates platform directions (N, NE, etc.) for OBA data. The second part reads from real-time departures and in-game frequencies and converts them to departures. Each departure is mapped to a siding and siding time segments must be generated beforehand. Should only be called during initialization (but after siding initialization), when setting world time, and after path generation of all sidings.
 	 */
 	public void generatePlatformDirectionsAndWriteDeparturesToSidings() {
-		final Long2ObjectOpenHashMap<Angle> platformDirections = new Long2ObjectOpenHashMap<>();
+		final Long2ObjectOpenHashMap<@Nullable Angle> platformDirections = new Long2ObjectOpenHashMap<>();
 
 		for (int i = 1; i < path.size(); i++) {
 			final long platformId = path.get(i - 1).getSavedRailBaseId();
@@ -422,18 +420,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		depotsToClear.forEach(depot -> depot.savedRails.forEach(Siding::clearVehicles));
 	}
 
-	private static class PlatformRouteDetails {
-
-		private final Platform platform;
-		@Nullable
-		private final Route route;
-		private final int platformIndex;
-
-		private PlatformRouteDetails(Platform platform, @Nullable Route route, int platformIndex) {
-			this.platform = platform;
-			this.route = route;
-			this.platformIndex = platformIndex;
-		}
+	private record PlatformRouteDetails(Platform platform, @Nullable Route route, int platformIndex) {
 	}
 
 	@FunctionalInterface

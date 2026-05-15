@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.*;
 import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.map.UpdateDynmap;
 import org.mtr.core.map.UpdateSquaremap;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
@@ -215,6 +216,7 @@ public abstract class Data {
 		return result == null ? defaultValue : result;
 	}
 
+	@Nullable
 	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> V tryGet(W map, T key1, U key2) {
 		final Map<U, V> innerMap = map.get(key1);
 		if (innerMap == null) {
@@ -248,7 +250,7 @@ public abstract class Data {
 		newInnerSet.addAll(newValue);
 	}
 
-	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> void put(W map, T key1, U key2, Function<V, V> putValue, Supplier<X> innerMapSupplier) {
+	public static <T, U, V, W extends Map<T, X>, X extends Map<U, V>> void put(W map, T key1, U key2, Function<@Nullable V, V> putValue, Supplier<X> innerMapSupplier) {
 		final X innerMap = map.get(key1);
 		final X newInnerMap;
 		if (innerMap == null) {

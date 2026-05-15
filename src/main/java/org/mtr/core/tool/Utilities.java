@@ -5,8 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectLongImmutablePair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
-import org.mtr.core.Main;
 import org.mtr.core.data.Position;
 import org.mtr.core.serializer.JsonWriter;
 import org.mtr.core.serializer.SerializedDataBase;
@@ -30,15 +31,27 @@ import java.util.function.Supplier;
  */
 public interface Utilities {
 
-	/** Hours in a day; lifted from a literal because it shows up in tick / departure maths. */
+	Logger LOGGER = LogManager.getLogger(Utilities.class);
+
+	/**
+	 * Hours in a day; lifted from a literal because it shows up in tick / departure maths.
+	 */
 	int HOURS_PER_DAY = 24;
-	/** Milliseconds in one second. */
+	/**
+	 * Milliseconds in one second.
+	 */
 	int MILLIS_PER_SECOND = 1000;
-	/** Milliseconds in one minute. */
+	/**
+	 * Milliseconds in one minute.
+	 */
 	int MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
-	/** Milliseconds in one hour. */
+	/**
+	 * Milliseconds in one hour.
+	 */
 	int MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
-	/** Milliseconds in one (real) day. */
+	/**
+	 * Milliseconds in one (real) day.
+	 */
 	int MILLIS_PER_DAY = HOURS_PER_DAY * MILLIS_PER_HOUR;
 
 	static boolean isBetween(double value, double value1, double value2) {
@@ -111,7 +124,7 @@ public interface Utilities {
 			// Empty object is the documented "couldn't parse" return. Logged at debug because the
 			// caller frequently feeds untrusted input (servlet bodies, on-disk legacy files) and a
 			// hard failure would be wrong; logged at all so silent corruption is debuggable. (§3.14)
-			Main.LOGGER.debug("parseJson fell back to empty object for input of length {}", data.length(), e);
+			LOGGER.debug("parseJson fell back to empty object for input of length {}", data.length(), e);
 			return new JsonObject();
 		}
 	}
@@ -249,7 +262,7 @@ public interface Utilities {
 		} catch (Exception e) {
 			// Numeric comparison was attempted as a fast path; fall back to lexicographic on
 			// non-numeric input. Logged at debug per CODE_STYLES §3.14.
-			Main.LOGGER.debug("Numeric compare of \"{}\" / \"{}\" failed; falling back to string compare", value1, value2, e);
+			LOGGER.debug("Numeric compare of \"{}\" / \"{}\" failed; falling back to string compare", value1, value2, e);
 			final int result = value1.compareTo(value2);
 			return result == 0 ? ifZero.getAsInt() : result;
 		}
@@ -285,12 +298,12 @@ public interface Utilities {
 	static void awaitTermination(ExecutorService executorService) {
 		try {
 			while (!executorService.awaitTermination(5, TimeUnit.MINUTES)) {
-				Main.LOGGER.warn("Termination failed, retrying...");
+				LOGGER.warn("Termination failed, retrying...");
 			}
 		} catch (InterruptedException e) {
 			// Restore the interrupt flag (CODE_STYLES §3.14) so callers can react.
 			Thread.currentThread().interrupt();
-			Main.LOGGER.error("Interrupted while awaiting executor termination", e);
+			LOGGER.error("Interrupted while awaiting executor termination", e);
 		}
 	}
 }

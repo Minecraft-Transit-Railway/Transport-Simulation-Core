@@ -1,6 +1,7 @@
 package org.mtr.core.tool;
 
-import org.mtr.core.Main;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Tolerant {@link Enum#valueOf(Class, String)} replacement that returns a default instead of
@@ -11,6 +12,8 @@ import org.mtr.core.Main;
  * propagating out of a load is never the right answer.</p>
  */
 public interface EnumHelper {
+
+	Logger LOGGER = LogManager.getLogger(EnumHelper.class);
 
 	/**
 	 * @param defaultValue value returned (and used to obtain the enum class) if {@code name} does
@@ -25,7 +28,7 @@ public interface EnumHelper {
 		} catch (Exception e) {
 			// Schema drift — name no longer exists. Logged at trace because it's expected during
 			// legacy data loads (CODE_STYLES §3.14).
-			Main.LOGGER.trace("EnumHelper.valueOf({}, {}) falling back to default", defaultValue.getDeclaringClass().getSimpleName(), name, e);
+			LOGGER.trace("EnumHelper.valueOf({}, {}) falling back to default", defaultValue.getDeclaringClass().getSimpleName(), name, e);
 			return defaultValue;
 		}
 	}
