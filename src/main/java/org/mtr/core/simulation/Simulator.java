@@ -2,6 +2,7 @@ package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.objects.*;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.*;
@@ -37,18 +38,33 @@ public class Simulator extends Data implements Utilities {
 	private long lastMillis;
 	private boolean autoSave = false;
 	private long gameMillis;
-	/** Real-time milliseconds per in-game day; default = 20 in-game minutes ≈ Minecraft's vanilla rate. */
+	/**
+	 * Real-time milliseconds per in-game day or {@code 0} if unknown / paused; default = 20 in-game minutes ≈ Minecraft's vanilla rate.
+	 */
+	@Getter
 	private long gameMillisPerDay = DEFAULT_GAME_MILLIS_PER_DAY;
+	/**
+	 * Whether the daylight cycle (and therefore the in-game clock) is currently advancing.
+	 */
+	@Getter
 	private boolean isTimeMoving;
 	private long lastSetGameMillisMidnight;
 
-	/** Connected dashboard / mod clients for this dimension. */
+	/**
+	 * Connected dashboard / mod clients for this dimension.
+	 */
 	public final ObjectArraySet<Client> clients = new ObjectArraySet<>();
-	/** Stable dimension identifier (e.g. {@code "minecraft/overworld"}). */
+	/**
+	 * Stable dimension identifier (e.g. {@code "minecraft/overworld"}).
+	 */
 	public final String dimension;
-	/** Identifiers of every dimension hosted in the same process — used for cross-dimension routing. */
+	/**
+	 * Identifiers of every dimension hosted in the same process — used for cross-dimension routing.
+	 */
 	public final String[] dimensions;
-	/** Background path-finder for passenger directions queries. */
+	/**
+	 * Background path-finder for passenger directions queries.
+	 */
 	public final DirectionsFinder directionsFinder = new DirectionsFinder(this);
 
 	private final FileLoader<Station> fileLoaderStations;
@@ -74,7 +90,9 @@ public class Simulator extends Data implements Utilities {
 	 * "noisy log on a sluggish host" and "silent multi-hour drift".
 	 */
 	private static final int SIMULATION_DIFFERENCE_LOGGING_THRESHOLD = 120000;
-	/** Default in-game day length in real-time milliseconds (20 in-game minutes). */
+	/**
+	 * Default in-game day length in real-time milliseconds (20 in-game minutes).
+	 */
 	private static final long DEFAULT_GAME_MILLIS_PER_DAY = 20L * 60 * MILLIS_PER_SECOND;
 
 	/**
@@ -170,12 +188,16 @@ public class Simulator extends Data implements Utilities {
 		}
 	}
 
-	/** Schedule a full save on the next tick. Returns immediately. */
+	/**
+	 * Schedule a full save on the next tick. Returns immediately.
+	 */
 	public void save() {
 		autoSave = true;
 	}
 
-	/** Stop ticking and perform a final, non-incremental save. */
+	/**
+	 * Stop ticking and perform a final, non-incremental save.
+	 */
 	public void stop() {
 		save(false);
 	}
@@ -236,16 +258,6 @@ public class Simulator extends Data implements Utilities {
 		depots.forEach(Depot::generatePlatformDirectionsAndWriteDeparturesToSidings);
 	}
 
-	/** @return real-time milliseconds in one in-game day, or {@code 0} if unknown / paused */
-	public long getGameMillisPerDay() {
-		return gameMillisPerDay;
-	}
-
-	/** @return whether the daylight cycle (and therefore the in-game clock) is currently advancing */
-	public boolean isTimeMoving() {
-		return isTimeMoving;
-	}
-
 	/**
 	 * @return milliseconds after epoch of the first midnight in-game
 	 */
@@ -269,7 +281,9 @@ public class Simulator extends Data implements Utilities {
 		queuedRuns.put(runnable);
 	}
 
-	/** Enqueue a client-to-server message; processed during the next tick. */
+	/**
+	 * Enqueue a client-to-server message; processed during the next tick.
+	 */
 	public void sendMessageC2S(QueueObject queueObject) {
 		messageQueueC2S.put(queueObject);
 	}
@@ -283,22 +297,30 @@ public class Simulator extends Data implements Utilities {
 		messageQueueS2C.put(new QueueObject(key, data, consumer == null ? null : responseData -> run(() -> consumer.accept(responseData)), responseDataClass));
 	}
 
-	/** Drain all pending S2C messages and feed each into {@code callback}. */
+	/**
+	 * Drain all pending S2C messages and feed each into {@code callback}.
+	 */
 	public void processMessagesS2C(Consumer<QueueObject> callback) {
 		messageQueueS2C.process(callback);
 	}
 
-	/** @return whether the entity {@code uuid} is currently riding {@code vehicleId} */
+	/**
+	 * @return whether the entity {@code uuid} is currently riding {@code vehicleId}
+	 */
 	public boolean isRiding(UUID uuid, long vehicleId) {
 		return ridingVehicleIds.getLong(uuid) == vehicleId;
 	}
 
-	/** Record that the entity {@code uuid} has boarded {@code vehicleId}. */
+	/**
+	 * Record that the entity {@code uuid} has boarded {@code vehicleId}.
+	 */
 	public void ride(UUID uuid, long vehicleId) {
 		ridingVehicleIds.put(uuid, vehicleId);
 	}
 
-	/** Record that the entity {@code uuid} has dismounted whatever vehicle it was riding. */
+	/**
+	 * Record that the entity {@code uuid} has dismounted whatever vehicle it was riding.
+	 */
 	public void stopRiding(UUID uuid) {
 		ridingVehicleIds.removeLong(uuid);
 	}
@@ -310,7 +332,7 @@ public class Simulator extends Data implements Utilities {
 	 */
 	@Nullable
 	public Platform getNextPlatformOfRidingVehicle(UUID uuid) {
-		final Platform[] platform = {null};
+		final @Nullable Platform[] platform = {null};
 		sidings.forEach(siding -> siding.iterateVehiclesAndRidingEntities((vehicleExtraData, vehicleRidingEntity) -> {
 			if (vehicleRidingEntity.uuid.equals(uuid)) {
 				final Platform checkPlatform = platformIdMap.get(vehicleExtraData.getNextPlatformId());

@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.mtr.core.Generator
 import org.mtr.core.WebserverSetup
@@ -5,6 +6,7 @@ import org.mtr.core.WebserverSetup
 plugins {
 	java
 	`maven-publish`
+	id("io.freefair.lombok") version "+"
 	id("com.gradleup.shadow") version "+"
 }
 
@@ -25,24 +27,20 @@ dependencies {
 	implementation("com.squareup.okhttp3:okhttp:+")
 	implementation("org.eclipse.jetty:jetty-servlet:+")
 	implementation("org.msgpack:msgpack-core:+")
-	implementation("org.apache.logging.log4j:log4j-core:+")
+	implementation("org.apache.logging.log4j:log4j-core:2.+")
 	implementation("org.jspecify:jspecify:+")
 	implementation("info.picocli:picocli:+")
+	runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.+")
 
 	// Compile-only
 	compileOnly("xyz.jpenilla:squaremap-api:+")
 	compileOnly("net.kyori:adventure-api:+")
 	compileOnly("us.dynmap:DynmapCoreAPI:3.8")
-	compileOnly("org.projectlombok:lombok:+")
-	annotationProcessor("org.projectlombok:lombok:+")
 
 	// Test
 	testImplementation("org.junit.jupiter:junit-jupiter-api:+")
 	testImplementation("org.junit.platform:junit-platform-launcher:+")
 	testImplementation("org.apache.httpcomponents:httpclient:+")
-
-	testCompileOnly("org.projectlombok:lombok:+")
-	testAnnotationProcessor("org.projectlombok:lombok:+")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:+")
 }
 
@@ -84,11 +82,17 @@ tasks.jar {
 tasks.shadowJar {
 	archiveClassifier.set("")
 	mergeServiceFiles()
-	minimize { exclude("org.eclipse.jetty.**") }
+	transform(Log4j2PluginsCacheFileTransformer())
+	minimize {
+		exclude(dependency("com.google.code.gson:gson"))
+		exclude(dependency("com.squareup.okhttp3:okhttp"))
+		exclude(dependency("it.unimi.dsi:fastutil"))
+		exclude(dependency("org.eclipse.jetty:jetty-servlet"))
+		exclude(dependency("org.msgpack:msgpack-core"))
+	}
 	relocate("com", "org.mtr.libraries.com") { skipStringConstants = true }
 	relocate("it", "org.mtr.libraries.it") { skipStringConstants = true }
 	relocate("jakarta", "org.mtr.libraries.jakarta")
-	relocate("javax", "org.mtr.libraries.javax")
 	relocate("kotlin", "org.mtr.libraries.kotlin") { skipStringConstants = true }
 	relocate("okhttp3", "org.mtr.libraries.okhttp3") { skipStringConstants = true }
 	relocate("okio", "org.mtr.libraries.okio") { skipStringConstants = true }

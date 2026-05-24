@@ -46,6 +46,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	private boolean atoOverride;
 
 	public final VehicleExtraData vehicleExtraData;
+	@Nullable
 	private final Siding siding;
 	/**
 	 * If a vehicle is clientside, don't open the doors or start up automatically. Always wait for a socket update instead.
@@ -547,7 +548,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	 * </ul>
 	 */
 	private void writeVehiclePositions(int currentIndex, Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
-		final Position[] minMaxPositions = {null, null};
+		final @Nullable Position[] minMaxPositions = {null, null};
 		int index = currentIndex;
 
 		while (index >= 0) {

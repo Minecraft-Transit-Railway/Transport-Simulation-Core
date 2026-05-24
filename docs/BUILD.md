@@ -6,12 +6,12 @@
 
 ## Prerequisites
 
-| Tool    | Version                                                                                                                                                                    |
-|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| JDK     | **21** — pinned via `java.toolchain.languageVersion = 21` in [`build.gradle.kts`](../build.gradle.kts). Gradle will provision a matching toolchain if one isn't installed. |
-| Node.js | A current LTS that supports the Angular 21 toolchain.                                                                                                                      |
-| npm     | Bundled with Node.                                                                                                                                                         |
-| Gradle  | Use the wrapper (`./gradlew` / `gradlew.bat`). Don't install Gradle globally.                                                                                              |
+| Tool    | Version                                                                                                                                                                                                                                                                                                             |
+|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| JDK     | **21** — pinned via `java.toolchain.languageVersion = 21` in [`build.gradle.kts`](../build.gradle.kts) and `buildSrc/build.gradle.kts`. Gradle can provision a matching compile toolchain, but this repo's build logic also runs on JVM 21 (for `buildSrc`), so running Gradle itself on older JVMs can still fail. |
+| Node.js | A current LTS that supports the Angular 21 toolchain.                                                                                                                                                                                                                                                               |
+| npm     | Bundled with Node.                                                                                                                                                                                                                                                                                                  |
+| Gradle  | Use the wrapper (`./gradlew` / `gradlew.bat`). Don't install Gradle globally.                                                                                                                                                                                                                                       |
 
 ## Backend (Gradle)
 

@@ -18,9 +18,9 @@ public class VehiclePosition {
 		for (final BlockedSegment blockedSegment : blockedSegments) {
 			if (id != blockedSegment.id && Utilities.isIntersecting(startDistance, endDistance, blockedSegment.startDistance, blockedSegment.endDistance)) {
 				if (reversePositions) {
-					closestOverlap = Math.min(closestOverlap, Math.max(0, endDistance - blockedSegment.endDistance));
+					closestOverlap = Utilities.clampSafe(endDistance - blockedSegment.endDistance, 0, closestOverlap);
 				} else {
-					closestOverlap = Math.min(closestOverlap, Math.max(0, blockedSegment.startDistance - startDistance));
+					closestOverlap = Utilities.clampSafe(blockedSegment.startDistance - startDistance, 0, closestOverlap);
 				}
 				valueSet = true;
 			}
@@ -29,16 +29,6 @@ public class VehiclePosition {
 		return valueSet ? closestOverlap : -1;
 	}
 
-	private static class BlockedSegment {
-
-		private final double startDistance;
-		private final double endDistance;
-		private final long id;
-
-		private BlockedSegment(double startDistance, double endDistance, long id) {
-			this.startDistance = startDistance;
-			this.endDistance = endDistance;
-			this.id = id;
-		}
+	private record BlockedSegment(double startDistance, double endDistance, long id) {
 	}
 }

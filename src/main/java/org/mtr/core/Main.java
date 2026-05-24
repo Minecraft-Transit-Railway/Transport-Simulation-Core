@@ -2,8 +2,7 @@ package org.mtr.core;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Depot;
@@ -41,6 +40,7 @@ import java.util.function.Function;
  * via {@link #manualTick()}, and bridges its own packet pipeline through
  * {@link #sendMessageC2S(Integer, QueueObject)} / {@link #processMessagesS2C(int, Consumer)}.</p>
  */
+@Log4j2
 public class Main {
 
 	private final ObjectImmutableList<Simulator> simulators;
@@ -57,10 +57,6 @@ public class Main {
 	@Nullable
 	public static Function<UUID, String> CLIENT_NAME_RESOLVER;
 
-	/**
-	 * Shared logger for the whole simulator process.
-	 */
-	public static final Logger LOGGER = LogManager.getLogger("TransportSimulationCore");
 	/**
 	 * Wall-clock interval between simulator ticks in threaded mode, in milliseconds.
 	 */
@@ -86,10 +82,10 @@ public class Main {
 			main.readConsoleInput();
 		} catch (ParameterException e) {
 			commandLine.usage(System.out);
-			LOGGER.error("Failed to parse arguments: {}", e.getMessage(), e);
+			log.error("Failed to parse arguments: {}", e.getMessage(), e);
 		} catch (Exception e) {
 			commandLine.usage(System.out);
-			LOGGER.error("Failed to start simulation", e);
+			log.error("Failed to start simulation", e);
 		}
 	}
 
@@ -107,7 +103,7 @@ public class Main {
 	public Main(Path rootPath, int webserverPort, boolean threadedSimulation, boolean threadedFileLoading, @Nullable Consumer<Webserver> additionalWebserverSetup, String... dimensions) {
 		final ObjectArrayList<Simulator> tempSimulators = new ObjectArrayList<>();
 
-		LOGGER.info("Loading files...");
+		log.info("Loading files...");
 		for (final String dimension : dimensions) {
 			tempSimulators.add(new Simulator(dimension, dimensions, rootPath, threadedFileLoading));
 		}
@@ -134,7 +130,7 @@ public class Main {
 			scheduledExecutorService = null;
 		}
 
-		LOGGER.info("Server started with dimensions {}", Arrays.toString(dimensions));
+		log.info("Server started with dimensions {}", Arrays.toString(dimensions));
 	}
 
 	/**
@@ -183,7 +179,7 @@ public class Main {
 	 * Safe to call from the embedding process during shutdown.
 	 */
 	public void stop() {
-		LOGGER.info("Stopping...");
+		log.info("Stopping...");
 
 		if (webserver != null) {
 			webserver.stop();
@@ -194,9 +190,9 @@ public class Main {
 			Utilities.awaitTermination(scheduledExecutorService);
 		}
 
-		LOGGER.info("Starting full save...");
+		log.info("Starting full save...");
 		simulators.forEach(Simulator::stop);
-		LOGGER.info("Stopped");
+		log.info("Stopped");
 	}
 
 	private void readConsoleInput() {
@@ -224,10 +220,10 @@ public class Main {
 						}
 						simulators.forEach(simulator -> Depot.generateDepotsByName(simulator, generateKey.toString()));
 					}
-					default -> LOGGER.info("Unknown command \"{}\"", input[0]);
+					default -> log.info("Unknown command \"{}\"", input[0]);
 				}
 			} catch (Exception e) {
-				LOGGER.error("Failed to read console input", e);
+				log.error("Failed to read console input", e);
 				stop();
 				return;
 			}
@@ -238,10 +234,11 @@ public class Main {
 	private static final class MainArguments {
 
 		@Option(names = {"-r", "--root-path"}, required = true, paramLabel = "<path>", description = "Directory containing per-dimension save folders")
+		@Nullable
 		private Path rootPath;
 
-		@Option(names = {"-p", "--webserver-port"}, defaultValue = "8080", paramLabel = "<port>", description = "Jetty listen port; use 0 to disable the webserver (default: ${DEFAULT-VALUE})")
-		private int webserverPort = 8080;
+		@Option(names = {"-p", "--webserver-port"}, defaultValue = "8888", paramLabel = "<port>", description = "Jetty listen port; use 0 to disable the webserver (default: ${DEFAULT-VALUE})")
+		private int webserverPort = 8888;
 
 		@Option(names = "--threaded-simulation", negatable = true, defaultValue = "true", description = "Tick each dimension on a scheduled thread (default: ${DEFAULT-VALUE})")
 		private boolean threadedSimulation = true;
@@ -250,7 +247,7 @@ public class Main {
 		private boolean threadedFileLoading = true;
 
 		@Parameters(arity = "1..*", paramLabel = "<dimension>", description = "One or more dimension identifiers to load")
-		private String[] dimensions;
+		private String @Nullable [] dimensions;
 	}
 
 	/**

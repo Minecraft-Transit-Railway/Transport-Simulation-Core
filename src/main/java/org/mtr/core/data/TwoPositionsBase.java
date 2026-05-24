@@ -1,11 +1,13 @@
 package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.serializer.SerializedDataBaseWithId;
 import org.mtr.core.tool.Utilities;
 
 public abstract class TwoPositionsBase implements SerializedDataBaseWithId {
 
+	@Nullable
 	private String hexId;
 
 	@Override
@@ -36,13 +38,13 @@ public abstract class TwoPositionsBase implements SerializedDataBaseWithId {
 
 	public static String getHexIdRaw(Position position1, Position position2) {
 		return String.format(
-				"%s-%s-%s-%s-%s-%s",
-				Utilities.numberToPaddedHexString(position1.getX()),
-				Utilities.numberToPaddedHexString(position1.getY()),
-				Utilities.numberToPaddedHexString(position1.getZ()),
-				Utilities.numberToPaddedHexString(position2.getX()),
-				Utilities.numberToPaddedHexString(position2.getY()),
-				Utilities.numberToPaddedHexString(position2.getZ())
+			"%s-%s-%s-%s-%s-%s",
+			Utilities.numberToPaddedHexString(position1.getX()),
+			Utilities.numberToPaddedHexString(position1.getY()),
+			Utilities.numberToPaddedHexString(position1.getZ()),
+			Utilities.numberToPaddedHexString(position2.getX()),
+			Utilities.numberToPaddedHexString(position2.getY()),
+			Utilities.numberToPaddedHexString(position2.getZ())
 		);
 	}
 }

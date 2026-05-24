@@ -1,6 +1,7 @@
 package org.mtr.core.oba;
 
 import com.google.gson.JsonObject;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.oba.ReferencesBaseSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
@@ -34,6 +35,7 @@ public abstract class ReferencesBase extends ReferencesBaseSchema {
 		}
 	}
 
+	@Nullable
 	public abstract JsonObject toJson(Simulator simulator);
 
 	protected abstract boolean isIncludeReferences();

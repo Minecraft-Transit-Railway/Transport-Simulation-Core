@@ -1,1 +1,1 @@
-rootProject.name = "buildSrc"
+rootProject.name = "Transport-Simulation-Core-Build-Tools"

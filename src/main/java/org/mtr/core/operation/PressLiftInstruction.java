@@ -1,5 +1,6 @@
 package org.mtr.core.operation;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.data.Lift;
 import org.mtr.core.data.LiftDirection;
 import org.mtr.core.data.LiftInstruction;
@@ -18,6 +19,7 @@ public final class PressLiftInstruction extends PressLiftInstructionSchema {
 		updateData(readerBase);
 	}
 
+	@Nullable
 	LiftInstruction getLiftInstruction(Lift lift) {
 		final int floor = lift.getFloorIndex(position);
 		return floor >= 0 ? new LiftInstruction(floor, direction) : null;

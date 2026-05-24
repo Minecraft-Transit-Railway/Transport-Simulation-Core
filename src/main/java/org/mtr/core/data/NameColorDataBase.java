@@ -2,6 +2,7 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.NameColorDataBaseSchema;
 import org.mtr.core.generated.data.StationSchema;
 import org.mtr.core.serializer.ReaderBase;
@@ -21,19 +22,26 @@ import java.util.stream.Collectors;
  */
 public abstract class NameColorDataBase extends NameColorDataBaseSchema implements SerializedDataBaseWithId, Comparable<NameColorDataBase> {
 
+	@Nullable
 	private String hexId;
 
-	/** Construct a fresh entity bound to {@code transportMode} and {@code data}. */
+	/**
+	 * Construct a fresh entity bound to {@code transportMode} and {@code data}.
+	 */
 	public NameColorDataBase(TransportMode transportMode, Data data) {
 		super(transportMode, data);
 	}
 
-	/** Deserialisation constructor used by the wire / on-disk layer. */
+	/**
+	 * Deserialisation constructor used by the wire / on-disk layer.
+	 */
 	public NameColorDataBase(ReaderBase readerBase, Data data) {
 		super(readerBase, data);
 	}
 
-	/** @return the entity's id formatted as a fixed-width upper-case hex string (computed once and cached). */
+	/**
+	 * @return the entity's id formatted as a fixed-width upper-case hex string (computed once and cached).
+	 */
 	@Override
 	public final String getHexId() {
 		if (hexId == null) {
@@ -42,37 +50,51 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 		return hexId;
 	}
 
-	/** @return the underlying numeric id */
+	/**
+	 * @return the underlying numeric id
+	 */
 	public final long getId() {
 		return id;
 	}
 
-	/** @return the entity's display name (may include MTR's {@code "name||subtitle"} marker — see {@link Utilities#formatName(String)}) */
+	/**
+	 * @return the entity's display name (may include MTR's {@code "name||subtitle"} marker — see {@link Utilities#formatName(String)})
+	 */
 	public final String getName() {
 		return name;
 	}
 
-	/** @return the entity's RGB colour as a 24-bit packed integer */
+	/**
+	 * @return the entity's RGB colour as a 24-bit packed integer
+	 */
 	public final int getColor() {
 		return (int) (color & 0xFFFFFF);
 	}
 
-	/** @return the entity's RGB colour as a 6-character upper-case hex string */
+	/**
+	 * @return the entity's RGB colour as a 6-character upper-case hex string
+	 */
 	public final String getColorHex() {
 		return Utilities.numberToPaddedHexString(color, 6);
 	}
 
-	/** @return the {@link TransportMode} this entity belongs to (may be a placeholder for stations) */
+	/**
+	 * @return the {@link TransportMode} this entity belongs to (may be a placeholder for stations)
+	 */
 	public final TransportMode getTransportMode() {
 		return transportMode;
 	}
 
-	/** Replace the entity's display name. */
+	/**
+	 * Replace the entity's display name.
+	 */
 	public final void setName(String newName) {
 		name = newName;
 	}
 
-	/** Replace the entity's RGB colour (truncated to 24 bits). */
+	/**
+	 * Replace the entity's RGB colour (truncated to 24 bits).
+	 */
 	public final void setColor(int newColor) {
 		color = newColor & 0xFFFFFF;
 	}
@@ -85,7 +107,9 @@ public abstract class NameColorDataBase extends NameColorDataBaseSchema implemen
 		return noTransportMode() || data.noTransportMode() || data.transportMode == transportMode;
 	}
 
-	/** @see #isTransportMode(NameColorDataBase) */
+	/**
+	 * @see #isTransportMode(NameColorDataBase)
+	 */
 	public final boolean isTransportMode(TransportMode transportMode) {
 		return noTransportMode() || this.transportMode == transportMode;
 	}

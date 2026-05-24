@@ -9,6 +9,7 @@ import org.mtr.core.tool.Utilities;
 
 public final class SingleElement<T extends SerializedDataBase> extends ReferencesBase {
 
+	@Nullable
 	private T entry;
 	private final boolean includeReferences;
 

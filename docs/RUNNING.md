@@ -15,7 +15,7 @@ java -jar Transport-Simulation-Core.jar --root-path <path> [--webserver-port <po
 | Argument / option              | Description                                                                                                                                                               |
 |--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `--root-path`, `-r`            | Filesystem directory containing per-dimension save folders. Each `<dimension>` argument is resolved relative to this path.                                                |
-| `--webserver-port`, `-p`       | TCP port for the embedded Jetty server. Default is `8080`. **Pass `0`** to disable the webserver entirely (handy when embedding from another process).                    |
+| `--webserver-port`, `-p`       | TCP port for the embedded Jetty server. Default is `8888`. **Pass `0`** to disable the webserver entirely (handy when embedding from another process).                    |
 | `--[no-]threaded-simulation`   | Enabled by default. Disable with `--no-threaded-simulation` when the caller drives `Main.manualTick()`.                                                                   |
 | `--[no-]threaded-file-loading` | Enabled by default. Disable with `--no-threaded-file-loading` to load sequentially (less memory pressure on small machines).                                              |
 | `dimensions...`                | One or more dimension names. Each becomes a `Simulator` and a `<rootPath>/<name>/` subdirectory. The order defines the integer index used by the `dimension` query param. |
@@ -25,19 +25,19 @@ java -jar Transport-Simulation-Core.jar --root-path <path> [--webserver-port <po
 ```bash
 java -jar Transport-Simulation-Core-1.0.0.jar \
     --root-path /var/lib/transport-simulation \
-    --webserver-port 8080 \
+    --webserver-port 8888 \
     --threaded-simulation \
     --threaded-file-loading \
     overworld nether end
 ```
 
-This starts the server on port 8080, ticks each of the three dimensions every 10 ms on its
+This starts the server on port 8888, ticks each of the three dimensions every 10 ms on its
 own thread, and exposes:
 
-- the dashboard at <http://localhost:8080/>,
-- map data at <http://localhost:8080/mtr/api/map/stations-and-routes?dimension=0> (and
+- the dashboard at <http://localhost:8888/>,
+- map data at <http://localhost:8888/mtr/api/map/stations-and-routes?dimension=0> (and
   `dimension=1`, `dimension=2`),
-- OBA at <http://localhost:8080/oba/api/where/...>.
+- OBA at <http://localhost:8888/oba/api/where/...>.
 
 To print generated help / version text:
 

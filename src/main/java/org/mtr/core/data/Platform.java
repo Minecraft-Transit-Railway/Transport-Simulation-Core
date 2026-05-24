@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.PlatformSchema;
 import org.mtr.core.oba.Stop;
 import org.mtr.core.oba.StopDirection;
@@ -27,7 +28,7 @@ public final class Platform extends PlatformSchema {
 
 	public final ObjectAVLTreeSet<Route> routes = new ObjectAVLTreeSet<>();
 	public final IntAVLTreeSet routeColors = new IntAVLTreeSet();
-	private final Long2ObjectOpenHashMap<Angle> anglesFromDepot = new Long2ObjectOpenHashMap<>();
+	private final Long2ObjectOpenHashMap<@Nullable Angle> anglesFromDepot = new Long2ObjectOpenHashMap<>();
 
 	public Platform(Position position1, Position position2, TransportMode transportMode, Data data) {
 		super(position1, position2, transportMode, data);
@@ -47,7 +48,7 @@ public final class Platform extends PlatformSchema {
 		return transportMode.continuousMovement ? 1 : Math.max(1, dwellTime);
 	}
 
-	public void setAngles(long depotId, Angle angle) {
+	public void setAngles(long depotId, @Nullable Angle angle) {
 		anglesFromDepot.put(depotId, angle);
 	}
 
@@ -69,12 +70,12 @@ public final class Platform extends PlatformSchema {
 		final LatLon latLon = new LatLon(getMidPosition());
 		final String stationName = area == null ? "" : Utilities.formatName(area.getName());
 		final Stop stop = new Stop(
-				getHexId(),
-				getHexId(),
-				String.format("%s%s%s%s", stationName, !stationName.isEmpty() && !name.isEmpty() ? " - " : "", name.isEmpty() ? "" : "Platform ", name),
-				latLon.lat(),
-				latLon.lon(),
-				EnumHelper.valueOf(StopDirection.NONE, angle == null ? "" : angle.getClosest45().toString())
+			getHexId(),
+			getHexId(),
+			String.format("%s%s%s%s", stationName, !stationName.isEmpty() && !name.isEmpty() ? " - " : "", name.isEmpty() ? "" : "Platform ", name),
+			latLon.lat(),
+			latLon.lon(),
+			EnumHelper.valueOf(StopDirection.NONE, angle == null ? "" : angle.getClosest45().toString())
 		);
 
 		routeColors.forEach(color -> {

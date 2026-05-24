@@ -2,6 +2,7 @@ package org.mtr.core.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import lombok.Getter;
 import org.mtr.core.tool.Angle;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
@@ -26,7 +27,9 @@ public class RailMath {
 	public final long maxX;
 	public final long maxZ;
 
+	@Getter
 	private final Rail.Shape shape;
+	@Getter
 	private final double verticalRadius;
 	private final int tiltPoints;
 	private final double tiltAngle1;
@@ -71,10 +74,10 @@ public class RailMath {
 	// x = h*T + k*r
 	// z = k*T + h*r
 	public RailMath(
-			Position position1, Angle angle1,
-			Position position2, Angle angle2,
-			Rail.Shape shape, double verticalRadius, int tiltPoints,
-			double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2
+		Position position1, Angle angle1,
+		Position position2, Angle angle2,
+		Rail.Shape shape, double verticalRadius, int tiltPoints,
+		double tiltAngleDegrees1, double tiltAngleDistance1a, double tiltAngleDegrees1a, double tiltAngleDegrees1b, double tiltAngleDistance1b, double tiltAngleDegreesMiddle, double tiltAngleDistance2b, double tiltAngleDegrees2b, double tiltAngleDegrees2a, double tiltAngleDistance2a, double tiltAngleDegrees2
 	) {
 		final long xStart = position1.getX();
 		final long zStart = position1.getZ();
@@ -339,9 +342,9 @@ public class RailMath {
 				final double tiltAngle1 = previousTiltPointAndAngle.rightDouble();
 				final double tiltAngle2 = thisTiltPointAndAngle.rightDouble();
 				return Utilities.circularClamp(Utilities.getValueFromPercentage(
-						(value - point1) / (point2 - point1),
-						tiltAngle1,
-						Utilities.circularClamp(tiltAngle2, tiltAngle1 - Math.PI, tiltAngle1 + Math.PI, 2 * Math.PI)
+					(value - point1) / (point2 - point1),
+					tiltAngle1,
+					Utilities.circularClamp(tiltAngle2, tiltAngle1 - Math.PI, tiltAngle1 + Math.PI, 2 * Math.PI)
 				), -Math.PI, Math.PI, 2 * Math.PI) * (reverse ? -1 : 1);
 			}
 		}
@@ -353,16 +356,8 @@ public class RailMath {
 		return getLength1() + getLength2();
 	}
 
-	public Rail.Shape getShape() {
-		return shape;
-	}
-
 	public DoubleDoubleImmutablePair getHorizontalRadii() {
 		return new DoubleDoubleImmutablePair(isStraight1 ? 0 : Math.abs(r1), isStraight2 ? 0 : Math.abs(r2));
-	}
-
-	public double getVerticalRadius() {
-		return verticalRadius;
 	}
 
 	public double getMaxVerticalRadius() {
@@ -390,27 +385,27 @@ public class RailMath {
 		switch (tiltPoints) {
 			case 3:
 				return createList(
-						reversed,
-						new DoubleDoubleImmutablePair(0, tiltAngle1),
-						new DoubleDoubleImmutablePair(middlePoint, tiltAngleMiddle),
-						new DoubleDoubleImmutablePair(length, tiltAngle2)
+					reversed,
+					new DoubleDoubleImmutablePair(0, tiltAngle1),
+					new DoubleDoubleImmutablePair(middlePoint, tiltAngleMiddle),
+					new DoubleDoubleImmutablePair(length, tiltAngle2)
 				);
 			case 4:
 				return createList(
-						reversed,
-						new DoubleDoubleImmutablePair(0, tiltAngle1),
-						new DoubleDoubleImmutablePair(Utilities.clampSafe(tiltAngleDistance1a, 0, middlePoint), tiltAngle1a),
-						new DoubleDoubleImmutablePair(Utilities.clampSafe(length - tiltAngleDistance2a, middlePoint, length), tiltAngle2a),
-						new DoubleDoubleImmutablePair(length, tiltAngle2)
+					reversed,
+					new DoubleDoubleImmutablePair(0, tiltAngle1),
+					new DoubleDoubleImmutablePair(Utilities.clampSafe(tiltAngleDistance1a, 0, middlePoint), tiltAngle1a),
+					new DoubleDoubleImmutablePair(Utilities.clampSafe(length - tiltAngleDistance2a, middlePoint, length), tiltAngle2a),
+					new DoubleDoubleImmutablePair(length, tiltAngle2)
 				);
 			case 5:
 				return createList(
-						reversed,
-						new DoubleDoubleImmutablePair(0, tiltAngle1),
-						new DoubleDoubleImmutablePair(Utilities.clampSafe(tiltAngleDistance1a, 0, middlePoint), tiltAngle1a),
-						new DoubleDoubleImmutablePair(middlePoint, tiltAngleMiddle),
-						new DoubleDoubleImmutablePair(Utilities.clampSafe(length - tiltAngleDistance2a, middlePoint, length), tiltAngle2a),
-						new DoubleDoubleImmutablePair(length, tiltAngle2)
+					reversed,
+					new DoubleDoubleImmutablePair(0, tiltAngle1),
+					new DoubleDoubleImmutablePair(Utilities.clampSafe(tiltAngleDistance1a, 0, middlePoint), tiltAngle1a),
+					new DoubleDoubleImmutablePair(middlePoint, tiltAngleMiddle),
+					new DoubleDoubleImmutablePair(Utilities.clampSafe(length - tiltAngleDistance2a, middlePoint, length), tiltAngle2a),
+					new DoubleDoubleImmutablePair(length, tiltAngle2)
 				);
 			case 6:
 			case 7:
@@ -432,28 +427,28 @@ public class RailMath {
 				}
 
 				return tiltPoints == 6 ? createList(
-						reversed,
-						new DoubleDoubleImmutablePair(0, tiltAngle1),
-						new DoubleDoubleImmutablePair(distance1a, tiltAngle1a),
-						new DoubleDoubleImmutablePair(distance1b, tiltAngle1b),
-						new DoubleDoubleImmutablePair(distance2b, tiltAngle2b),
-						new DoubleDoubleImmutablePair(distance2a, tiltAngle2a),
-						new DoubleDoubleImmutablePair(length, tiltAngle2)
+					reversed,
+					new DoubleDoubleImmutablePair(0, tiltAngle1),
+					new DoubleDoubleImmutablePair(distance1a, tiltAngle1a),
+					new DoubleDoubleImmutablePair(distance1b, tiltAngle1b),
+					new DoubleDoubleImmutablePair(distance2b, tiltAngle2b),
+					new DoubleDoubleImmutablePair(distance2a, tiltAngle2a),
+					new DoubleDoubleImmutablePair(length, tiltAngle2)
 				) : createList(
-						reversed,
-						new DoubleDoubleImmutablePair(0, tiltAngle1),
-						new DoubleDoubleImmutablePair(distance1a, tiltAngle1a),
-						new DoubleDoubleImmutablePair(distance1b, tiltAngle1b),
-						new DoubleDoubleImmutablePair(middlePoint, tiltAngleMiddle),
-						new DoubleDoubleImmutablePair(distance2b, tiltAngle2b),
-						new DoubleDoubleImmutablePair(distance2a, tiltAngle2a),
-						new DoubleDoubleImmutablePair(length, tiltAngle2)
+					reversed,
+					new DoubleDoubleImmutablePair(0, tiltAngle1),
+					new DoubleDoubleImmutablePair(distance1a, tiltAngle1a),
+					new DoubleDoubleImmutablePair(distance1b, tiltAngle1b),
+					new DoubleDoubleImmutablePair(middlePoint, tiltAngleMiddle),
+					new DoubleDoubleImmutablePair(distance2b, tiltAngle2b),
+					new DoubleDoubleImmutablePair(distance2a, tiltAngle2a),
+					new DoubleDoubleImmutablePair(length, tiltAngle2)
 				);
 			default:
 				return createList(
-						reversed,
-						new DoubleDoubleImmutablePair(0, tiltAngle1),
-						new DoubleDoubleImmutablePair(length, tiltAngle2)
+					reversed,
+					new DoubleDoubleImmutablePair(0, tiltAngle1),
+					new DoubleDoubleImmutablePair(length, tiltAngle2)
 				);
 		}
 	}
@@ -487,11 +482,11 @@ public class RailMath {
 
 			if (previousCorner1 != null) {
 				callback.renderRail(
-						previousCorner1.x(), previousCorner1.y(), previousCorner1.z(),
-						previousCorner2.x(), previousCorner2.y(), previousCorner2.z(),
-						corner1.x(), corner1.y(), corner1.z(),
-						corner2.x(), corner2.y(), corner2.z(),
-						tiltAngle
+					previousCorner1.x(), previousCorner1.y(), previousCorner1.z(),
+					previousCorner2.x(), previousCorner2.y(), previousCorner2.z(),
+					corner1.x(), corner1.y(), corner1.z(),
+					corner2.x(), corner2.y(), corner2.z(),
+					tiltAngle
 				);
 			}
 

@@ -37,6 +37,7 @@ public abstract class PathFinder<T> {
 		tempData = ObjectArrayList.of(new ConnectionDetails<>(startNode, 0, 0, 0));
 	}
 
+	@Nullable
 	protected ObjectArrayList<ConnectionDetails<T>> findPath() {
 		if (!completed) {
 			final long elapsedTime = tempData.stream().mapToLong(data -> data.duration + data.waitingTime).sum();
@@ -112,12 +113,7 @@ public abstract class PathFinder<T> {
 		return lessThanOrEqualTo ? time <= blacklist.getOrDefault(node, Long.MAX_VALUE) : time < blacklist.getOrDefault(node, Long.MAX_VALUE);
 	}
 
-	protected static class ConnectionDetails<T> {
-
-		public final T node;
-		public final long duration;
-		public final long waitingTime;
-		public final long routeId;
+	protected record ConnectionDetails<T>(T node, long duration, long waitingTime, long routeId) {
 
 		protected ConnectionDetails(T node, long duration, long waitingTime, long routeId) {
 			this.node = node;

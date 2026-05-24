@@ -7,6 +7,7 @@ import org.mtr.core.tool.Utilities;
 
 public final class Response extends ResponseSchema {
 
+	@Nullable
 	public final JsonObject data;
 
 	public Response(int code, String text, @Nullable JsonObject data) {

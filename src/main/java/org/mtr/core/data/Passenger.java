@@ -188,7 +188,7 @@ public final class Passenger extends PassengerSchema {
 	private static LongLongImmutablePair getSidingAndVehicleIds(Route route, Platform platform) {
 		for (final Depot depot : route.depots) {
 			for (final Siding siding : depot.savedRails) {
-				final ObjectBooleanImmutablePair<Vehicle> vehicleDetails = siding.getVehicleDetailsAtPlatform(route.getId(), platform.getId());
+				final ObjectBooleanImmutablePair<@Nullable Vehicle> vehicleDetails = siding.getVehicleDetailsAtPlatform(route.getId(), platform.getId());
 				if (vehicleDetails.rightBoolean()) {
 					final Vehicle vehicle = vehicleDetails.left();
 					return new LongLongImmutablePair(siding.getId(), vehicle == null ? 0 : vehicle.getId());
