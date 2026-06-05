@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: 24
       - name: Install Node packages
-        run: npm ci --prefix website
+        run: npm ci --prefix website --force
       - name: Update packages
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         run: npm run update-all --prefix website
