@@ -9,7 +9,9 @@ package org.mtr.core.serializer;
  */
 public interface SerializedDataBaseWithId extends SerializedDataBase {
 
-	/** @return the entity's id formatted as a fixed-width upper-case hex string */
+	/**
+	 * @return the entity's id formatted as a fixed-width upper-case hex string
+	 */
 	String getHexId();
 
 	/**

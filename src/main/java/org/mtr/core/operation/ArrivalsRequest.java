@@ -33,7 +33,9 @@ public final class ArrivalsRequest extends ArrivalsRequestSchema {
 		this.platformIds.addAll(platformIds);
 	}
 
-	/** Deserialisation constructor used by the wire layer. */
+	/**
+	 * Deserialisation constructor used by the wire layer.
+	 */
 	public ArrivalsRequest(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);

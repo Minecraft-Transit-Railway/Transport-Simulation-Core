@@ -15,11 +15,17 @@ import org.mtr.core.data.Position;
  */
 public record LatLon(double lat, double lon) {
 
-	/** Maximum absolute latitude (the poles), in degrees. */
+	/**
+	 * Maximum absolute latitude (the poles), in degrees.
+	 */
 	public static final double MAX_LAT = 90;
-	/** Maximum absolute longitude (the antimeridian), in degrees. */
+	/**
+	 * Maximum absolute longitude (the antimeridian), in degrees.
+	 */
 	public static final double MAX_LON = 180;
-	/** Earth's equatorial circumference in metres, used as the projection scale. */
+	/**
+	 * Earth's equatorial circumference in metres, used as the projection scale.
+	 */
 	private static final int EARTH_CIRCUMFERENCE_METERS = 40075017;
 
 	/**
@@ -32,17 +38,23 @@ public record LatLon(double lat, double lon) {
 		this(metersToLat(-position.getZ()), metersToLon(position.getX()));
 	}
 
-	/** @return a new {@link LatLon} translated by {@code (latOffset, lonOffset)}. */
+	/**
+	 * @return a new {@link LatLon} translated by {@code (latOffset, lonOffset)}.
+	 */
 	public LatLon offset(double latOffset, double lonOffset) {
 		return new LatLon(lat + latOffset, lon + lonOffset);
 	}
 
-	/** @return {@code meters} converted to a latitude delta in degrees, clamped to {@code [-MAX_LAT, MAX_LAT]}. */
+	/**
+	 * @return {@code meters} converted to a latitude delta in degrees, clamped to {@code [-MAX_LAT, MAX_LAT]}.
+	 */
 	public static double metersToLat(double meters) {
 		return Utilities.clampSafe(MAX_LAT * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LAT, MAX_LAT);
 	}
 
-	/** @return {@code meters} converted to a longitude delta in degrees, clamped to {@code [-MAX_LON, MAX_LON]}. */
+	/**
+	 * @return {@code meters} converted to a longitude delta in degrees, clamped to {@code [-MAX_LON, MAX_LON]}.
+	 */
 	public static double metersToLon(double meters) {
 		return Utilities.clampSafe(MAX_LON * 2 * meters / EARTH_CIRCUMFERENCE_METERS, -MAX_LON, MAX_LON);
 	}

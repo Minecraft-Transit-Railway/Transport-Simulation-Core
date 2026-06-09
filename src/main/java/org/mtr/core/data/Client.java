@@ -34,11 +34,23 @@ public class Client extends ClientSchema {
 	private final ObjectAVLTreeSet<String> keepRailIds = new ObjectAVLTreeSet<>();
 	private final Object2ObjectAVLTreeMap<String, Rail> signalBlockUpdates = new Object2ObjectAVLTreeMap<>();
 
+	private final LongAVLTreeSet existingPassengerIds = new LongAVLTreeSet();
+	private final LongAVLTreeSet keepPassengerIds = new LongAVLTreeSet();
+	private final Long2ObjectAVLTreeMap<Passenger> passengerUpdates = new Long2ObjectAVLTreeMap<>();
+
+	/**
+	 * Create a new client with the given unique identifier.
+	 *
+	 * @param uuid client UUID used for tracking across the mod and dashboard
+	 */
 	public Client(UUID uuid) {
 		super(uuid.toString());
 		this.uuid = uuid;
 	}
 
+	/**
+	 * Deserialisation constructor used by the wire / on-disk layer.
+	 */
 	public Client(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
@@ -58,23 +70,41 @@ public class Client extends ClientSchema {
 		return updateRadius;
 	}
 
+	/**
+	 * Update the client's tracked position and area-of-interest radius. Entities within this
+	 * radius will be pushed to the client on the next {@link #sendUpdates} cycle.
+	 */
 	public void setPositionAndUpdateRadius(Position position, long updateRadius) {
 		this.position = position;
 		this.updateRadius = updateRadius;
 	}
 
+	/**
+	 * Send pending vehicle / lift / passenger / signal-block updates to the client via the
+	 * server-to-client message queue.
+	 */
 	public void sendUpdates(Simulator simulator) {
 		final DynamicDataResponse dynamicDataResponse = new DynamicDataResponse(uuid, simulator);
 		final boolean hasUpdate1 = process(vehicleUpdates, existingVehicleIds, keepVehicleIds, dynamicDataResponse::addVehicleToUpdate, dynamicDataResponse::addVehicleToKeep);
 		final boolean hasUpdate2 = process(liftUpdates, existingLiftIds, keepLiftIds, dynamicDataResponse::addLiftToUpdate, dynamicDataResponse::addLiftToKeep);
 		final boolean hasUpdate3 = process(signalBlockUpdates, existingRailIds, keepRailIds, dynamicDataResponse::addSignalBlockUpdate, railId -> {
 		});
+		final boolean hasUpdate4 = process(passengerUpdates, existingPassengerIds, keepPassengerIds, dynamicDataResponse::addPassengerToUpdate, dynamicDataResponse::addPassengerToKeep);
 
-		if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
+		if (hasUpdate1 || hasUpdate2 || hasUpdate3 || hasUpdate4) {
 			simulator.sendMessageS2C(OperationProcessor.VEHICLES_LIFTS, dynamicDataResponse, playerPresentResponse -> playerPresentResponse.verify(simulator, uuid), PlayerPresentResponse.class);
 		}
 	}
 
+	/**
+	 * Track a vehicle for the next {@link #sendUpdates} cycle. If the vehicle is new or
+	 * dirty it is queued for a full update; otherwise it is kept alive so the client knows not
+	 * to remove it.
+	 *
+	 * @param vehicle         the vehicle to track
+	 * @param needsUpdate     whether the vehicle's state has changed since the last sync
+	 * @param pathUpdateIndex index into the vehicle's path data for partial updates
+	 */
 	public void update(Vehicle vehicle, boolean needsUpdate, int pathUpdateIndex) {
 		final long vehicleId = vehicle.getId();
 		if (needsUpdate || !existingVehicleIds.contains(vehicleId)) {
@@ -85,6 +115,12 @@ public class Client extends ClientSchema {
 		}
 	}
 
+	/**
+	 * Track a lift for the next {@link #sendUpdates} cycle.
+	 *
+	 * @param lift        the lift to track
+	 * @param needsUpdate whether the lift's state has changed since the last sync
+	 */
 	public void update(Lift lift, boolean needsUpdate) {
 		final long liftId = lift.getId();
 		if (needsUpdate || !existingLiftIds.contains(liftId)) {
@@ -95,6 +131,12 @@ public class Client extends ClientSchema {
 		}
 	}
 
+	/**
+	 * Track a rail for signal-block updates on the next {@link #sendUpdates} cycle.
+	 *
+	 * @param rail        the rail to track
+	 * @param needsUpdate whether the rail's signal-block state has changed since the last sync
+	 */
 	public void update(Rail rail, boolean needsUpdate) {
 		final String railId = rail.getHexId();
 		if (needsUpdate || !existingRailIds.contains(railId)) {
@@ -102,6 +144,24 @@ public class Client extends ClientSchema {
 			keepRailIds.remove(railId);
 		} else if (!signalBlockUpdates.containsKey(railId)) {
 			keepRailIds.add(railId);
+		}
+	}
+
+	/**
+	 * Track a passenger for the next {@link #sendUpdates} cycle. If the passenger is new or
+	 * dirty it is queued for a full update; otherwise it is kept alive so the client knows not
+	 * to remove it.
+	 *
+	 * @param passenger   the passenger to track
+	 * @param needsUpdate whether the passenger's state has changed since the last sync
+	 */
+	public void update(Passenger passenger, boolean needsUpdate) {
+		final long passengerId = passenger.getId();
+		if (needsUpdate || !existingPassengerIds.contains(passengerId)) {
+			passengerUpdates.put(passengerId, passenger);
+			keepPassengerIds.remove(passengerId);
+		} else if (!passengerUpdates.containsKey(passengerId)) {
+			keepPassengerIds.add(passengerId);
 		}
 	}
 

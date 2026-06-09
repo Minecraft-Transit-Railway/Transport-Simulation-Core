@@ -17,16 +17,32 @@ public final class Home extends HomeSchema {
 
 	private static final int MAX_PASSENGERS_PER_TICK = 10;
 
+	/**
+	 * Create a new empty home in the given simulation or client context.
+	 */
 	public Home(Data data) {
 		super(TransportMode.values()[0], data);
 	}
 
+	/**
+	 * Deserialisation constructor used by the wire / on-disk layer.
+	 *
+	 * @param readerBase source to read persisted data from
+	 * @param data       the simulation engine or client data container
+	 */
 	public Home(ReaderBase readerBase, Data data) {
 		super(readerBase, data);
 		updateData(readerBase);
 	}
 
-	public void tick(long millisElapsed) {
+	/**
+	 * Advance this home's passenger simulation by one tick. The passenger count is converged
+	 * towards the configured {@link #population} (at most
+	 * {@value #MAX_PASSENGERS_PER_TICK} adjustments per tick), and each passenger is ticked
+	 * individually. Dirty passengers are pushed to nearby clients for synchronisation.
+	 *
+	 */
+	public void tick() {
 		if (data instanceof Simulator simulator) {
 			int adjustments = 0;
 			while (passengers.size() != population && adjustments < MAX_PASSENGERS_PER_TICK) {
@@ -38,7 +54,14 @@ public final class Home extends HomeSchema {
 				adjustments++;
 			}
 
-			passengers.forEach(passenger -> passenger.tick(this, simulator, millisElapsed));
+			passengers.forEach(passenger -> {
+				final boolean dirty = passenger.tick(this, simulator);
+				simulator.clients.forEach(client -> {
+					if (inArea(client.getPosition(), client.getUpdateRadius())) {
+						client.update(passenger, dirty);
+					}
+				});
+			});
 		}
 	}
 }

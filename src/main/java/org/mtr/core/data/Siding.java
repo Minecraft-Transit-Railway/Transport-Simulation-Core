@@ -104,7 +104,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	/**
-	 * Should only be called during initialization and when a siding is created (by building a siding rail)
+	 * Should only be called during initialisation and when a siding is created (by building a siding rail)
 	 */
 	public void init() {
 		tick();
@@ -532,8 +532,8 @@ public final class Siding extends SidingSchema implements Utilities {
 			return (long) Depot.CONTINUOUS_MOVEMENT_FREQUENCY * area.savedRails.size();
 		} else if (area.getRepeatInfinitely()) {
 			return Math.round(timeOffsetForRepeating);
-		} else if (data instanceof Simulator && !area.getUseRealTime()) {
-			return ((Simulator) data).getGameMillisPerDay() * area.getRepeatDepartures();
+		} else if (data instanceof final Simulator simulator && !area.getUseRealTime()) {
+			return simulator.getGameMillisPerDay() * area.getRepeatDepartures();
 		} else {
 			return defaultAmount;
 		}
@@ -704,7 +704,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	private OccupancyStatus getOBAOccupancyStatus(boolean predicted) {
-		// TODO
+		// TODO implement actual occupancy calculation based on vehicle capacity
 		return predicted ? OccupancyStatus.values()[RANDOM.nextInt(OccupancyStatus.values().length - 2)] : OccupancyStatus.NO_DATA_AVAILABLE;
 	}
 
@@ -722,7 +722,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	/**
-	 * After a path is set, generate the distance and time values. Should only be called during initialization and after a path is generated.
+	 * After a path is set, generate the distance and time values. Should only be called during initialisation and after a path is generated.
 	 */
 	private void generatePathDistancesAndTimeSegments() {
 		vehicles.clear();

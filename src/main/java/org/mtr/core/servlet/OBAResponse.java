@@ -30,24 +30,28 @@ public final class OBAResponse extends ResponseBase<Object> {
 	private static final Agency AGENCY = new Agency();
 
 	/**
-	 * @param data            path-suffix the request was made against (interpreted per endpoint)
-	 * @param parameters      query-string parameters keyed by name
-	 * @param currentMillis   simulator-wall-clock millis at the time the request was admitted
-	 * @param simulator       simulator the request was routed to
+	 * @param data          path-suffix the request was made against (interpreted per endpoint)
+	 * @param parameters    query-string parameters keyed by name
+	 * @param currentMillis simulator-wall-clock millis at the time the request was admitted
+	 * @param simulator     simulator the request was routed to
 	 */
 	public OBAResponse(String data, Object2ObjectAVLTreeMap<String, String> parameters, long currentMillis, Simulator simulator) {
 		super(data, parameters, new Object(), currentMillis, simulator);
 		includeReferences = !"false".equals(parameters.get("includeReferences"));
 	}
 
-	/** @return JSON envelope for {@code /oba/api/where/agencies-with-coverage} */
+	/**
+	 * @return JSON envelope for {@code /oba/api/where/agencies-with-coverage}
+	 */
 	public JsonObject getAgenciesWithCoverage() {
 		final ListElement<AgencyWithCoverage> listElement = ListElement.create(includeReferences, AGENCY);
 		listElement.add(new AgencyWithCoverage());
 		return listElement.toJson(simulator);
 	}
 
-	/** @return JSON envelope for {@code /oba/api/where/agency/{id}}, or {@code null} if {@code id != "1"} */
+	/**
+	 * @return JSON envelope for {@code /oba/api/where/agency/{id}}, or {@code null} if {@code id != "1"}
+	 */
 	@Nullable
 	public JsonObject getAgency() {
 		if (data.equals("1")) {
@@ -107,7 +111,9 @@ public final class OBAResponse extends ResponseBase<Object> {
 		return null;
 	}
 
-	/** @return JSON envelope for {@code /oba/api/where/stops-for-location} */
+	/**
+	 * @return JSON envelope for {@code /oba/api/where/stops-for-location}
+	 */
 	public JsonObject getStopsForLocation() {
 		final LatLon latLon = getLatLonParameter();
 

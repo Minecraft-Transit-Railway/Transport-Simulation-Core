@@ -49,6 +49,7 @@ public class Simulator extends Data implements Utilities {
 	@Getter
 	private boolean isTimeMoving;
 	private long lastSetGameMillisMidnight;
+	private int currentPassengerDirectionsRequests;
 
 	/**
 	 * Connected dashboard / mod clients for this dimension.
@@ -90,6 +91,7 @@ public class Simulator extends Data implements Utilities {
 	 * "noisy log on a sluggish host" and "silent multi-hour drift".
 	 */
 	private static final int SIMULATION_DIFFERENCE_LOGGING_THRESHOLD = 120000;
+	private static final int MAX_PASSENGER_DIRECTIONS_REQUESTS = 512;
 	/**
 	 * Default in-game day length in real-time milliseconds (20 in-game minutes).
 	 */
@@ -178,7 +180,7 @@ public class Simulator extends Data implements Utilities {
 			final ObjectLongImmutablePair<Integer> ticksAndDuration = Utilities.measureDuration(this::tickUntilCaughtUp);
 			log.info(
 				"Simulation difference of {}h{}m for {} caught up with {} ticks in {} second(s)",
-				totalDifference / MILLIS_PER_SECOND / 3600, (totalDifference / MILLIS_PER_SECOND / 60) % 60,
+				totalDifference / MILLIS_PER_SECOND / (MILLIS_PER_HOUR / MILLIS_PER_SECOND), (totalDifference / MILLIS_PER_SECOND / (MILLIS_PER_MINUTE / MILLIS_PER_SECOND)) % (MILLIS_PER_MINUTE / MILLIS_PER_SECOND),
 				dimension,
 				ticksAndDuration.left(),
 				(float) ticksAndDuration.rightLong() / MILLIS_PER_SECOND
@@ -269,7 +271,62 @@ public class Simulator extends Data implements Utilities {
 	 * @return the game hour (0-23)
 	 */
 	public int getGameHour() {
-		return gameMillisPerDay > 0 ? (int) (gameMillis * HOURS_PER_DAY / gameMillisPerDay) : 0;
+		return getGameHourAt(getCurrentMillis());
+	}
+
+	/**
+	 * @param simulationMillis target simulation timestamp
+	 * @return normalized in-game milliseconds in [0, gameMillisPerDay), projected from current
+	 * simulator time if game time is moving
+	 */
+	public long getGameMillisAt(long simulationMillis) {
+		if (gameMillisPerDay <= 0) {
+			return 0;
+		}
+
+		final long projectedGameMillis = isTimeMoving ? gameMillis + (simulationMillis - getCurrentMillis()) : gameMillis;
+		return Math.floorMod(projectedGameMillis, gameMillisPerDay);
+	}
+
+	/**
+	 * @param simulationMillis target simulation timestamp
+	 * @return projected in-game hour (0-23) at {@code simulationMillis}
+	 */
+	public int getGameHourAt(long simulationMillis) {
+		return gameMillisPerDay > 0 ? (int) (getGameMillisAt(simulationMillis) * HOURS_PER_DAY / gameMillisPerDay) : 0;
+	}
+
+	/**
+	 * Map an in-game day offset (0..{@link Utilities#MILLIS_PER_DAY}) to an absolute simulation
+	 * timestamp using the current game-day scale.
+	 */
+	public long getSimulationMillisAtGameDayOffset(long gameDayOffsetMillis) {
+		if (gameMillisPerDay <= 0) {
+			return getCurrentMillis();
+		}
+
+		return getMillisOfGameMidnight() + Math.floorMod(gameDayOffsetMillis, (long) MILLIS_PER_DAY) * gameMillisPerDay / MILLIS_PER_DAY;
+	}
+
+	/**
+	 * For in-game schedules, when game time is paused we pin frequency lookup to the current game
+	 * hour; when moving, use the iterated schedule hour.
+	 */
+	public int getScheduleFrequencyHour(int iteratedHour) {
+		return isTimeMoving ? iteratedHour : getGameHour();
+	}
+
+	/**
+	 * Limit how many new passenger direction requests enter CSA per simulation tick to keep latency
+	 * stable on very large maps.
+	 */
+	public boolean tryConsumePassengerDirectionsRequestBudget() {
+		if (currentPassengerDirectionsRequests >= MAX_PASSENGER_DIRECTIONS_REQUESTS) {
+			return false;
+		} else {
+			currentPassengerDirectionsRequests++;
+			return true;
+		}
 	}
 
 	/**
@@ -371,6 +428,7 @@ public class Simulator extends Data implements Utilities {
 	private void tick(long millisElapsed) {
 		lastMillis = getCurrentMillis();
 		setCurrentMillis(lastMillis + millisElapsed);
+		currentPassengerDirectionsRequests = 0;
 
 		try {
 			vehiclePositions.forEach(vehiclePositionsForTransportMode -> {
@@ -400,7 +458,7 @@ public class Simulator extends Data implements Utilities {
 
 			lifts.forEach(lift -> lift.tick(millisElapsed));
 			landmarks.forEach(Landmark::tick);
-			homes.forEach(home -> home.tick(millisElapsed));
+			homes.forEach(Home::tick);
 
 			// Process queued runs
 			queuedRuns.process(Runnable::run);

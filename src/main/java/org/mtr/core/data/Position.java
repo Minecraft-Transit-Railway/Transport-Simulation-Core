@@ -30,33 +30,45 @@ public class Position extends PositionSchema implements Comparable<Position> {
 	private static final int X_HASH_SHIFT = Y_HASH_BITS + Z_HASH_BITS;
 	private static final int Y_HASH_SHIFT = Z_HASH_BITS;
 
-	/** Construct an explicit position. */
+	/**
+	 * Construct an explicit position.
+	 */
 	public Position(long x, long y, long z) {
 		super(x, y, z);
 	}
 
-	/** Deserialisation constructor used by the wire / on-disk layer. */
+	/**
+	 * Deserialisation constructor used by the wire / on-disk layer.
+	 */
 	public Position(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);
 	}
 
-	/** Snap a continuous {@link Vector} down to its containing block (floor on each axis). */
+	/**
+	 * Snap a continuous {@link Vector} down to its containing block (floor on each axis).
+	 */
 	public Position(Vector railPosition) {
 		this((long) Math.floor(railPosition.x()), (long) Math.floor(railPosition.y()), (long) Math.floor(railPosition.z()));
 	}
 
-	/** @return the world-space {@code x} coordinate */
+	/**
+	 * @return the world-space {@code x} coordinate
+	 */
 	public long getX() {
 		return x;
 	}
 
-	/** @return the world-space {@code y} (height) coordinate */
+	/**
+	 * @return the world-space {@code y} (height) coordinate
+	 */
 	public long getY() {
 		return y;
 	}
 
-	/** @return the world-space {@code z} coordinate */
+	/**
+	 * @return the world-space {@code z} coordinate
+	 */
 	public long getZ() {
 		return z;
 	}
@@ -69,12 +81,16 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return offsetX == 0 && offsetY == 0 && offsetZ == 0 ? this : new Position(x + offsetX, y + offsetY, z + offsetZ);
 	}
 
-	/** @return {@code this + position} as a new {@link Position}. */
+	/**
+	 * @return {@code this + position} as a new {@link Position}.
+	 */
 	public Position offset(Position position) {
 		return offset(position.x, position.y, position.z);
 	}
 
-	/** @return Manhattan (taxicab) distance between {@code this} and {@code position}. */
+	/**
+	 * @return Manhattan (taxicab) distance between {@code this} and {@code position}.
+	 */
 	public long manhattanDistance(Position position) {
 		return Math.abs(position.x - x) + Math.abs(position.y - y) + Math.abs(position.z - z);
 	}
@@ -94,7 +110,9 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		return new Position(Math.min(position1.x, position2.x), Math.min(position1.y, position2.y), Math.min(position1.z, position2.z));
 	}
 
-	/** Component-wise maximum, mirroring {@link #getMin(Position, Position)}. */
+	/**
+	 * Component-wise maximum, mirroring {@link #getMin(Position, Position)}.
+	 */
 	@Nullable
 	public static Position getMax(@Nullable Position position1, @Nullable Position position2) {
 		if (position1 == null) {
@@ -125,7 +143,7 @@ public class Position extends PositionSchema implements Comparable<Position> {
 		if (equals(position)) {
 			return 0;
 		} else {
-			return x > position.x ? 1 : x < position.x ? -1 : y > position.y ? 1 : y < position.y ? -1 : z > position.z ? 1 : -1;
+			return x > position.x ? 1 : (x < position.x ? -1 : (y > position.y ? 1 : (y < position.y ? -1 : (z > position.z ? 1 : -1))));
 		}
 	}
 }

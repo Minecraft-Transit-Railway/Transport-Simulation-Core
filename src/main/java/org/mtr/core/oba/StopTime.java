@@ -9,12 +9,12 @@ public final class StopTime extends StopTimeSchema implements Utilities {
 
 	public StopTime(Trip.StopTime stopTime, long offsetMillis) {
 		super(
-				Utilities.numberToPaddedHexString(stopTime.platformId),
-				(stopTime.startTime + offsetMillis) / MILLIS_PER_SECOND,
-				(stopTime.endTime + offsetMillis) / MILLIS_PER_SECOND,
-				0,
-				0,
-				stopTime.customDestination
+			Utilities.numberToPaddedHexString(stopTime.platformId),
+			(stopTime.startTime + offsetMillis) / MILLIS_PER_SECOND,
+			(stopTime.endTime + offsetMillis) / MILLIS_PER_SECOND,
+			0,
+			0,
+			stopTime.customDestination
 		);
 	}
 

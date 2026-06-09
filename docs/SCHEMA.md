@@ -31,10 +31,6 @@ The mapping is wired in [`build.gradle.kts`](../build.gradle.kts) under the
 Run `generateSchemaClasses` whenever you touch a schema. The output folders are git-ignored,
 so the generated sources are produced fresh per build environment.
 
-`generateSchemaClasses` additionally emits a `SchemaTests` JUnit class per domain that
-round-trips a randomly populated instance through serialise → deserialise (so adding a
-property without updating the serializer breaks the build).
-
 Run `setupWebserver` to package the built Angular app into the `WebserverResources` Java class
 served at `/`. This means the website must be built (`cd website && npm run build`) before
 this Gradle task if you want the dashboard bundled into the jar.

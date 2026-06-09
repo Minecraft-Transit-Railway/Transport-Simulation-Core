@@ -13,19 +13,29 @@ import java.util.Collection;
  */
 public abstract class WriterBase {
 
-	/** Write a boolean field under {@code key}. */
+	/**
+	 * Write a boolean field under {@code key}.
+	 */
 	public abstract void writeBoolean(String key, boolean value);
 
-	/** Write an int field under {@code key}. */
+	/**
+	 * Write an int field under {@code key}.
+	 */
 	public abstract void writeInt(String key, int value);
 
-	/** Write a long field under {@code key}. */
+	/**
+	 * Write a long field under {@code key}.
+	 */
 	public abstract void writeLong(String key, long value);
 
-	/** Write a double field under {@code key}. */
+	/**
+	 * Write a double field under {@code key}.
+	 */
 	public abstract void writeDouble(String key, double value);
 
-	/** Write a string field under {@code key}. */
+	/**
+	 * Write a string field under {@code key}.
+	 */
 	public abstract void writeString(String key, String value);
 
 	/**
@@ -34,7 +44,9 @@ public abstract class WriterBase {
 	 */
 	public abstract Array writeArray(String key);
 
-	/** Open a nested-object field under {@code key}; returns the writer that scopes it. */
+	/**
+	 * Open a nested-object field under {@code key}; returns the writer that scopes it.
+	 */
 	public abstract WriterBase writeChild(String key);
 
 	/**
@@ -52,22 +64,34 @@ public abstract class WriterBase {
 	 */
 	public abstract static class Array {
 
-		/** Append a boolean element. */
+		/**
+		 * Append a boolean element.
+		 */
 		public abstract void writeBoolean(boolean value);
 
-		/** Append an int element. */
+		/**
+		 * Append an int element.
+		 */
 		public abstract void writeInt(int value);
 
-		/** Append a long element. */
+		/**
+		 * Append a long element.
+		 */
 		public abstract void writeLong(long value);
 
-		/** Append a double element. */
+		/**
+		 * Append a double element.
+		 */
 		public abstract void writeDouble(double value);
 
-		/** Append a string element. */
+		/**
+		 * Append a string element.
+		 */
 		public abstract void writeString(String value);
 
-		/** Open a nested-object element; returns the writer that scopes it. */
+		/**
+		 * Open a nested-object element; returns the writer that scopes it.
+		 */
 		public abstract WriterBase writeChild();
 	}
 }

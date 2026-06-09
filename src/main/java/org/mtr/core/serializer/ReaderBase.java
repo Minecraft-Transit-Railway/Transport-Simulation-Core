@@ -49,40 +49,64 @@ public abstract class ReaderBase {
 	 */
 	public abstract void iterateBooleanArray(String key, Runnable clearList, BooleanConsumer ifExists);
 
-	/** @see #unpackBoolean(String, BooleanConsumer) */
+	/**
+	 * @see #unpackBoolean(String, BooleanConsumer)
+	 */
 	public abstract void unpackInt(String key, IntConsumer ifExists);
 
-	/** @see #getBoolean(String, boolean) */
+	/**
+	 * @see #getBoolean(String, boolean)
+	 */
 	public abstract int getInt(String key, int defaultValue);
 
-	/** @see #iterateBooleanArray(String, Runnable, BooleanConsumer) */
+	/**
+	 * @see #iterateBooleanArray(String, Runnable, BooleanConsumer)
+	 */
 	public abstract void iterateIntArray(String key, Runnable clearList, IntConsumer ifExists);
 
-	/** @see #unpackBoolean(String, BooleanConsumer) */
+	/**
+	 * @see #unpackBoolean(String, BooleanConsumer)
+	 */
 	public abstract void unpackLong(String key, LongConsumer ifExists);
 
-	/** @see #getBoolean(String, boolean) */
+	/**
+	 * @see #getBoolean(String, boolean)
+	 */
 	public abstract long getLong(String key, long defaultValue);
 
-	/** @see #iterateBooleanArray(String, Runnable, BooleanConsumer) */
+	/**
+	 * @see #iterateBooleanArray(String, Runnable, BooleanConsumer)
+	 */
 	public abstract void iterateLongArray(String key, Runnable clearList, LongConsumer ifExists);
 
-	/** @see #unpackBoolean(String, BooleanConsumer) */
+	/**
+	 * @see #unpackBoolean(String, BooleanConsumer)
+	 */
 	public abstract void unpackDouble(String key, DoubleConsumer ifExists);
 
-	/** @see #getBoolean(String, boolean) */
+	/**
+	 * @see #getBoolean(String, boolean)
+	 */
 	public abstract double getDouble(String key, double defaultValue);
 
-	/** @see #iterateBooleanArray(String, Runnable, BooleanConsumer) */
+	/**
+	 * @see #iterateBooleanArray(String, Runnable, BooleanConsumer)
+	 */
 	public abstract void iterateDoubleArray(String key, Runnable clearList, DoubleConsumer ifExists);
 
-	/** @see #unpackBoolean(String, BooleanConsumer) */
+	/**
+	 * @see #unpackBoolean(String, BooleanConsumer)
+	 */
 	public abstract void unpackString(String key, Consumer<String> ifExists);
 
-	/** @see #getBoolean(String, boolean) */
+	/**
+	 * @see #getBoolean(String, boolean)
+	 */
 	public abstract String getString(String key, String defaultValue);
 
-	/** @see #iterateBooleanArray(String, Runnable, BooleanConsumer) */
+	/**
+	 * @see #iterateBooleanArray(String, Runnable, BooleanConsumer)
+	 */
 	public abstract void iterateStringArray(String key, Runnable clearList, Consumer<String> ifExists);
 
 	/**

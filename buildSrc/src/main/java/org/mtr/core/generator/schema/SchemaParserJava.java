@@ -9,8 +9,7 @@ import org.mtr.core.generator.objects.*;
 import org.mtr.core.generator.objects.Class;
 
 /**
- * Parses a single JSON schema object into a Java code-model ({@link Class}) and
- * accumulates the corresponding JUnit test method content.
+ * Parses a single JSON schema object into a Java code-model ({@link Class}).
  *
  * <p>Construction inspects the {@code properties}, {@code required},
  * {@code javaConstructorFields}, and {@code javaImplements} keys of the supplied
@@ -27,9 +26,6 @@ public class SchemaParserJava {
 	private final Method serializeMethod;
 	@Nullable
 	private final String extendsClassName;
-	private final Method testMethod;
-	final ObjectArrayList<String> testMethodContent1 = new ObjectArrayList<>();
-	final ObjectArrayList<String> testMethodContent2 = new ObjectArrayList<>();
 
 	/**
 	 * Creates a schema parser for one JSON schema object.
@@ -37,17 +33,15 @@ public class SchemaParserJava {
 	 * @param schemaClass      the class model to populate
 	 * @param extendsClassName the {@code Schema}-suffixed name of the direct superclass,
 	 *                         or {@code null} if the class has no schema parent
-	 * @param testMethod       the test method model to which test statements are appended
 	 * @param jsonObject       the raw JSON schema object
 	 */
-	public SchemaParserJava(Class schemaClass, @Nullable String extendsClassName, Method testMethod, JsonObject jsonObject) {
+	public SchemaParserJava(Class schemaClass, @Nullable String extendsClassName, JsonObject jsonObject) {
 		this.schemaClass = schemaClass;
 		constructor1 = schemaClass.createConstructor(VisibilityModifier.PROTECTED);
 		constructor2 = schemaClass.createConstructor(VisibilityModifier.PROTECTED);
 		updateMethod = new Method(VisibilityModifier.PUBLIC, null, "updateData");
 		serializeMethod = new Method(VisibilityModifier.PUBLIC, null, "serializeData");
 		this.extendsClassName = extendsClassName;
-		this.testMethod = testMethod;
 
 		updateMethod.parameters.add(new Parameter(Type.createObject("ReaderBase", ""), "readerBase"));
 		serializeMethod.parameters.add(new Parameter(Type.createObject("WriterBase", ""), "writerBase"));
@@ -137,31 +131,20 @@ public class SchemaParserJava {
 	}
 
 	/**
-	 * Finalises the class model (wires super-constructor parameters and test content from
-	 * extended classes) and renders the class to a Java source string.
-	 *
-	 * <p>If this class is a leaf in the schema inheritance tree it also registers the
-	 * accumulated test method into {@code testClass}.</p>
+	 * Finalises the class model (wires super-constructor parameters) and renders the
+	 * class to a Java source string.
 	 *
 	 * @param schemaParsers all sibling schema parsers keyed by schema class name, used to
 	 *                      resolve the inheritance chain
-	 * @param testClass     the test class model that collects test methods for leaf schemas
 	 * @return the complete Java source text for the generated schema class
 	 */
-	public String generateSchemaClass(Object2ObjectAVLTreeMap<String, SchemaParserJava> schemaParsers, Class testClass) {
+	public String generateSchemaClass(Object2ObjectAVLTreeMap<String, SchemaParserJava> schemaParsers) {
 		if (extendsClassName != null) {
 			updateMethod.content.add(0, "super.updateData(readerBase);");
 			serializeMethod.content.add(0, "super.serializeData(writerBase);");
 		}
 
 		traverseExtendedClasses(this, schemaParsers);
-
-		if (schemaParsers.values().stream().noneMatch(schemaParserJava -> schemaParserJava.extendsClassName != null && equals(schemaParsers.get(schemaParserJava.extendsClassName)))) {
-			testMethod.content.addAll(testMethodContent1);
-			testMethod.content.addAll(testMethodContent2);
-			testMethod.content.add(testMethod.content.get(1));
-			testClass.methods.add(testMethod);
-		}
 
 		return String.join("\n", schemaClass.generateJava());
 	}
@@ -174,7 +157,6 @@ public class SchemaParserJava {
 		schemaClass.methods.add(method);
 		updateMethod.content.add(String.format(typeWithData.unpackData, key, typeWithData.type.nameJava));
 		serializeMethod.content.add(String.format("%s(writerBase);", methodName));
-		testMethodContent1.add(String.format(typeWithData.randomData, String.format("data.%s", key)));
 	}
 
 	private void traverseExtendedClasses(SchemaParserJava schemaParserJava, Object2ObjectAVLTreeMap<String, SchemaParserJava> schemaParsers) {
@@ -182,7 +164,6 @@ public class SchemaParserJava {
 			final SchemaParserJava extendedSchemaParserJava = schemaParsers.get(schemaParserJava.extendsClassName);
 			constructor1.superParameters.addAll(extendedSchemaParserJava.constructor1.parameters);
 			constructor2.superParameters.addAll(extendedSchemaParserJava.constructor2.parameters);
-			testMethodContent2.addAll(extendedSchemaParserJava.testMethodContent1);
 			traverseExtendedClasses(extendedSchemaParserJava, schemaParsers);
 		}
 	}

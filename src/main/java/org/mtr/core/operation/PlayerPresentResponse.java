@@ -15,12 +15,16 @@ import java.util.UUID;
 @Log4j2
 public class PlayerPresentResponse extends PlayerPresentResponseSchema {
 
-	/** Construct a response naming the dimension the player is currently in. */
+	/**
+	 * Construct a response naming the dimension the player is currently in.
+	 */
 	public PlayerPresentResponse(String playerDimension) {
 		super(playerDimension);
 	}
 
-	/** Deserialisation constructor used by the wire layer. */
+	/**
+	 * Deserialisation constructor used by the wire layer.
+	 */
 	public PlayerPresentResponse(ReaderBase readerBase) {
 		super(readerBase);
 		updateData(readerBase);

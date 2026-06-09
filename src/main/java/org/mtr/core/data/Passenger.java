@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import it.unimi.dsi.fastutil.longs.LongLongImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectBooleanImmutablePair;
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.PassengerSchema;
 import org.mtr.core.map.DirectionsRequest;
@@ -27,14 +28,28 @@ public final class Passenger extends PassengerSchema {
 	private Route currentRoute;
 
 	private long findDirectionsTime;
+	@Getter
+	private boolean dirtySync = true;
 
 	private static final Random RANDOM = new Random();
 	private static final int COOLDOWN = 2000;
+	private static final int GO_HOME_PROBABILITY_DENOMINATOR = 3;
+	private static final int COOLDOWN_RETRY_DIVISOR = 2;
 
+	/**
+	 * Each passenger is simulated independently (not as a grouped cohort), so route decisions and
+	 * landmark reservations stay consistent with per-passenger density limits.
+	 */
 	public Passenger(Data data) {
 		super(TransportMode.values()[0], data);
 	}
 
+	/**
+	 * Deserialisation constructor used by the wire / on-disk layer.
+	 *
+	 * @param readerBase source to read persisted data from
+	 * @param data       the simulation engine or client data container
+	 */
 	public Passenger(ReaderBase readerBase, Data data) {
 		super(readerBase, data);
 		updateData(readerBase);
@@ -45,6 +60,8 @@ public final class Passenger extends PassengerSchema {
 	 * {@link org.mtr.core.generated.data.HomeSchema} when reconstructing the {@code passengers}
 	 * array. Wraps the read in a fresh {@link ClientData} so the resulting passenger has somewhere
 	 * to look up cached references. <strong>Do not call from user code.</strong>
+	 *
+	 * @deprecated Use {@link #Passenger(ReaderBase, Data)} instead for simulator-side usage.
 	 */
 	@Deprecated
 	@SuppressWarnings("DeprecatedIsStillUsed")
@@ -57,20 +74,32 @@ public final class Passenger extends PassengerSchema {
 		return true;
 	}
 
-	public void tick(Home home, Simulator simulator, long millisElapsed) {
+	/**
+	 * Advance this passenger by one tick, updating its position in the route graph, handling
+	 * journey completion, and requesting new directions when idle.
+	 *
+	 * @param home      the home this passenger belongs to
+	 * @param simulator the simulation engine
+	 * @return {@code true} if the passenger's state changed (dirty) and should be synced to clients
+	 */
+	public boolean tick(Home home, Simulator simulator) {
 		// Write caches
 		this.home = home;
 		if (currentLandmark == null && !directions.isEmpty()) {
-			currentLandmark = simulator.landmarkIdMap.get(endLandmarkId);
-			if (currentLandmark == null) {
-				directions.clear();
+			// Restore landmark from endLandmarkId only if it's not a homebound trip (endLandmarkId != 0)
+			if (endLandmarkId != 0) {
+				currentLandmark = simulator.landmarkIdMap.get(endLandmarkId);
+				if (currentLandmark == null) {
+					directions.clear();
+					dirtySync = true;
+				}
 			}
 		}
 
 		if (directions.isEmpty()) {
 			// If there are no directions, find directions to go somewhere
-			if (System.currentTimeMillis() > findDirectionsTime) {
-				if (simulator.landmarks.isEmpty() || RANDOM.nextInt(3) == 0) {
+			if (simulator.getCurrentMillis() > findDirectionsTime) {
+				if (simulator.landmarks.isEmpty() || RANDOM.nextInt(GO_HOME_PROBABILITY_DENOMINATOR) == 0) {
 					// Go home
 					findDirections(null);
 				} else {
@@ -107,6 +136,9 @@ public final class Passenger extends PassengerSchema {
 				currentRoute = simulator.routeIdMap.get(passengerDirection.getRouteId());
 			}
 
+			final long prevSidingId = sidingId;
+			final long prevVehicleId = vehicleId;
+
 			if (currentRoute == null) {
 				sidingId = 0;
 				vehicleId = 0;
@@ -118,9 +150,41 @@ public final class Passenger extends PassengerSchema {
 					vehicleId = sidingAndVehicleIds == null ? 0 : sidingAndVehicleIds.rightLong();
 				}
 			}
+
+			if (sidingId != prevSidingId || vehicleId != prevVehicleId) {
+				dirtySync = true;
+			}
+
+			// Check if the entire journey is complete (last direction has ended)
+			if (simulator.getCurrentMillis() >= directions.getLast().getEndTime()) {
+				directions.clear();
+				currentStartPlatform = null;
+				currentEndPlatform = null;
+				currentRoute = null;
+				sidingId = 0;
+				vehicleId = 0;
+				// Update currentLandmark to arrived landmark (or null = home)
+				currentLandmark = endLandmarkId != 0 ? simulator.landmarkIdMap.get(endLandmarkId) : null;
+				// If there is a reserved visit time remaining, wait until it expires before replanning
+				if (endLandmarkId != 0 && landmarkVisitEndTime > simulator.getCurrentMillis()) {
+					findDirectionsTime = landmarkVisitEndTime;
+				}
+				dirtySync = true;
+			}
 		}
+
+		final boolean dirty = dirtySync;
+		dirtySync = false;
+		return dirty;
 	}
 
+	/**
+	 * Request a passenger-direction path from the CSA engine. If the destination is a landmark,
+	 * the visit is reserved before the route is committed; if the landmark is full the route is
+	 * rejected and retried after a short backoff.
+	 *
+	 * @param newLandmark destination landmark, or {@code null} for a home-bound trip
+	 */
 	private void findDirections(@Nullable Landmark newLandmark) {
 		if (data instanceof Simulator simulator) {
 			if (home == null) {
@@ -132,7 +196,8 @@ public final class Passenger extends PassengerSchema {
 			final Position endPosition;
 
 			if (newLandmark == null && currentLandmark == null) {
-				// Already at home, trying to go home
+				// Already at home, trying to go home — backoff to avoid spinning every tick
+				findDirectionsTime = simulator.getCurrentMillis() + COOLDOWN + RANDOM.nextInt(COOLDOWN);
 				return;
 			} else if (newLandmark == null) {
 				// At current landmark, trying to go home
@@ -143,7 +208,8 @@ public final class Passenger extends PassengerSchema {
 				startPosition = home.getCenter();
 				endPosition = newLandmark.getCenter();
 			} else if (newLandmark.getId() == currentLandmark.getId()) {
-				// Trying to go to the same landmark
+				// Trying to go to the same landmark — backoff to avoid spinning every tick
+				findDirectionsTime = simulator.getCurrentMillis() + COOLDOWN + RANDOM.nextInt(COOLDOWN);
 				return;
 			} else {
 				// At a landmark, trying to go to a new landmark
@@ -151,34 +217,49 @@ public final class Passenger extends PassengerSchema {
 				endPosition = newLandmark.getCenter();
 			}
 
+			if (!simulator.tryConsumePassengerDirectionsRequestBudget()) {
+				findDirectionsTime = simulator.getCurrentMillis() + COOLDOWN / COOLDOWN_RETRY_DIVISOR + RANDOM.nextInt(COOLDOWN / COOLDOWN_RETRY_DIVISOR);
+				return;
+			}
+
 			findDirectionsTime = Long.MAX_VALUE;
 			simulator.directionsFinder.addRequest(new DirectionsRequest(startPosition, endPosition, simulator.getCurrentMillis(), null, passengerDirections -> {
-				findDirectionsTime = System.currentTimeMillis() + COOLDOWN + RANDOM.nextInt(COOLDOWN);
-
 				if (!passengerDirections.isEmpty()) {
-					directions.clear();
-					currentStartPlatform = null;
-					currentEndPlatform = null;
-					currentRoute = null;
-					directions.addAll(passengerDirections);
-					if (newLandmark == null) {
+					// For landmark trips, try to reserve the visit BEFORE committing to the route
+					if (newLandmark != null) {
+						final long estimatedArrivalTime = passengerDirections.getLast().getEndTime();
+						final long visitDuration = newLandmark.reserveVisit(estimatedArrivalTime);
+						if (visitDuration <= 0) {
+							// Reservation failed; don't accept this route
+							findDirectionsTime = simulator.getCurrentMillis() + COOLDOWN / COOLDOWN_RETRY_DIVISOR + RANDOM.nextInt(COOLDOWN / COOLDOWN_RETRY_DIVISOR);
+							return;
+						}
+						// Reservation succeeded; now commit to the route
+						directions.clear();
+						currentStartPlatform = null;
+						currentEndPlatform = null;
+						currentRoute = null;
+						directions.addAll(passengerDirections);
+						startLandmarkId = endLandmarkId;
+						endLandmarkId = newLandmark.getId();
+						landmarkVisitStartTime = estimatedArrivalTime;
+						landmarkVisitEndTime = landmarkVisitStartTime + visitDuration;
+						newLandmark.writeVisitCache(landmarkVisitStartTime, landmarkVisitEndTime);
+					} else {
 						// Going home
+						directions.clear();
+						currentStartPlatform = null;
+						currentEndPlatform = null;
+						currentRoute = null;
+						directions.addAll(passengerDirections);
 						startLandmarkId = endLandmarkId;
 						endLandmarkId = 0;
 						landmarkVisitStartTime = 0;
 						landmarkVisitEndTime = 0;
-					} else {
-						// Going to a landmark
-						final long estimatedArrivalTime = passengerDirections.getLast().getEndTime();
-						final long visitDuration = newLandmark.reserveVisit(estimatedArrivalTime);
-						if (visitDuration > 0) {
-							startLandmarkId = endLandmarkId;
-							endLandmarkId = newLandmark.getId();
-							landmarkVisitStartTime = estimatedArrivalTime;
-							landmarkVisitEndTime = landmarkVisitStartTime + visitDuration;
-							newLandmark.writeVisitCache(landmarkVisitStartTime, landmarkVisitEndTime);
-						}
 					}
+					dirtySync = true;
+				} else {
+					findDirectionsTime = simulator.getCurrentMillis() + COOLDOWN + RANDOM.nextInt(COOLDOWN);
 				}
 			}));
 		}

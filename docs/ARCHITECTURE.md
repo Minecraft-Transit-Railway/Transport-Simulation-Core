@@ -73,6 +73,17 @@ The simulator's `tick()` advances vehicle positions, processes queued runnables,
 inbound message queue through `OperationProcessor`, and writes outbound messages to the
 S2C queue.
 
+### Passenger demand model (homes / landmarks)
+
+- Homes own a persisted list of `Passenger` entities and keep it converged to configured
+  `population` over time.
+- Passengers are currently simulated **individually** (not as clumped cohorts): each one picks
+  destinations and requests CSA directions independently.
+- Landmark demand uses 24 hourly density slots. The slot source is configurable per landmark:
+  `useRealTime = true` uses wall-clock time, `useRealTime = false` uses in-game time.
+- To protect latency on huge worlds, the simulator caps how many new passenger CSA requests can
+  be submitted each tick; over-budget passengers are retried on a short cooldown.
+
 ## Servlets and HTTP surface
 
 Three servlets are registered in `Main` when `webserverPort > 0`:
