@@ -71,7 +71,8 @@ public final class Graph extends RefreshableObject<Long2ObjectOpenHashMap<Long2O
 			return null;
 		} else {
 			simulator.routes.forEach(route -> {
-				if (route.getTransportMode().continuousMovement && !route.getHidden()) {
+				// Keep transfer graph and CSA in sync: jammed routes are excluded from directions.
+				if (route.getTransportMode().continuousMovement && !route.getHidden() && !simulator.isRouteJammed(route.getId())) {
 					DirectionsFinder.processRoute(
 						route,
 						route.getRoutePlatforms().size() - 1,

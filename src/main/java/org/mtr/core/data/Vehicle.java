@@ -44,6 +44,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	private long manualCooldown;
 	private long doorCooldown;
 	private boolean atoOverride;
+	/**
+	 * Last simulator timestamp at which this vehicle moved; used by jam detection.
+	 */
+	private long lastMovementMillis;
 
 	public final VehicleExtraData vehicleExtraData;
 	@Nullable
@@ -57,6 +61,10 @@ public class Vehicle extends VehicleSchema implements Utilities {
 	public static final int POWER_LEVEL_RATIO = 5;
 	public static final int DOOR_MOVE_TIME = 3200;
 	private static final int DOOR_DELAY = 1000;
+	/**
+	 * Vehicles that do not move for this long while on-route are treated as jammed.
+	 */
+	private static final long JAM_THRESHOLD = 5 * MILLIS_PER_MINUTE;
 
 	public Vehicle(VehicleExtraData vehicleExtraData, @Nullable Siding siding, TransportMode transportMode, Data data) {
 		super(transportMode, data);
@@ -155,9 +163,16 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		}
 
 		if (!isClientside) {
-			// Remove entities that have dismounted
 			if (data instanceof final Simulator simulator) {
+				// Remove entities that have dismounted
 				vehicleExtraData.removeRidingEntitiesIf(vehicleRidingEntity -> !simulator.isRiding(vehicleRidingEntity.uuid, id));
+
+				// Check jam status
+				if (simulator.getCurrentMillis() - lastMovementMillis >= JAM_THRESHOLD) {
+					simulator.markRouteJammed(vehicleExtraData.getPreviousRouteId());
+					simulator.markRouteJammed(vehicleExtraData.getThisRouteId());
+					simulator.markRouteJammed(vehicleExtraData.getNextRouteId());
+				}
 			}
 
 			// Update the manual state for the client
@@ -171,6 +186,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		}
 
 		vehicleExtraData.closeDoors();
+		lastMovementMillis = data.getCurrentMillis();
 
 		// Ensure doors are closed before starting up
 		if (doorCooldown == 0) {
@@ -226,6 +242,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		return vehicleCarsAndPositions;
 	}
 
+	@Nullable
 	public PositionAndTiltAngle getHeadPositionAndTiltAngle() {
 		return getPositionAndTiltAngle(railProgress, new DoubleArrayList());
 	}
@@ -307,6 +324,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		stoppingCooldown = 0;
 
 		if (isCurrentlyManual()) {
+			lastMovementMillis = data.getCurrentMillis();
 			if (railProgress == pathData.getStartDistance()) {
 				// Stopped behind a node
 				final PathData currentPathData = Utilities.getElement(vehicleExtraData.immutablePath, currentIndex - 1);
@@ -341,6 +359,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 				if (totalDwellMillis > 0 && elapsedDwellTime >= DOOR_DELAY && elapsedDwellTime < doorCloseTime) {
 					vehicleExtraData.openDoors();
+					lastMovementMillis = data.getCurrentMillis();
 				} else if (elapsedDwellTime >= doorCloseTime && railBlockedDistance(currentIndex, nextStartDistance, 0, vehiclePositions, true, false) < 0) {
 					if (doorCooldown == 0) {
 						railProgress = nextStartDistance;
@@ -389,6 +408,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			speedTarget = vehicleExtraData.getSpeedTarget();
 			powerLevel = vehicleExtraData.getPowerLevel();
 		} else {
+			lastMovementMillis = data.getCurrentMillis();
 			final double safeStoppingDistance = 0.5 * speed * speed / vehicleExtraData.getDeceleration() * (isCurrentlyManual() ? POWER_LEVEL_RATIO : 1); // when on manual mode, check for blocked rails on the lowest deceleration (B1)
 			final double hardStoppingDistance = 0.5 * speed * speed / (Siding.MAX_ACCELERATION * 2);
 

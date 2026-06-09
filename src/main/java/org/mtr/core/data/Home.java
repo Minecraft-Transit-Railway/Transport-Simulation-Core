@@ -4,6 +4,8 @@ import org.mtr.core.generated.data.HomeSchema;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.simulation.Simulator;
 
+import java.util.function.Consumer;
+
 /**
  * A residential area that holds a steady population of {@link Passenger}s &mdash; the source
  * end of most trips simulated by the dispatcher.
@@ -63,5 +65,12 @@ public final class Home extends HomeSchema {
 				});
 			});
 		}
+	}
+
+	/**
+	 * Iterate persisted passengers belonging to this home.
+	 */
+	public void iteratePassengers(Consumer<Passenger> consumer) {
+		passengers.forEach(consumer);
 	}
 }

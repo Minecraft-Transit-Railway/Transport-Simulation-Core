@@ -79,10 +79,19 @@ S2C queue.
   `population` over time.
 - Passengers are currently simulated **individually** (not as clumped cohorts): each one picks
   destinations and requests CSA directions independently.
+- Transit legs are executed against realtime vehicle state (board actual vehicle ids and finish
+  a leg when the vehicle reaches the transfer platform), rather than only replaying original
+  planned timestamps.
+- At transfers and stale waits, passengers can re-request directions from their current
+  position, so delayed service can reroute mid-journey.
 - Landmark demand uses 24 hourly density slots. The slot source is configurable per landmark:
   `useRealTime = true` uses wall-clock time, `useRealTime = false` uses in-game time.
 - To protect latency on huge worlds, the simulator caps how many new passenger CSA requests can
   be submitted each tick; over-budget passengers are retried on a short cooldown.
+- Runtime caches include `vehicleIdMap` (vehicle lookup) and `vehicleIdToPassengers` (onboard
+  passenger sets), rebuilt by `Data.sync()` and refreshed each simulator tick.
+- Vehicles that remain stalled on-route past a jam threshold mark their active routes as jammed;
+  jammed routes are excluded from both `/mtr/api/map/directions` and passenger CSA replanning.
 
 ## Servlets and HTTP surface
 

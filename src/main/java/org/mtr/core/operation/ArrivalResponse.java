@@ -12,8 +12,8 @@ import java.util.function.Consumer;
 
 public final class ArrivalResponse extends ArrivalResponseSchema implements Comparable<ArrivalResponse> {
 
-	public ArrivalResponse(String destination, long arrival, long departure, long deviation, boolean realtime, long departureIndex, int stopIndex, Route route, Platform platform) {
-		super(destination, arrival, departure, deviation, realtime, departureIndex, stopIndex == route.getRoutePlatforms().size() - 1, route.getId(), route.getName(), route.getRouteNumber(), route.getColor(), route.getCircularState(), platform.getId(), platform.getName());
+	public ArrivalResponse(String destination, long arrival, long departure, long deviation, boolean realtime, long departureIndex, int stopIndex, Route route, Platform platform, long passengerCount) {
+		super(destination, arrival, departure, deviation, realtime, departureIndex, stopIndex == route.getRoutePlatforms().size() - 1, route.getId(), route.getName(), route.getRouteNumber(), route.getColor(), route.getCircularState(), platform.getId(), platform.getName(), passengerCount);
 	}
 
 	public ArrivalResponse(ReaderBase readerBase) {
@@ -75,6 +75,13 @@ public final class ArrivalResponse extends ArrivalResponseSchema implements Comp
 
 	public String getPlatformName() {
 		return platformName;
+	}
+
+	/**
+	 * @return realtime onboard passenger count for the predicted vehicle, or {@code 0} when unknown.
+	 */
+	public long getPassengerCount() {
+		return passengerCount;
 	}
 
 	public int getCarCount() {

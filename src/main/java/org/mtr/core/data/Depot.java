@@ -276,7 +276,11 @@ public final class Depot extends DepotSchema implements Utilities {
 	public void finishGeneratingPath(long sidingId) {
 		generatingSidingIds.remove(sidingId);
 		if (generatingSidingIds.isEmpty()) {
-			updateGenerationStatus(GeneratedStatus.SUCCESSFUL, 0, 0, "Path generation complete for %s");
+			if (lastGeneratedFailedSidingCount > 0) {
+				updateGenerationStatus(GeneratedStatus.PATH_NOT_FOUND, 0, 0, "Path generation finished with " + lastGeneratedFailedSidingCount + " failed siding(s) for %s");
+			} else {
+				updateGenerationStatus(GeneratedStatus.SUCCESSFUL, 0, 0, "Path generation complete for %s");
+			}
 			generatePlatformDirectionsAndWriteDeparturesToSidings();
 		}
 	}
@@ -491,14 +495,16 @@ public final class Depot extends DepotSchema implements Utilities {
 	 */
 	public static void generateDepots(Simulator simulator, ObjectArrayList<Depot> depotsToGenerate) {
 		final LongAVLTreeSet idsToGenerate = new LongAVLTreeSet();
-		final UpdateDataResponse updateDataResponse = new UpdateDataResponse(simulator);
+		final ObjectArrayList<Depot> depotsToUpdate = new ObjectArrayList<>();
 
 		depotsToGenerate.forEach(depot -> {
 			idsToGenerate.add(depot.getId());
 			depot.generateMainRoute(forceComplete -> {
 				idsToGenerate.remove(depot.getId());
-				updateDataResponse.addDepot(depot);
 				if (forceComplete || idsToGenerate.isEmpty()) {
+					depotsToUpdate.add(depot);
+					final UpdateDataResponse updateDataResponse = new UpdateDataResponse(simulator);
+					depotsToUpdate.forEach(updateDataResponse::addDepot);
 					simulator.sendMessageS2C(OperationProcessor.GENERATION_STATUS_UPDATE, updateDataResponse, null, null);
 				}
 			});

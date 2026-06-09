@@ -109,10 +109,10 @@ public class RailMath {
 					tStart1 = xStart / h1;
 					tEnd1 = xEnd / h1;
 				} else {
-					final double div = angle1.add(angle1).cos;
-					r1 = (h1 * zStart - k1 * xStart) / div;
-					tStart1 = (h1 * xStart - k1 * zStart) / div;
-					tEnd1 = (h1 * xEnd - k1 * zEnd) / div;
+					final double divisor = angle1.add(angle1).cos;
+					r1 = (h1 * zStart - k1 * xStart) / divisor;
+					tStart1 = (h1 * xStart - k1 * zStart) / divisor;
+					tEnd1 = (h1 * xEnd - k1 * zEnd) / divisor;
 				}
 				h2 = 0;
 				k2 = 0;
@@ -181,10 +181,10 @@ public class RailMath {
 						tStart1 = xStart / h1;
 						tEnd1 = deltaXEnd / h1;
 					} else {
-						final double div = newAngle1.add(newAngle1).cos;
-						r1 = (h1 * zStart - k1 * xStart) / div;
-						tStart1 = (h1 * xStart - k1 * zStart) / div;
-						tEnd1 = (h1 * deltaXEnd - k1 * deltaZEnd) / div;
+						final double divisor = newAngle1.add(newAngle1).cos;
+						r1 = (h1 * zStart - k1 * xStart) / divisor;
+						tStart1 = (h1 * xStart - k1 * zStart) / divisor;
+						tEnd1 = (h1 * deltaXEnd - k1 * deltaZEnd) / divisor;
 					}
 					isStraight1 = true;
 					reverseT1 = tStart1 > tEnd1;
@@ -217,10 +217,10 @@ public class RailMath {
 						tStart2 = deltaXEnd / h2;
 						tEnd2 = xEnd / h2;
 					} else {
-						final double div = newAngle2.add(newAngle2).cos;
-						r2 = (h2 * deltaZEnd - k2 * deltaXEnd) / div;
-						tStart2 = (h2 * deltaXEnd - k2 * deltaZEnd) / div;
-						tEnd2 = (h2 * xEnd - k2 * zEnd) / div;
+						final double divisor = newAngle2.add(newAngle2).cos;
+						r2 = (h2 * deltaZEnd - k2 * deltaXEnd) / divisor;
+						tStart2 = (h2 * deltaXEnd - k2 * deltaZEnd) / divisor;
+						tEnd2 = (h2 * xEnd - k2 * zEnd) / divisor;
 					}
 					isStraight2 = true;
 					reverseT2 = tStart2 > tEnd2;

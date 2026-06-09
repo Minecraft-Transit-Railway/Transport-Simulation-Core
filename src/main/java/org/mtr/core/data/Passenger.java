@@ -35,6 +35,7 @@ public final class Passenger extends PassengerSchema {
 	private static final int COOLDOWN = 2000;
 	private static final int GO_HOME_PROBABILITY_DENOMINATOR = 3;
 	private static final int COOLDOWN_RETRY_DIVISOR = 2;
+	private static final long REALTIME_REPLAN_THRESHOLD = 2 * Utilities.MILLIS_PER_MINUTE;
 
 	/**
 	 * Each passenger is simulated independently (not as a grouped cohort), so route decisions and
@@ -96,86 +97,166 @@ public final class Passenger extends PassengerSchema {
 			}
 		}
 
-		if (directions.isEmpty()) {
-			// If there are no directions, find directions to go somewhere
-			if (simulator.getCurrentMillis() > findDirectionsTime) {
-				if (simulator.landmarks.isEmpty() || RANDOM.nextInt(GO_HOME_PROBABILITY_DENOMINATOR) == 0) {
-					// Go home
-					findDirections(null);
-				} else {
-					// Go to a random landmark
-					findDirections(new ObjectArrayList<>(simulator.landmarks).get(RANDOM.nextInt(simulator.landmarks.size())));
+		while (true) {
+			if (directions.isEmpty()) {
+				// If there are no directions, find directions to go somewhere
+				if (simulator.getCurrentMillis() > findDirectionsTime) {
+					if (simulator.landmarks.isEmpty() || RANDOM.nextInt(GO_HOME_PROBABILITY_DENOMINATOR) == 0) {
+						// Go home
+						findDirections(null);
+					} else {
+						// Go to a random landmark
+						findDirections(new ObjectArrayList<>(simulator.landmarks).get(RANDOM.nextInt(simulator.landmarks.size())));
+					}
 				}
-			}
-		} else {
-			final int directionsCount = directions.size();
-			final int index1 = Utilities.clampSafe(Utilities.getIndexFromConditionalList(directions, simulator.getCurrentMillis()), 0, directionsCount - 1);
-			final int index2 = Math.min(index1 + 1, directionsCount - 1);
-			final PassengerDirection passengerDirection1 = directions.get(index1);
-			final PassengerDirection passengerDirection2 = directions.get(index2);
-			final PassengerDirection passengerDirection = simulator.getCurrentMillis() >= passengerDirection1.getEndTime() ? passengerDirection2 : passengerDirection1;
 
-			// Update start platform cache
-			if (passengerDirection.getStartPlatformId() == 0) {
-				currentStartPlatform = null;
-			} else if (currentStartPlatform == null) {
-				currentStartPlatform = simulator.platformIdMap.get(passengerDirection.getStartPlatformId());
+				break;
 			}
 
-			// Update end platform cache
-			if (passengerDirection.getEndPlatformId() == 0) {
-				currentEndPlatform = null;
-			} else if (currentEndPlatform == null) {
-				currentEndPlatform = simulator.platformIdMap.get(passengerDirection.getEndPlatformId());
-			}
-
-			// Update route cache
-			if (passengerDirection.getRouteId() == 0) {
-				currentRoute = null;
-			} else if (currentRoute == null) {
-				currentRoute = simulator.routeIdMap.get(passengerDirection.getRouteId());
-			}
-
-			final long prevSidingId = sidingId;
-			final long prevVehicleId = vehicleId;
+			final PassengerDirection passengerDirection = directions.getFirst();
+			updateCurrentDirectionCache(passengerDirection, simulator);
 
 			if (currentRoute == null) {
 				sidingId = 0;
 				vehicleId = 0;
-			} else {
-				if (currentStartPlatform != null) {
-					// TODO adjust schedule and find directions based on vehicle deviation
-					final LongLongImmutablePair sidingAndVehicleIds = getSidingAndVehicleIds(currentRoute, currentStartPlatform);
-					sidingId = sidingAndVehicleIds == null ? 0 : sidingAndVehicleIds.leftLong();
-					vehicleId = sidingAndVehicleIds == null ? 0 : sidingAndVehicleIds.rightLong();
+				if (simulator.getCurrentMillis() >= passengerDirection.getEndTime()) {
+					directions.removeFirst();
+					clearCurrentDirectionCache();
+					dirtySync = true;
+					if (directions.isEmpty()) {
+						completeJourney(simulator);
+						break;
+					}
+					continue;
 				}
+				break;
 			}
 
-			if (sidingId != prevSidingId || vehicleId != prevVehicleId) {
-				dirtySync = true;
+			if (currentStartPlatform == null || currentEndPlatform == null) {
+				replanCurrentJourney(simulator, home.getCenter());
+				break;
 			}
 
-			// Check if the entire journey is complete (last direction has ended)
-			if (simulator.getCurrentMillis() >= directions.getLast().getEndTime()) {
-				directions.clear();
-				currentStartPlatform = null;
-				currentEndPlatform = null;
-				currentRoute = null;
+			if (vehicleId == 0) {
+				final long prevSidingId = sidingId;
+				final long prevVehicleId = vehicleId;
+
+				if (simulator.isRouteJammed(currentRoute.getId()) || simulator.getCurrentMillis() >= passengerDirection.getStartTime() + REALTIME_REPLAN_THRESHOLD) {
+					replanCurrentJourney(simulator, currentStartPlatform.getMidPosition());
+					break;
+				}
+
+				final LongLongImmutablePair sidingAndVehicleIds = getSidingAndVehicleIds(currentRoute, currentStartPlatform);
+				sidingId = sidingAndVehicleIds == null ? 0 : sidingAndVehicleIds.leftLong();
+				vehicleId = sidingAndVehicleIds == null ? 0 : sidingAndVehicleIds.rightLong();
+
+				if (sidingId != prevSidingId || vehicleId != prevVehicleId) {
+					dirtySync = true;
+				}
+				break;
+			}
+
+			final Vehicle vehicle = simulator.vehicleIdMap.get(vehicleId);
+			if (vehicle == null) {
 				sidingId = 0;
 				vehicleId = 0;
-				// Update currentLandmark to arrived landmark (or null = home)
-				currentLandmark = endLandmarkId != 0 ? simulator.landmarkIdMap.get(endLandmarkId) : null;
-				// If there is a reserved visit time remaining, wait until it expires before replanning
-				if (endLandmarkId != 0 && landmarkVisitEndTime > simulator.getCurrentMillis()) {
-					findDirectionsTime = landmarkVisitEndTime;
-				}
 				dirtySync = true;
+				break;
 			}
+
+			if (!vehicle.isMoving() && vehicle.vehicleExtraData.getThisPlatformId() == currentEndPlatform.getId()) {
+				directions.removeFirst();
+				sidingId = 0;
+				vehicleId = 0;
+				clearCurrentDirectionCache();
+				dirtySync = true;
+
+				if (directions.isEmpty()) {
+					completeJourney(simulator);
+				} else {
+					replanCurrentJourney(simulator, currentEndPlatform.getMidPosition());
+				}
+				break;
+			}
+
+			break;
+		}
+
+		if (vehicleId != 0) {
+			simulator.vehicleIdToPassengers.computeIfAbsent(vehicleId, key -> new it.unimi.dsi.fastutil.objects.ObjectArraySet<>()).add(this);
 		}
 
 		final boolean dirty = dirtySync;
 		dirtySync = false;
 		return dirty;
+	}
+
+	/**
+	 * @return current boarded vehicle id, or {@code 0} if the passenger is not onboard.
+	 */
+	public long getVehicleId() {
+		return vehicleId;
+	}
+
+	/**
+	 * Resolve the first planned leg's platform/route references against the latest simulator maps.
+	 */
+	private void updateCurrentDirectionCache(PassengerDirection passengerDirection, Simulator simulator) {
+		if (passengerDirection.getStartPlatformId() == 0) {
+			currentStartPlatform = null;
+		} else {
+			currentStartPlatform = simulator.platformIdMap.get(passengerDirection.getStartPlatformId());
+		}
+
+		if (passengerDirection.getEndPlatformId() == 0) {
+			currentEndPlatform = null;
+		} else {
+			currentEndPlatform = simulator.platformIdMap.get(passengerDirection.getEndPlatformId());
+		}
+
+		if (passengerDirection.getRouteId() == 0) {
+			currentRoute = null;
+		} else {
+			currentRoute = simulator.routeIdMap.get(passengerDirection.getRouteId());
+		}
+	}
+
+	/**
+	 * Clear transient references for the currently active leg.
+	 */
+	private void clearCurrentDirectionCache() {
+		currentStartPlatform = null;
+		currentEndPlatform = null;
+		currentRoute = null;
+	}
+
+	/**
+	 * Mark the current trip complete and set the next planning cooldown.
+	 */
+	private void completeJourney(Simulator simulator) {
+		clearCurrentDirectionCache();
+		sidingId = 0;
+		vehicleId = 0;
+		currentLandmark = endLandmarkId != 0 ? simulator.landmarkIdMap.get(endLandmarkId) : null;
+		if (endLandmarkId != 0 && landmarkVisitEndTime > simulator.getCurrentMillis()) {
+			findDirectionsTime = landmarkVisitEndTime;
+		} else {
+			findDirectionsTime = simulator.getCurrentMillis() + COOLDOWN + RANDOM.nextInt(COOLDOWN);
+		}
+		dirtySync = true;
+	}
+
+	/**
+	 * Replan the remaining journey from a transfer point while preserving destination metadata.
+	 */
+	private void replanCurrentJourney(Simulator simulator, Position startPosition) {
+		final Landmark destinationLandmark = endLandmarkId == 0 ? null : simulator.landmarkIdMap.get(endLandmarkId);
+		directions.clear();
+		clearCurrentDirectionCache();
+		sidingId = 0;
+		vehicleId = 0;
+		dirtySync = true;
+		findDirections(destinationLandmark, startPosition, true);
 	}
 
 	/**
@@ -186,6 +267,15 @@ public final class Passenger extends PassengerSchema {
 	 * @param newLandmark destination landmark, or {@code null} for a home-bound trip
 	 */
 	private void findDirections(@Nullable Landmark newLandmark) {
+		findDirections(newLandmark, null, false);
+	}
+
+	/**
+	 * Request a new passenger plan. When {@code overrideStartPosition} is supplied (transfer
+	 * replanning), the destination metadata is optionally preserved so only the route legs are
+	 * refreshed.
+	 */
+	private void findDirections(@Nullable Landmark newLandmark, @Nullable Position overrideStartPosition, boolean preserveDestinationData) {
 		if (data instanceof Simulator simulator) {
 			if (home == null) {
 				// This should never happen
@@ -195,7 +285,10 @@ public final class Passenger extends PassengerSchema {
 			final Position startPosition;
 			final Position endPosition;
 
-			if (newLandmark == null && currentLandmark == null) {
+			if (overrideStartPosition != null) {
+				startPosition = overrideStartPosition;
+				endPosition = newLandmark == null ? home.getCenter() : newLandmark.getCenter();
+			} else if (newLandmark == null && currentLandmark == null) {
 				// Already at home, trying to go home — backoff to avoid spinning every tick
 				findDirectionsTime = simulator.getCurrentMillis() + COOLDOWN + RANDOM.nextInt(COOLDOWN);
 				return;
@@ -225,8 +318,14 @@ public final class Passenger extends PassengerSchema {
 			findDirectionsTime = Long.MAX_VALUE;
 			simulator.directionsFinder.addRequest(new DirectionsRequest(startPosition, endPosition, simulator.getCurrentMillis(), null, passengerDirections -> {
 				if (!passengerDirections.isEmpty()) {
-					// For landmark trips, try to reserve the visit BEFORE committing to the route
-					if (newLandmark != null) {
+					if (preserveDestinationData) {
+						directions.clear();
+						currentStartPlatform = null;
+						currentEndPlatform = null;
+						currentRoute = null;
+						directions.addAll(passengerDirections);
+					} else if (newLandmark != null) {
+						// For landmark trips, try to reserve the visit BEFORE committing to the route
 						final long estimatedArrivalTime = passengerDirections.getLast().getEndTime();
 						final long visitDuration = newLandmark.reserveVisit(estimatedArrivalTime);
 						if (visitDuration <= 0) {

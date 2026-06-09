@@ -79,4 +79,12 @@ public final class DepotDepartureTests {
 	public void testGetRealTimeDepartures() {
 		assertTrue(depot.getRealTimeDepartures().isEmpty(), "Default real-time departures should be empty");
 	}
+
+	@Test
+	public void testFinishGeneratingPathUpdatesStatus() {
+		assertEquals(Depot.GeneratedStatus.NONE, depot.getLastGeneratedStatus());
+		// finishGeneratingPath without any generating siding IDs should trigger status update
+		// (this is normally called internally, but we can verify it doesn't throw)
+		assertDoesNotThrow(() -> depot.finishGeneratingPath(0));
+	}
 }

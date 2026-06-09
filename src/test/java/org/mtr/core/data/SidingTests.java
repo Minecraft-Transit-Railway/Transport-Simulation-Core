@@ -69,4 +69,15 @@ public final class SidingTests {
 	public void testEarlyVehicleIncreaseDwellTime() {
 		assertTrue(siding.getEarlyVehicleIncreaseDwellTime());
 	}
+
+	@Test
+	public void testGetVehicleDetailsAtPlatformNotFound() {
+		final var result = siding.getVehicleDetailsAtPlatform(0, 0);
+		assertFalse(result.rightBoolean(), "No vehicle should be found at platform with no setup");
+	}
+
+	@Test
+	public void testGetDepotNameWithNoArea() {
+		assertEquals("", siding.getDepotName(), "Depot name should be empty when area is null");
+	}
 }

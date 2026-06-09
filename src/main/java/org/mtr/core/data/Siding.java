@@ -20,6 +20,7 @@ import org.mtr.legacy.data.DataFixer;
 import java.util.Collections;
 import java.util.Random;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
 /**
@@ -262,7 +263,14 @@ public final class Siding extends SidingSchema implements Utilities {
 		// Attempt to find a corresponding rail for this siding and return true if failed
 		if (defaultPathData == null) {
 			final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
-			if (rail != null) {
+			if (rail == null) {
+				// Ensure depot generation is unblocked before this invalid siding is removed
+				if (!sidingPathFinderSidingToMainRoute.isEmpty() || !sidingPathFinderMainRouteToSiding.isEmpty()) {
+					sidingPathFinderSidingToMainRoute.clear();
+					sidingPathFinderMainRouteToSiding.clear();
+					finishGeneratingPath(true);
+				}
+			} else {
 				defaultPathData = new PathData(rail, id, 1, -1, 0, rail.railMath.getLength(), position1, rail.getStartAngle(position1), position2, rail.getStartAngle(position2));
 			}
 			return defaultPathData == null;
@@ -275,7 +283,10 @@ public final class Siding extends SidingSchema implements Utilities {
 		vehicles.forEach(vehicle -> vehicle.initVehiclePositions(vehiclePositions));
 	}
 
-	public void simulateTrain(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+	/**
+	 * Simulate this siding's vehicles for one tick and refresh runtime vehicle ID caches used by passenger boarding and arrivals payload enrichment.
+	 */
+	public void simulateVehicles(long millisElapsed, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
 		vehicleTimesAlongRoute.clear();
 
 		if (area == null) {
@@ -292,6 +303,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		final ObjectArraySet<Vehicle> trainsToRemove = new ObjectArraySet<>();
 		final LongOpenHashSet visitedDepartureIndices = new LongOpenHashSet();
 		for (final Vehicle vehicle : vehicles) {
+			writeVehicleIdMapCache(vehicle);
 			vehicle.simulate(millisElapsed, vehiclePositions, vehicleTimesAlongRoute);
 
 			if (vehicle.closeToDepot()) {
@@ -336,11 +348,18 @@ public final class Siding extends SidingSchema implements Utilities {
 		}
 
 		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
-			vehicles.add(new Vehicle(VehicleExtraData.create(area.getId(), id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data));
+			final Vehicle vehicle = new Vehicle(VehicleExtraData.create(area.getId(), id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data);
+			vehicles.add(vehicle);
+			writeVehicleIdMapCache(vehicle);
 		}
 
 		if (!trainsToRemove.isEmpty()) {
-			trainsToRemove.forEach(vehicles::remove);
+			trainsToRemove.forEach(vehicle -> {
+				vehicles.remove(vehicle);
+				if (data instanceof Simulator simulator) {
+					simulator.vehicleIdMap.remove(vehicle.getId());
+				}
+			});
 		}
 	}
 
@@ -396,13 +415,32 @@ public final class Siding extends SidingSchema implements Utilities {
 		vehicles.forEach(vehicle -> vehicle.vehicleExtraData.iterateRidingEntities(vehicleRidingEntity -> consumer.accept(vehicle.vehicleExtraData, vehicleRidingEntity)));
 	}
 
+	/**
+	 * Iterate currently active vehicles on this siding.
+	 */
+	public void iterateVehicles(Consumer<Vehicle> consumer) {
+		vehicles.forEach(consumer);
+	}
+
+	/**
+	 * Build sorted arrivals for one platform, including realtime passenger counts when a concrete
+	 * serving vehicle is available.
+	 */
 	public void getArrivals(long currentMillis, Platform platform, long count, ObjectArrayList<ArrivalResponse> arrivalResponseList) {
 		final long[] maxArrivalAndCount = {0, 0};
 		final ObjectArrayList<ArrivalResponse> tempArrivalResponseList = new ObjectArrayList<>();
 
 		iterateArrivals(currentMillis, platform.getId(), 0, MILLIS_PER_DAY, (vehicle, trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
 			if (scheduledArrivalTime + deviation < maxArrivalAndCount[0] || maxArrivalAndCount[1] < count) {
-				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, stopTime.tripStopIndex, trip.route, platform);
+				final ObjectArraySet<Passenger> passengers;
+
+				if (vehicle == null || !(data instanceof Simulator simulator)) {
+					passengers = null;
+				} else {
+					passengers = simulator.vehicleIdToPassengers.get(vehicle.getId());
+				}
+
+				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, stopTime.tripStopIndex, trip.route, platform, passengers == null ? 0 : passengers.size());
 				arrivalResponse.setCarDetails(getVehicleCars());
 				tempArrivalResponseList.add(arrivalResponse);
 				maxArrivalAndCount[0] = Math.max(maxArrivalAndCount[0], scheduledArrivalTime + deviation);
@@ -885,6 +923,12 @@ public final class Siding extends SidingSchema implements Utilities {
 			}
 
 			timeOffsetForRepeating = time - timeOffsetForRepeating;
+		}
+	}
+
+	private void writeVehicleIdMapCache(Vehicle vehicle) {
+		if (data instanceof Simulator simulator) {
+			simulator.vehicleIdMap.put(vehicle.getId(), vehicle);
 		}
 	}
 

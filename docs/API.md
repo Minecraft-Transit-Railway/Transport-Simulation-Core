@@ -79,6 +79,8 @@ On-demand arrivals query for a specific set of stops / platforms.
 - **Body**: an `ArrivalsRequest` JSON object — see
   `org.mtr.core.operation.ArrivalsRequest`.
 - **Response data**: an `ArrivalsResponse` listing predicted arrivals, sorted by time.
+  Each `ArrivalResponse` includes `passengerCount` (realtime onboard passengers for the
+  serving vehicle, or `0` when unknown / no concrete vehicle).
 
 ### `GET /mtr/api/map/clients`
 
@@ -102,6 +104,8 @@ Path-finding query — "how do I get from A to B".
   walking transfers). The request is queued on the simulator's `directionsFinder`, so
   responses are asynchronous from the caller's perspective but synchronous from the
   client's (the connection is held open until the result is ready).
+- **Realtime filtering**: routes currently marked jammed by the simulator are excluded from
+  directions results (same filter used by passenger replanning).
 
 ## `/oba/api/where/*` — OneBusAway-compatible API
 

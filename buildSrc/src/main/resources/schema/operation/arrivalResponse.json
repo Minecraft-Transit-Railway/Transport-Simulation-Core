@@ -49,6 +49,9 @@
 		"platformName": {
 			"type": "string"
 		},
+		"passengerCount": {
+			"type": "integer"
+		},
 		"cars": {
 			"type": "array",
 			"items": {
@@ -70,6 +73,7 @@
 		"routeColor",
 		"circularState",
 		"platformId",
-		"platformName"
+		"platformName",
+		"passengerCount"
 	]
 }

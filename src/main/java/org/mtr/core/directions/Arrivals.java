@@ -37,25 +37,32 @@ public final class Arrivals extends RefreshableObject<ObjectArrayList<ObjectArra
 			simulator.sidings.forEach(siding -> siding.getDeparturesForDirections(millis, tempDepartures));
 			return null;
 		} else if (currentRefreshStep == 1) {
-			tempDepartures.values().forEach(departuresForRoute -> DirectionsFinder.processRoute(departuresForRoute.left(), departuresForRoute.left().getRoutePlatforms().size() - 1, (offsetTimeFromLastDeparture, duration, platform1, platform2) -> {
-				for (final long departureForRoute : departuresForRoute.right()) {
-					final long vehicleArrival1 = departureForRoute - offsetTimeFromLastDeparture;
-					final long vehicleArrival2 = vehicleArrival1 + duration;
-
-					if (vehicleArrival1 >= millis) {
-						final int index = (int) ((vehicleArrival1 - millis) / Utilities.MILLIS_PER_HOUR);
-						while (routeConnectionsLists.size() <= index) {
-							routeConnectionsLists.add(new ObjectArrayList<>());
-						}
-						routeConnectionsLists.get(index).add(new Connection(
-							departuresForRoute.left(),
-							platform1.getId(), platform2.getId(),
-							vehicleArrival1, vehicleArrival2,
-							0
-						));
-					}
+			// Drop jammed routes from the timetable graph so both passenger and API directions avoid them.
+			tempDepartures.values().forEach(departuresForRoute -> {
+				if (simulator.isRouteJammed(departuresForRoute.left().getId())) {
+					return;
 				}
-			}));
+
+				DirectionsFinder.processRoute(departuresForRoute.left(), departuresForRoute.left().getRoutePlatforms().size() - 1, (offsetTimeFromLastDeparture, duration, platform1, platform2) -> {
+					for (final long departureForRoute : departuresForRoute.right()) {
+						final long vehicleArrival1 = departureForRoute - offsetTimeFromLastDeparture;
+						final long vehicleArrival2 = vehicleArrival1 + duration;
+
+						if (vehicleArrival1 >= millis) {
+							final int index = (int) ((vehicleArrival1 - millis) / Utilities.MILLIS_PER_HOUR);
+							while (routeConnectionsLists.size() <= index) {
+								routeConnectionsLists.add(new ObjectArrayList<>());
+							}
+							routeConnectionsLists.get(index).add(new Connection(
+								departuresForRoute.left(),
+								platform1.getId(), platform2.getId(),
+								vehicleArrival1, vehicleArrival2,
+								0
+							));
+						}
+					}
+				});
+			});
 			return null;
 		} else if (index1 < routeConnectionsLists.size()) {
 			// Sort by the start time of each connection

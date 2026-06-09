@@ -138,4 +138,45 @@ public final class SimulatorTimeTests {
 		final long wrapped = simulator.getGameMillisAt(simulator.getCurrentMillis());
 		assertEquals(23000, wrapped, "Game millis should be in [0, gameMillisPerDay)");
 	}
+
+	@Test
+	public void testIsRouteJammedDefaultsToFalse() {
+		assertFalse(simulator.isRouteJammed(1));
+		assertFalse(simulator.isRouteJammed(999));
+	}
+
+	@Test
+	public void testMarkAndCheckRouteJammed() {
+		simulator.markRouteJammed(5);
+		assertTrue(simulator.isRouteJammed(5));
+		assertFalse(simulator.isRouteJammed(6));
+
+		simulator.markRouteJammed(5);
+		assertTrue(simulator.isRouteJammed(5), "Idempotent mark should still hold");
+	}
+
+	@Test
+	public void testMarkRouteJammedZeroIsNoOp() {
+		simulator.markRouteJammed(0);
+		assertFalse(simulator.isRouteJammed(0), "Route 0 should never be considered jammed");
+	}
+
+	@Test
+	public void testVehicleIdMapAvailable() {
+		assertNotNull(simulator.vehicleIdMap);
+		assertTrue(simulator.vehicleIdMap.isEmpty(), "Should start empty");
+	}
+
+	@Test
+	public void testVehicleIdToPassengersAvailable() {
+		assertNotNull(simulator.vehicleIdToPassengers);
+		assertTrue(simulator.vehicleIdToPassengers.isEmpty(), "Should start empty");
+	}
+
+	@Test
+	public void testVehicleIdMapAndPassengersClearedOnTick() {
+		simulator.tick();
+		assertTrue(simulator.vehicleIdMap.isEmpty(), "vehicleIdMap should be empty or re-populated but not stale");
+		assertTrue(simulator.vehicleIdToPassengers.isEmpty(), "vehicleIdToPassengers should be empty after tick with no passengers");
+	}
 }

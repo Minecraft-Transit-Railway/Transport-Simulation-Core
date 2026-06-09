@@ -1,6 +1,8 @@
 package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -67,6 +69,14 @@ public class Simulator extends Data implements Utilities {
 	 * Background path-finder for passenger directions queries.
 	 */
 	public final DirectionsFinder directionsFinder = new DirectionsFinder(this);
+	/**
+	 * Runtime-only vehicle lookup, rebuilt every simulation tick.
+	 */
+	public final Long2ObjectOpenHashMap<Vehicle> vehicleIdMap = new Long2ObjectOpenHashMap<>();
+	/**
+	 * Runtime-only onboard-passenger cache keyed by vehicle id, rebuilt every simulation tick.
+	 */
+	public final Long2ObjectOpenHashMap<ObjectArraySet<Passenger>> vehicleIdToPassengers = new Long2ObjectOpenHashMap<>();
 
 	private final FileLoader<Station> fileLoaderStations;
 	private final FileLoader<Platform> fileLoaderPlatforms;
@@ -84,6 +94,7 @@ public class Simulator extends Data implements Utilities {
 	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
 	private final MessageQueue<QueueObject> messageQueueC2S = new MessageQueue<>();
 	private final MessageQueue<QueueObject> messageQueueS2C = new MessageQueue<>();
+	private final LongOpenHashSet jammedRouteIds = new LongOpenHashSet();
 
 	/**
 	 * If the simulation falls more than this many milliseconds behind wall clock, log a notice and
@@ -229,7 +240,7 @@ public class Simulator extends Data implements Utilities {
 		for (int i = 0; i < MILLIS_PER_DAY; i += MILLIS_PER_SECOND) {
 			lastMillis = getCurrentMillis();
 			setCurrentMillis(lastMillis + MILLIS_PER_SECOND);
-			depotsToInstantDeploy.forEach(depot -> depot.savedRails.forEach(siding -> siding.simulateTrain(MILLIS_PER_SECOND, null)));
+			depotsToInstantDeploy.forEach(depot -> depot.savedRails.forEach(siding -> siding.simulateVehicles(MILLIS_PER_SECOND, null)));
 		}
 		lastMillis = oldLastMillis;
 		setCurrentMillis(oldCurrentMillis);
@@ -383,6 +394,22 @@ public class Simulator extends Data implements Utilities {
 	}
 
 	/**
+	 * @return whether the route is currently considered jammed for pathfinding purposes.
+	 */
+	public boolean isRouteJammed(long routeId) {
+		return routeId != 0 && jammedRouteIds.contains(routeId);
+	}
+
+	/**
+	 * Mark a route as jammed for the current tick so CSA/path searches avoid it.
+	 */
+	public void markRouteJammed(long routeId) {
+		if (routeId != 0) {
+			jammedRouteIds.add(routeId);
+		}
+	}
+
+	/**
 	 * @param uuid riding entity to look up
 	 * @return the next platform of the vehicle being ridden by {@code uuid}, or {@code null} if
 	 * the entity is not riding anything or its vehicle has no upcoming platform.
@@ -448,7 +475,10 @@ public class Simulator extends Data implements Utilities {
 				sync();
 			}
 
-			sidings.forEach(siding -> siding.simulateTrain(millisElapsed, vehiclePositions.get(siding.getTransportModeOrdinal())));
+			vehicleIdToPassengers.clear();
+			vehicleIdMap.clear();
+			jammedRouteIds.clear();
+			sidings.forEach(siding -> siding.simulateVehicles(millisElapsed, vehiclePositions.get(siding.getTransportModeOrdinal())));
 			clients.forEach(client -> client.sendUpdates(this));
 
 			if (autoSave) {
