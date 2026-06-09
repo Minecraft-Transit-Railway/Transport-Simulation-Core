@@ -128,8 +128,8 @@ export class MapComponent implements AfterViewInit {
 
 		const animate = () => {
 			const animationProgress = Date.now() - animationStartTime;
-			if (animationProgress < animationDuration) {
-				const animationPercentage = (1 - Math.cos(Math.PI * animationProgress / animationDuration)) / 2;
+			if (animationProgress < ANIMATION_DURATION_MILLIS) {
+				const animationPercentage = (1 - Math.cos(Math.PI * animationProgress / ANIMATION_DURATION_MILLIS)) / 2;
 				this.moveMap(
 					animationStartX + (animationTargetX - animationStartX) * animationPercentage,
 					animationStartY + (animationTargetY - animationStartY) * animationPercentage,
@@ -277,8 +277,8 @@ export class MapComponent implements AfterViewInit {
 		const positions: number[] = [];
 		const colors: number[] = [];
 		const backgroundColor = this.getBackgroundColor();
-		const newClientImagePadding = clientImagePadding * SETTINGS.scale / this.camera.zoom / 2;
-		const newClientImageSize = clientImageSize * SETTINGS.scale / this.camera.zoom / 2;
+		const newClientImagePadding = CLIENT_IMAGE_PADDING * SETTINGS.scale / this.camera.zoom / 2;
+		const newClientImageSize = CLIENT_IMAGE_PADDING * SETTINGS.scale / this.camera.zoom / 2;
 		this.clientPositions = {};
 		this.clientGroupsOnRouteRaw.length = 0;
 
