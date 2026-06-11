@@ -163,6 +163,8 @@ class DataResponse {
 
 class DataResponseCar {
 	readonly vehicleId: string = "";
+	readonly capacity: number = 0;
+	readonly passengerCount: number = 0;
 }
 
 export class Arrival {
@@ -177,7 +179,7 @@ export class Arrival {
 	readonly routeTypeIcon: string;
 	readonly circularState: "NONE" | "CLOCKWISE" | "ANTICLOCKWISE";
 	readonly platformName: string;
-	readonly cars: string[];
+	readonly cars: DataResponseCar[] = [];
 	readonly arrival: number;
 	readonly departure: number;
 	readonly isContinuous: boolean;
@@ -198,7 +200,7 @@ export class Arrival {
 		this.routeTypeIcon = tempRouteType === undefined ? "" : ROUTE_TYPES[tempRouteType].icon;
 		this.circularState = dataResponse.circularState;
 		this.platformName = dataResponse.platformName;
-		this.cars = dataResponse.cars.map(car => car.vehicleId);
+		this.cars = dataResponse.cars;
 		this.arrival = dataResponse.arrival === 0 ? 0 : dataResponse.arrival + timeOffset;
 		this.departure = dataResponse.departure === 0 ? 0 : dataResponse.departure + timeOffset;
 		this.isContinuous = this.arrival === 0;

@@ -133,9 +133,9 @@
 				<div>{{ dialogData?.departureIndex }}</div>
 			</div>
 			<div class="column">
-				<div class="title">{{ t('station.carVehicle', {count: dialogData?.cars?.length}) }}</div>
+				<div class="title">{{ t('station.vehicleCarCount', {count: dialogData?.cars?.length}) }}</div>
 				@for (car of dialogData?.cars; track $index) {
-					<div>{{ car }}</div>
+					<div>{{ car.vehicleId }}</div>
 				}
 			</div>
 		</div>

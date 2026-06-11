@@ -35,7 +35,7 @@
 		"showDetails": "顯示詳情",
 		"arrivalDetails": "到站詳情",
 		"departureIndex": "發車編號",
-		"carVehicle": "{{count}}卡列車",
+		"vehicleCarCount": "{{count}}卡車輛",
 		"arrived": "已到站",
 		"platform": "{{name}}號月台",
 		"everyEightSeconds": "每8秒一班"

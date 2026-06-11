@@ -93,7 +93,7 @@ public final class ArrivalResponse extends ArrivalResponseSchema implements Comp
 	}
 
 	public void setCarDetails(ObjectArrayList<VehicleCar> vehicleCars) {
-		vehicleCars.forEach(vehicleCar -> cars.add(new CarDetails(vehicleCar.getVehicleId(), 0)));
+		vehicleCars.forEach(vehicleCar -> cars.add(new CarDetails(vehicleCar.getVehicleId(), vehicleCar.getCapacity(), 0)));
 	}
 
 	@Override

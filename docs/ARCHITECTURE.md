@@ -75,23 +75,97 @@ S2C queue.
 
 ### Passenger demand model (homes / landmarks)
 
-- Homes own a persisted list of `Passenger` entities and keep it converged to configured
-  `population` over time.
-- Passengers are currently simulated **individually** (not as clumped cohorts): each one picks
-  destinations and requests CSA directions independently.
-- Transit legs are executed against realtime vehicle state (board actual vehicle ids and finish
-  a leg when the vehicle reaches the transfer platform), rather than only replaying original
-  planned timestamps.
-- At transfers and stale waits, passengers can re-request directions from their current
-  position, so delayed service can reroute mid-journey.
-- Landmark demand uses 24 hourly density slots. The slot source is configurable per landmark:
-  `useRealTime = true` uses wall-clock time, `useRealTime = false` uses in-game time.
-- To protect latency on huge worlds, the simulator caps how many new passenger CSA requests can
-  be submitted each tick; over-budget passengers are retried on a short cooldown.
-- Runtime caches include `vehicleIdMap` (vehicle lookup) and `vehicleIdToPassengers` (onboard
-  passenger sets), rebuilt by `Data.sync()` and refreshed each simulator tick.
-- Vehicles that remain stalled on-route past a jam threshold mark their active routes as jammed;
-  jammed routes are excluded from both `/mtr/api/map/directions` and passenger CSA replanning.
+#### Homes
+
+Homes own a persisted `ObjectArrayList<Passenger>` and converge it towards the configured
+`population` each tick (at most 10 adds/removes per tick, FIFO order — oldest removed first
+when shrinking). Convergence is bounded so that loading a large zone with many homes doesn't
+spike the per-tick cost.
+
+#### Passenger state machine
+
+Each `Passenger` runs a deterministic while-loop every tick with six states:
+
+```
+          ┌─────────────────┐
+          │     Idle        │  ← home / cooldown expired
+          │  (no directions)│
+          └────────┬────────┘
+                   │ pick destination (home or random landmark, 1:3 odds)
+                   ▼
+          ┌─────────────────┐
+          │  Request CSA    │  async via DirectionsFinder
+          │  path           │  (budget-capped, retries on backoff)
+          └────────┬────────┘
+                   │ callback received
+                   ▼
+     ┌───────────────────────────┐
+     │  Execute legs in sequence │
+     │  ┌─────────────────────┐  │
+     │  │ Walking leg (no     │  │  wait for endTime, then consume
+     │  │ route)              │  │
+     │  └─────────┬───────────┘  │
+     │            ▼              │
+     │  ┌─────────────────────┐  │
+     │  │ Awaiting vehicle    │  │  scan sidings for matching vehicle
+     │  │ (vehicleId == 0)    │  │  replan if jammed or >2min late
+     │  └─────────┬───────────┘  │
+     │            ▼              │
+     │  ┌─────────────────────┐  │
+     │  │ Riding (vehicleId   │  │  ride until vehicle stops at target
+     │  │ != 0)               │  │  OR vehicle vanishes → replan
+     │  └─────────┬───────────┘  │
+     │            ▼              │
+     │  ┌─────────────────────┐  │
+     │  │ Leg complete /      │  │  disembark → next leg
+     │  │ transfer            │  │  OR final leg → journey complete
+     │  └─────────────────────┘  │
+     └───────────────────────────┘
+                   │
+                   ▼
+          ┌─────────────────┐
+          │ Journey         │  at landmark: visit timer starts
+          │ complete        │  at home: → idle (state 1)
+          └─────────────────┘
+```
+
+**Missed-stop guard**: If a leg's estimated arrival time passes without the vehicle reaching
+the target platform, the passenger force-disembarks and replans from its current position.
+This prevents passengers from getting stuck when a vehicle is deleted, rerouted, or when
+ticks are missed.
+
+**Vanished-vehicle replan**: When the boarded vehicle disappears from `vehicleIdMap`, the
+passenger immediately replans instead of waiting for the 2-minute stale threshold. The replan
+origin is the destination platform's position (or home center if unknown) for a better route.
+
+**CSA budget**: The simulator caps the number of concurrent outbound CSA requests per tick.
+When the budget is exhausted, the passenger retries after a shorter backoff
+(COOLDOWN / 2 + random).
+
+#### Landmark density model
+
+Landmarks use 288 time-of-day slots (5 minutes each) with per-hour density limits. A visit
+occupies every slot between arrival and departure. The `reserveVisit` method walks forward
+from the arrival slot, consuming slots until either the density limit is reached or the
+randomized max-stay cap is hit. This gives a visit duration proportional to available
+capacity at that time of day.
+
+- `useRealTime = true` → wall-clock time indexing (slots aligned to real 5-minute boundaries).
+- `useRealTime = false` → in-game time indexing (slots distributed across the game day length).
+
+The density arrays are cumulative within a session and reset on save/load
+(not persisted — reconstructed from the schema fields). The first tick of a newly loaded
+landmark is lenient (no prior occupancy), but thereafter the double-buffered
+(`currentVisitingPassengers` / `currentVisitingPassengersOld`) snapshot system provides
+correct back-pressure.
+
+#### Runtime caches
+
+- `vehicleIdMap` → vehicle lookup (rebuilt by `Data.sync()`).
+- `vehicleIdToPassengers` → onboard passenger sets (populated each tick by passengers with
+  `vehicleId != 0`).
+- `jammedRouteIds` → routes where a vehicle has stalled past threshold (excluded from both
+  `/mtr/api/map/directions` and passenger replanning).
 
 ## Servlets and HTTP surface
 

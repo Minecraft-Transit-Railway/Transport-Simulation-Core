@@ -8,23 +8,59 @@ import org.mtr.core.tool.Utilities;
 import java.util.Random;
 
 /**
- * A non-rail point of interest (a tourist attraction, monument, &hellip;) that generates
- * passenger demand throughout the day.
+ * A non-rail point of interest (a tourist attraction, monument, &hellip;) that constrains
+ * passenger demand through per-hour density limits.
  *
- * <p>Each tick the landmark adjusts its visiting passenger count for the current
- * {@value #DAY_DIVISIONS}-slot time-of-day bucket, modelling passengers arriving, staying for
- * up to {@value #MAX_STAY} divisions (≈ 12 hours) and leaving again. The resulting demand
- * feeds the simulator's passenger generator. Each landmark independently chooses whether those
- * slots are interpreted using wall-clock time or in-game time via {@code useRealTime}.</p>
+ * <p><strong>Time-slot model</strong></p>
+ * <p>The day is split into {@value #DAY_DIVISIONS} slots ({@value #DIVISIONS_PER_HOUR} per
+ * hour, each {@value #DAY_DIVISION_MILLIS} ms). A passenger visit occupies every slot between
+ * its arrival and departure. The {@code reserveVisit} method finds the longest consecutive run
+ * of non-full slots (up to {@value #MAX_STAY} slots ≈ 12 h) starting at the arrival time.</p>
+ *
+ * <p><strong>Density and back-pressure</strong></p>
+ * <p>Each hour has a per-hour density limit. Slot {@code i} is &ldquo;full&rdquo; when
+ * {@code currentVisitingPassengersOld[i] + addedVisitorsThisTick >= densities[i / 12]}. The
+ * {@code currentVisitingPassengers} array records the cumulative number of visits that span
+ * each slot; it is snapshotted into {@code currentVisitingPassengersOld} at the start of every
+ * tick so that within a single tick the count is stable.</p>
+ *
+ * <p><strong>First-tick behavior</strong></p>
+ * <p>Both arrays start zeroed. On the landmark&rsquo;s very first tick the snapshot is still
+ * all zeros, so every slot appears empty &mdash; the density limit is the only active
+ * constraint. From the second tick onward {@code currentVisitingPassengersOld} reflects
+ * reservations made in prior ticks and the system converges to steady state.</p>
+ *
+ * <p><strong>Time source</strong></p>
+ * <p>Each landmark independently chooses wall-clock versus in-game time via
+ * {@code useRealTime}. Wall-clock uses {@code DAY_DIVISION_MILLIS} for division; in-game time
+ * uses the simulator's day length and game-time mapping.</p>
+ *
+ * @see #reserveVisit(long)
+ * @see #writeVisitCache(long, long)
  */
 public final class Landmark extends LandmarkSchema {
 
+	/**
+	 * New reservations made this tick (resets to 0 at the start of each tick). Used alongside
+	 * {@link #currentVisitingPassengersOld} so that multiple concurrent reservations within one
+	 * tick don't oversubscribe the same slot.
+	 */
 	private int addedVisitorsThisTick;
+	/**
+	 * Cumulative per-slot visitor count. Every call to {@link #writeVisitCache} increments each
+	 * slot the visit spans. Never decremented within a session; reset on save/load.
+	 */
 	private final int[] currentVisitingPassengers = new int[DAY_DIVISIONS];
+	/**
+	 * Snapshot of {@link #currentVisitingPassengers} taken at the start of the previous tick.
+	 * Used by {@link #reserveVisit} for the density check so that in-flight reservations this
+	 * tick don't see themselves.
+	 */
 	private final int[] currentVisitingPassengersOld = new int[DAY_DIVISIONS];
 
 	/**
 	 * The number of chunks to divide the day into, for simulation purposes.
+	 * 24 hours × 12 = 288 slots, each {@value #DAY_DIVISION_MILLIS} ms (5 minutes).
 	 */
 	private static final int DAY_DIVISIONS = Utilities.HOURS_PER_DAY * 12;
 	private static final int DAY_DIVISION_MILLIS = Utilities.MILLIS_PER_DAY / DAY_DIVISIONS;
@@ -32,7 +68,10 @@ public final class Landmark extends LandmarkSchema {
 	 * How many {@link #DAY_DIVISIONS} buckets fit in one density-profile hour slot.
 	 */
 	private static final int DIVISIONS_PER_HOUR = DAY_DIVISIONS / Utilities.HOURS_PER_DAY;
-	private static final int MAX_STAY = 12 * 12; // Max stay at a landmark is 12 hours
+	/**
+	 * Maximum consecutive slots a single visit may occupy (12 hours).
+	 */
+	private static final int MAX_STAY = 12 * 12;
 	private static final Random RANDOM = new Random();
 
 	/**
@@ -61,6 +100,27 @@ public final class Landmark extends LandmarkSchema {
 	public void tick() {
 		System.arraycopy(currentVisitingPassengers, 0, currentVisitingPassengersOld, 0, currentVisitingPassengers.length);
 		addedVisitorsThisTick = 0;
+	}
+
+	public boolean getUseRealTime() {
+		return useRealTime;
+	}
+
+	public long getDensity(int hour) {
+		return hour >= 0 && hour < Math.min(Utilities.HOURS_PER_DAY, densities.size()) ? densities.getLong(hour) : 0;
+	}
+
+	public void setUseRealTime(boolean useRealTime) {
+		this.useRealTime = useRealTime;
+	}
+
+	public void setDensity(int hour, int density) {
+		if (hour >= 0 && hour < Utilities.HOURS_PER_DAY) {
+			while (densities.size() < Utilities.HOURS_PER_DAY) {
+				densities.add(0);
+			}
+			densities.set(hour, Math.max(0, density));
+		}
 	}
 
 	/**
