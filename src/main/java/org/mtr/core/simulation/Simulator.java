@@ -1,7 +1,6 @@
 package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.*;
 import lombok.Getter;
@@ -69,14 +68,6 @@ public class Simulator extends Data implements Utilities {
 	 * Background path-finder for passenger directions queries.
 	 */
 	public final DirectionsFinder directionsFinder = new DirectionsFinder(this);
-	/**
-	 * Runtime-only vehicle lookup, rebuilt every simulation tick.
-	 */
-	public final Long2ObjectOpenHashMap<Vehicle> vehicleIdMap = new Long2ObjectOpenHashMap<>();
-	/**
-	 * Runtime-only onboard-passenger cache keyed by vehicle id, rebuilt every simulation tick.
-	 */
-	public final Long2ObjectOpenHashMap<ObjectArraySet<Passenger>> vehicleIdToPassengers = new Long2ObjectOpenHashMap<>();
 
 	private final FileLoader<Station> fileLoaderStations;
 	private final FileLoader<Platform> fileLoaderPlatforms;
@@ -161,6 +152,7 @@ public class Simulator extends Data implements Utilities {
 		}
 		vehiclePositions = new ObjectImmutableList<>(tempVehiclePositions);
 		sidings.forEach(siding -> siding.initVehiclePositions(vehiclePositions.get(siding.getTransportModeOrdinal()).get(1)));
+		homes.forEach(home -> home.iteratePassengers(passenger -> passenger.writeVehicleCache(this)));
 
 		// Load settings
 		final ObjectArraySet<Settings> settings = new ObjectArraySet<>();
@@ -475,8 +467,6 @@ public class Simulator extends Data implements Utilities {
 				sync();
 			}
 
-			vehicleIdToPassengers.clear();
-			vehicleIdMap.clear();
 			jammedRouteIds.clear();
 			sidings.forEach(siding -> siding.simulateVehicles(millisElapsed, vehiclePositions.get(siding.getTransportModeOrdinal())));
 			clients.forEach(client -> client.sendUpdates(this));

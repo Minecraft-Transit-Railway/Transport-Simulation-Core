@@ -69,7 +69,7 @@ public final class Home extends HomeSchema {
 			int adjustments = 0;
 			while (passengers.size() != population && adjustments < MAX_PASSENGERS_PER_TICK) {
 				if (passengers.size() > population) {
-					passengers.removeFirst();
+					passengers.removeFirst().clearVehicleReferences(simulator);
 				} else {
 					passengers.add(new Passenger(data));
 				}

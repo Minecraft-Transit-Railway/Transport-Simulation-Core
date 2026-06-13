@@ -136,25 +136,26 @@ export class MapComponent implements AfterViewInit {
 				);
 			}
 
-			if (hasUpdate) {
-				const {clientWidth, clientHeight} = this.canvas();
-				if (clientWidth !== renderer.domElement.width || clientHeight !== renderer.domElement.height) {
-					renderer.setSize(clientWidth * devicePixelRatio, clientHeight * devicePixelRatio, false);
-					this.camera.left = -clientWidth / 2;
-					this.camera.right = clientWidth / 2;
-					this.camera.top = clientHeight / 2;
-					this.camera.bottom = -clientHeight / 2;
-					(this.camera as unknown as { aspect: number }).aspect = clientWidth / clientHeight;
-					lineMaterialStationConnectionThin.resolution.set(clientWidth, clientHeight);
-					lineMaterialStationConnectionThick.resolution.set(clientWidth, clientHeight);
-					lineMaterialNormal.resolution.set(clientWidth, clientHeight);
-					lineMaterialNormalDashed.resolution.set(clientWidth, clientHeight);
-					lineMaterialThin.resolution.set(clientWidth, clientHeight);
-					lineMaterialThinDashed.resolution.set(clientWidth, clientHeight);
-					this.camera.updateProjectionMatrix();
-				}
+		const {clientWidth, clientHeight} = this.canvas();
+			if (clientWidth !== renderer.domElement.width || clientHeight !== renderer.domElement.height) {
+				renderer.setSize(clientWidth * devicePixelRatio, clientHeight * devicePixelRatio, false);
+				this.camera.left = -clientWidth / 2;
+				this.camera.right = clientWidth / 2;
+				this.camera.top = clientHeight / 2;
+				this.camera.bottom = -clientHeight / 2;
+				(this.camera as unknown as { aspect: number }).aspect = clientWidth / clientHeight;
+				lineMaterialStationConnectionThin.resolution.set(clientWidth, clientHeight);
+				lineMaterialStationConnectionThick.resolution.set(clientWidth, clientHeight);
+				lineMaterialNormal.resolution.set(clientWidth, clientHeight);
+				lineMaterialNormalDashed.resolution.set(clientWidth, clientHeight);
+				lineMaterialThin.resolution.set(clientWidth, clientHeight);
+				lineMaterialThinDashed.resolution.set(clientWidth, clientHeight);
+				this.camera.updateProjectionMatrix();
+			}
 
-				renderer.render(this.scene, this.camera);
+			renderer.render(this.scene, this.camera);
+
+			if (hasUpdate) {
 				this.updateLabels();
 				hasUpdate = false;
 			}

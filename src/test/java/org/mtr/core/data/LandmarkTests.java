@@ -1,14 +1,14 @@
 package org.mtr.core.data;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.nio.file.Paths;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public final class LandmarkTests {
 
@@ -20,7 +20,7 @@ public final class LandmarkTests {
 	}
 
 	@Test
-	public void testLandmarkConstruction() {
+	public void testConstruction() {
 		final Landmark landmark = new Landmark(simulator);
 		landmark.setName("Test Landmark");
 		assertNotNull(landmark);
@@ -32,79 +32,57 @@ public final class LandmarkTests {
 		final Landmark landmark = new Landmark(simulator);
 		landmark.setCorners(new Position(-10, -10, -10), new Position(10, 10, 10));
 		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, false);
-
-		// With empty densities, no visit should be possible
-		final long visitDuration = landmark.reserveVisit(simulator.getCurrentMillis());
-		assertEquals(0, visitDuration, "Visit duration should be 0 when landmark has no densities configured");
+		assertEquals(0, landmark.reserveVisit(simulator.getCurrentMillis()), "Visit duration should be 0 when landmark has no densities configured");
 	}
 
 	@Test
-	public void testTick() {
+	public void testWriteAndEndVisitLifecycle() {
 		final Landmark landmark = new Landmark(simulator);
+		landmark.setCorners(new Position(-10, -10, -10), new Position(10, 10, 10));
 		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, false);
-		// tick should not throw
+
+		for (int hour = 0; hour < 24; hour++) {
+			landmark.setDensity(hour, 1);
+		}
+
+		final long startTime = simulator.getCurrentMillis();
+		final long endTime = startTime + Utilities.MILLIS_PER_HOUR;
+
+		// Fill slots with one visit
+		landmark.writeVisitCache(startTime, endTime);
 		landmark.tick();
+
+		// With density 1 and slot occupied, reserve should fail
+		assertEquals(0, landmark.reserveVisit(startTime), "Slot should be full after writeVisitCache");
+
+		// Free the slots
+		landmark.endVisit(startTime, endTime);
+		landmark.tick();
+
+		// Now reserve should succeed
+		assertTrue(landmark.reserveVisit(startTime) > 0, "Slot should be free after endVisit");
 	}
 
 	@Test
 	public void testWriteVisitCacheDoesNotThrow() {
 		final Landmark landmark = new Landmark(simulator);
-		landmark.writeVisitCache(simulator.getCurrentMillis(), simulator.getCurrentMillis() + Utilities.MILLIS_PER_HOUR);
+		assertDoesNotThrow(() -> landmark.writeVisitCache(simulator.getCurrentMillis(), simulator.getCurrentMillis() + Utilities.MILLIS_PER_HOUR));
 	}
 
 	@Test
-	public void testReserveVisitWithWallClock() {
+	public void testEndVisitDoesNotThrow() {
 		final Landmark landmark = new Landmark(simulator);
-		// Without game time (non-Simulator data path), reserveVisit returns 0
-		// This tests the else branch
-		final long visitDuration = landmark.reserveVisit(System.currentTimeMillis());
-		assertEquals(0, visitDuration, "Without simulator context, reserveVisit should return 0");
+		assertDoesNotThrow(() -> landmark.endVisit(simulator.getCurrentMillis(), simulator.getCurrentMillis() + Utilities.MILLIS_PER_HOUR));
 	}
 
 	@Test
-	public void testGetDayDivisionIndexViaReserve() {
-		simulator.setGameTime(Utilities.MILLIS_PER_HOUR * 6, Utilities.MILLIS_PER_DAY, false);
-		final Landmark landmark = new Landmark(simulator);
-
-		// With empty densities, reserve at any hour returns 0
-		final long visitDuration = landmark.reserveVisit(simulator.getCurrentMillis());
-		assertEquals(0, visitDuration, "Without configured densities, reservation should fail");
-	}
-
-	@Test
-	public void testMultipleTicks() {
-		final Landmark landmark = new Landmark(simulator);
-		// Running tick multiple times should not throw
-		landmark.tick();
-		landmark.tick();
-		landmark.tick();
-	}
-
-	@Test
-	public void testReserveVisitWithUseRealTimeTrue() {
-		final Landmark landmark = new Landmark(simulator);
-		landmark.setCorners(new Position(-10, -10, -10), new Position(10, 10, 10));
-		simulator.setGameTime(Utilities.MILLIS_PER_HOUR * 8, Utilities.MILLIS_PER_DAY, false);
-		// With useRealTime = true and no densities, should still return 0
-		final long visitDuration = landmark.reserveVisit(simulator.getCurrentMillis());
-		assertEquals(0, visitDuration, "Without configured densities, reservation should fail");
-	}
-
-	@Test
-	public void testWriteVisitCacheWithSimulatorContext() {
+	public void testMultipleTicksDoNotThrow() {
 		final Landmark landmark = new Landmark(simulator);
 		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, false);
-		// Should not throw when called with simulator context
-		landmark.writeVisitCache(simulator.getCurrentMillis(), simulator.getCurrentMillis() + Utilities.MILLIS_PER_HOUR);
-	}
-
-	@Test
-	public void testReserveVisitWithGameTimeMoving() {
-		final Landmark landmark = new Landmark(simulator);
-		landmark.setCorners(new Position(-10, -10, -10), new Position(10, 10, 10));
-		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, true);
-		// With time moving and empty densities, should still return 0
-		final long visitDuration = landmark.reserveVisit(simulator.getCurrentMillis() + Utilities.MILLIS_PER_HOUR);
-		assertEquals(0, visitDuration, "Without configured densities, reservation should fail even with time moving");
+		assertDoesNotThrow(() -> {
+			landmark.tick();
+			landmark.tick();
+			landmark.tick();
+		});
 	}
 }

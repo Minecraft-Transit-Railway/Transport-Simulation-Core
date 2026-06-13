@@ -84,63 +84,100 @@ spike the per-tick cost.
 
 #### Passenger state machine
 
-Each `Passenger` runs a deterministic while-loop every tick with six states:
+Each `Passenger` runs a deterministic while-loop every tick. A **cooldown gate** at the top of
+the method checks `simulator.getCurrentMillis() < cooldownTime`: if the passenger is waiting
+(for a landmark visit, boarding retry, or journey cooldown), the tick returns immediately.
 
 ```
-          ┌─────────────────┐
-          │     Idle        │  ← home / cooldown expired
-          │  (no directions)│
-          └────────┬────────┘
-                   │ pick destination (home or random landmark, 1:3 odds)
-                   ▼
-          ┌─────────────────┐
-          │  Request CSA    │  async via DirectionsFinder
-          │  path           │  (budget-capped, retries on backoff)
-          └────────┬────────┘
-                   │ callback received
-                   ▼
-     ┌───────────────────────────┐
-     │  Execute legs in sequence │
-     │  ┌─────────────────────┐  │
-     │  │ Walking leg (no     │  │  wait for endTime, then consume
-     │  │ route)              │  │
-     │  └─────────┬───────────┘  │
-     │            ▼              │
-     │  ┌─────────────────────┐  │
-     │  │ Awaiting vehicle    │  │  scan sidings for matching vehicle
-     │  │ (vehicleId == 0)    │  │  replan if jammed or >2min late
-     │  └─────────┬───────────┘  │
-     │            ▼              │
-     │  ┌─────────────────────┐  │
-     │  │ Riding (vehicleId   │  │  ride until vehicle stops at target
-     │  │ != 0)               │  │  OR vehicle vanishes → replan
-     │  └─────────┬───────────┘  │
-     │            ▼              │
-     │  ┌─────────────────────┐  │
-     │  │ Leg complete /      │  │  disembark → next leg
-     │  │ transfer            │  │  OR final leg → journey complete
-     │  └─────────────────────┘  │
-     └───────────────────────────┘
-                   │
-                   ▼
-          ┌─────────────────┐
-          │ Journey         │  at landmark: visit timer starts
-          │ complete        │  at home: → idle (state 1)
-          └─────────────────┘
+                    ┌──────────────────────┐
+                    │   Cooldown gate      │  if now < cooldownTime → return
+                    │   (cooldownTime)     │
+                    └──────────┬───────────┘
+                               │ cooldown expired
+                               ▼
+                    ┌──────────────────────┐
+                    │   Idle / no          │  end landmark visit (if any)
+                    │   directions         │  pick destination (home or landmark, 1:3)
+                    └──────────┬───────────┘
+                               │ findDirections async via DirectionsFinder
+                               │ (budget-capped; cooldownTime = Long.MAX_VALUE during request)
+                               ▼
+                    ┌──────────────────────┐
+                    │   Walking leg        │  no route → wait for endTime, then consume
+                    │   (currentRoute==null)│
+                    └──────────┬───────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │   Awaiting vehicle   │  vehicleId == 0
+                    │                      │  check jammed / REALTIME_REPLAN_THRESHOLD
+                    │                      │  → replan if expired
+                    │                      │  waitForVehicle(simulator)
+                    │                      │    ─ scan all sidings
+                    │                      │    ─ found → set currentVehicle
+                    │                      │    ─ not found → reset & wait(BOARDING_COOLDOWN)
+                    │                      │  boardVehicle(getBoardingCar(), 10)
+                    │                      │    ─ hash-based car; 10% adjacent spillover
+                    │                      │    ─ all full → replan
+                    └──────────┬───────────┘
+                               ▼
+   ┌────────────────────────────────────────────┐
+   │   On vehicle  (vehicleId != 0)              │
+   │   updateCurrentSidingAndVehicleCache()      │
+   │   ┌────────────────────────────────────┐    │
+   │   │ 5a vanished  → reset & replan      │    │
+   │   │ 5b arrived   → doors open/depot →  │    │
+   │   │                alightVehicle()      │    │
+   │   │                consume leg          │    │
+   │   │                (stay aboard if      │    │
+   │   │                 next leg same route)│    │
+   │   │ 6 missed-stop  → alight & replan   │    │
+   │   └────────────────────────────────────┘    │
+   └──────────────────┬─────────────────────────┘
+                      │ consumed / completed
+                      ▼
+               ┌────────────────────┐
+               │   Leg complete     │  directions not empty → replan or continue
+               │   / Journey done   │  directions empty → completeJourney
+               └────────────────────┘
+                      │
+                      ▼
+               ┌────────────────────┐
+               │   Complete         │  at landmark: cooldownTime = landmarkVisitEndTime
+               │                    │  at home: wait(GENERIC_COOLDOWN, randomize)
+               └────────────────────┘
 ```
 
-**Missed-stop guard**: If a leg's estimated arrival time passes without the vehicle reaching
-the target platform, the passenger force-disembarks and replans from its current position.
-This prevents passengers from getting stuck when a vehicle is deleted, rerouted, or when
-ticks are missed.
+**Cooldown system**: A single `cooldownTime` field replaces the older `findDirectionsTime`.
+It is set to:
+- `Long.MAX_VALUE` while a CSA request is in flight (prevents duplicate submissions),
+- `landmarkVisitEndTime` while visiting a landmark,
+- `now + GENERIC_COOLDOWN + random(GENERIC_COOLDOWN)` after a journey completes (home),
+- `now + BOARDING_COOLDOWN + random(BOARDING_COOLDOWN)` when no vehicle found,
+- `now + RETRY_COOLDOWN + random(RETRY_COOLDOWN)` on budget exhaustion or failed reservation.
+The callback resets `cooldownTime = 0` on success so the next tick proceeds.
 
-**Vanished-vehicle replan**: When the boarded vehicle disappears from `vehicleIdMap`, the
-passenger immediately replans instead of waiting for the 2-minute stale threshold. The replan
-origin is the destination platform's position (or home center if unknown) for a better route.
+**Boarding**: `waitForVehicle()` scans all sidings for a vehicle on the current route/platform.
+On find, fields `sidingId`, `currentSiding`, `vehicleId`, `currentVehicle` are set.
+`boardVehicle()` uses a hash of the passenger's ID to choose a preferred car, with 10%
+spillover to an adjacent car when the preferred car is full (avoids hotspots).
+`alightVehicle()` removes the passenger from every car's passenger set.
+
+**Vanished-vehicle replan (5a)**: When the boarded vehicle cannot be found in any siding
+(via `updateCurrentSidingAndVehicleCache()`), the passenger immediately replans instead of
+waiting. The replan origin is the destination platform's position (or home center if unknown).
+
+**Missed-stop guard (6)**: If the leg's estimated arrival time passes without the vehicle
+reaching the target platform, the passenger force-alights and replans. This is handled within
+the same `if` branch as arrival (5b) — both end with `alightVehicle()`, leg consumption, and
+either completion or replan. The distinction is cosmetic for the passenger state machine.
 
 **CSA budget**: The simulator caps the number of concurrent outbound CSA requests per tick.
-When the budget is exhausted, the passenger retries after a shorter backoff
-(COOLDOWN / 2 + random).
+When the budget is exhausted the passenger retries after `RETRY_COOLDOWN + random(RETRY_COOLDOWN)`.
+
+**Population convergence cleanup**: When a passenger is removed from its home during
+population convergence, `clearVehicleReferences()` is called to remove it from any vehicle
+car set and to end any active landmark visit (`endVisit`). This prevents stale references
+in the shared occupancy data structures.
 
 #### Landmark density model
 
@@ -161,9 +198,17 @@ correct back-pressure.
 
 #### Runtime caches
 
-- `vehicleIdMap` → vehicle lookup (rebuilt by `Data.sync()`).
-- `vehicleIdToPassengers` → onboard passenger sets (populated each tick by passengers with
-  `vehicleId != 0`).
+- `sidingIdMap` → siding lookup (rebuilt by `Data.sync()`).
+- `Siding.vehicleIdMap` → per-siding vehicle lookup (the canonical vehicle store, replacing
+  the old set).
+- `Passenger.currentSiding` / `currentVehicle` → per-passenger transient cache, resolved from
+  persisted `sidingId` / `vehicleId` fields by
+  {@link org.mtr.core.data.Passenger#updateCurrentSidingAndVehicleCache}.
+- `VehicleCar.passengers` → per-car passenger occupancy set (runtime only, rebuilt on load via
+  {@link org.mtr.core.data.Passenger#writeVehicleCache}). Replaces the removed
+  `Simulator.vehicleIdToPassengers` — occupancy now lives on the car, not the vehicle.
+- `Passenger.vehicleCarNumber` → persisted car index; written on board, cleared on alight.
+  Survives restarts so passengers are restored to the correct car on load.
 - `jammedRouteIds` → routes where a vehicle has stalled past threshold (excluded from both
   `/mtr/api/map/directions` and passenger replanning).
 

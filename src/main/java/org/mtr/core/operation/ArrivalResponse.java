@@ -1,6 +1,10 @@
 package org.mtr.core.operation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.jspecify.annotations.Nullable;
+import org.mtr.core.data.Passenger;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.data.VehicleCar;
@@ -12,8 +16,8 @@ import java.util.function.Consumer;
 
 public final class ArrivalResponse extends ArrivalResponseSchema implements Comparable<ArrivalResponse> {
 
-	public ArrivalResponse(String destination, long arrival, long departure, long deviation, boolean realtime, long departureIndex, int stopIndex, Route route, Platform platform, long passengerCount) {
-		super(destination, arrival, departure, deviation, realtime, departureIndex, stopIndex == route.getRoutePlatforms().size() - 1, route.getId(), route.getName(), route.getRouteNumber(), route.getColor(), route.getCircularState(), platform.getId(), platform.getName(), passengerCount);
+	public ArrivalResponse(String destination, long arrival, long departure, long deviation, boolean realtime, long departureIndex, int stopIndex, Route route, Platform platform) {
+		super(destination, arrival, departure, deviation, realtime, departureIndex, stopIndex == route.getRoutePlatforms().size() - 1, route.getId(), route.getName(), route.getRouteNumber(), route.getColor(), route.getCircularState(), platform.getId(), platform.getName());
 	}
 
 	public ArrivalResponse(ReaderBase readerBase) {
@@ -77,13 +81,6 @@ public final class ArrivalResponse extends ArrivalResponseSchema implements Comp
 		return platformName;
 	}
 
-	/**
-	 * @return realtime onboard passenger count for the predicted vehicle, or {@code 0} when unknown.
-	 */
-	public long getPassengerCount() {
-		return passengerCount;
-	}
-
 	public int getCarCount() {
 		return cars.size();
 	}
@@ -92,8 +89,11 @@ public final class ArrivalResponse extends ArrivalResponseSchema implements Comp
 		cars.forEach(consumer);
 	}
 
-	public void setCarDetails(ObjectArrayList<VehicleCar> vehicleCars) {
-		vehicleCars.forEach(vehicleCar -> cars.add(new CarDetails(vehicleCar.getVehicleId(), vehicleCar.getCapacity(), 0)));
+	public void setCarDetails(ObjectArrayList<VehicleCar> vehicleCars, @Nullable ObjectImmutableList<ObjectArraySet<Passenger>> passengers) {
+		for (int i = 0; i < vehicleCars.size(); i++) {
+			final VehicleCar vehicleCar = vehicleCars.get(i);
+			cars.add(new CarDetails(vehicleCar.getVehicleId(), vehicleCar.getCapacity(), passengers == null ? 0 : passengers.get(i).size()));
+		}
 	}
 
 	@Override

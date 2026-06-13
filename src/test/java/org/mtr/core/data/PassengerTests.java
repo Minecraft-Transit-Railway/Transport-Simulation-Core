@@ -1,9 +1,13 @@
 package org.mtr.core.data;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.simulation.Simulator;
 import org.mtr.core.tool.Utilities;
+
+import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Paths;
 
@@ -23,41 +27,14 @@ public final class PassengerTests {
 		final Landmark landmark = new Landmark(simulator);
 		landmark.setName("Test Landmark");
 		landmark.setCorners(new Position(100, -10, 100), new Position(120, 10, 120));
+		simulator.sync();
 	}
 
 	@Test
-	public void testPassengerConstruction() {
+	public void testConstruction() {
 		final Passenger passenger = new Passenger(simulator);
 		assertNotNull(passenger);
 		assertTrue(passenger.isValid());
-	}
-
-	@Test
-	public void testIsValidReturnsTrue() {
-		final Passenger passenger = new Passenger(simulator);
-		assertTrue(passenger.isValid());
-	}
-
-	@Test
-	public void testTickOnCooldownReturnsNotDirty() {
-		final Passenger passenger = new Passenger(simulator);
-		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, false);
-		passenger.tick(home, simulator);
-		assertFalse(passenger.tick(home, simulator), "On cooldown, should return not dirty");
-	}
-
-	@Test
-	public void testFindDirectionsBackoffOnAlreadyAtHome() {
-		final Passenger passenger = new Passenger(simulator);
-		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, false);
-		passenger.tick(home, simulator);
-	}
-
-	@Test
-	public void testTickDoesNotThrowWithLandmarkAndNoDirections() {
-		final Passenger passenger = new Passenger(simulator);
-		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, false);
-		passenger.tick(home, simulator);
 	}
 
 	@Test
@@ -74,13 +51,11 @@ public final class PassengerTests {
 	}
 
 	@Test
-	public void testJourneyCompleteSetsCooldown() {
+	public void testTickOnCooldownReturnsNotDirty() {
 		final Passenger passenger = new Passenger(simulator);
 		simulator.setGameTime(0, Utilities.MILLIS_PER_DAY, false);
 		passenger.tick(home, simulator);
-		passenger.tick(home, simulator);
-		// After two ticks, cooldown should be set and tick should not throw
-		assertDoesNotThrow(() -> passenger.tick(home, simulator));
+		assertFalse(passenger.tick(home, simulator), "On cooldown, should return not dirty");
 	}
 
 	@Test
@@ -92,7 +67,6 @@ public final class PassengerTests {
 		assertTrue(passenger1.tick(home, simulator));
 		assertTrue(passenger2.tick(home, simulator));
 
-		// Both should be on cooldown now
 		assertFalse(passenger1.tick(home, simulator));
 		assertFalse(passenger2.tick(home, simulator));
 	}
@@ -104,32 +78,12 @@ public final class PassengerTests {
 	}
 
 	@Test
-	public void testMarkRouteJammed() {
+	public void testMarkAndClearRouteJammed() {
 		simulator.markRouteJammed(42);
 		assertTrue(simulator.isRouteJammed(42), "Route 42 should be jammed after marking");
 		assertFalse(simulator.isRouteJammed(0), "Route 0 should not be affected");
-	}
-
-	@Test
-	public void testJammedRoutesClearOnTick() {
-		simulator.markRouteJammed(42);
-		assertTrue(simulator.isRouteJammed(42));
-		// Tick clears jammed routes
 		simulator.tick();
 		assertFalse(simulator.isRouteJammed(42), "Jammed routes should be cleared after tick");
-	}
-
-	@Test
-	public void testVehicleIdMapPopulatedOnTick() {
-		simulator.tick();
-		// After tick, vehicleIdMap should be non-null and usable
-		assertNotNull(simulator.vehicleIdMap);
-	}
-
-	@Test
-	public void testVehicleIdToPassengersClearedOnTick() {
-		simulator.tick();
-		assertNotNull(simulator.vehicleIdToPassengers);
 	}
 
 	@Test
@@ -137,17 +91,95 @@ public final class PassengerTests {
 		final Home testHome = new Home(simulator);
 		testHome.setName("Iterate Home");
 		testHome.setCorners(new Position(-5, -5, -5), new Position(5, 5, 5));
-
-		// iteratePassengers should not throw on empty home
 		assertDoesNotThrow(() -> testHome.iteratePassengers(passenger -> {
 		}));
 	}
 
 	@Test
-	public void testPassengerDirectionGetStartTime() {
-		// PassengerDirection is generated from CSA; its start time is the planned departure
-		// Create one via driver and verify defaults
+	public void testVehicleExtraDataPassengerSetsPerCar() {
+		final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
+		vehicleCars.add(new VehicleCar("car_1", 10, 2, 100, 0, 5, 0.5, 0.5));
+		vehicleCars.add(new VehicleCar("car_2", 10, 2, 100, 0, 5, 0.5, 0.5));
+		vehicleCars.add(new VehicleCar("car_3", 10, 2, 100, 0, 5, 0.5, 0.5));
+		final ObjectArrayList<PathData> emptyPath = new ObjectArrayList<>();
+		final PathData dummyPath = new PathData(new JsonReader(new JsonObject()));
+		final VehicleExtraData vehicleExtraData = VehicleExtraData.create(
+			0, 0, 10, vehicleCars, emptyPath, emptyPath, emptyPath, dummyPath, false, 0.1, 0.1, false, 0, 0
+		);
+
+		assertEquals(3, vehicleExtraData.passengers.size(), "Should have one set per car");
+
 		final Passenger passenger = new Passenger(simulator);
-		assertEquals(0, passenger.getVehicleId(), "Vehicle ID should be 0 initially");
+		vehicleExtraData.passengers.get(1).add(passenger);
+		assertTrue(vehicleExtraData.passengers.get(1).contains(passenger));
+		assertFalse(vehicleExtraData.passengers.getFirst().contains(passenger));
+		assertFalse(vehicleExtraData.passengers.get(2).contains(passenger));
+	}
+
+	@Test
+	public void testVehicleExtraDataCopyHasEmptyPassengerSets() {
+		final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
+		vehicleCars.add(new VehicleCar("car_1", 10, 2, 100, 0, 5, 0.5, 0.5));
+		final ObjectArrayList<PathData> emptyPath = new ObjectArrayList<>();
+		final PathData dummyPath = new PathData(new JsonReader(new JsonObject()));
+		final VehicleExtraData original = VehicleExtraData.create(
+			0, 0, 10, vehicleCars, emptyPath, emptyPath, emptyPath, dummyPath, false, 0.1, 0.1, false, 0, 0
+		);
+
+		final Passenger passenger = new Passenger(simulator);
+		original.passengers.getFirst().add(passenger);
+		assertEquals(1, original.passengers.getFirst().size());
+
+		final VehicleExtraData copy = original.copy(0);
+		assertTrue(copy.passengers.getFirst().isEmpty(), "Copy must start with empty passenger sets");
+	}
+
+	@Test
+	public void testWriteVehicleCacheWithDefaultsDoesNotAdd() {
+		final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
+		vehicleCars.add(new VehicleCar("car_0", 10, 2, 100, 0, 5, 0.5, 0.5));
+		final ObjectArrayList<PathData> emptyPath = new ObjectArrayList<>();
+		final PathData dummyPath = new PathData(new JsonReader(new JsonObject()));
+		final VehicleExtraData vehicleExtraData = VehicleExtraData.create(
+			0, 0, 10, vehicleCars, emptyPath, emptyPath, emptyPath, dummyPath, false, 0.1, 0.1, false, 0, 0
+		);
+
+		final Passenger passenger = new Passenger(simulator);
+		passenger.writeVehicleCache(simulator);
+		assertTrue(vehicleExtraData.passengers.getFirst().isEmpty());
+	}
+
+	@Test
+	public void testWriteVehicleCacheWithMissingSidingDoesNotThrow() {
+		final Passenger passenger = new Passenger(simulator);
+		assertDoesNotThrow(() -> passenger.writeVehicleCache(simulator));
+	}
+
+	@Test
+	public void testVehicleExtraDataPassengersAccessibleByCar() {
+		final ObjectArrayList<VehicleCar> vehicleCars = new ObjectArrayList<>();
+		vehicleCars.add(new VehicleCar("car_0", 10, 2, 100, 0, 5, 0.5, 0.5));
+		vehicleCars.add(new VehicleCar("car_1", 10, 2, 100, 0, 5, 0.5, 0.5));
+		final ObjectArrayList<PathData> emptyPath = new ObjectArrayList<>();
+		final PathData dummyPath = new PathData(new JsonReader(new JsonObject()));
+		final VehicleExtraData vehicleExtraData = VehicleExtraData.create(
+			0, 0, 10, vehicleCars, emptyPath, emptyPath, emptyPath, dummyPath, false, 0.1, 0.1, false, 0, 0
+		);
+
+		final Passenger passenger1 = new Passenger(simulator);
+		final Passenger passenger2 = new Passenger(simulator);
+		vehicleExtraData.passengers.getFirst().add(passenger1);
+		vehicleExtraData.passengers.getFirst().add(passenger2);
+
+		assertEquals(2, vehicleExtraData.passengers.getFirst().size(), "Car 0 should have 2 passengers");
+		assertTrue(vehicleExtraData.passengers.getFirst().contains(passenger1));
+		assertTrue(vehicleExtraData.passengers.getFirst().contains(passenger2));
+		assertFalse(vehicleExtraData.passengers.get(1).contains(passenger1), "Car 1 should not contain passenger 1");
+	}
+
+	@Test
+	public void testClearVehicleReferencesDoesNotThrowOnFreshPassenger() {
+		final Passenger passenger = new Passenger(simulator);
+		assertDoesNotThrow(() -> passenger.clearVehicleReferences(simulator));
 	}
 }

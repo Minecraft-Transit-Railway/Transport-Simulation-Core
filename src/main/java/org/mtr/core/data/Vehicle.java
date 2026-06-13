@@ -6,10 +6,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongObjectImmutablePair;
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.*;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.VehicleSchema;
@@ -131,6 +128,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 				if (!isClientside) {
 					vehicleExtraData.setPowerLevel(Math.min(vehicleExtraData.getPowerLevel(), -1));
 				}
+				vehicleExtraData.passengers.forEach(ObjectArraySet::clear);
 				simulateInDepot();
 			} else {
 				// If the vehicle is on route normally

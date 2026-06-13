@@ -48,7 +48,7 @@ public final class Landmark extends LandmarkSchema {
 	private int addedVisitorsThisTick;
 	/**
 	 * Cumulative per-slot visitor count. Every call to {@link #writeVisitCache} increments each
-	 * slot the visit spans. Never decremented within a session; reset on save/load.
+	 * slot the visit spans; {@link #endVisit} decrements them when a visit ends. Reset on save/load.
 	 */
 	private final int[] currentVisitingPassengers = new int[DAY_DIVISIONS];
 	/**
@@ -142,6 +142,34 @@ public final class Landmark extends LandmarkSchema {
 		} else {
 			for (long i = startTime / DAY_DIVISION_MILLIS; i <= endTime / DAY_DIVISION_MILLIS; i++) {
 				currentVisitingPassengers[(int) (i % DAY_DIVISIONS)]++;
+			}
+		}
+	}
+
+	/**
+	 * Decrement the occupancy slots for a visit range. Mirrors the increment logic in
+	 * {@link #writeVisitCache} but guards against underflow.
+	 *
+	 * @param startTime simulation millis at which the visit began
+	 * @param endTime   simulation millis at which the visit ended
+	 */
+	void endVisit(long startTime, long endTime) {
+		if (data instanceof Simulator simulator) {
+			final int startIndex = getDayDivisionIndex(simulator, startTime);
+			final int endIndex = getDayDivisionIndex(simulator, endTime);
+			final int divisionsToWrite = Math.floorMod(endIndex - startIndex, DAY_DIVISIONS) + 1;
+			for (int i = 0; i < divisionsToWrite; i++) {
+				final int index = (startIndex + i) % DAY_DIVISIONS;
+				if (currentVisitingPassengers[index] > 0) {
+					currentVisitingPassengers[index]--;
+				}
+			}
+		} else {
+			for (long i = startTime / DAY_DIVISION_MILLIS; i <= endTime / DAY_DIVISION_MILLIS; i++) {
+				final int idx = (int) (i % DAY_DIVISIONS);
+				if (currentVisitingPassengers[idx] > 0) {
+					currentVisitingPassengers[idx]--;
+				}
 			}
 		}
 	}

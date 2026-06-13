@@ -43,7 +43,10 @@ public final class Siding extends SidingSchema implements Utilities {
 	private final ObjectArrayList<PathData> pathMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<PathData> pathSidingToMainRoute = new ObjectArrayList<>();
 	private final ObjectArrayList<PathData> pathMainRouteToSiding = new ObjectArrayList<>();
-	private final ObjectArraySet<Vehicle> vehicles = new ObjectArraySet<>();
+	/**
+	 * Vehicles on this siding; also doubles as an ID map
+	 */
+	private final Long2ObjectOpenHashMap<Vehicle> vehicleIdMap = new Long2ObjectOpenHashMap<>();
 	private final ObjectImmutableList<ReaderBase> vehicleReaders;
 	/**
 	 * Trips this siding will serve
@@ -93,7 +96,13 @@ public final class Siding extends SidingSchema implements Utilities {
 	@Override
 	public void updateData(ReaderBase readerBase) {
 		super.updateData(readerBase);
-		vehicles.removeIf(vehicle -> !vehicle.getIsOnRoute());
+		final ObjectIterator<Long2ObjectMap.Entry<Vehicle>> iterator = vehicleIdMap.long2ObjectEntrySet().fastIterator();
+		while (iterator.hasNext()) {
+			final Long2ObjectMap.Entry<Vehicle> entry = iterator.next();
+			if (!entry.getValue().getIsOnRoute()) {
+				iterator.remove();
+			}
+		}
 	}
 
 	@Override
@@ -101,7 +110,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		super.serializeFullData(writerBase);
 		writerBase.writeDataset(pathSidingToMainRoute, KEY_PATH_SIDING_TO_MAIN_ROUTE);
 		writerBase.writeDataset(pathMainRouteToSiding, KEY_PATH_MAIN_ROUTE_TO_SIDING);
-		writerBase.writeDataset(vehicles, KEY_VEHICLES);
+		writerBase.writeDataset(vehicleIdMap.values(), KEY_VEHICLES);
 	}
 
 	/**
@@ -111,7 +120,10 @@ public final class Siding extends SidingSchema implements Utilities {
 		tick();
 		generatePathDistancesAndTimeSegments();
 		if (area != null && defaultPathData != null) {
-			vehicleReaders.forEach(readerBase -> vehicles.add(new Vehicle(VehicleExtraData.create(area.getId(), id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data)));
+			vehicleReaders.forEach(readerBase -> {
+				final Vehicle vehicle = new Vehicle(VehicleExtraData.create(area.getId(), id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, readerBase, data);
+				vehicleIdMap.put(vehicle.getId(), vehicle);
+			});
 		}
 		// Automatically clamp acceleration and deceleration values
 		setAcceleration(acceleration);
@@ -227,11 +239,11 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void clearVehicles() {
-		vehicles.clear();
+		vehicleIdMap.clear();
 	}
 
 	public void generateRoute(Platform firstPlatform, @Nullable Platform lastPlatform, int stopIndex, long cruisingAltitude) {
-		vehicles.clear();
+		vehicleIdMap.clear();
 		pathSidingToMainRoute.clear();
 		pathMainRouteToSiding.clear();
 		sidingPathFinderSidingToMainRoute.clear();
@@ -280,7 +292,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void initVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
-		vehicles.forEach(vehicle -> vehicle.initVehiclePositions(vehiclePositions));
+		vehicleIdMap.values().forEach(vehicle -> vehicle.initVehiclePositions(vehiclePositions));
 	}
 
 	/**
@@ -290,7 +302,7 @@ public final class Siding extends SidingSchema implements Utilities {
 		vehicleTimesAlongRoute.clear();
 
 		if (area == null) {
-			vehicles.clear();
+			vehicleIdMap.clear();
 			pathMainRoute.clear();
 			pathSidingToMainRoute.clear();
 			pathMainRouteToSiding.clear();
@@ -302,8 +314,7 @@ public final class Siding extends SidingSchema implements Utilities {
 
 		final ObjectArraySet<Vehicle> trainsToRemove = new ObjectArraySet<>();
 		final LongOpenHashSet visitedDepartureIndices = new LongOpenHashSet();
-		for (final Vehicle vehicle : vehicles) {
-			writeVehicleIdMapCache(vehicle);
+		for (final Vehicle vehicle : vehicleIdMap.values()) {
 			vehicle.simulate(millisElapsed, vehiclePositions, vehicleTimesAlongRoute);
 
 			if (vehicle.closeToDepot()) {
@@ -331,7 +342,7 @@ public final class Siding extends SidingSchema implements Utilities {
 				} else if (!pathSidingToMainRoute.isEmpty() && !getIsManual()) {
 					final int departureIndex = matchDeparture();
 					if (departureIndex >= 0 && departureIndex < departures.size()) {
-						if (!transportMode.continuousMovement && vehicles.stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
+						if (!transportMode.continuousMovement && vehicleIdMap.values().stream().anyMatch(checkVehicle -> checkVehicle.getDepartureIndex() == departureIndex)) {
 							if (millisElapsed <= MILLIS_PER_HOUR) {
 								log.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
 							}
@@ -347,19 +358,13 @@ public final class Siding extends SidingSchema implements Utilities {
 			}
 		}
 
-		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicles.size() < getMaxVehicles())) {
+		if (defaultPathData != null && !vehicleCars.isEmpty() && spawnTrain && (getIsUnlimited() || vehicleIdMap.size() < getMaxVehicles())) {
 			final Vehicle vehicle = new Vehicle(VehicleExtraData.create(area.getId(), id, railLength, vehicleCars, pathSidingToMainRoute, pathMainRoute, pathMainRouteToSiding, defaultPathData, area.getRepeatInfinitely(), acceleration, deceleration, getIsManual(), maxManualSpeed, manualToAutomaticTime), this, transportMode, data);
-			vehicles.add(vehicle);
-			writeVehicleIdMapCache(vehicle);
+			vehicleIdMap.put(vehicle.getId(), vehicle);
 		}
 
 		if (!trainsToRemove.isEmpty()) {
-			trainsToRemove.forEach(vehicle -> {
-				vehicles.remove(vehicle);
-				if (data instanceof Simulator simulator) {
-					simulator.vehicleIdMap.remove(vehicle.getId());
-				}
-			});
+			trainsToRemove.forEach(vehicle -> vehicleIdMap.remove(vehicle.getId()));
 		}
 	}
 
@@ -399,7 +404,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void updateVehicleRidingEntities(long vehicleId, ObjectArrayList<VehicleRidingEntity> vehicleRidingEntities) {
-		for (final Vehicle vehicle : vehicles) {
+		for (final Vehicle vehicle : vehicleIdMap.values()) {
 			if (vehicle.getId() == vehicleId) {
 				vehicle.updateRidingEntities(vehicleRidingEntities);
 				break;
@@ -412,14 +417,25 @@ public final class Siding extends SidingSchema implements Utilities {
 	}
 
 	public void iterateVehiclesAndRidingEntities(BiConsumer<VehicleExtraData, VehicleRidingEntity> consumer) {
-		vehicles.forEach(vehicle -> vehicle.vehicleExtraData.iterateRidingEntities(vehicleRidingEntity -> consumer.accept(vehicle.vehicleExtraData, vehicleRidingEntity)));
+		vehicleIdMap.values().forEach(vehicle -> vehicle.vehicleExtraData.iterateRidingEntities(vehicleRidingEntity -> consumer.accept(vehicle.vehicleExtraData, vehicleRidingEntity)));
 	}
 
 	/**
 	 * Iterate currently active vehicles on this siding.
 	 */
 	public void iterateVehicles(Consumer<Vehicle> consumer) {
-		vehicles.forEach(consumer);
+		vehicleIdMap.values().forEach(consumer);
+	}
+
+	/**
+	 * Look up a vehicle by ID on this siding.
+	 *
+	 * @param vehicleId the vehicle ID to find
+	 * @return the vehicle, or {@code null} if not on this siding
+	 */
+	@Nullable
+	public Vehicle getVehicleById(long vehicleId) {
+		return vehicleIdMap.get(vehicleId);
 	}
 
 	/**
@@ -432,16 +448,8 @@ public final class Siding extends SidingSchema implements Utilities {
 
 		iterateArrivals(currentMillis, platform.getId(), 0, MILLIS_PER_DAY, (vehicle, trip, tripStopIndex, stopTime, scheduledArrivalTime, scheduledDepartureTime, predicted, deviation, departureIndex, departureOffset) -> {
 			if (scheduledArrivalTime + deviation < maxArrivalAndCount[0] || maxArrivalAndCount[1] < count) {
-				final ObjectArraySet<Passenger> passengers;
-
-				if (vehicle == null || !(data instanceof Simulator simulator)) {
-					passengers = null;
-				} else {
-					passengers = simulator.vehicleIdToPassengers.get(vehicle.getId());
-				}
-
-				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, stopTime.tripStopIndex, trip.route, platform, passengers == null ? 0 : passengers.size());
-				arrivalResponse.setCarDetails(getVehicleCars());
+				final ArrivalResponse arrivalResponse = new ArrivalResponse(stopTime.customDestination, scheduledArrivalTime + deviation, scheduledDepartureTime + deviation, deviation, predicted, departureIndex, stopTime.tripStopIndex, trip.route, platform);
+				arrivalResponse.setCarDetails(getVehicleCars(), vehicle == null ? null : vehicle.vehicleExtraData.passengers);
 				tempArrivalResponseList.add(arrivalResponse);
 				maxArrivalAndCount[0] = Math.max(maxArrivalAndCount[0], scheduledArrivalTime + deviation);
 				maxArrivalAndCount[1]++;
@@ -763,7 +771,7 @@ public final class Siding extends SidingSchema implements Utilities {
 	 * After a path is set, generate the distance and time values. Should only be called during initialisation and after a path is generated.
 	 */
 	private void generatePathDistancesAndTimeSegments() {
-		vehicles.clear();
+		vehicleIdMap.clear();
 		pathMainRoute.clear();
 		trips.clear();
 		platformTripStopTimes.clear();
@@ -923,12 +931,6 @@ public final class Siding extends SidingSchema implements Utilities {
 			}
 
 			timeOffsetForRepeating = time - timeOffsetForRepeating;
-		}
-	}
-
-	private void writeVehicleIdMapCache(Vehicle vehicle) {
-		if (data instanceof Simulator simulator) {
-			simulator.vehicleIdMap.put(vehicle.getId(), vehicle);
 		}
 	}
 

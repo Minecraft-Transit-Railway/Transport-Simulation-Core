@@ -112,6 +112,10 @@ export class StationPanelComponent {
 		this.stationService.updateArrivalFilter(filterArrivalShowTerminating, toggleRouteKey);
 	}
 
+	getOccupancyString(cars: { capacity: number, passengerCount: number }[]) {
+		return cars.length === 0 ? "" : `| ${cars.map(car => `${Math.round(100 * car.passengerCount / car.capacity)}%`).join(" | ")} |`;
+	}
+
 	routeFiltered(routeKey: string) {
 		return this.stationService.routeFiltered(routeKey);
 	}

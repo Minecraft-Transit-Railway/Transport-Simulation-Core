@@ -160,23 +160,4 @@ public final class SimulatorTimeTests {
 		simulator.markRouteJammed(0);
 		assertFalse(simulator.isRouteJammed(0), "Route 0 should never be considered jammed");
 	}
-
-	@Test
-	public void testVehicleIdMapAvailable() {
-		assertNotNull(simulator.vehicleIdMap);
-		assertTrue(simulator.vehicleIdMap.isEmpty(), "Should start empty");
-	}
-
-	@Test
-	public void testVehicleIdToPassengersAvailable() {
-		assertNotNull(simulator.vehicleIdToPassengers);
-		assertTrue(simulator.vehicleIdToPassengers.isEmpty(), "Should start empty");
-	}
-
-	@Test
-	public void testVehicleIdMapAndPassengersClearedOnTick() {
-		simulator.tick();
-		assertTrue(simulator.vehicleIdMap.isEmpty(), "vehicleIdMap should be empty or re-populated but not stale");
-		assertTrue(simulator.vehicleIdToPassengers.isEmpty(), "vehicleIdToPassengers should be empty after tick with no passengers");
-	}
 }
