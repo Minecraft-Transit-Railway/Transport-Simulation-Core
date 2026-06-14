@@ -22,7 +22,7 @@
 		"@angular/router": "^22.0.1",
 		"@iconify-icons/fluent": "^1.2.38",
 		"@iconify-icons/mdi": "^1.2.48",
-		"@jsverse/transloco": "^8.3.0",
+		"@jsverse/transloco": "^8.4.0",
 		"@primeuix/themes": "^2.0.3",
 		"iconify-icon": "^3.0.2",
 		"primeng": "^21.1.9",
