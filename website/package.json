@@ -13,13 +13,13 @@
 	"private": true,
 	"dependencies": {
 		"@angular-eslint/builder": "^22.0.0",
-		"@angular/animations": "^22.0.1",
-		"@angular/common": "^22.0.1",
-		"@angular/compiler": "^22.0.1",
-		"@angular/core": "^22.0.1",
-		"@angular/forms": "^22.0.1",
-		"@angular/platform-browser": "^22.0.1",
-		"@angular/router": "^22.0.1",
+		"@angular/animations": "^22.0.2",
+		"@angular/common": "^22.0.2",
+		"@angular/compiler": "^22.0.2",
+		"@angular/core": "^22.0.2",
+		"@angular/forms": "^22.0.2",
+		"@angular/platform-browser": "^22.0.2",
+		"@angular/router": "^22.0.2",
 		"@iconify-icons/fluent": "^1.2.38",
 		"@iconify-icons/mdi": "^1.2.48",
 		"@jsverse/transloco": "^8.4.0",
@@ -31,13 +31,13 @@
 		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
-		"@angular/build": "^22.0.1",
-		"@angular/cli": "^22.0.1",
-		"@angular/compiler-cli": "^22.0.1",
+		"@angular/build": "^22.0.2",
+		"@angular/cli": "^22.0.2",
+		"@angular/compiler-cli": "^22.0.2",
 		"@eslint/js": "^10.0.1",
 		"@types/three": "^0.184.1",
 		"angular-eslint": "22.0.0",
-		"baseline-browser-mapping": "^2.10.37",
+		"baseline-browser-mapping": "^2.10.38",
 		"eslint": "^10.5.0",
 		"typescript-eslint": "8.61.1"
 	}
