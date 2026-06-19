@@ -666,6 +666,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			return firstPathData.isSignalBlocked(id, Rail.BlockReservation.DO_NOT_RESERVE);
 		} else {
 			final IntAVLTreeSet signalColors = firstPathData.getSignalColors();
+			final boolean hasAlpha = signalColors.intStream().anyMatch(signalColor -> (signalColor & 0xFF000000) != 0);
 			int index = currentIndex + 1;
 
 			while (!signalColors.isEmpty() && index < vehicleExtraData.immutablePath.size()) {
@@ -673,7 +674,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 
 				if (pathData.getSignalColors().intStream().noneMatch(signalColors::contains)) {
 					// Only reserve the signal block after checking if the path after the signal block is clear, not before!
-					final double railBlockedDistance = railBlockedDistance(index, pathData.getStartDistance(), vehicleExtraData.getTotalVehicleLength(), vehiclePositions, false, true);
+					final double railBlockedDistance = hasAlpha ? railBlockedDistance(index, pathData.getStartDistance(), vehicleExtraData.getTotalVehicleLength(), vehiclePositions, false, true) : -1;
 					return railBlockedDistance >= 0 && railBlockedDistance < vehicleExtraData.getTotalVehicleLength() || firstPathData.isSignalBlocked(id, reserveRail ? Rail.BlockReservation.PRE_RESERVE : Rail.BlockReservation.DO_NOT_RESERVE);
 				}
 
