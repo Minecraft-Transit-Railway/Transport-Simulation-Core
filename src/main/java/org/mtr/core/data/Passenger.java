@@ -184,14 +184,13 @@ public final class Passenger extends PassengerSchema {
 	 * @return {@code true} if the passenger's state became dirty during this tick
 	 */
 	public boolean tick(Home home, Simulator simulator) {
+		homeId = home.getId();
 		this.home = home;
-		if (currentLandmark == null && !directions.isEmpty()) {
-			if (endLandmarkId != 0) {
-				currentLandmark = simulator.landmarkIdMap.get(endLandmarkId);
-				if (currentLandmark == null) {
-					directions.clear();
-					dirtySync = true;
-				}
+		if (currentLandmark == null && endLandmarkId != 0) {
+			currentLandmark = simulator.landmarkIdMap.get(endLandmarkId);
+			if (currentLandmark == null) {
+				directions.clear();
+				dirtySync = true;
 			}
 		}
 
@@ -319,11 +318,31 @@ public final class Passenger extends PassengerSchema {
 		return dirty;
 	}
 
+	public long getHomeId() {
+		return homeId;
+	}
+
+	public long getStartLandmarkId() {
+		return startLandmarkId;
+	}
+
+	public long getEndLandmarkId() {
+		return endLandmarkId;
+	}
+
 	/**
 	 * @return current boarded vehicle id, or {@code 0} if the passenger is not onboard.
 	 */
 	public long getVehicleId() {
 		return vehicleId;
+	}
+
+	public long getVehicleCarNumber() {
+		return vehicleCarNumber;
+	}
+
+	public ObjectArrayList<PassengerDirection> getDirections() {
+		return directions;
 	}
 
 	/**
@@ -371,6 +390,20 @@ public final class Passenger extends PassengerSchema {
 			landmarkVisitStartTime = 0;
 			landmarkVisitEndTime = 0;
 		}
+	}
+
+	boolean closeTo(Position position, double padding) {
+		if (home == null) {
+			return false;
+		}
+
+		if (home.inArea(position, padding) || currentLandmark != null && currentLandmark.inArea(position, padding) || currentStartPlatform != null && currentStartPlatform.closeTo(position, padding) || currentEndPlatform != null && currentEndPlatform.closeTo(position, padding)) {
+			return true;
+		}
+
+		final Position position1 = currentStartPlatform == null ? home.getCenter() : currentStartPlatform.getMidPosition();
+		final Position position2 = currentEndPlatform == null ? home.getCenter() : currentEndPlatform.getMidPosition();
+		return Utilities.isBetween(position, position1, position2, padding);
 	}
 
 	/**

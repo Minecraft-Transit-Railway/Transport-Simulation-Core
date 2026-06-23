@@ -79,7 +79,7 @@ public final class Home extends HomeSchema {
 			passengers.forEach(passenger -> {
 				final boolean dirty = passenger.tick(this, simulator);
 				simulator.clients.forEach(client -> {
-					if (inArea(client.getPosition(), client.getUpdateRadius())) {
+					if (passenger.closeTo(client.getPosition(), client.getUpdateRadius())) {
 						client.update(passenger, dirty);
 					}
 				});

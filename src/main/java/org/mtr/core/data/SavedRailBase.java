@@ -22,6 +22,7 @@ import org.mtr.legacy.data.DataFixer;
 public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> extends SavedRailBaseSchema {
 
 	public @Nullable U area;
+	public @Nullable Rail rail;
 
 	public SavedRailBase(Position position1, Position position2, TransportMode transportMode, Data data) {
 		super(position1, position2, transportMode, data);
@@ -46,8 +47,8 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		return new Position(offsetPosition.getX() / 2, offsetPosition.getY() / 2, offsetPosition.getZ() / 2);
 	}
 
-	public boolean isInvalidSavedRail(Data data) {
-		final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
+	public boolean isInvalidSavedRail() {
+		updateRailCache();
 		return rail == null || this instanceof Platform && !rail.isPlatform() || this instanceof Siding && !rail.isSiding();
 	}
 
@@ -63,8 +64,7 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 		return Utilities.isBetween(position, position1, position2, radius);
 	}
 
-	public double getApproximateClosestDistance(Position position, Data data) {
-		final Rail rail = Data.tryGet(data.positionsToRail, position1, position2);
+	public double getApproximateClosestDistance(Position position) {
 		if (rail == null) {
 			return Double.MAX_VALUE;
 		} else {
@@ -78,6 +78,10 @@ public abstract class SavedRailBase<T extends SavedRailBase<T, U>, U extends Are
 
 			return closestDistance[0];
 		}
+	}
+
+	public void updateRailCache() {
+		rail = Data.tryGet(data.positionsToRail, position1, position2);
 	}
 
 	private static void iterateAndCheckDistance(double x, double y, double z, double[] previousPosition, Position position, double[] closestDistance) {
