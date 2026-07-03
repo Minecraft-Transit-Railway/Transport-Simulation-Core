@@ -37,7 +37,7 @@
 		"@eslint/js": "^10.0.1",
 		"@types/three": "^0.185.0",
 		"angular-eslint": "22.0.0",
-		"baseline-browser-mapping": "^2.10.40",
+		"baseline-browser-mapping": "^2.10.41",
 		"eslint": "^10.6.0",
 		"typescript-eslint": "8.62.1"
 	}
