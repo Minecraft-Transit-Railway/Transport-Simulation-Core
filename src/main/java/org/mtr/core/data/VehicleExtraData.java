@@ -3,6 +3,7 @@ package org.mtr.core.data;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.booleans.BooleanBooleanImmutablePair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.Getter;
@@ -30,6 +31,10 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 
 	public final ObjectImmutableList<PathData> immutablePath;
 	public final ObjectImmutableList<VehicleCar> immutableVehicleCars;
+	/**
+	 * Per-car passenger occupancy sets (runtime only, rebuilt on load). Indexed by car number.
+	 */
+	public final ObjectImmutableList<ObjectArraySet<Passenger>> passengers;
 
 	private VehicleExtraData(long depotId, long sidingId, double railLength, double totalVehicleLength, long repeatIndex1, long repeatIndex2, double acceleration, double deceleration, boolean isManualAllowed, double maxManualSpeed, long manualToAutomaticTime, double totalDistance, double defaultPosition, ObjectArrayList<VehicleCar> vehicleCars, ObjectArrayList<PathData> path) {
 		super(depotId, sidingId, railLength, totalVehicleLength, repeatIndex1, repeatIndex2, acceleration, deceleration, isManualAllowed, maxManualSpeed, manualToAutomaticTime, totalDistance, defaultPosition);
@@ -39,6 +44,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		this.vehicleCars.clear();
 		this.vehicleCars.addAll(vehicleCars);
 		immutableVehicleCars = new ObjectImmutableList<>(vehicleCars);
+		passengers = new ObjectImmutableList<>(vehicleCars.stream().map(vehicleCar -> new ObjectArraySet<Passenger>()).toList());
 	}
 
 	public VehicleExtraData(ReaderBase readerBase) {
@@ -46,6 +52,7 @@ public class VehicleExtraData extends VehicleExtraDataSchema {
 		updateData(readerBase);
 		immutablePath = new ObjectImmutableList<>(path);
 		immutableVehicleCars = new ObjectImmutableList<>(vehicleCars);
+		passengers = new ObjectImmutableList<>(vehicleCars.stream().map(vehicleCar -> new ObjectArraySet<Passenger>()).toList());
 	}
 
 	public VehicleExtraData copy(int pathUpdateIndex) {

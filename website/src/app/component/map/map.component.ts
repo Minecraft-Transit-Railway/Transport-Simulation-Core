@@ -1,7 +1,8 @@
 import * as THREE from "three";
-import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, ElementRef, inject, output, signal, viewChild} from "@angular/core";
+import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, ElementRef, inject, isDevMode, output, signal, viewChild} from "@angular/core";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import SETTINGS from "../../utility/settings";
+import {ANIMATION_DURATION_MILLIS, ARROW_SPACING, CLIENT_IMAGE_PADDING, CLIENT_IMAGE_SIZE} from "../../utility/map.constants";
 import {MapDataService} from "../../service/map-data.service";
 import {connectStations, connectWith45} from "../../utility/drawing";
 import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
@@ -23,9 +24,6 @@ const blackColor = 0x000000;
 const whiteColor = 0xFFFFFF;
 const grayColorLight = 0xDDDDDD;
 const grayColorDark = 0x222222;
-const arrowSpacing = 80;
-const clientImageSize = 32;
-const clientImagePadding = 5;
 const materialWithVertexColors = new THREE.MeshBasicMaterial({vertexColors: true});
 const lineMaterialStationConnectionThin = new LineMaterial({color: 0xFFFFFF, linewidth: 4 * SETTINGS.scale * devicePixelRatio, vertexColors: true});
 const lineMaterialStationConnectionThick = new LineMaterial({color: 0xFFFFFF, linewidth: 8 * SETTINGS.scale * devicePixelRatio, vertexColors: true});
@@ -33,7 +31,6 @@ const lineMaterialNormal = new LineMaterial({color: 0xFFFFFF, linewidth: 6 * SET
 const lineMaterialNormalDashed = new LineMaterial({color: 0xFFFFFF, linewidth: 6 * SETTINGS.scale * devicePixelRatio, vertexColors: true, dashed: true});
 const lineMaterialThin = new LineMaterial({color: 0xFFFFFF, linewidth: 3 * SETTINGS.scale * devicePixelRatio, vertexColors: true});
 const lineMaterialThinDashed = new LineMaterial({color: 0xFFFFFF, linewidth: 3 * SETTINGS.scale * devicePixelRatio, vertexColors: true, dashed: true});
-const animationDuration = 2000;
 
 @Component({
 	selector: "app-map",
@@ -64,7 +61,7 @@ export class MapComponent implements AfterViewInit {
 	private readonly statsRef = viewChild.required<ElementRef<HTMLDivElement>>("stats");
 	readonly clientGroupsOnRoute = signal<ClientGroupOnRoute[]>([]);
 	readonly textLabels = signal<TextLabel[]>([]);
-	readonly clientImageSize = clientImageSize;
+	readonly clientImageSize = CLIENT_IMAGE_SIZE;
 	readonly loading = this.mapDataService.mapLoading;
 
 	private timeoutId = 0;
@@ -95,7 +92,7 @@ export class MapComponent implements AfterViewInit {
 	}
 
 	ngAfterViewInit() {
-		const stats = document.location.origin === "http://localhost:4200" ? new Stats() : undefined;
+		const stats = isDevMode() ? new Stats() : undefined;
 		if (stats) {
 			this.statsRef().nativeElement.append(stats.dom);
 		}
@@ -131,33 +128,34 @@ export class MapComponent implements AfterViewInit {
 
 		const animate = () => {
 			const animationProgress = Date.now() - animationStartTime;
-			if (animationProgress < animationDuration) {
-				const animationPercentage = (1 - Math.cos(Math.PI * animationProgress / animationDuration)) / 2;
+			if (animationProgress < ANIMATION_DURATION_MILLIS) {
+				const animationPercentage = (1 - Math.cos(Math.PI * animationProgress / ANIMATION_DURATION_MILLIS)) / 2;
 				this.moveMap(
 					animationStartX + (animationTargetX - animationStartX) * animationPercentage,
 					animationStartY + (animationTargetY - animationStartY) * animationPercentage,
 				);
 			}
 
-			if (hasUpdate) {
-				const {clientWidth, clientHeight} = this.canvas();
-				if (clientWidth !== renderer.domElement.width || clientHeight !== renderer.domElement.height) {
-					renderer.setSize(clientWidth * devicePixelRatio, clientHeight * devicePixelRatio, false);
-					this.camera.left = -clientWidth / 2;
-					this.camera.right = clientWidth / 2;
-					this.camera.top = clientHeight / 2;
-					this.camera.bottom = -clientHeight / 2;
-					(this.camera as unknown as { aspect: number }).aspect = clientWidth / clientHeight;
-					lineMaterialStationConnectionThin.resolution.set(clientWidth, clientHeight);
-					lineMaterialStationConnectionThick.resolution.set(clientWidth, clientHeight);
-					lineMaterialNormal.resolution.set(clientWidth, clientHeight);
-					lineMaterialNormalDashed.resolution.set(clientWidth, clientHeight);
-					lineMaterialThin.resolution.set(clientWidth, clientHeight);
-					lineMaterialThinDashed.resolution.set(clientWidth, clientHeight);
-					this.camera.updateProjectionMatrix();
-				}
+		const {clientWidth, clientHeight} = this.canvas();
+			if (clientWidth !== renderer.domElement.width || clientHeight !== renderer.domElement.height) {
+				renderer.setSize(clientWidth * devicePixelRatio, clientHeight * devicePixelRatio, false);
+				this.camera.left = -clientWidth / 2;
+				this.camera.right = clientWidth / 2;
+				this.camera.top = clientHeight / 2;
+				this.camera.bottom = -clientHeight / 2;
+				(this.camera as unknown as { aspect: number }).aspect = clientWidth / clientHeight;
+				lineMaterialStationConnectionThin.resolution.set(clientWidth, clientHeight);
+				lineMaterialStationConnectionThick.resolution.set(clientWidth, clientHeight);
+				lineMaterialNormal.resolution.set(clientWidth, clientHeight);
+				lineMaterialNormalDashed.resolution.set(clientWidth, clientHeight);
+				lineMaterialThin.resolution.set(clientWidth, clientHeight);
+				lineMaterialThinDashed.resolution.set(clientWidth, clientHeight);
+				this.camera.updateProjectionMatrix();
+			}
 
-				renderer.render(this.scene, this.camera);
+			renderer.render(this.scene, this.camera);
+
+			if (hasUpdate) {
 				this.updateLabels();
 				hasUpdate = false;
 			}
@@ -280,8 +278,8 @@ export class MapComponent implements AfterViewInit {
 		const positions: number[] = [];
 		const colors: number[] = [];
 		const backgroundColor = this.getBackgroundColor();
-		const newClientImagePadding = clientImagePadding * SETTINGS.scale / this.camera.zoom / 2;
-		const newClientImageSize = clientImageSize * SETTINGS.scale / this.camera.zoom / 2;
+		const newClientImagePadding = CLIENT_IMAGE_PADDING * SETTINGS.scale / this.camera.zoom / 2;
+		const newClientImageSize = CLIENT_IMAGE_PADDING * SETTINGS.scale / this.camera.zoom / 2;
 		this.clientPositions = {};
 		this.clientGroupsOnRouteRaw.length = 0;
 
@@ -503,7 +501,7 @@ export class MapComponent implements AfterViewInit {
 						const differenceX = point2X - point1X;
 						const differenceY = point2Y - point1Y;
 						const distance = Math.sqrt(differenceX * differenceX + differenceY * differenceY);
-						const scaledArrowSpacing = arrowSpacing * SETTINGS.scale / Math.min(5, this.camera.zoom);
+						const scaledArrowSpacing = ARROW_SPACING * SETTINGS.scale / Math.min(5, this.camera.zoom);
 						const arrowCount = Math.floor(distance / scaledArrowSpacing);
 						const padding = (distance - arrowCount * scaledArrowSpacing) / 2;
 						const [hollowArrowPaddingX, hollowArrowPaddingY] = trig45(-angle + 2, 1.5 * Math.SQRT2 * SETTINGS.scale / this.camera.zoom);
@@ -570,8 +568,8 @@ export class MapComponent implements AfterViewInit {
 			if (Math.abs(canvasX) <= halfCanvasWidth && Math.abs(canvasY) <= halfCanvasHeight && (clientGroup || renderedTextCount < SETTINGS.maxText * 2) && (this.mapSelectionService.selectedStations.length === 0 || this.mapSelectionService.selectedStations.includes(id))) {
 				const newWidth = width * 3 * SETTINGS.scale;
 				const newHeight = height * 3 * SETTINGS.scale;
-				const clientsHeight = clientGroup ? clientImageSize * SETTINGS.scale / 2 : 0;
-				const clientsWidth = clientGroup ? clientsHeight * clientGroup.clients.length + clientImagePadding * SETTINGS.scale * (clientGroup.clients.length - 1) / 2 : 0;
+				const clientsHeight = clientGroup ? CLIENT_IMAGE_SIZE * SETTINGS.scale / 2 : 0;
+				const clientsWidth = clientGroup ? clientsHeight * clientGroup.clients.length + CLIENT_IMAGE_PADDING * SETTINGS.scale * (clientGroup.clients.length - 1) / 2 : 0;
 				const rotatedSize = (newHeight + newWidth) * Math.SQRT1_2;
 				const textOffset = Math.max(rotate ? rotatedSize : newHeight, clientsHeight) + 9 * SETTINGS.scale;
 				const icons = getIcons(type => this.mapDataService.routeTypeVisibility()[type] === "HIDDEN");
@@ -582,7 +580,7 @@ export class MapComponent implements AfterViewInit {
 					icons,
 					shouldRenderText: !!clientGroup || renderedTextCount < SETTINGS.maxText,
 					clients: clientGroup?.clients,
-					clientImagePadding: clientImagePadding * SETTINGS.scale,
+					clientImagePadding: CLIENT_IMAGE_PADDING * SETTINGS.scale,
 					x: canvasX + halfCanvasWidth,
 					y: canvasY + halfCanvasHeight - textOffset,
 					stationWidth: Math.max(rotate ? rotatedSize : newWidth, clientsWidth) * 2 + 18 * SETTINGS.scale,
@@ -598,9 +596,9 @@ export class MapComponent implements AfterViewInit {
 			const canvasY = (-y + this.camera.position.y) * this.camera.zoom;
 			newClientGroupsOnRoute.push({
 				clients,
-				clientImagePadding: clientImagePadding * SETTINGS.scale,
+				clientImagePadding: CLIENT_IMAGE_PADDING * SETTINGS.scale,
 				x: canvasX + halfCanvasWidth,
-				y: canvasY + halfCanvasHeight - clientImageSize * SETTINGS.scale / 2,
+				y: canvasY + halfCanvasHeight - CLIENT_IMAGE_SIZE * SETTINGS.scale / 2,
 			});
 		});
 
@@ -609,9 +607,9 @@ export class MapComponent implements AfterViewInit {
 			const canvasY = (rawZ + this.camera.position.y) * this.camera.zoom;
 			newClientGroupsOnRoute.push({
 				clients: [{id, name}],
-				clientImagePadding: clientImagePadding * SETTINGS.scale,
+				clientImagePadding: CLIENT_IMAGE_PADDING * SETTINGS.scale,
 				x: canvasX + halfCanvasWidth,
-				y: canvasY + halfCanvasHeight - clientImageSize * SETTINGS.scale / 2,
+				y: canvasY + halfCanvasHeight - CLIENT_IMAGE_SIZE * SETTINGS.scale / 2,
 			});
 		});
 

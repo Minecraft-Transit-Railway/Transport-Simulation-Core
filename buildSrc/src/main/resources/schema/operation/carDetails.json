@@ -8,12 +8,16 @@
 		"vehicleId": {
 			"type": "string"
 		},
-		"occupancy": {
-			"type": "number"
+		"capacity": {
+			"type": "integer"
+		},
+		"passengerCount": {
+			"type": "integer"
 		}
 	},
 	"required": [
 		"vehicleId",
-		"occupancy"
+		"capacity",
+		"passengerCount"
 	]
 }

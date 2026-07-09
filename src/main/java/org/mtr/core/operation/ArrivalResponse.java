@@ -1,6 +1,10 @@
 package org.mtr.core.operation;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.jspecify.annotations.Nullable;
+import org.mtr.core.data.Passenger;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Route;
 import org.mtr.core.data.VehicleCar;
@@ -85,8 +89,11 @@ public final class ArrivalResponse extends ArrivalResponseSchema implements Comp
 		cars.forEach(consumer);
 	}
 
-	public void setCarDetails(ObjectArrayList<VehicleCar> vehicleCars) {
-		vehicleCars.forEach(vehicleCar -> cars.add(new CarDetails(vehicleCar.getVehicleId(), 0)));
+	public void setCarDetails(ObjectArrayList<VehicleCar> vehicleCars, @Nullable ObjectImmutableList<ObjectArraySet<Passenger>> passengers) {
+		for (int i = 0; i < vehicleCars.size(); i++) {
+			final VehicleCar vehicleCar = vehicleCars.get(i);
+			cars.add(new CarDetails(vehicleCar.getVehicleId(), vehicleCar.getCapacity(), passengers == null ? 0 : passengers.get(i).size()));
+		}
 	}
 
 	@Override

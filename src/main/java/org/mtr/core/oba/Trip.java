@@ -11,16 +11,16 @@ public final class Trip extends TripSchema {
 
 	public Trip(Route route, String id, int departureIndex) {
 		super(
-				route.getColorHex(),
-				"1",
-				id,
-				Utilities.formatName(route.getName()),
-				"",
-				0,
-				String.valueOf(departureIndex),
-				"",
-				Utilities.formatName(route.getRouteNumber()),
-				TimeZone.getDefault().getID()
+			route.getColorHex(),
+			"1",
+			id,
+			Utilities.formatName(route.getName()),
+			"",
+			0,
+			String.valueOf(departureIndex),
+			"",
+			Utilities.formatName(route.getRouteNumber()),
+			TimeZone.getDefault().getID()
 		);
 	}
 

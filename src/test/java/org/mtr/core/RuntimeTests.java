@@ -9,7 +9,7 @@ import org.mtr.core.tool.Utilities;
 
 import java.io.IOException;
 
-public class RuntimeTests implements TestUtilities {
+public final class RuntimeTests implements TestUtilities {
 
 	@Test
 	public void createAndUpdateData() throws IOException {

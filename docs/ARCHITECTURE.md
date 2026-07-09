@@ -73,6 +73,145 @@ The simulator's `tick()` advances vehicle positions, processes queued runnables,
 inbound message queue through `OperationProcessor`, and writes outbound messages to the
 S2C queue.
 
+### Passenger demand model (homes / landmarks)
+
+#### Homes
+
+Homes own a persisted `ObjectArrayList<Passenger>` and converge it towards the configured
+`population` each tick (at most 10 adds/removes per tick, FIFO order — oldest removed first
+when shrinking). Convergence is bounded so that loading a large zone with many homes doesn't
+spike the per-tick cost.
+
+#### Passenger state machine
+
+Each `Passenger` runs a deterministic while-loop every tick. A **cooldown gate** at the top of
+the method checks `simulator.getCurrentMillis() < cooldownTime`: if the passenger is waiting
+(for a landmark visit, boarding retry, or journey cooldown), the tick returns immediately.
+
+```
+                    ┌──────────────────────┐
+                    │   Cooldown gate      │  if now < cooldownTime → return
+                    │   (cooldownTime)     │
+                    └──────────┬───────────┘
+                               │ cooldown expired
+                               ▼
+                    ┌──────────────────────┐
+                    │   Idle / no          │  end landmark visit (if any)
+                    │   directions         │  pick destination (home or landmark, 1:3)
+                    └──────────┬───────────┘
+                               │ findDirections async via DirectionsFinder
+                               │ (budget-capped; cooldownTime = Long.MAX_VALUE during request)
+                               ▼
+                    ┌──────────────────────┐
+                    │   Walking leg        │  no route → wait for endTime, then consume
+                    │   (currentRoute==null)│
+                    └──────────┬───────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │   Awaiting vehicle   │  vehicleId == 0
+                    │                      │  check jammed / REALTIME_REPLAN_THRESHOLD
+                    │                      │  → replan if expired
+                    │                      │  waitForVehicle(simulator)
+                    │                      │    ─ scan all sidings
+                    │                      │    ─ found → set currentVehicle
+                    │                      │    ─ not found → reset & wait(BOARDING_COOLDOWN)
+                    │                      │  boardVehicle(getBoardingCar(), 10)
+                    │                      │    ─ hash-based car; 10% adjacent spillover
+                    │                      │    ─ all full → replan
+                    └──────────┬───────────┘
+                               ▼
+   ┌────────────────────────────────────────────┐
+   │   On vehicle  (vehicleId != 0)              │
+   │   updateCurrentSidingAndVehicleCache()      │
+   │   ┌────────────────────────────────────┐    │
+   │   │ 5a vanished  → reset & replan      │    │
+   │   │ 5b arrived   → doors open/depot →  │    │
+   │   │                alightVehicle()      │    │
+   │   │                consume leg          │    │
+   │   │                (stay aboard if      │    │
+   │   │                 next leg same route)│    │
+   │   │ 6 missed-stop  → alight & replan   │    │
+   │   └────────────────────────────────────┘    │
+   └──────────────────┬─────────────────────────┘
+                      │ consumed / completed
+                      ▼
+               ┌────────────────────┐
+               │   Leg complete     │  directions not empty → replan or continue
+               │   / Journey done   │  directions empty → completeJourney
+               └────────────────────┘
+                      │
+                      ▼
+               ┌────────────────────┐
+               │   Complete         │  at landmark: cooldownTime = landmarkVisitEndTime
+               │                    │  at home: wait(GENERIC_COOLDOWN, randomize)
+               └────────────────────┘
+```
+
+**Cooldown system**: A single `cooldownTime` field replaces the older `findDirectionsTime`.
+It is set to:
+- `Long.MAX_VALUE` while a CSA request is in flight (prevents duplicate submissions),
+- `landmarkVisitEndTime` while visiting a landmark,
+- `now + GENERIC_COOLDOWN + random(GENERIC_COOLDOWN)` after a journey completes (home),
+- `now + BOARDING_COOLDOWN + random(BOARDING_COOLDOWN)` when no vehicle found,
+- `now + RETRY_COOLDOWN + random(RETRY_COOLDOWN)` on budget exhaustion or failed reservation.
+The callback resets `cooldownTime = 0` on success so the next tick proceeds.
+
+**Boarding**: `waitForVehicle()` scans all sidings for a vehicle on the current route/platform.
+On find, fields `sidingId`, `currentSiding`, `vehicleId`, `currentVehicle` are set.
+`boardVehicle()` uses a hash of the passenger's ID to choose a preferred car, with 10%
+spillover to an adjacent car when the preferred car is full (avoids hotspots).
+`alightVehicle()` removes the passenger from every car's passenger set.
+
+**Vanished-vehicle replan (5a)**: When the boarded vehicle cannot be found in any siding
+(via `updateCurrentSidingAndVehicleCache()`), the passenger immediately replans instead of
+waiting. The replan origin is the destination platform's position (or home center if unknown).
+
+**Missed-stop guard (6)**: If the leg's estimated arrival time passes without the vehicle
+reaching the target platform, the passenger force-alights and replans. This is handled within
+the same `if` branch as arrival (5b) — both end with `alightVehicle()`, leg consumption, and
+either completion or replan. The distinction is cosmetic for the passenger state machine.
+
+**CSA budget**: The simulator caps the number of concurrent outbound CSA requests per tick.
+When the budget is exhausted the passenger retries after `RETRY_COOLDOWN + random(RETRY_COOLDOWN)`.
+
+**Population convergence cleanup**: When a passenger is removed from its home during
+population convergence, `clearVehicleReferences()` is called to remove it from any vehicle
+car set and to end any active landmark visit (`endVisit`). This prevents stale references
+in the shared occupancy data structures.
+
+#### Landmark density model
+
+Landmarks use 288 time-of-day slots (5 minutes each) with per-hour density limits. A visit
+occupies every slot between arrival and departure. The `reserveVisit` method walks forward
+from the arrival slot, consuming slots until either the density limit is reached or the
+randomized max-stay cap is hit. This gives a visit duration proportional to available
+capacity at that time of day.
+
+- `useRealTime = true` → wall-clock time indexing (slots aligned to real 5-minute boundaries).
+- `useRealTime = false` → in-game time indexing (slots distributed across the game day length).
+
+The density arrays are cumulative within a session and reset on save/load
+(not persisted — reconstructed from the schema fields). The first tick of a newly loaded
+landmark is lenient (no prior occupancy), but thereafter the double-buffered
+(`currentVisitingPassengers` / `currentVisitingPassengersOld`) snapshot system provides
+correct back-pressure.
+
+#### Runtime caches
+
+- `sidingIdMap` → siding lookup (rebuilt by `Data.sync()`).
+- `Siding.vehicleIdMap` → per-siding vehicle lookup (the canonical vehicle store, replacing
+  the old set).
+- `Passenger.currentSiding` / `currentVehicle` → per-passenger transient cache, resolved from
+  persisted `sidingId` / `vehicleId` fields by
+  {@link org.mtr.core.data.Passenger#updateCurrentSidingAndVehicleCache}.
+- `VehicleCar.passengers` → per-car passenger occupancy set (runtime only, rebuilt on load via
+  {@link org.mtr.core.data.Passenger#writeVehicleCache}). Replaces the removed
+  `Simulator.vehicleIdToPassengers` — occupancy now lives on the car, not the vehicle.
+- `Passenger.vehicleCarNumber` → persisted car index; written on board, cleared on alight.
+  Survives restarts so passengers are restored to the correct car on load.
+- `jammedRouteIds` → routes where a vehicle has stalled past threshold (excluded from both
+  `/mtr/api/map/directions` and passenger replanning).
+
 ## Servlets and HTTP surface
 
 Three servlets are registered in `Main` when `webserverPort > 0`:

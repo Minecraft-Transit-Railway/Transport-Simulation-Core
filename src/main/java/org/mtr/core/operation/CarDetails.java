@@ -5,8 +5,8 @@ import org.mtr.core.serializer.ReaderBase;
 
 public final class CarDetails extends CarDetailsSchema {
 
-	public CarDetails(String vehicleId, double occupancy) {
-		super(vehicleId, occupancy);
+	public CarDetails(String vehicleId, long capacity, long passengerCount) {
+		super(vehicleId, capacity, passengerCount);
 	}
 
 	public CarDetails(ReaderBase readerBase) {
@@ -18,7 +18,11 @@ public final class CarDetails extends CarDetailsSchema {
 		return vehicleId;
 	}
 
-	public double getOccupancy() {
-		return occupancy;
+	public double getCapacity() {
+		return capacity;
+	}
+
+	public double getPassengerCount() {
+		return passengerCount;
 	}
 }

@@ -1,7 +1,7 @@
 import {HttpClient} from "@angular/common/http";
 import {inject, Injectable, signal, WritableSignal} from "@angular/core";
 
-import {Subject} from "rxjs";
+import {ReplaySubject, Subject} from "rxjs";
 
 import {ROUTE_TYPES} from "../data/route-type";
 import {arrayAverage, getCookie, getFromArray, pushIfNotExists, setIfUndefined} from "../data/utilities";
@@ -32,7 +32,7 @@ export class MapDataService extends DataServiceBase<{ data: StationsAndRoutesDTO
 	public readonly centerY = signal<number>(0);
 	public readonly mapLoading = signal<boolean>(true);
 
-	public readonly drawMap = new Subject<void>();
+	public readonly drawMap = new ReplaySubject<void>(1);
 	public readonly animateMap = new Subject<{ x: number, z: number }>();
 	public readonly animateClient = new Subject<string>();
 

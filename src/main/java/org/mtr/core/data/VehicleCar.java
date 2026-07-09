@@ -7,8 +7,10 @@ public final class VehicleCar extends VehicleCarSchema {
 
 	public final boolean hasOneBogie;
 
-	public VehicleCar(String vehicleId, double length, double width, double bogie1Position, double bogie2Position, double couplingPadding1, double couplingPadding2) {
-		super(vehicleId, length, width, bogie1Position, bogie2Position, couplingPadding1, couplingPadding2);
+	private static final int PASSENGERS_PER_SQUARE_METER = 2;
+
+	public VehicleCar(String vehicleId, double length, double width, long capacity, double bogie1Position, double bogie2Position, double couplingPadding1, double couplingPadding2) {
+		super(vehicleId, length, width, capacity, bogie1Position, bogie2Position, couplingPadding1, couplingPadding2);
 		hasOneBogie = this.bogie1Position == this.bogie2Position;
 	}
 
@@ -28,6 +30,10 @@ public final class VehicleCar extends VehicleCarSchema {
 
 	public double getWidth() {
 		return width;
+	}
+
+	public long getCapacity() {
+		return capacity > 0 ? capacity : Math.round(length * width * PASSENGERS_PER_SQUARE_METER);
 	}
 
 	public double getBogie1Position() {

@@ -22,10 +22,14 @@ import java.util.function.Consumer;
 @Log4j2
 public final class DirectionsRequest extends DirectionsRequestSchema {
 
-	/** Optional callback fed the structured response (map view). */
+	/**
+	 * Optional callback fed the structured response (map view).
+	 */
 	@Nullable
 	public final Consumer<DirectionsResponse> callback1;
-	/** Optional callback fed only the per-leg passenger directions list (mod overlay use). */
+	/**
+	 * Optional callback fed only the per-leg passenger directions list (mod overlay use).
+	 */
 	@Nullable
 	public final Consumer<ObjectArrayList<PassengerDirection>> callback2;
 
@@ -44,7 +48,9 @@ public final class DirectionsRequest extends DirectionsRequestSchema {
 		this.callback2 = callback2;
 	}
 
-	/** Deserialisation constructor used by the wire layer. */
+	/**
+	 * Deserialisation constructor used by the wire layer.
+	 */
 	public DirectionsRequest(ReaderBase readerBase, @Nullable Consumer<DirectionsResponse> callback1, @Nullable Consumer<ObjectArrayList<PassengerDirection>> callback2) {
 		super(readerBase);
 		updateData(readerBase);
@@ -60,12 +66,16 @@ public final class DirectionsRequest extends DirectionsRequestSchema {
 		return getPosition(simulator, startPositionX, startPositionY, startPositionZ, startStationName, startClientId);
 	}
 
-	/** @see #getStartPosition(Simulator) */
+	/**
+	 * @see #getStartPosition(Simulator)
+	 */
 	public Position getEndPosition(Simulator simulator) {
 		return getPosition(simulator, endPositionX, endPositionY, endPositionZ, endStationName, endClientId);
 	}
 
-	/** @return the configured start time (simulator wall-clock millis) */
+	/**
+	 * @return the configured start time (simulator wall-clock millis)
+	 */
 	public long getStartTime() {
 		return startTime;
 	}

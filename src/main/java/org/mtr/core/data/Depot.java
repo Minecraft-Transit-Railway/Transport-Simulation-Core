@@ -61,10 +61,19 @@ public final class Depot extends DepotSchema implements Utilities {
 	private static final long FREQUENCY_BASE_MILLIS = 4L * MILLIS_PER_HOUR;
 	private static final String KEY_PATH = "path";
 
+	/**
+	 * Create a new depot for the given transport mode in the specified simulation or client context.
+	 */
 	public Depot(TransportMode transportMode, Data data) {
 		super(transportMode, data);
 	}
 
+	/**
+	 * Deserialisation constructor used by the wire / on-disk layer.
+	 *
+	 * @param readerBase source to read persisted data from
+	 * @param data       the simulation engine or client data container
+	 */
 	public Depot(ReaderBase readerBase, Data data) {
 		super(readerBase, data);
 		readerBase.iterateReaderArray(KEY_PATH, path::clear, readerBaseChild -> path.add(new PathData(readerBaseChild)));
@@ -98,21 +107,38 @@ public final class Depot extends DepotSchema implements Utilities {
 		writerBase.writeDataset(path, KEY_PATH);
 	}
 
+	/**
+	 * Initialise the depot: write path caches, initialise all sidings, and generate the
+	 * platform directions and departure timetable.
+	 */
 	public void init() {
 		writePathCache();
 		savedRails.forEach(Siding::init); // Sidings not under a depot will be ignored, but it doesn't matter
 		generatePlatformDirectionsAndWriteDeparturesToSidings();
 	}
 
+	/**
+	 * Write path-finding caches for this depot and all its sidings.
+	 */
 	public void writePathCache() {
 		PathData.writePathCache(path, data, transportMode);
 		savedRails.forEach(Siding::writePathCache);
 	}
 
+	/**
+	 * @param useRealTime whether to use wall-clock time ({@code true}) or in-game time ({@code false})
+	 *                    for departure scheduling
+	 */
 	public void setUseRealTime(boolean useRealTime) {
 		this.useRealTime = useRealTime;
 	}
 
+	/**
+	 * Set the departure frequency for a given hour of the day.
+	 *
+	 * @param hour      hour index (0-23)
+	 * @param frequency trains per hour
+	 */
 	public void setFrequency(int hour, int frequency) {
 		if (hour >= 0 && hour < HOURS_PER_DAY) {
 			while (frequencies.size() < HOURS_PER_DAY) {
@@ -122,22 +148,38 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 	}
 
+	/**
+	 * @param repeatInfinitely whether the departure schedule should loop forever ({@code true})
+	 *                         or respect the in-game day length ({@code false})
+	 */
 	public void setRepeatInfinitely(boolean repeatInfinitely) {
 		this.repeatInfinitely = repeatInfinitely;
 	}
 
+	/**
+	 * @param cruisingAltitude the altitude at which vehicles in this depot travel
+	 */
 	public void setCruisingAltitude(long cruisingAltitude) {
 		this.cruisingAltitude = cruisingAltitude;
 	}
 
+	/**
+	 * @return the list of route IDs associated with this depot
+	 */
 	public LongArrayList getRouteIds() {
 		return routeIds;
 	}
 
+	/**
+	 * @return the timestamp of the last path generation attempt
+	 */
 	public long getLastGeneratedMillis() {
 		return lastGeneratedMillis;
 	}
 
+	/**
+	 * @return the status of the last path generation attempt
+	 */
 	public GeneratedStatus getLastGeneratedStatus() {
 		return lastGeneratedStatus;
 	}
@@ -175,6 +217,12 @@ public final class Depot extends DepotSchema implements Utilities {
 		return realTimeDepartures;
 	}
 
+	/**
+	 * Rebuild the platform-in-route list from the current route data and register this depot
+	 * on each referenced route.
+	 *
+	 * @param routeIdMap map of route ID to Route, used to resolve route references
+	 */
 	public void writeRouteCache(Long2ObjectOpenHashMap<Route> routeIdMap) {
 		routes.clear();
 		routeIds.forEach(id -> routes.add(routeIdMap.get(id)));
@@ -202,6 +250,10 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 	}
 
+	/**
+	 * Called every tick to advance depot-level path generation. Invokes the shared path-finding
+	 * pipeline and, on completion, generates route and departure data for every siding.
+	 */
 	public void tick() {
 		SidingPathFinder.findPathTick(path, sidingPathFinders, cruisingAltitude, () -> {
 			if (!platformsInRoute.isEmpty()) {
@@ -215,14 +267,31 @@ public final class Depot extends DepotSchema implements Utilities {
 		}, (startSavedRail, endSavedRail) -> updateGenerationStatus(GeneratedStatus.PATH_NOT_FOUND, startSavedRail.getId(), endSavedRail.getId(), "Path not found for %s"));
 	}
 
+	/**
+	 * Mark a siding's path generation as complete. When all sidings are done the departure
+	 * timetable is regenerated.
+	 *
+	 * @param sidingId the siding whose path generation finished
+	 */
 	public void finishGeneratingPath(long sidingId) {
 		generatingSidingIds.remove(sidingId);
 		if (generatingSidingIds.isEmpty()) {
-			updateGenerationStatus(GeneratedStatus.SUCCESSFUL, 0, 0, "Path generation complete for %s");
+			if (lastGeneratedFailedSidingCount > 0) {
+				updateGenerationStatus(GeneratedStatus.PATH_NOT_FOUND, 0, 0, "Path generation finished with " + lastGeneratedFailedSidingCount + " failed siding(s) for %s");
+			} else {
+				updateGenerationStatus(GeneratedStatus.SUCCESSFUL, 0, 0, "Path generation complete for %s");
+			}
 			generatePlatformDirectionsAndWriteDeparturesToSidings();
 		}
 	}
 
+	/**
+	 * Get the platform and route information for a given stop index in the depot's route.
+	 * Handles both infinite-repeating and finite schedules.
+	 *
+	 * @param stopIndex index of the stop to query
+	 * @return platform/route info for the requested stop and its neighbours
+	 */
 	public VehicleExtraData.VehiclePlatformRouteInfo getVehiclePlatformRouteInfo(int stopIndex) {
 		final int platformCount = platformsInRoute.size();
 		final PlatformRouteDetails previousData;
@@ -259,7 +328,7 @@ public final class Depot extends DepotSchema implements Utilities {
 	}
 
 	/**
-	 * The first part generates platform directions (N, NE, etc.) for OBA data. The second part reads from real-time departures and in-game frequencies and converts them to departures. Each departure is mapped to a siding and siding time segments must be generated beforehand. Should only be called during initialization (but after siding initialization), when setting world time, and after path generation of all sidings.
+	 * The first part generates platform directions (N, NE, etc.) for OBA data. The second part reads from real-time departures and in-game frequencies and converts them to departures. Each departure is mapped to a siding and siding time segments must be generated beforehand. Should only be called during initialisation (but after siding initialisation), when setting world time, and after path generation of all sidings.
 	 */
 	public void generatePlatformDirectionsAndWriteDeparturesToSidings() {
 		final Long2ObjectOpenHashMap<@Nullable Angle> platformDirections = new Long2ObjectOpenHashMap<>();
@@ -284,7 +353,7 @@ public final class Depot extends DepotSchema implements Utilities {
 		});
 
 		final LongArrayList departures = new LongArrayList();
-		final long gameMillisPerDay = data instanceof final Simulator simulator1 ? simulator1.getGameMillisPerDay() : 0;
+		long repeatIntervalMillis = 0;
 		repeatDepartures = 1;
 
 		if (transportMode.continuousMovement) {
@@ -295,16 +364,12 @@ public final class Depot extends DepotSchema implements Utilities {
 			if (useRealTime) {
 				departures.addAll(realTimeDepartures);
 			} else if (data instanceof final Simulator simulator) {
-				final long offsetMillis = simulator.getMillisOfGameMidnight();
+				repeatIntervalMillis = simulator.getGameMillisPerDay();
 				long lastDeparture = Long.MIN_VALUE;
-
-				if (gameMillisPerDay > 0) {
-					final long highestJourneyTime = savedRails.stream().mapToLong(Siding::getJourneyTime).reduce(0, Math::max);
-					repeatDepartures = highestJourneyTime == 0 ? 1 : (long) Math.ceil((double) highestJourneyTime / gameMillisPerDay);
-				}
+				repeatDepartures = getRepeatDeparturesForJourneyTime(simulator);
 
 				for (int i = 0; i < HOURS_PER_DAY; i++) {
-					final long frequency = getFrequency(simulator.isTimeMoving() ? i : simulator.getGameHour());
+					final long frequency = getFrequency(simulator.getScheduleFrequencyHour(i));
 					if (frequency == 0) {
 						continue;
 					}
@@ -316,7 +381,7 @@ public final class Depot extends DepotSchema implements Utilities {
 					while (true) {
 						final long newDeparture = Math.max(hourMinMillis, lastDeparture + intervalMillis);
 						if (newDeparture < hourMaxMillis) {
-							departures.add(offsetMillis + newDeparture * gameMillisPerDay / MILLIS_PER_DAY);
+							departures.add(simulator.getSimulationMillisAtGameDayOffset(newDeparture));
 							lastDeparture = newDeparture;
 						} else {
 							break;
@@ -336,7 +401,7 @@ public final class Depot extends DepotSchema implements Utilities {
 			for (int i = 0; i < repeatDepartures; i++) {
 				for (final long departure : departures) {
 					for (int j = 0; j < sidingsInDepot.size(); j++) {
-						if (sidingsInDepot.get((sidingIndex + j) % sidingsInDepot.size()).addDeparture(departure + gameMillisPerDay * i)) {
+						if (sidingsInDepot.get((sidingIndex + j) % sidingsInDepot.size()).addDeparture(departure + repeatIntervalMillis * i)) {
 							sidingIndex++;
 							break;
 						}
@@ -346,6 +411,25 @@ public final class Depot extends DepotSchema implements Utilities {
 		}
 	}
 
+	/**
+	 * Compute how many in-game day cycles are needed to cover the longest siding journey time,
+	 * so that departures repeat enough times to serve the full timetable. Returns 1 when the
+	 * game-day length is zero or the highest journey time is zero.
+	 */
+	private long getRepeatDeparturesForJourneyTime(Simulator simulator) {
+		final long gameMillisPerDay = simulator.getGameMillisPerDay();
+		if (gameMillisPerDay <= 0) {
+			return 1;
+		}
+
+		final long highestJourneyTime = savedRails.stream().mapToLong(Siding::getJourneyTime).reduce(0, Math::max);
+		return highestJourneyTime == 0 ? 1 : (long) Math.ceil((double) highestJourneyTime / gameMillisPerDay);
+	}
+
+	/**
+	 * Update the depot's path-generation status fields. These are visible to clients so they
+	 * can surface generation progress / errors in the UI.
+	 */
 	public void updateGenerationStatus(long lastGeneratedMillis, GeneratedStatus lastGeneratedStatus, long lastGeneratedFailedStartId, long lastGeneratedFailedEndId) {
 		this.lastGeneratedMillis = lastGeneratedMillis;
 		this.lastGeneratedStatus = lastGeneratedStatus;
@@ -392,30 +476,56 @@ public final class Depot extends DepotSchema implements Utilities {
 		log.info("{}", String.format(message, name));
 	}
 
+	/**
+	 * Trigger path generation for all depots whose name matches the given filter.
+	 *
+	 * @param simulator the simulator instance
+	 * @param filter    case-insensitive name filter
+	 */
 	public static void generateDepotsByName(Simulator simulator, String filter) {
 		generateDepots(simulator, getDataByName(simulator.depots, filter));
 	}
 
+	/**
+	 * Trigger path generation for the specified depots. Each depot runs its own path-finding
+	 * pipeline; when all are complete a generation status message is sent to clients.
+	 *
+	 * @param simulator        the simulator instance
+	 * @param depotsToGenerate the depots to generate paths for
+	 */
 	public static void generateDepots(Simulator simulator, ObjectArrayList<Depot> depotsToGenerate) {
 		final LongAVLTreeSet idsToGenerate = new LongAVLTreeSet();
-		final UpdateDataResponse updateDataResponse = new UpdateDataResponse(simulator);
+		final ObjectArrayList<Depot> depotsToUpdate = new ObjectArrayList<>();
 
 		depotsToGenerate.forEach(depot -> {
 			idsToGenerate.add(depot.getId());
 			depot.generateMainRoute(forceComplete -> {
 				idsToGenerate.remove(depot.getId());
-				updateDataResponse.addDepot(depot);
 				if (forceComplete || idsToGenerate.isEmpty()) {
+					depotsToUpdate.add(depot);
+					final UpdateDataResponse updateDataResponse = new UpdateDataResponse(simulator);
+					depotsToUpdate.forEach(updateDataResponse::addDepot);
 					simulator.sendMessageS2C(OperationProcessor.GENERATION_STATUS_UPDATE, updateDataResponse, null, null);
 				}
 			});
 		});
 	}
 
+	/**
+	 * Clear (remove) all vehicles from depots matching the given name filter.
+	 *
+	 * @param simulator the simulator instance
+	 * @param filter    case-insensitive name filter
+	 */
 	public static void clearDepotsByName(Simulator simulator, String filter) {
 		clearDepots(getDataByName(simulator.depots, filter));
 	}
 
+	/**
+	 * Clear (remove) all vehicles from the specified depots.
+	 *
+	 * @param depotsToClear the depots whose vehicles should be cleared
+	 */
 	public static void clearDepots(ObjectArrayList<Depot> depotsToClear) {
 		depotsToClear.forEach(depot -> depot.savedRails.forEach(Siding::clearVehicles));
 	}

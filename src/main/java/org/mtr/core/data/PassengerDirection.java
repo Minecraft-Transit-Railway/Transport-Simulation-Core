@@ -24,6 +24,13 @@ public final class PassengerDirection extends PassengerDirectionSchema implement
 		return endTime;
 	}
 
+	/**
+	 * @return planned start time for this leg (used for stale-wait detection).
+	 */
+	public long getStartTime() {
+		return startTime;
+	}
+
 	public long getRouteId() {
 		return routeId;
 	}

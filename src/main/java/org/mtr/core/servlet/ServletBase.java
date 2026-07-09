@@ -1,23 +1,22 @@
 package org.mtr.core.servlet;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import lombok.extern.log4j.Log4j2;
-import org.jspecify.annotations.Nullable;
-import org.mtr.core.integration.Response;
-import org.mtr.core.serializer.JsonReader;
-import org.mtr.core.simulation.Simulator;
-
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
+import org.mtr.core.integration.Response;
+import org.mtr.core.serializer.JsonReader;
+import org.mtr.core.simulation.Simulator;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

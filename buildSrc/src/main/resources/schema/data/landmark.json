@@ -6,6 +6,9 @@
 		"$ref": "areaBase.json"
 	},
 	"properties": {
+		"useRealTime": {
+			"type": "boolean"
+		},
 		"densities": {
 			"type": "array",
 			"minItems": 24,

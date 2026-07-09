@@ -170,7 +170,6 @@ export class DirectionsService extends SelectableDataServiceBase<{ currentTime: 
 			endPositionZ: endStation?.z,
 			startClientId,
 			endClientId,
-			maxWalkingDistance: 250, // TODO
 		});
 		this.select(key);
 		this.fetchData(key);

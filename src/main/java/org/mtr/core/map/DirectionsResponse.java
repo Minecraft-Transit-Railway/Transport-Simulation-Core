@@ -7,20 +7,20 @@ import org.mtr.core.serializer.ReaderBase;
 public final class DirectionsResponse extends DirectionsResponseSchema {
 
 	public DirectionsResponse(
-			long totalRefreshGraphTime,
-			long totalRefreshArrivalsTime,
-			long totalPathFindingTime,
-			long longestRefreshGraphTime,
-			long longestRefreshArrivalsTime,
-			long longestPathFindingTime
+		long totalRefreshGraphTime,
+		long totalRefreshArrivalsTime,
+		long totalPathFindingTime,
+		long longestRefreshGraphTime,
+		long longestRefreshArrivalsTime,
+		long longestPathFindingTime
 	) {
 		super(
-				totalRefreshGraphTime,
-				totalRefreshArrivalsTime,
-				totalPathFindingTime,
-				longestRefreshGraphTime,
-				longestRefreshArrivalsTime,
-				longestPathFindingTime
+			totalRefreshGraphTime,
+			totalRefreshArrivalsTime,
+			totalPathFindingTime,
+			longestRefreshGraphTime,
+			longestRefreshArrivalsTime,
+			longestPathFindingTime
 		);
 	}
 

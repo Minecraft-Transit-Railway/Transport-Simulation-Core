@@ -90,8 +90,8 @@ public abstract class Data {
 			});
 
 			if (this instanceof Simulator) {
-				platforms.removeIf(platform -> platform.isInvalidSavedRail(this));
-				sidings.removeIf(siding -> siding.isInvalidSavedRail(this));
+				platforms.removeIf(SavedRailBase::isInvalidSavedRail);
+				sidings.removeIf(SavedRailBase::isInvalidSavedRail);
 			}
 
 			mapIds(stationIdMap, stations);
@@ -284,6 +284,7 @@ public abstract class Data {
 					break;
 				}
 			}
+			savedRail.updateRailCache();
 		});
 	}
 }

@@ -35,7 +35,7 @@
 		"showDetails": "Show Details",
 		"arrivalDetails": "Arrival Details",
 		"departureIndex": "Departure Index",
-		"carVehicle": "{{count}}-Car Vehicle",
+		"vehicleCarCount": "{{count}}-Car Vehicle",
 		"arrived": "Arrived",
 		"platform": "Platform {{name}}",
 		"everyEightSeconds": "Every 8 Seconds"

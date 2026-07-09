@@ -88,8 +88,8 @@ public interface Utilities {
 		return (double) Math.round(value * factor) / factor;
 	}
 
-	static double getAverage(double a, double b) {
-		return (a + b) / 2;
+	static double getAverage(double valueA, double valueB) {
+		return (valueA + valueB) / 2;
 	}
 
 	static double getValueFromPercentage(double percentage, double value1, double value2) {
@@ -138,7 +138,7 @@ public interface Utilities {
 	}
 
 	static double kilometersPerHourToMetersPerMillisecond(double speedKilometersPerHour) {
-		return speedKilometersPerHour / 3600;
+		return speedKilometersPerHour / (MILLIS_PER_HOUR / MILLIS_PER_SECOND);
 	}
 
 	@Nullable

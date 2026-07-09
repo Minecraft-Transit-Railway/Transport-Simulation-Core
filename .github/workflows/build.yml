@@ -22,8 +22,7 @@ jobs:
         uses: actions/setup-java@main
         with:
           java-version: 21
-          distribution: 'zulu'
-          cache: gradle
+          distribution: 'temurin'
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
       - name: Update Gradle
@@ -47,7 +46,7 @@ jobs:
       - name: Setup webserver
         run: ./gradlew setupWebserver --no-daemon
       - name: Build JAR
-        run: ./gradlew build -x test --no-daemon
+        run: ./gradlew build --no-daemon
       - name: Publish main project to GitHub Packages
         if: github.event_name == 'push'
         run: ./gradlew publish --no-daemon

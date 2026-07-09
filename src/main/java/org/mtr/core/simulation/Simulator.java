@@ -1,6 +1,7 @@
 package org.mtr.core.simulation;
 
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.*;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -49,6 +50,7 @@ public class Simulator extends Data implements Utilities {
 	@Getter
 	private boolean isTimeMoving;
 	private long lastSetGameMillisMidnight;
+	private int currentPassengerDirectionsRequests;
 
 	/**
 	 * Connected dashboard / mod clients for this dimension.
@@ -83,6 +85,7 @@ public class Simulator extends Data implements Utilities {
 	private final Object2LongOpenHashMap<UUID> ridingVehicleIds = new Object2LongOpenHashMap<>();
 	private final MessageQueue<QueueObject> messageQueueC2S = new MessageQueue<>();
 	private final MessageQueue<QueueObject> messageQueueS2C = new MessageQueue<>();
+	private final LongOpenHashSet jammedRouteIds = new LongOpenHashSet();
 
 	/**
 	 * If the simulation falls more than this many milliseconds behind wall clock, log a notice and
@@ -90,6 +93,7 @@ public class Simulator extends Data implements Utilities {
 	 * "noisy log on a sluggish host" and "silent multi-hour drift".
 	 */
 	private static final int SIMULATION_DIFFERENCE_LOGGING_THRESHOLD = 120000;
+	private static final int MAX_PASSENGER_DIRECTIONS_REQUESTS = 512;
 	/**
 	 * Default in-game day length in real-time milliseconds (20 in-game minutes).
 	 */
@@ -148,6 +152,7 @@ public class Simulator extends Data implements Utilities {
 		}
 		vehiclePositions = new ObjectImmutableList<>(tempVehiclePositions);
 		sidings.forEach(siding -> siding.initVehiclePositions(vehiclePositions.get(siding.getTransportModeOrdinal()).get(1)));
+		homes.forEach(home -> home.iteratePassengers(passenger -> passenger.writeVehicleCache(this)));
 
 		// Load settings
 		final ObjectArraySet<Settings> settings = new ObjectArraySet<>();
@@ -178,7 +183,7 @@ public class Simulator extends Data implements Utilities {
 			final ObjectLongImmutablePair<Integer> ticksAndDuration = Utilities.measureDuration(this::tickUntilCaughtUp);
 			log.info(
 				"Simulation difference of {}h{}m for {} caught up with {} ticks in {} second(s)",
-				totalDifference / MILLIS_PER_SECOND / 3600, (totalDifference / MILLIS_PER_SECOND / 60) % 60,
+				totalDifference / MILLIS_PER_SECOND / (MILLIS_PER_HOUR / MILLIS_PER_SECOND), (totalDifference / MILLIS_PER_SECOND / (MILLIS_PER_MINUTE / MILLIS_PER_SECOND)) % (MILLIS_PER_MINUTE / MILLIS_PER_SECOND),
 				dimension,
 				ticksAndDuration.left(),
 				(float) ticksAndDuration.rightLong() / MILLIS_PER_SECOND
@@ -227,7 +232,7 @@ public class Simulator extends Data implements Utilities {
 		for (int i = 0; i < MILLIS_PER_DAY; i += MILLIS_PER_SECOND) {
 			lastMillis = getCurrentMillis();
 			setCurrentMillis(lastMillis + MILLIS_PER_SECOND);
-			depotsToInstantDeploy.forEach(depot -> depot.savedRails.forEach(siding -> siding.simulateTrain(MILLIS_PER_SECOND, null)));
+			depotsToInstantDeploy.forEach(depot -> depot.savedRails.forEach(siding -> siding.simulateVehicles(MILLIS_PER_SECOND, null)));
 		}
 		lastMillis = oldLastMillis;
 		setCurrentMillis(oldCurrentMillis);
@@ -269,7 +274,62 @@ public class Simulator extends Data implements Utilities {
 	 * @return the game hour (0-23)
 	 */
 	public int getGameHour() {
-		return gameMillisPerDay > 0 ? (int) (gameMillis * HOURS_PER_DAY / gameMillisPerDay) : 0;
+		return getGameHourAt(getCurrentMillis());
+	}
+
+	/**
+	 * @param simulationMillis target simulation timestamp
+	 * @return normalized in-game milliseconds in [0, gameMillisPerDay), projected from current
+	 * simulator time if game time is moving
+	 */
+	public long getGameMillisAt(long simulationMillis) {
+		if (gameMillisPerDay <= 0) {
+			return 0;
+		}
+
+		final long projectedGameMillis = isTimeMoving ? gameMillis + (simulationMillis - getCurrentMillis()) : gameMillis;
+		return Math.floorMod(projectedGameMillis, gameMillisPerDay);
+	}
+
+	/**
+	 * @param simulationMillis target simulation timestamp
+	 * @return projected in-game hour (0-23) at {@code simulationMillis}
+	 */
+	public int getGameHourAt(long simulationMillis) {
+		return gameMillisPerDay > 0 ? (int) (getGameMillisAt(simulationMillis) * HOURS_PER_DAY / gameMillisPerDay) : 0;
+	}
+
+	/**
+	 * Map an in-game day offset (0..{@link Utilities#MILLIS_PER_DAY}) to an absolute simulation
+	 * timestamp using the current game-day scale.
+	 */
+	public long getSimulationMillisAtGameDayOffset(long gameDayOffsetMillis) {
+		if (gameMillisPerDay <= 0) {
+			return getCurrentMillis();
+		}
+
+		return getMillisOfGameMidnight() + Math.floorMod(gameDayOffsetMillis, (long) MILLIS_PER_DAY) * gameMillisPerDay / MILLIS_PER_DAY;
+	}
+
+	/**
+	 * For in-game schedules, when game time is paused we pin frequency lookup to the current game
+	 * hour; when moving, use the iterated schedule hour.
+	 */
+	public int getScheduleFrequencyHour(int iteratedHour) {
+		return isTimeMoving ? iteratedHour : getGameHour();
+	}
+
+	/**
+	 * Limit how many new passenger direction requests enter CSA per simulation tick to keep latency
+	 * stable on very large maps.
+	 */
+	public boolean tryConsumePassengerDirectionsRequestBudget() {
+		if (currentPassengerDirectionsRequests >= MAX_PASSENGER_DIRECTIONS_REQUESTS) {
+			return false;
+		} else {
+			currentPassengerDirectionsRequests++;
+			return true;
+		}
 	}
 
 	/**
@@ -326,6 +386,22 @@ public class Simulator extends Data implements Utilities {
 	}
 
 	/**
+	 * @return whether the route is currently considered jammed for pathfinding purposes.
+	 */
+	public boolean isRouteJammed(long routeId) {
+		return routeId != 0 && jammedRouteIds.contains(routeId);
+	}
+
+	/**
+	 * Mark a route as jammed for the current tick so CSA/path searches avoid it.
+	 */
+	public void markRouteJammed(long routeId) {
+		if (routeId != 0) {
+			jammedRouteIds.add(routeId);
+		}
+	}
+
+	/**
 	 * @param uuid riding entity to look up
 	 * @return the next platform of the vehicle being ridden by {@code uuid}, or {@code null} if
 	 * the entity is not riding anything or its vehicle has no upcoming platform.
@@ -371,6 +447,7 @@ public class Simulator extends Data implements Utilities {
 	private void tick(long millisElapsed) {
 		lastMillis = getCurrentMillis();
 		setCurrentMillis(lastMillis + millisElapsed);
+		currentPassengerDirectionsRequests = 0;
 
 		try {
 			vehiclePositions.forEach(vehiclePositionsForTransportMode -> {
@@ -390,7 +467,8 @@ public class Simulator extends Data implements Utilities {
 				sync();
 			}
 
-			sidings.forEach(siding -> siding.simulateTrain(millisElapsed, vehiclePositions.get(siding.getTransportModeOrdinal())));
+			jammedRouteIds.clear();
+			sidings.forEach(siding -> siding.simulateVehicles(millisElapsed, vehiclePositions.get(siding.getTransportModeOrdinal())));
 			clients.forEach(client -> client.sendUpdates(this));
 
 			if (autoSave) {
@@ -400,7 +478,7 @@ public class Simulator extends Data implements Utilities {
 
 			lifts.forEach(lift -> lift.tick(millisElapsed));
 			landmarks.forEach(Landmark::tick);
-			homes.forEach(home -> home.tick(millisElapsed));
+			homes.forEach(Home::tick);
 
 			// Process queued runs
 			queuedRuns.process(Runnable::run);

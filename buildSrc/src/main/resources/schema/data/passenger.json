@@ -12,6 +12,9 @@
 				"$ref": "passengerDirection.json"
 			}
 		},
+		"homeId": {
+			"type": "integer"
+		},
 		"startLandmarkId": {
 			"type": "integer"
 		},
@@ -28,6 +31,9 @@
 			"type": "integer"
 		},
 		"vehicleId": {
+			"type": "integer"
+		},
+		"vehicleCarNumber": {
 			"type": "integer"
 		}
 	}
