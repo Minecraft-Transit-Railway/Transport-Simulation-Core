@@ -39,6 +39,6 @@
 		"angular-eslint": "22.1.0",
 		"baseline-browser-mapping": "^2.10.43",
 		"eslint": "^10.7.0",
-		"typescript-eslint": "8.63.0"
+		"typescript-eslint": "8.64.0"
 	}
 }
