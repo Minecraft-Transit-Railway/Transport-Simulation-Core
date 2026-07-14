@@ -1,41 +1,32 @@
-<ng-container *transloco="let t">
-	<app-drawer #sideMain [title]="getTitle()">
-		<app-main-panel
-				class="wrapper"
-				(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
-				(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
-				(clientClicked)="onClickClient($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
-				(directionsOpened)="onOpenDirections(undefined, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
-	</app-drawer>
-
-	<app-drawer #sideStation [title]="t('station.title')" (closed)="onCloseStation()">
-		<app-station-panel
-				(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
-				(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
-				(directionsOpened)="onOpenDirections($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
-	</app-drawer>
-
-	<app-drawer #sideClient [title]="t('client.title')" (closed)="onCloseClient()">
-		<app-client-panel
-				(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
-				(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"
-				(directionsOpened)="onOpenDirections($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
-	</app-drawer>
-
-	<app-drawer #sideDirections [title]="t('common.directions')" (closed)="onCloseDirections()">
-		<app-directions/>
-	</app-drawer>
-
-	<app-drawer #sideRoute [title]="t('route.title')" (closed)="onCloseRoute()">
-		<app-route-panel
-				(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, true)"
-				(routeClicked)="onClickRoute($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
-	</app-drawer>
-
-	<app-map
-			(stationClicked)="onClickStation($event, sideMain, sideStation, sideClient, sideDirections, sideRoute, false)"
-			(clientClicked)="onClickClient($event, sideMain, sideStation, sideClient, sideDirections, sideRoute)"/>
-	<button pButton class="button-corner" [rounded]="true" [text]="true" [raised]="true" size="large" (click)="onClickMain(sideMain, sideStation, sideClient, sideDirections, sideRoute)" [pTooltip]="t('common.menu')" tooltipPosition="left">
-		<iconify-icon icon="mdi:menu" aria-hidden="true"></iconify-icon>
-	</button>
-</ng-container>
+<ion-app>
+	<ion-split-pane contentId="main-content" when="md" [disabled]="!showSplitPane()">
+		<ion-menu contentId="main-content" side="end">
+			<ion-header>
+				<ion-toolbar>
+					<ion-buttons slot="end">
+						@if (canGoBack()) {
+							<ion-back-button defaultHref="/home"/>
+						} @else {
+							<ion-button (click)="closePanel()">
+								<ion-icon name="close"/>
+							</ion-button>
+						}
+					</ion-buttons>
+				</ion-toolbar>
+			</ion-header>
+			<ion-content>
+				<ion-router-outlet/>
+			</ion-content>
+		</ion-menu>
+		<div class="ion-page" id="main-content">
+			<app-map/>
+			@if (!showSplitPane()) {
+				<ion-fab vertical="bottom" horizontal="end">
+					<ion-fab-button color="light" (click)="openPanel()">
+						<ion-icon name="menu"/>
+					</ion-fab-button>
+				</ion-fab>
+			}
+		</div>
+	</ion-split-pane>
+</ion-app>

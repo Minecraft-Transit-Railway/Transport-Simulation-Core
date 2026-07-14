@@ -6,7 +6,6 @@ import {HttpClient} from "@angular/common/http";
 export class TranslocoHttpLoader implements TranslocoLoader {
 	private readonly httpClient = inject(HttpClient);
 
-
 	getTranslation(lang: string) {
 		return this.httpClient.get(`./assets/i18n/${lang}.json`);
 	}

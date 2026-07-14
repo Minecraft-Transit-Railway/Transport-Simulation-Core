@@ -1,122 +1,52 @@
-import {ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject} from "@angular/core";
+import {ChangeDetectionStrategy, Component, computed, inject} from "@angular/core";
+import {NavigationEnd, Router} from "@angular/router";
+import {toSignal} from "@angular/core/rxjs-interop";
+import {filter, map} from "rxjs";
+
+import {IonApp, IonBackButton, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar} from "@ionic/angular/standalone";
+import {addIcons} from "ionicons";
+import {close, menu} from "ionicons/icons";
+
 import {MapComponent} from "./component/map/map.component";
-import {StationPanelComponent} from "./component/station-panel/station-panel.component";
-import {StationService} from "./service/station.service";
-import {DrawerComponent} from "./component/drawer/drawer.component";
-import {DirectionsComponent} from "./component/directions/directions.component";
-import {MainPanelComponent} from "./component/main-panel/main-panel.component";
-import {RouteKeyService} from "./service/route.service";
-import {RoutePanelComponent} from "./component/route-panel/route-panel.component";
-import {DirectionsService} from "./service/directions.service";
-import {ButtonModule} from "primeng/button";
-import {TooltipModule} from "primeng/tooltip";
-import {ClientService} from "./service/client.service";
-import {ClientPanelComponent} from "./component/client-panel/client-panel.component";
-import {TranslocoDirective} from "@jsverse/transloco";
 
 @Component({
 	selector: "app-root",
-	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
+		IonApp,
+		IonBackButton,
+		IonButton,
+		IonButtons,
+		IonContent,
+		IonFab,
+		IonFabButton,
+		IonHeader,
+		IonIcon,
+		IonMenu,
+		IonRouterOutlet,
+		IonSplitPane,
+		IonToolbar,
 		MapComponent,
-		ButtonModule,
-		TooltipModule,
-		TranslocoDirective,
-		StationPanelComponent,
-		DrawerComponent,
-		ClientPanelComponent,
-		DirectionsComponent,
-		MainPanelComponent,
-		RoutePanelComponent,
 	],
 	templateUrl: "./app.component.html",
 	styleUrl: "./app.component.scss",
-	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-	private readonly stationService = inject(StationService);
-	private readonly routeKeyService = inject(RouteKeyService);
-	private readonly clientService = inject(ClientService);
-	private readonly directionsService = inject(DirectionsService);
+	private readonly router = inject(Router);
+	private readonly url = toSignal(this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd), map(() => this.router.url)), {initialValue: this.router.url});
 
+	protected readonly showSplitPane = computed(() => this.url() !== "/");
+	protected readonly canGoBack = computed(() => this.url().startsWith("/station/"));
 
-	getTitle() {
-		return document.title;
+	protected openPanel() {
+		this.router.navigate(["/home"]);
 	}
 
-	onClickMain(sideMain: DrawerComponent, sideStation: DrawerComponent, sideClient: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
-		sideMain.open();
-		sideStation.close();
-		sideClient.close();
-		sideDirections.close();
-		sideRoute.close();
-		this.onCloseStation();
-		this.onCloseClient();
-		this.onCloseDirections();
-		this.onCloseRoute();
+	protected closePanel() {
+		this.router.navigate(["/"]);
 	}
 
-	onClickStation(stationId: string, sideMain: DrawerComponent, sideStation: DrawerComponent, sideClient: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent, zoomToStation: boolean) {
-		this.stationService.setStation(stationId, zoomToStation);
-		sideMain.close();
-		sideStation.open();
-		sideClient.close();
-		sideDirections.close();
-		sideRoute.close();
-		this.onCloseClient();
-		this.onCloseDirections();
-		this.onCloseRoute();
-	}
-
-	onClickRoute(routeKey: string, sideMain: DrawerComponent, sideStation: DrawerComponent, sideClient: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
-		this.routeKeyService.select(routeKey);
-		sideMain.close();
-		sideStation.close();
-		sideClient.close();
-		sideDirections.close();
-		sideRoute.open();
-		this.onCloseStation();
-		this.onCloseClient();
-		this.onCloseDirections();
-	}
-
-	onClickClient(clientId: string, sideMain: DrawerComponent, sideStation: DrawerComponent, sideClient: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
-		this.clientService.setClient(clientId);
-		sideMain.close();
-		sideStation.close();
-		sideClient.open();
-		sideDirections.close();
-		sideRoute.close();
-		this.onCloseStation();
-		this.onCloseRoute();
-		this.onCloseDirections();
-	}
-
-	onOpenDirections(directionsSelection: { stationDetails?: { stationId: string, isStartStation: boolean }, clientDetails?: { clientId: string, isStartClient: boolean } } | undefined, sideMain: DrawerComponent, sideStation: DrawerComponent, sideClient: DrawerComponent, sideDirections: DrawerComponent, sideRoute: DrawerComponent) {
-		this.directionsService.directionsPanelOpened.next(directionsSelection);
-		sideMain.close();
-		sideStation.close();
-		sideClient.close();
-		sideDirections.open();
-		sideRoute.close();
-		this.onCloseStation();
-		this.onCloseClient();
-		this.onCloseRoute();
-	}
-
-	onCloseStation() {
-		this.stationService.clear();
-	}
-
-	onCloseClient() {
-		this.clientService.clear();
-	}
-
-	onCloseDirections() {
-		this.directionsService.clear();
-	}
-
-	onCloseRoute() {
-		this.routeKeyService.clear();
+	constructor() {
+		addIcons({close, menu});
 	}
 }

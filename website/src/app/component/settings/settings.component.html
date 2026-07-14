@@ -1,0 +1,14 @@
+<ion-list>
+	<ion-item>
+		<ion-label>{{ "settings.darkMode" | transloco }}</ion-label>
+		<ion-toggle slot="end" [checked]="darkMode()" (ionChange)="toggleDarkMode()"/>
+	</ion-item>
+	<ion-item>
+		<ion-label>{{ "settings.language" | transloco }}</ion-label>
+		<ion-select slot="end" [value]="language()" (ionChange)="setLanguage($event)">
+			@for (language of languages; track $index) {
+				<ion-select-option [value]="language.key">{{ language.value }}</ion-select-option>
+			}
+		</ion-select>
+	</ion-item>
+</ion-list>

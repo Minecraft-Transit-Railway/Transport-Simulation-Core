@@ -1,39 +1,28 @@
 import {provideHttpClient} from "@angular/common/http";
-import {ApplicationConfig, isDevMode} from "@angular/core";
-import {provideTransloco} from "@jsverse/transloco";
-import {providePrimeNG} from "primeng/config";
+import {ApplicationConfig, inject, isDevMode, provideAppInitializer} from "@angular/core";
+import {provideRouter} from "@angular/router";
 
-import {getCookie} from "./data/utilities";
-import {FormatNamePipe} from "./pipe/format-name.pipe";
-import {FormatTimePipe} from "./pipe/format-time.pipe";
-import {SimplifyRoutesPipe} from "./pipe/simplify-routes.pipe";
-import {SimplifyStationsPipe} from "./pipe/simplify-stations.pipe";
-import {SplitNamePipe} from "./pipe/split-name.pipe";
-import {myPreset} from "../theme-preset";
+import {provideIonicAngular} from "@ionic/angular/standalone";
+import {provideTransloco} from "@jsverse/transloco";
+
+import {routes} from "./app.routes";
+import {SettingsService} from "./service/settings.service";
 import {TranslocoHttpLoader} from "../transloco-loader";
 
 export const appConfig: ApplicationConfig = {
 	providers: [
 		provideHttpClient(),
-		providePrimeNG({
-			theme: {
-				preset: myPreset,
-				options: {darkModeSelector: ".dark-theme"},
-			},
-		}),
+		provideIonicAngular(),
+		provideRouter(routes),
+		provideAppInitializer(() => inject(SettingsService).init()),
 		provideTransloco({
 			config: {
 				availableLangs: ["en", "zh"],
-				defaultLang: getCookie("language") || "en",
+				defaultLang: "en",
 				reRenderOnLangChange: true,
 				prodMode: !isDevMode(),
 			},
 			loader: TranslocoHttpLoader,
 		}),
-		SimplifyStationsPipe,
-		SimplifyRoutesPipe,
-		SplitNamePipe,
-		FormatNamePipe,
-		FormatTimePipe,
 	],
 };
