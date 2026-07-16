@@ -50,7 +50,7 @@
 					<app-route-display #display1 [colorAbove]="$index > 0 ? getRouteColor() : undefined" [colorBelow]="$index < $count - 1 ? getRouteColor() : undefined" [isStation]="true" [icons]="getVehicleIcons($index, display1.getHeight() + display2.getHeight())">
 						<div class="row center">
 							<app-data-list-entry class="spacing" [icons]="[]" [title]="[stationDetails.name | formatName, '']" [subtitles]="[]" [useLightColor]="false" [clickable]="true" (entryClicked)="stationClicked.emit(stationDetails.id)"/>
-							@if (showDwellTimesCheckbox.checked && stationDetails.dwellTimeSeconds) {
+							@if (showDwellTimesCheckbox.checked() && stationDetails.dwellTimeSeconds) {
 								<div class="row center duration" [pTooltip]="t('route.dwellTime')">
 									<iconify-icon icon="mdi:duration" aria-hidden="true"></iconify-icon>
 									<div>&nbsp;{{ stationDetails.dwellTimeSeconds | formatTime :"" }}</div>
@@ -59,7 +59,7 @@
 						</div>
 					</app-route-display>
 					<app-route-display #display2 [colorAbove]="getRouteColor()" [colorBelow]="getRouteColor()" [isStation]="false" [icons]="[]" [style.display]="$index < $count - 1? '' : 'none'">
-						@if (showDurationsCheckbox.checked && stationDetails.durationSeconds) {
+						@if (showDurationsCheckbox.checked() && stationDetails.durationSeconds) {
 							<div class="row">
 								<div class="spacing"></div>
 								<div class="row center duration" [pTooltip]="t('route.travelTime')">
