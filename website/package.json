@@ -35,7 +35,7 @@
 		"@angular/cli": "^22.1.2",
 		"@angular/compiler-cli": "^22.1.0",
 		"@eslint/js": "^10.0.1",
-		"@types/three": "^0.185.3",
+		"@types/three": "^0.185.4",
 		"angular-eslint": "22.1.0",
 		"baseline-browser-mapping": "^2.11.12",
 		"eslint": "^10.8.0",
