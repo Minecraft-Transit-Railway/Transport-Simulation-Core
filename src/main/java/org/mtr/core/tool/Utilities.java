@@ -220,35 +220,89 @@ public interface Utilities {
 	}
 
 	static long circularClamp(long value, long min, long max, long totalDegrees) {
-		long result = value;
-		while (result < min) {
-			result += totalDegrees;
+		if (value >= min && value <= max) {
+			return value;
 		}
-		while (result > max) {
-			result -= totalDegrees;
+		if (totalDegrees <= 0) {
+			throw new IllegalArgumentException("The circular range must be positive");
 		}
-		return result;
+
+		final long valueRemainder = Math.floorMod(value, totalDegrees);
+		if (value < min) {
+			long offset = valueRemainder - Math.floorMod(min, totalDegrees);
+			if (offset < 0) {
+				offset += totalDegrees;
+			}
+			return min + offset;
+		} else {
+			long offset = Math.floorMod(max, totalDegrees) - valueRemainder;
+			if (offset < 0) {
+				offset += totalDegrees;
+			}
+			return max - offset;
+		}
 	}
 
 	static double circularClamp(double value, double min, double max, double totalDegrees) {
-		double result = value;
-		while (result < min) {
-			result += totalDegrees;
+		if (value >= min && value <= max || Double.isNaN(value)) {
+			return value;
 		}
-		while (result > max) {
-			result -= totalDegrees;
+		if (!(totalDegrees > 0) || !Double.isFinite(totalDegrees)) {
+			throw new IllegalArgumentException("The circular range must be finite and positive");
 		}
-		return result;
+
+		if (value < min) {
+			return min + floorMod(value - min, totalDegrees);
+		} else {
+			return max - floorMod(max - value, totalDegrees);
+		}
+	}
+
+	private static double floorMod(double value, double modulus) {
+		final double remainder = value % modulus;
+		return remainder < 0 ? remainder + modulus : remainder;
 	}
 
 	static long circularDifference(long value1, long value2, long totalDegrees) {
+		if (value1 == value2) {
+			return 0;
+		}
+		if (totalDegrees <= 0) {
+			throw new IllegalArgumentException("The circular range must be positive");
+		}
+
 		final long halfTotalDegrees = totalDegrees / 2;
-		return value1 - circularClamp(value2, value1 - halfTotalDegrees, value1 + halfTotalDegrees, totalDegrees);
+		long difference = Math.floorMod(value1, totalDegrees) - Math.floorMod(value2, totalDegrees);
+		if (difference > halfTotalDegrees) {
+			difference -= totalDegrees;
+		} else if (difference < -halfTotalDegrees) {
+			difference += totalDegrees;
+		}
+		if ((totalDegrees & 1) == 0 && Math.abs(difference) == halfTotalDegrees) {
+			return value1 > value2 ? halfTotalDegrees : -halfTotalDegrees;
+		}
+		return difference;
 	}
 
 	static double circularDifference(double value1, double value2, double totalDegrees) {
+		if (value1 == value2) {
+			return 0;
+		}
+		if (!(totalDegrees > 0) || !Double.isFinite(totalDegrees)) {
+			throw new IllegalArgumentException("The circular range must be finite and positive");
+		}
+
 		final double halfTotalDegrees = totalDegrees / 2;
-		return value1 - circularClamp(value2, value1 - halfTotalDegrees, value1 + halfTotalDegrees, totalDegrees);
+		double difference = floorMod(value1, totalDegrees) - floorMod(value2, totalDegrees);
+		if (difference > halfTotalDegrees) {
+			difference -= totalDegrees;
+		} else if (difference < -halfTotalDegrees) {
+			difference += totalDegrees;
+		}
+		if (Math.abs(difference) == halfTotalDegrees) {
+			return value1 > value2 ? halfTotalDegrees : -halfTotalDegrees;
+		}
+		return difference;
 	}
 
 	static int compare(long value1, long value2, IntSupplier ifZero) {
