@@ -107,18 +107,50 @@ public final class UtilitiesTests {
 	public void testCircularClamp() {
 		assertEquals(350, Utilities.circularClamp(350, 0, 360, 360));
 		assertEquals(10, Utilities.circularClamp(370, 0, 360, 360));
+		assertEquals(0, Utilities.circularClamp(-360, 0, 360, 360));
+		assertEquals(360, Utilities.circularClamp(720, 0, 360, 360));
+		assertEquals(352, Utilities.circularClamp(Long.MIN_VALUE, 0, 360, 360));
+		assertEquals(7, Utilities.circularClamp(Long.MAX_VALUE, 0, 360, 360));
+		assertThrows(IllegalArgumentException.class, () -> Utilities.circularClamp(1, 0, 0, 0));
+	}
+
+	@Test
+	public void testCircularClampMatchesIterativeSemantics() {
+		for (long value = -2000; value <= 2000; value++) {
+			assertEquals(iterativeCircularClamp(value, -180, 180, 360), Utilities.circularClamp(value, -180, 180, 360));
+			assertEquals(iterativeCircularClamp(value, 100, 460, 360), Utilities.circularClamp(value, 100, 460, 360));
+		}
 	}
 
 	@Test
 	public void testCircularClampDouble() {
 		assertEquals(350.0, Utilities.circularClamp(350.0, 0.0, 360.0, 360.0), 1e-10);
 		assertEquals(10.0, Utilities.circularClamp(370.0, 0.0, 360.0, 360.0), 1e-10);
+		assertEquals(0.0, Utilities.circularClamp(-360.0, 0.0, 360.0, 360.0), 1e-10);
+		assertEquals(360.0, Utilities.circularClamp(720.0, 0.0, 360.0, 360.0), 1e-10);
+		assertTrue(Double.isNaN(Utilities.circularClamp(Double.NaN, 0.0, 360.0, 360.0)));
+		assertThrows(IllegalArgumentException.class, () -> Utilities.circularClamp(1.0, 0.0, 0.0, 0.0));
 	}
 
 	@Test
 	public void testCircularDifference() {
 		assertEquals(10, Utilities.circularDifference(10, 0, 360));
 		assertEquals(-10, Utilities.circularDifference(0, 10, 360));
+		assertEquals(180, Utilities.circularDifference(180, 0, 360));
+		assertEquals(-180, Utilities.circularDifference(0, 180, 360));
+		assertEquals(-30400000, Utilities.circularDifference(0, 1753000000000L, 86400000));
+		assertEquals(15, Utilities.circularDifference(Long.MAX_VALUE, Long.MIN_VALUE, 360));
+		assertEquals(0, Utilities.circularDifference(1, 1, 0));
+		assertThrows(IllegalArgumentException.class, () -> Utilities.circularDifference(1, 2, 0));
+	}
+
+	@Test
+	public void testCircularDifferenceMatchesIterativeSemantics() {
+		for (long value1 = -720; value1 <= 720; value1++) {
+			for (long value2 = -720; value2 <= 720; value2++) {
+				assertEquals(iterativeCircularDifference(value1, value2, 360), Utilities.circularDifference(value1, value2, 360));
+			}
+		}
 	}
 
 	@Test
@@ -140,5 +172,21 @@ public final class UtilitiesTests {
 	@Test
 	public void testParseJson() {
 		assertNotNull(Utilities.parseJson("{\"key\":\"value\"}"));
+	}
+
+	private static long iterativeCircularClamp(long value, long min, long max, long period) {
+		long result = value;
+		while (result < min) {
+			result += period;
+		}
+		while (result > max) {
+			result -= period;
+		}
+		return result;
+	}
+
+	private static long iterativeCircularDifference(long value1, long value2, long period) {
+		final long halfPeriod = period / 2;
+		return value1 - iterativeCircularClamp(value2, value1 - halfPeriod, value1 + halfPeriod, period);
 	}
 }
