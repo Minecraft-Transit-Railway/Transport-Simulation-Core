@@ -347,7 +347,7 @@ public final class Siding extends SidingSchema implements Utilities {
 								log.debug("Already deployed vehicle from {} for departure index {}", getDepotName(), departureIndex);
 							}
 						} else {
-							vehicle.startUp(departureIndex, departures.getLong(departureIndex));
+							vehicle.tryStartUp(departureIndex, departures.getLong(departureIndex), vehiclePositions);
 						}
 					}
 				}
