@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongConsumer;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.objects.*;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.generated.data.RailSchema;
@@ -39,10 +40,12 @@ public final class Rail extends RailSchema {
 
 	private final ObjectOpenHashSet<Rail> connectedRails1 = new ObjectOpenHashSet<>();
 	private final ObjectOpenHashSet<Rail> connectedRails2 = new ObjectOpenHashSet<>();
-	private final Long2LongAVLTreeMap preBlockedVehicleIds = new Long2LongAVLTreeMap();
-	private final Long2LongAVLTreeMap currentlyBlockedVehicleIds = new Long2LongAVLTreeMap();
-	private final Long2LongAVLTreeMap preBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
-	private final Long2LongAVLTreeMap currentlyBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
+	private Long2LongAVLTreeMap preBlockedVehicleIds = new Long2LongAVLTreeMap();
+	private Long2LongAVLTreeMap currentlyBlockedVehicleIds = new Long2LongAVLTreeMap();
+	private Long2LongAVLTreeMap preBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
+	private Long2LongAVLTreeMap currentlyBlockedVehicleIdsOld = new Long2LongAVLTreeMap();
+	private boolean preBlockedVehicleIdsChanged;
+	private boolean currentlyBlockedVehicleIdsChanged;
 	private final LongArrayList manualBlockColors = new LongArrayList();
 	private final boolean reversePositions;
 
@@ -303,20 +306,29 @@ public final class Rail extends RailSchema {
 	}
 
 	public void tick1(Simulator simulator) {
-		final boolean needsUpdate = Utilities.differentItems(preBlockedVehicleIds.keySet(), preBlockedVehicleIdsOld.keySet()) || Utilities.differentItems(currentlyBlockedVehicleIds.keySet(), currentlyBlockedVehicleIdsOld.keySet());
-		simulator.clients.forEach(client -> {
+		tick1(simulator.clients.toArray(new Client[simulator.clients.size()]));
+	}
+
+	public void tick1(Client[] clients) {
+		final boolean needsUpdate = preBlockedVehicleIdsChanged || currentlyBlockedVehicleIdsChanged || preBlockedVehicleIds.size() != preBlockedVehicleIdsOld.size() || currentlyBlockedVehicleIds.size() != currentlyBlockedVehicleIdsOld.size();
+		for (final Client client : clients) {
 			if (closeTo(client.getPosition(), client.getUpdateRadius())) {
 				client.update(this, needsUpdate);
 			}
-		});
+		}
 
-		preBlockedVehicleIdsOld.clear();
-		preBlockedVehicleIdsOld.putAll(preBlockedVehicleIds);
+		final Long2LongAVLTreeMap previousPreBlockedVehicleIds = preBlockedVehicleIdsOld;
+		preBlockedVehicleIdsOld = preBlockedVehicleIds;
+		preBlockedVehicleIds = previousPreBlockedVehicleIds;
 		preBlockedVehicleIds.clear();
 
-		currentlyBlockedVehicleIdsOld.clear();
-		currentlyBlockedVehicleIdsOld.putAll(currentlyBlockedVehicleIds);
+		final Long2LongAVLTreeMap previousCurrentlyBlockedVehicleIds = currentlyBlockedVehicleIdsOld;
+		currentlyBlockedVehicleIdsOld = currentlyBlockedVehicleIds;
+		currentlyBlockedVehicleIds = previousCurrentlyBlockedVehicleIds;
 		currentlyBlockedVehicleIds.clear();
+
+		preBlockedVehicleIdsChanged = false;
+		currentlyBlockedVehicleIdsChanged = false;
 	}
 
 	public void tick2(long millisElapsed) {
@@ -483,7 +495,13 @@ public final class Rail extends RailSchema {
 
 	private static void reserveRail(long vehicleId, long color, ObjectOpenHashSet<Rail> visitedRails, Rail rail, boolean currentlyBlocked) {
 		if (!visitedRails.contains(rail) && rail.signalColors.contains(color)) {
-			(currentlyBlocked ? rail.currentlyBlockedVehicleIds : rail.preBlockedVehicleIds).put(color, vehicleId);
+			if (currentlyBlocked) {
+				rail.currentlyBlockedVehicleIdsChanged |= !rail.currentlyBlockedVehicleIdsOld.containsKey(color);
+				rail.currentlyBlockedVehicleIds.put(color, vehicleId);
+			} else {
+				rail.preBlockedVehicleIdsChanged |= !rail.preBlockedVehicleIdsOld.containsKey(color);
+				rail.preBlockedVehicleIds.put(color, vehicleId);
+			}
 			visitedRails.add(rail);
 			rail.connectedRails1.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail, currentlyBlocked));
 			rail.connectedRails2.forEach(connectedRail -> reserveRail(vehicleId, color, visitedRails, connectedRail, currentlyBlocked));
@@ -491,7 +509,13 @@ public final class Rail extends RailSchema {
 	}
 
 	private static boolean isNotBlocked(Long2LongAVLTreeMap blockedVehicleIds, long vehicleId) {
-		return blockedVehicleIds.values().longStream().allMatch(blockedVehicleId -> blockedVehicleId == vehicleId);
+		final LongIterator iterator = blockedVehicleIds.values().iterator();
+		while (iterator.hasNext()) {
+			if (iterator.nextLong() != vehicleId) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static void updateConnectingRailsTiltAngles(Data data, ObjectCollection<Rail> rails, String hexId, Position position, Angle angle, double tiltAngleDegrees, ObjectArrayList<Rail> railsToUpdate) {
