@@ -86,6 +86,7 @@ public class Simulator extends Data implements Utilities {
 	private final MessageQueue<QueueObject> messageQueueC2S = new MessageQueue<>();
 	private final MessageQueue<QueueObject> messageQueueS2C = new MessageQueue<>();
 	private final LongOpenHashSet jammedRouteIds = new LongOpenHashSet();
+	private final LongOpenHashSet previouslyJammedRouteIds = new LongOpenHashSet();
 
 	/**
 	 * If the simulation falls more than this many milliseconds behind wall clock, log a notice and
@@ -93,6 +94,7 @@ public class Simulator extends Data implements Utilities {
 	 * "noisy log on a sluggish host" and "silent multi-hour drift".
 	 */
 	private static final int SIMULATION_DIFFERENCE_LOGGING_THRESHOLD = 120000;
+	private static final int MAX_CATCH_UP_TICKS = 5;
 	private static final int MAX_PASSENGER_DIRECTIONS_REQUESTS = 512;
 	/**
 	 * Default in-game day length in real-time milliseconds (20 in-game minutes).
@@ -168,16 +170,15 @@ public class Simulator extends Data implements Utilities {
 
 	/**
 	 * Catch the simulation up to wall clock and log a notice if it had drifted by more than
-	 * {@link #SIMULATION_DIFFERENCE_LOGGING_THRESHOLD} milliseconds. If the drift exceeds an hour
-	 * the simulator jumps to "one hour ago" instead of replaying the full gap, since replaying
-	 * many hours of vehicle motion is rarely useful and is expensive.
+	 * {@link #SIMULATION_DIFFERENCE_LOGGING_THRESHOLD} milliseconds. If the drift exceeds an hour,
+	 * deployed vehicles are cleared and only the bounded catch-up window is replayed.
 	 */
 	public void tick() {
 		final long totalDifference = System.currentTimeMillis() - getCurrentMillis();
 		if (totalDifference >= SIMULATION_DIFFERENCE_LOGGING_THRESHOLD) {
 			if (totalDifference > MILLIS_PER_HOUR) {
-				// If the simulation is over an hour behind, jump to one hour ago and simulate the last hour
-				setCurrentMillis(System.currentTimeMillis() - MILLIS_PER_HOUR);
+				// Replaying an hour synchronously can permanently trap an overloaded simulation worker.
+				setCurrentMillis(System.currentTimeMillis() - (long) MAX_CATCH_UP_TICKS * MILLIS_PER_SECOND);
 				sidings.forEach(Siding::clearVehicles);
 			}
 			final ObjectLongImmutablePair<Integer> ticksAndDuration = Utilities.measureDuration(this::tickUntilCaughtUp);
@@ -389,7 +390,7 @@ public class Simulator extends Data implements Utilities {
 	 * @return whether the route is currently considered jammed for pathfinding purposes.
 	 */
 	public boolean isRouteJammed(long routeId) {
-		return routeId != 0 && jammedRouteIds.contains(routeId);
+		return routeId != 0 && (jammedRouteIds.contains(routeId) || previouslyJammedRouteIds.contains(routeId));
 	}
 
 	/**
@@ -421,22 +422,35 @@ public class Simulator extends Data implements Utilities {
 	}
 
 	/**
-	 * Simulates the system in one-second intervals until the simulation is all caught up
+	 * Simulates the system in one-second intervals until caught up, subject to a bounded work budget.
+	 * If simulation work itself is slower than wall clock, remaining elapsed time is skipped instead
+	 * of trapping the scheduler in an unbounded catch-up loop.
 	 *
 	 * @return the number of ticks it took
 	 */
 	private int tickUntilCaughtUp() {
 		int ticks = 0;
-		while (true) {
+		while (ticks < MAX_CATCH_UP_TICKS) {
 			ticks++;
 			final long totalDifference = System.currentTimeMillis() - getCurrentMillis();
 			if (totalDifference > MILLIS_PER_SECOND) {
 				tick(MILLIS_PER_SECOND);
 			} else {
-				tick(totalDifference);
+				tick(Math.max(0, totalDifference));
 				return ticks;
 			}
 		}
+
+		final long currentWallTime = System.currentTimeMillis();
+		final long skippedMillis = currentWallTime - getCurrentMillis();
+		if (skippedMillis > MILLIS_PER_SECOND) {
+			sidings.forEach(siding -> siding.iterateVehicles(vehicle -> vehicle.skipSimulationTime(skippedMillis)));
+			lastMillis = currentWallTime;
+			setCurrentMillis(currentWallTime);
+			log.warn("Simulation {} skipped {}ms after reaching the {}-tick catch-up budget", dimension, skippedMillis, MAX_CATCH_UP_TICKS);
+		}
+
+		return ticks;
 	}
 
 	/**
@@ -467,6 +481,11 @@ public class Simulator extends Data implements Utilities {
 				sync();
 			}
 
+			// Preserve the previous tick's result while sidings are simulated. Without this one-tick
+			// hand-off, a depot that happens to be iterated before the stalled train cannot observe the
+			// congestion and may dispatch another vehicle into the same route.
+			previouslyJammedRouteIds.clear();
+			previouslyJammedRouteIds.addAll(jammedRouteIds);
 			jammedRouteIds.clear();
 			sidings.forEach(siding -> siding.simulateVehicles(millisElapsed, vehiclePositions.get(siding.getTransportModeOrdinal())));
 			clients.forEach(client -> client.sendUpdates(this));
