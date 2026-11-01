@@ -20,7 +20,7 @@
 		"@angular/forms": "^22.2.4",
 		"@angular/platform-browser": "^22.2.4",
 		"@angular/router": "^22.2.4",
-		"@iconify-icons/fluent": "^2.0.5",
+		"@iconify-icons/fluent": "^2.0.6",
 		"@iconify-icons/mdi": "^2.0.0",
 		"@jsverse/transloco": "^8.4.0",
 		"@primeuix/themes": "^3.1.0",
