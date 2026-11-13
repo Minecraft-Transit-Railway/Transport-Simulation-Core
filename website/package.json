@@ -31,13 +31,13 @@
 		"tslib": "^2.9.1"
 	},
 	"devDependencies": {
-		"@angular/build": "^22.2.6",
-		"@angular/cli": "^22.2.6",
+		"@angular/build": "^22.2.7",
+		"@angular/cli": "^22.2.7",
 		"@angular/compiler-cli": "^22.2.6",
 		"@eslint/js": "^10.0.1",
 		"@types/three": "^0.187.0",
 		"angular-eslint": "22.6.0",
-		"baseline-browser-mapping": "^2.11.36",
+		"baseline-browser-mapping": "^2.11.37",
 		"eslint": "^10.14.0",
 		"typescript-eslint": "8.72.2"
 	}
