@@ -78,12 +78,14 @@ public final class PassengerTests {
 	}
 
 	@Test
-	public void testMarkAndClearRouteJammed() {
+	public void testRouteJamSurvivesOneTickHandoff() {
 		simulator.markRouteJammed(42);
 		assertTrue(simulator.isRouteJammed(42), "Route 42 should be jammed after marking");
 		assertFalse(simulator.isRouteJammed(0), "Route 0 should not be affected");
 		simulator.tick();
-		assertFalse(simulator.isRouteJammed(42), "Jammed routes should be cleared after tick");
+		assertTrue(simulator.isRouteJammed(42), "The previous tick should remain visible while sidings dispatch");
+		simulator.tick();
+		assertFalse(simulator.isRouteJammed(42), "An unobserved route jam should expire after one handoff tick");
 	}
 
 	@Test

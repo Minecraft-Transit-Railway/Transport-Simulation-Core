@@ -111,6 +111,14 @@ public class Vehicle extends VehicleSchema implements Utilities {
 		return !getIsOnRoute() || railProgress < vehicleExtraData.getTotalVehicleLength() + vehicleExtraData.getRailLength();
 	}
 
+	/**
+	 * Keep jam age stable when the simulator deliberately skips wall-clock time after exhausting its
+	 * catch-up budget. Otherwise scheduler load shedding alone could report every vehicle as jammed.
+	 */
+	public void skipSimulationTime(long skippedMillis) {
+		lastMovementMillis += skippedMillis;
+	}
+
 	public void initVehiclePositions(Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>> vehiclePositions) {
 		writeVehiclePositions(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress), vehiclePositions);
 	}
@@ -211,6 +219,50 @@ public class Vehicle extends VehicleSchema implements Utilities {
 				deviationSpeedAdjustment = 1;
 			}
 		}
+	}
+
+	/**
+	 * Attempt to dispatch this vehicle from its siding without adding another train to an already
+	 * occupied or jammed route. A successful dispatch is written into the current occupancy snapshot
+	 * immediately so another siding evaluated later in the same simulation tick can observe it.
+	 *
+	 * @return whether the vehicle was dispatched
+	 */
+	public boolean tryStartUp(long newDepartureIndex, long newSidingDepartureTime, @Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+		vehicleExtraData.closeDoors();
+
+		if (isDeploymentBlocked(vehiclePositions)) {
+			return false;
+		}
+
+		startUp(newDepartureIndex, newSidingDepartureTime);
+		if (!getIsOnRoute()) {
+			return false;
+		}
+
+		if (vehiclePositions != null && vehiclePositions.size() > 1) {
+			writeVehiclePositions(Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, railProgress), vehiclePositions.get(1));
+		}
+		return true;
+	}
+
+	private boolean isDeploymentBlocked(@Nullable ObjectArrayList<Object2ObjectAVLTreeMap<Position, Object2ObjectAVLTreeMap<Position, VehiclePosition>>> vehiclePositions) {
+		if (data instanceof final Simulator simulator && (
+			simulator.isRouteJammed(vehicleExtraData.getPreviousRouteId()) ||
+				simulator.isRouteJammed(vehicleExtraData.getThisRouteId()) ||
+				simulator.isRouteJammed(vehicleExtraData.getNextRouteId())
+		)) {
+			return true;
+		}
+
+		if (vehiclePositions == null || vehiclePositions.size() < 2 || vehicleExtraData.immutablePath.isEmpty()) {
+			return false;
+		}
+
+		final double deploymentProgress = vehicleExtraData.getDefaultPosition() + Siding.ACCELERATION_DEFAULT;
+		final int currentIndex = Utilities.getIndexFromConditionalList(vehicleExtraData.immutablePath, deploymentProgress);
+		final double deploymentClearance = vehicleExtraData.getTotalVehicleLength() + transportMode.stoppingSpace;
+		return currentIndex >= 0 && railBlockedDistance(currentIndex, deploymentProgress, deploymentClearance, vehiclePositions, true, false) >= 0;
 	}
 
 	public long getDepartureIndex() {
@@ -583,7 +635,7 @@ public class Vehicle extends VehicleSchema implements Utilities {
 			if (!transportMode.continuousMovement) {
 				final DoubleDoubleImmutablePair blockedBounds = getBlockedBounds(pathData, railProgress - vehicleExtraData.getTotalVehicleLength(), railProgress - 0.01);
 				if (blockedBounds.rightDouble() - blockedBounds.leftDouble() > 0.01) {
-					if (getIsOnRoute() && index > 0) {
+					if (getIsOnRoute() && index >= 0) {
 						Data.put(vehiclePositions, position1, position2, vehiclePosition -> {
 							final VehiclePosition newVehiclePosition = vehiclePosition == null ? new VehiclePosition() : vehiclePosition;
 							newVehiclePosition.addSegment(blockedBounds.leftDouble(), blockedBounds.rightDouble(), id);
