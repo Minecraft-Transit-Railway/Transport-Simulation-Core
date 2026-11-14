@@ -86,6 +86,7 @@ public class Simulator extends Data implements Utilities {
 	private final MessageQueue<QueueObject> messageQueueC2S = new MessageQueue<>();
 	private final MessageQueue<QueueObject> messageQueueS2C = new MessageQueue<>();
 	private final LongOpenHashSet jammedRouteIds = new LongOpenHashSet();
+	private static final Client[] EMPTY_CLIENTS = new Client[0];
 
 	/**
 	 * If the simulation falls more than this many milliseconds behind wall clock, log a notice and
@@ -457,7 +458,8 @@ public class Simulator extends Data implements Utilities {
 				vehiclePositionsForTransportMode.add(new Object2ObjectAVLTreeMap<>());
 			});
 
-			rails.forEach(rail -> rail.tick1(this));
+			final Client[] clientsSnapshot = clients.isEmpty() ? EMPTY_CLIENTS : clients.toArray(new Client[clients.size()]);
+			rails.forEach(rail -> rail.tick1(clientsSnapshot));
 			rails.forEach(rail -> rail.tick2(millisElapsed));
 			depots.forEach(Depot::tick);
 
