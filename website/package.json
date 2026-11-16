@@ -12,7 +12,7 @@
 	},
 	"private": true,
 	"dependencies": {
-		"@angular-eslint/builder": "^22.6.0",
+		"@angular-eslint/builder": "^22.7.0",
 		"@angular/animations": "^22.2.6",
 		"@angular/common": "^22.2.6",
 		"@angular/compiler": "^22.2.6",
@@ -36,7 +36,7 @@
 		"@angular/compiler-cli": "^22.2.6",
 		"@eslint/js": "^10.0.1",
 		"@types/three": "^0.187.0",
-		"angular-eslint": "22.6.0",
+		"angular-eslint": "22.7.0",
 		"baseline-browser-mapping": "^2.11.37",
 		"eslint": "^10.15.0",
 		"typescript-eslint": "8.72.2"
