@@ -25,7 +25,7 @@
 		"@jsverse/transloco": "^8.4.0",
 		"@primeuix/themes": "^3.1.1",
 		"iconify-icon": "^3.0.5",
-		"primeng": "^22.1.5",
+		"primeng": "^22.1.6",
 		"rxjs": "~7.8.2",
 		"three": "^0.187.0",
 		"tslib": "^2.9.1"
@@ -38,7 +38,7 @@
 		"@types/three": "^0.187.0",
 		"angular-eslint": "22.8.0",
 		"baseline-browser-mapping": "^2.11.40",
-		"eslint": "^10.15.0",
+		"eslint": "^10.16.0",
 		"typescript-eslint": "8.74.0"
 	}
 }
